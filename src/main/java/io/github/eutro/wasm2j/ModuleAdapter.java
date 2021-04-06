@@ -52,7 +52,7 @@ public class ModuleAdapter extends ModuleVisitor {
     public ClassNode toJava(ClassNode cn) {
         addCustoms(cn);
         Externs externs = new Externs();
-        addImports(externs);
+        addImports(cn, externs);
         List<MethodNode> funcs = new ArrayList<>();
         List<FieldNode> mems = new ArrayList<>();
         List<FieldNode> globals = new ArrayList<>();
@@ -62,7 +62,7 @@ public class ModuleAdapter extends ModuleVisitor {
         if (node.codes != null) {
             int ci = 0;
             for (CodeNode code : node.codes) {
-                putBody(cn, externs, ci, code, cn.methods.get(ci));
+                putBody(cn, externs, ci, code, funcs.get(ci));
                 ++ci;
             }
         }
@@ -73,29 +73,33 @@ public class ModuleAdapter extends ModuleVisitor {
         for (List<CustomNode> sections : node.customs) {
             if (sections != null) {
                 for (CustomNode section : sections) {
-                    AnnotationVisitor av = cn.visitAnnotation("Lio/github/eutro/wasm2j/runtime/CustomSection;", true);
-                    av.visit("name", section.name);
-                    av.visit("data", section.data);
+                    addCustom(cn, section);
                 }
             }
         }
     }
 
-    protected void addImports(Externs externs) {
+    protected void addCustom(ClassNode cn, CustomNode section) {
+        AnnotationVisitor av = cn.visitAnnotation("Lio/github/eutro/wasm2j/runtime/CustomSection;", true);
+        av.visit("name", section.name);
+        av.visit("data", section.data);
+    }
+
+    protected void addImports(ClassNode cn, Externs externs) {
         if (node.imports != null) {
             for (AbstractImportNode imprt : node.imports) {
                 switch (imprt.importType()) {
                     case IMPORTS_FUNC:
-                        externs.funcs.add(resolveFuncImport((FuncImportNode) imprt));
+                        externs.funcs.add(resolveFuncImport(cn, (FuncImportNode) imprt));
                         break;
                     case IMPORTS_MEM:
-                        externs.mems.add(resolveMemImport((MemImportNode) imprt));
+                        externs.mems.add(resolveMemImport(cn, (MemImportNode) imprt));
                         break;
                     case IMPORTS_GLOBAL:
-                        externs.globals.add(resolveGlobalImport((GlobalImportNode) imprt));
+                        externs.globals.add(resolveGlobalImport(cn, (GlobalImportNode) imprt));
                         break;
                     case IMPORTS_TABLE:
-                        externs.tables.add(resolveTableImport((TableImportNode) imprt));
+                        externs.tables.add(resolveTableImport(cn, (TableImportNode) imprt));
                         break;
                 }
             }
@@ -125,12 +129,15 @@ public class ModuleAdapter extends ModuleVisitor {
             }
         }
         if (node.mems != null) {
-            for (MemoryNode ignored : node.mems) {
+            for (MemoryNode memory : node.mems) {
                 FieldNode fn = new FieldNode(ACC_PRIVATE,
                         "mem" + mems.size(),
                         Type.getType(ByteBuffer.class).toString(),
                         null,
                         null);
+                AnnotationVisitor av = fn.visitAnnotation("Lio/github/eutro/wasm2j/runtime/LinearMemory;", true);
+                av.visit("min", memory.limits.min);
+                if (memory.limits.max != null) av.visit("max", memory.limits.max);
                 mems.add(fn);
                 cn.fields.add(fn);
                 externs.mems.add(new Extern.ModuleFieldExtern(fn, cn.name));
@@ -143,6 +150,7 @@ public class ModuleAdapter extends ModuleVisitor {
                         Types.toJava(global.type.type).getDescriptor(),
                         null,
                         null);
+                fn.visitAnnotation("Lio/github/eutro/wasm2j/runtime/Global;", true);
                 if (global.type.mut == MUT_CONST) fn.access |= ACC_FINAL;
                 globals.add(fn);
                 cn.fields.add(fn);
@@ -156,6 +164,7 @@ public class ModuleAdapter extends ModuleVisitor {
                         "[" + Types.toJava(table.type).getDescriptor(),
                         null,
                         null);
+                fn.visitAnnotation("Lio/github/eutro/wasm2j/runtime/Table;", true);
                 tables.add(fn);
                 cn.fields.add(fn);
                 externs.tables.add(new TypedExtern.ModuleTypedExtern(fn, cn.name, table.type));
@@ -362,10 +371,8 @@ public class ModuleAdapter extends ModuleVisitor {
         }
 
         if (node.start != null) {
-            ctx.visitVarInsn(ALOAD, 0);
-            MethodNode start = funcs.get(node.start);
-            if (!"()V".equals(start.desc)) throw new IllegalArgumentException();
-            ctx.visitMethodInsn(INVOKEVIRTUAL, cn.name, start.name, start.desc, false);
+            FuncExtern startf = externs.funcs.get(node.start);
+            startf.emitInvoke(ctx);
         }
         ctx.visitInsn(Opcodes.RETURN);
         ctx.visitMaxs(/* calculated */ 0, 0);
@@ -422,20 +429,20 @@ public class ModuleAdapter extends ModuleVisitor {
         ctx.visitMaxs(/* calculated */ 0, 0);
     }
 
-    protected @NotNull FuncExtern resolveFuncImport(FuncImportNode imprt) {
-        throw new UnsupportedOperationException("Func imports not supported");
+    protected @NotNull FuncExtern resolveFuncImport(ClassNode cn, FuncImportNode imprt) {
+        throw new UnsupportedOperationException(String.format("Func import %s from %s not supported", imprt.module, imprt.name));
     }
 
-    protected @NotNull TypedExtern resolveTableImport(TableImportNode imprt) {
-        throw new UnsupportedOperationException("Table imports not supported");
+    protected @NotNull TypedExtern resolveTableImport(ClassNode cn, TableImportNode imprt) {
+        throw new UnsupportedOperationException(String.format("Table import %s from %s not supported", imprt.module, imprt.name));
     }
 
-    protected @NotNull Extern resolveMemImport(MemImportNode imprt) {
-        throw new UnsupportedOperationException("Memory imports not supported");
+    protected @NotNull Extern resolveMemImport(ClassNode cn, MemImportNode imprt) {
+        throw new UnsupportedOperationException(String.format("Memory import %s from %s not supported", imprt.module, imprt.name));
     }
 
-    protected @NotNull TypedExtern resolveGlobalImport(GlobalImportNode imprt) {
-        throw new UnsupportedOperationException("Global imports not supported");
+    protected @NotNull TypedExtern resolveGlobalImport(ClassNode cn, GlobalImportNode imprt) {
+        throw new UnsupportedOperationException(String.format("Global import %s from %s not supported", imprt.module, imprt.name));
     }
 
 }

@@ -1,15 +1,15 @@
 package io.github.eutro.wasm2j;
 
-import org.objectweb.asm.MethodVisitor;
+import org.objectweb.asm.commons.GeneratorAdapter;
 import org.objectweb.asm.tree.FieldNode;
 
 import static org.objectweb.asm.Opcodes.*;
 import static org.objectweb.asm.Opcodes.PUTFIELD;
 
-interface Extern {
-    void emitGet(MethodVisitor mv);
+public interface Extern {
+    void emitGet(GeneratorAdapter mv);
 
-    default boolean emitSet(MethodVisitor mv) {
+    default boolean emitSet(GeneratorAdapter mv) {
         return false;
     }
 
@@ -23,15 +23,15 @@ interface Extern {
         }
 
         @Override
-        public void emitGet(MethodVisitor mv) {
-            mv.visitVarInsn(ALOAD, 0);
+        public void emitGet(GeneratorAdapter mv) {
+            mv.loadThis();
             mv.visitFieldInsn(GETFIELD, internalName, fn.name, fn.desc);
         }
 
         @Override
-        public boolean emitSet(MethodVisitor mv) {
-            mv.visitVarInsn(ALOAD, 0);
-            mv.visitInsn(SWAP);
+        public boolean emitSet(GeneratorAdapter mv) {
+            mv.loadThis();
+            mv.swap();
             mv.visitFieldInsn(PUTFIELD, internalName, fn.name, fn.desc);
             return true;
         }

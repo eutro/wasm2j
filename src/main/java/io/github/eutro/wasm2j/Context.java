@@ -49,8 +49,12 @@ class Context extends GeneratorAdapter {
         this.passiveDatas = passiveDatas;
     }
 
-    public Type funcType(int index) {
-        return Types.methodDesc(funcTypes.get(index));
+    public Type jfuncType(int index) {
+        return Types.methodDesc(funcType(index));
+    }
+
+    public TypeNode funcType(int index) {
+        return funcTypes.get(index);
     }
 
     public Type localType(int local) {
@@ -58,7 +62,52 @@ class Context extends GeneratorAdapter {
     }
 
     public Context compress(byte[] types) {
-        if (types.length > 1) throw new UnsupportedOperationException();
+        if (types.length > 1) {
+            Type arType = Types.returnType(types);
+            Type elType = arType.getElementType();
+            push(types.length);
+            newArray(elType);
+            int local = newLocal(arType);
+            storeLocal(local);
+            for (int i = types.length - 1; i >= 0; i--) {
+                Type thisElType = Types.toJava(types[i]);
+                if (!thisElType.equals(elType)) {
+                    if (thisElType.getSort() != Type.OBJECT) {
+                        valueOf(thisElType);
+                    } else {
+                        checkCast(elType);
+                    }
+                }
+                loadLocal(local);
+                swap(elType, arType);
+                push(i);
+                swap(elType, Type.INT_TYPE);
+                arrayStore(elType);
+            }
+        }
+        return this;
+    }
+
+    public Context decompress(byte[] types) {
+        if (types.length > 1) {
+            Type arType = Types.returnType(types);
+            Type elType = arType.getElementType();
+            for (int i = 0; i < types.length; i++) {
+                if (i + 1 != types.length) {
+                    dup();
+                }
+                push(i);
+                arrayLoad(elType);
+                byte type = types[i];
+                Type thisElType = Types.toJava(type);
+                if (!elType.equals(thisElType)) {
+                    unbox(thisElType);
+                }
+                if (i + 1 != types.length) {
+                    swap(arType, thisElType);
+                }
+            }
+        }
         return this;
     }
 
@@ -90,11 +139,6 @@ class Context extends GeneratorAdapter {
         for (org.objectweb.asm.tree.AbstractInsnNode insn : insns) {
             insn.accept(this);
         }
-        return this;
-    }
-
-    public Context addInsns(InsnList insns) {
-        insns.accept(this);
         return this;
     }
 

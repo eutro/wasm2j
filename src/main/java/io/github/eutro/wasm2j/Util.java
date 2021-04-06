@@ -48,13 +48,6 @@ class Util {
         return v == null ? new InsnNode(ACONST_NULL) : new LdcInsnNode(v);
     }
 
-    @NotNull
-    public static InsnList fromAdapter(Consumer<InstructionAdapter> iac) {
-        MethodNode mn = new MethodNode();
-        iac.accept(new InstructionAdapter(mn));
-        return mn.instructions;
-    }
-
     public static AbstractInsnNode defaultValue(Type type) {
         switch (type.getSort()) {
             case Type.BOOLEAN:

@@ -3,7 +3,6 @@ package io.github.eutro.wasm2j;
 import io.github.eutro.jwasm.Opcodes;
 import io.github.eutro.jwasm.tree.AbstractInsnNode;
 import io.github.eutro.jwasm.tree.*;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.objectweb.asm.Label;
 import org.objectweb.asm.Type;
@@ -97,11 +96,12 @@ class ExprAdapter {
                 .match(CALL).terminal((Rule<CallInsnNode>) (ctx, insn) -> {
             FuncExtern func = ctx.externs.funcs.get(insn.function);
             func.emitInvoke(ctx);
+            ctx.decompress(func.type().returns);
         })
                 .match(CALL_INDIRECT).terminal((Rule<CallIndirectInsnNode>) (ctx, insn) -> {
             int index = ctx.newLocal(Type.INT_TYPE);
             ctx.storeLocal(index);
-            Type fType = ctx.funcType(insn.type);
+            Type fType = ctx.jfuncType(insn.type);
             Type[] argumentTypes = fType.getArgumentTypes();
             int[] locals = new int[argumentTypes.length];
             for (int i = argumentTypes.length - 1; i >= 0; i--) {
@@ -115,6 +115,7 @@ class ExprAdapter {
                 ctx.loadLocal(local);
             }
             ctx.invokeVirtual(mhType, new Method("invokeExact", fType.toString()));
+            ctx.decompress(ctx.funcType(insn.type).returns);
         });
         // endregion
         // region Reference
@@ -296,143 +297,166 @@ class ExprAdapter {
         // region Memory
         // region Load
         b
-                .match(I32_LOAD).terminal((Rule<MemInsnNode>) (ctx, insn) -> ctx
-                .addInsns(offsetFor(insn))
-                .addInsns(getMem(ctx))
-                .addInsns(new InsnNode(SWAP), virtualNode("java/nio/ByteBuffer", "getInt", "(I)I")))
-                .match(I64_LOAD).terminal((Rule<MemInsnNode>) (ctx, insn) -> ctx
-                .addInsns(offsetFor(insn))
-                .addInsns(getMem(ctx))
-                .addInsns(new InsnNode(SWAP), virtualNode("java/nio/ByteBuffer", "getLong", "(I)J")))
-                .match(F32_LOAD).terminal((Rule<MemInsnNode>) (ctx, insn) -> ctx
-                .addInsns(offsetFor(insn))
-                .addInsns(getMem(ctx))
-                .addInsns(new InsnNode(SWAP), virtualNode("java/nio/ByteBuffer", "getFloat", "(I)F")))
-                .match(F64_LOAD).terminal((Rule<MemInsnNode>) (ctx, insn) -> ctx
-                .addInsns(offsetFor(insn))
-                .addInsns(getMem(ctx))
-                .addInsns(new InsnNode(SWAP), virtualNode("java/nio/ByteBuffer", "getDouble", "(I)D")))
-                .match(I32_LOAD8_S).terminal((Rule<MemInsnNode>) (ctx, insn) -> ctx
-                .addInsns(offsetFor(insn))
-                .addInsns(getMem(ctx))
-                .addInsns(new InsnNode(SWAP), virtualNode("java/nio/ByteBuffer", "get", "(I)B")))
-                .match(I32_LOAD8_U).terminal((Rule<MemInsnNode>) (ctx, insn) -> ctx
-                .addInsns(offsetFor(insn))
-                .addInsns(getMem(ctx))
-                .addInsns(new InsnNode(SWAP), virtualNode("java/nio/ByteBuffer", "get", "(I)B"),
-                        staticNode("java/lang/Byte", "toUnsignedInt", "(B)I")))
-                .match(I32_LOAD16_S).terminal((Rule<MemInsnNode>) (ctx, insn) -> ctx
-                .addInsns(offsetFor(insn))
-                .addInsns(getMem(ctx))
-                .addInsns(new InsnNode(SWAP), virtualNode("java/nio/ByteBuffer", "getShort", "(I)S")))
-                .match(I32_LOAD16_U).terminal((Rule<MemInsnNode>) (ctx, insn) -> ctx
-                .addInsns(offsetFor(insn))
-                .addInsns(getMem(ctx))
-                .addInsns(new InsnNode(SWAP), virtualNode("java/nio/ByteBuffer", "getShort", "(I)S"),
-                        staticNode("java/lang/Short", "toUnsignedInt", "(S)I")))
-                .match(I64_LOAD8_S).terminal((Rule<MemInsnNode>) (ctx, insn) -> ctx
-                .addInsns(offsetFor(insn))
-                .addInsns(getMem(ctx))
-                .addInsns(new InsnNode(SWAP), virtualNode("java/nio/ByteBuffer", "get", "(I)B"),
-                        new InsnNode(I2L)))
-                .match(I64_LOAD8_U).terminal((Rule<MemInsnNode>) (ctx, insn) -> ctx
-                .addInsns(offsetFor(insn))
-                .addInsns(getMem(ctx))
-                .addInsns(new InsnNode(SWAP), virtualNode("java/nio/ByteBuffer", "get", "(I)B"),
-                        staticNode("java/lang/Byte", "toUnsignedLong", "(B)J")))
-                .match(I64_LOAD16_S).terminal((Rule<MemInsnNode>) (ctx, insn) -> ctx
-                .addInsns(offsetFor(insn))
-                .addInsns(getMem(ctx))
-                .addInsns(new InsnNode(SWAP), virtualNode("java/nio/ByteBuffer", "getShort", "(I)S"),
-                        new InsnNode(I2L)))
-                .match(I64_LOAD16_U).terminal((Rule<MemInsnNode>) (ctx, insn) -> ctx
-                .addInsns(offsetFor(insn))
-                .addInsns(getMem(ctx))
-                .addInsns(new InsnNode(SWAP), virtualNode("java/nio/ByteBuffer", "getShort", "(I)S"),
-                        staticNode("java/lang/Short", "toUnsignedLong", "(S)J")))
-                .match(I64_LOAD32_S).terminal((Rule<MemInsnNode>) (ctx, insn) -> ctx
-                .addInsns(offsetFor(insn))
-                .addInsns(getMem(ctx))
-                .addInsns(new InsnNode(SWAP), virtualNode("java/nio/ByteBuffer", "getInt", "(I)I"),
-                        new InsnNode(I2L)))
-                .match(I64_LOAD32_U).terminal((Rule<MemInsnNode>) (ctx, insn) -> ctx
-                .addInsns(offsetFor(insn))
-                .addInsns(getMem(ctx))
-                .addInsns(new InsnNode(SWAP), virtualNode("java/nio/ByteBuffer", "getInt", "(I)I"),
-                        staticNode("java/lang/Short", "toUnsignedLong", "(S)J")));
+                .match(I32_LOAD).terminal((Rule<MemInsnNode>) (ctx, insn) -> {
+            offsetFor(ctx, insn);
+            getMem(ctx);
+            ctx.addInsns(new InsnNode(SWAP), virtualNode("java/nio/ByteBuffer", "getInt", "(I)I"));
+        })
+                .match(I64_LOAD).terminal((Rule<MemInsnNode>) (ctx, insn) -> {
+            offsetFor(ctx, insn);
+            getMem(ctx);
+            ctx.addInsns(new InsnNode(SWAP), virtualNode("java/nio/ByteBuffer", "getLong", "(I)J"));
+        })
+                .match(F32_LOAD).terminal((Rule<MemInsnNode>) (ctx, insn) -> {
+            offsetFor(ctx, insn);
+            getMem(ctx);
+            ctx.addInsns(new InsnNode(SWAP), virtualNode("java/nio/ByteBuffer", "getFloat", "(I)F"));
+        })
+                .match(F64_LOAD).terminal((Rule<MemInsnNode>) (ctx, insn) -> {
+            offsetFor(ctx, insn);
+            getMem(ctx);
+            ctx.addInsns(new InsnNode(SWAP), virtualNode("java/nio/ByteBuffer", "getDouble", "(I)D"));
+        })
+                .match(I32_LOAD8_S).terminal((Rule<MemInsnNode>) (ctx, insn) -> {
+            offsetFor(ctx, insn);
+            getMem(ctx);
+            ctx.addInsns(new InsnNode(SWAP), virtualNode("java/nio/ByteBuffer", "get", "(I)B"));
+        })
+                .match(I32_LOAD8_U).terminal((Rule<MemInsnNode>) (ctx, insn) -> {
+            offsetFor(ctx, insn);
+            getMem(ctx);
+            ctx.addInsns(new InsnNode(SWAP), virtualNode("java/nio/ByteBuffer", "get", "(I)B"),
+                    staticNode("java/lang/Byte", "toUnsignedInt", "(B)I"));
+        })
+                .match(I32_LOAD16_S).terminal((Rule<MemInsnNode>) (ctx, insn) -> {
+            offsetFor(ctx, insn);
+            getMem(ctx);
+            ctx.addInsns(new InsnNode(SWAP), virtualNode("java/nio/ByteBuffer", "getShort", "(I)S"));
+        })
+                .match(I32_LOAD16_U).terminal((Rule<MemInsnNode>) (ctx, insn) -> {
+            offsetFor(ctx, insn);
+            getMem(ctx);
+            ctx.addInsns(new InsnNode(SWAP), virtualNode("java/nio/ByteBuffer", "getShort", "(I)S"),
+                    staticNode("java/lang/Short", "toUnsignedInt", "(S)I"));
+        })
+                .match(I64_LOAD8_S).terminal((Rule<MemInsnNode>) (ctx, insn) -> {
+            offsetFor(ctx, insn);
+            getMem(ctx);
+            ctx.addInsns(new InsnNode(SWAP), virtualNode("java/nio/ByteBuffer", "get", "(I)B"),
+                    new InsnNode(I2L));
+        })
+                .match(I64_LOAD8_U).terminal((Rule<MemInsnNode>) (ctx, insn) -> {
+            offsetFor(ctx, insn);
+            getMem(ctx);
+            ctx.addInsns(new InsnNode(SWAP), virtualNode("java/nio/ByteBuffer", "get", "(I)B"),
+                    staticNode("java/lang/Byte", "toUnsignedLong", "(B)J"));
+        })
+                .match(I64_LOAD16_S).terminal((Rule<MemInsnNode>) (ctx, insn) -> {
+            offsetFor(ctx, insn);
+            getMem(ctx);
+            ctx.addInsns(new InsnNode(SWAP), virtualNode("java/nio/ByteBuffer", "getShort", "(I)S"),
+                    new InsnNode(I2L));
+        })
+                .match(I64_LOAD16_U).terminal((Rule<MemInsnNode>) (ctx, insn) -> {
+            offsetFor(ctx, insn);
+            getMem(ctx);
+            ctx.addInsns(new InsnNode(SWAP), virtualNode("java/nio/ByteBuffer", "getShort", "(I)S"),
+                    staticNode("java/lang/Short", "toUnsignedLong", "(S)J"));
+        })
+                .match(I64_LOAD32_S).terminal((Rule<MemInsnNode>) (ctx, insn) -> {
+            offsetFor(ctx, insn);
+            getMem(ctx);
+            ctx.addInsns(new InsnNode(SWAP), virtualNode("java/nio/ByteBuffer", "getInt", "(I)I"),
+                    new InsnNode(I2L));
+        })
+                .match(I64_LOAD32_U).terminal((Rule<MemInsnNode>) (ctx, insn) -> {
+            offsetFor(ctx, insn);
+            getMem(ctx);
+            ctx.addInsns(new InsnNode(SWAP), virtualNode("java/nio/ByteBuffer", "getInt", "(I)I"),
+                    staticNode("java/lang/Short", "toUnsignedLong", "(S)J"));
+        });
         // endregion
         // region Store
         b
-                .match(I32_STORE).terminal((Rule<MemInsnNode>) (ctx, insn) -> ctx
-                .addInsns(new InsnNode(SWAP))
-                .addInsns(offsetFor(insn))
-                .addInsns(new InsnNode(SWAP))
-                .addInsns(getMem(ctx))
-                .addInsns(new InsnNode(DUP_X2), new InsnNode(POP),
-                        virtualNode("java/nio/ByteBuffer", "putInt", "(II)Ljava/nio/ByteBuffer;"),
-                        new InsnNode(POP)))
-                .match(I64_STORE).terminal((Rule<MemInsnNode>) (ctx, insn) -> ctx
-                .addInsns(new InsnNode(DUP2_X1), new InsnNode(POP2))
-                .addInsns(offsetFor(insn))
-                .addInsns(getMem(ctx))
-                .addInsns(new InsnNode(SWAP), new InsnNode(DUP2_X2), new InsnNode(POP2),
-                        virtualNode("java/nio/ByteBuffer", "putLong", "(IJ)Ljava/nio/ByteBuffer;"),
-                        new InsnNode(POP)))
-                .match(F32_STORE).terminal((Rule<MemInsnNode>) (ctx, insn) -> ctx
-                .addInsns(new InsnNode(SWAP))
-                .addInsns(offsetFor(insn))
-                .addInsns(new InsnNode(SWAP))
-                .addInsns(getMem(ctx))
-                .addInsns(new InsnNode(DUP_X2), new InsnNode(POP),
-                        virtualNode("java/nio/ByteBuffer", "putInt", "(IF)Ljava/nio/ByteBuffer;"),
-                        new InsnNode(POP)))
-                .match(F64_STORE).terminal((Rule<MemInsnNode>) (ctx, insn) -> ctx
-                .addInsns(new InsnNode(DUP2_X1), new InsnNode(POP2))
-                .addInsns(offsetFor(insn))
-                .addInsns(getMem(ctx))
-                .addInsns(new InsnNode(SWAP), new InsnNode(DUP2_X2), new InsnNode(POP2),
-                        virtualNode("java/nio/ByteBuffer", "putDouble", "(ID)Ljava/nio/ByteBuffer;"),
-                        new InsnNode(POP)))
-                .match(I32_STORE8).terminal((Rule<MemInsnNode>) (ctx, insn) -> ctx
-                .addInsns(new InsnNode(I2B), new InsnNode(SWAP))
-                .addInsns(offsetFor(insn))
-                .addInsns(new InsnNode(SWAP))
-                .addInsns(getMem(ctx))
-                .addInsns(new InsnNode(DUP_X2), new InsnNode(POP),
-                        virtualNode("java/nio/ByteBuffer", "put", "(IB)Ljava/nio/ByteBuffer;"),
-                        new InsnNode(POP)))
-                .match(I32_STORE16).terminal((Rule<MemInsnNode>) (ctx, insn) -> ctx
-                .addInsns(new InsnNode(I2S), new InsnNode(SWAP))
-                .addInsns(offsetFor(insn))
-                .addInsns(new InsnNode(SWAP))
-                .addInsns(getMem(ctx))
-                .addInsns(new InsnNode(DUP_X2), new InsnNode(POP),
-                        virtualNode("java/nio/ByteBuffer", "putShort", "(IS)Ljava/nio/ByteBuffer;"),
-                        new InsnNode(POP)))
-                .match(I64_STORE8).terminal((Rule<MemInsnNode>) (ctx, insn) -> ctx
-                .addInsns(new InsnNode(L2I), new InsnNode(I2B), new InsnNode(SWAP))
-                .addInsns(offsetFor(insn))
-                .addInsns(new InsnNode(SWAP))
-                .addInsns(getMem(ctx))
-                .addInsns(new InsnNode(DUP_X2), new InsnNode(POP),
-                        virtualNode("java/nio/ByteBuffer", "put", "(IB)Ljava/nio/ByteBuffer;"),
-                        new InsnNode(POP)))
-                .match(I64_STORE16).terminal((Rule<MemInsnNode>) (ctx, insn) -> ctx
-                .addInsns(new InsnNode(L2I), new InsnNode(I2S), new InsnNode(SWAP))
-                .addInsns(offsetFor(insn))
-                .addInsns(new InsnNode(SWAP))
-                .addInsns(getMem(ctx))
-                .addInsns(new InsnNode(DUP_X2), new InsnNode(POP),
-                        virtualNode("java/nio/ByteBuffer", "putShort", "(IS)Ljava/nio/ByteBuffer;"),
-                        new InsnNode(POP)))
-                .match(I64_STORE32).terminal((Rule<MemInsnNode>) (ctx, insn) -> ctx
-                .addInsns(new InsnNode(L2I), new InsnNode(SWAP))
-                .addInsns(offsetFor(insn))
-                .addInsns(new InsnNode(SWAP))
-                .addInsns(getMem(ctx))
-                .addInsns(new InsnNode(DUP_X2), new InsnNode(POP),
-                        virtualNode("java/nio/ByteBuffer", "putInt", "(II)Ljava/nio/ByteBuffer;"),
-                        new InsnNode(POP)));
+                .match(I32_STORE).terminal((Rule<MemInsnNode>) (ctx, insn) -> {
+            ctx.addInsns(new InsnNode(SWAP));
+            offsetFor(ctx, insn);
+            ctx.addInsns(new InsnNode(SWAP));
+            getMem(ctx);
+            ctx.addInsns(new InsnNode(DUP_X2), new InsnNode(POP),
+                    virtualNode("java/nio/ByteBuffer", "putInt", "(II)Ljava/nio/ByteBuffer;"),
+                    new InsnNode(POP));
+        })
+                .match(I64_STORE).terminal((Rule<MemInsnNode>) (ctx, insn) -> {
+            ctx.addInsns(new InsnNode(DUP2_X1), new InsnNode(POP2));
+            offsetFor(ctx, insn);
+            getMem(ctx);
+            ctx.addInsns(new InsnNode(SWAP), new InsnNode(DUP2_X2), new InsnNode(POP2),
+                    virtualNode("java/nio/ByteBuffer", "putLong", "(IJ)Ljava/nio/ByteBuffer;"),
+                    new InsnNode(POP));
+        })
+                .match(F32_STORE).terminal((Rule<MemInsnNode>) (ctx, insn) -> {
+            ctx.addInsns(new InsnNode(SWAP));
+            offsetFor(ctx, insn);
+            ctx.addInsns(new InsnNode(SWAP));
+            getMem(ctx);
+            ctx.addInsns(new InsnNode(DUP_X2), new InsnNode(POP),
+                    virtualNode("java/nio/ByteBuffer", "putInt", "(IF)Ljava/nio/ByteBuffer;"),
+                    new InsnNode(POP));
+        })
+                .match(F64_STORE).terminal((Rule<MemInsnNode>) (ctx, insn) -> {
+            ctx.addInsns(new InsnNode(DUP2_X1), new InsnNode(POP2));
+            offsetFor(ctx, insn);
+            getMem(ctx);
+            ctx.addInsns(new InsnNode(SWAP), new InsnNode(DUP2_X2), new InsnNode(POP2),
+                    virtualNode("java/nio/ByteBuffer", "putDouble", "(ID)Ljava/nio/ByteBuffer;"),
+                    new InsnNode(POP));
+        })
+                .match(I32_STORE8).terminal((Rule<MemInsnNode>) (ctx, insn) -> {
+            ctx.addInsns(new InsnNode(I2B), new InsnNode(SWAP));
+            offsetFor(ctx, insn);
+            ctx.addInsns(new InsnNode(SWAP));
+            getMem(ctx);
+            ctx.addInsns(new InsnNode(DUP_X2), new InsnNode(POP),
+                    virtualNode("java/nio/ByteBuffer", "put", "(IB)Ljava/nio/ByteBuffer;"),
+                    new InsnNode(POP));
+        })
+                .match(I32_STORE16).terminal((Rule<MemInsnNode>) (ctx, insn) -> {
+            ctx.addInsns(new InsnNode(I2S), new InsnNode(SWAP));
+            offsetFor(ctx, insn);
+            ctx.addInsns(new InsnNode(SWAP));
+            getMem(ctx);
+            ctx.addInsns(new InsnNode(DUP_X2), new InsnNode(POP),
+                    virtualNode("java/nio/ByteBuffer", "putShort", "(IS)Ljava/nio/ByteBuffer;"),
+                    new InsnNode(POP));
+        })
+                .match(I64_STORE8).terminal((Rule<MemInsnNode>) (ctx, insn) -> {
+            ctx.addInsns(new InsnNode(L2I), new InsnNode(I2B), new InsnNode(SWAP));
+            offsetFor(ctx, insn);
+            ctx.addInsns(new InsnNode(SWAP));
+            getMem(ctx);
+            ctx.addInsns(new InsnNode(DUP_X2), new InsnNode(POP),
+                    virtualNode("java/nio/ByteBuffer", "put", "(IB)Ljava/nio/ByteBuffer;"),
+                    new InsnNode(POP));
+        })
+                .match(I64_STORE16).terminal((Rule<MemInsnNode>) (ctx, insn) -> {
+            ctx.addInsns(new InsnNode(L2I), new InsnNode(I2S), new InsnNode(SWAP));
+            offsetFor(ctx, insn);
+            ctx.addInsns(new InsnNode(SWAP));
+            getMem(ctx);
+            ctx.addInsns(new InsnNode(DUP_X2), new InsnNode(POP),
+                    virtualNode("java/nio/ByteBuffer", "putShort", "(IS)Ljava/nio/ByteBuffer;"),
+                    new InsnNode(POP));
+        })
+                .match(I64_STORE32).terminal((Rule<MemInsnNode>) (ctx, insn) -> {
+            ctx.addInsns(new InsnNode(L2I), new InsnNode(SWAP));
+            offsetFor(ctx, insn);
+            ctx.addInsns(new InsnNode(SWAP));
+            getMem(ctx);
+            ctx.addInsns(new InsnNode(DUP_X2), new InsnNode(POP),
+                    virtualNode("java/nio/ByteBuffer", "putInt", "(II)Ljava/nio/ByteBuffer;"),
+                    new InsnNode(POP));
+        });
         // endregion
         b
                 .match(MEMORY_SIZE).terminal((Rule<AbstractInsnNode>) (ctx, insn) -> {
@@ -628,11 +652,11 @@ class ExprAdapter {
         // region i64
         b
                 .match(I64_CLZ).terminal((Rule<AbstractInsnNode>) (ctx, insn) -> ctx
-                .addInsns(makeList(staticNode("java/lang/Long", "numberOfLeadingZeros", "(J)I"), new InsnNode(I2L))))
+                .addInsns(staticNode("java/lang/Long", "numberOfLeadingZeros", "(J)I"), new InsnNode(I2L)))
                 .match(I64_CTZ).terminal((Rule<AbstractInsnNode>) (ctx, insn) -> ctx
-                .addInsns(makeList(staticNode("java/lang/Long", "numberOfTrailingZeros", "(J)I"), new InsnNode(I2L))))
+                .addInsns(staticNode("java/lang/Long", "numberOfTrailingZeros", "(J)I"), new InsnNode(I2L)))
                 .match(I64_POPCNT).terminal((Rule<AbstractInsnNode>) (ctx, insn) -> ctx
-                .addInsns(makeList(staticNode("java/lang/Long", "bitCount", "(J)I"), new InsnNode(I2L))))
+                .addInsns(staticNode("java/lang/Long", "bitCount", "(J)I"), new InsnNode(I2L)))
                 .match(I64_ADD).terminal((Rule<AbstractInsnNode>) (ctx, insn) -> ctx.addInsns(new InsnNode(LADD)))
                 .match(I64_SUB).terminal((Rule<AbstractInsnNode>) (ctx, insn) -> ctx.addInsns(new InsnNode(LSUB)))
                 .match(I64_MUL).terminal((Rule<AbstractInsnNode>) (ctx, insn) -> ctx.addInsns(new InsnNode(LMUL)))
@@ -825,14 +849,15 @@ class ExprAdapter {
         }
     }
 
-    @NotNull
-    private static InsnList offsetFor(MemInsnNode insn) {
-        return insn.offset == 0 ? makeList() : makeList(constant(insn.offset), new InsnNode(IADD));
+    private static void offsetFor(Context ctx, MemInsnNode insn) {
+        if (insn.offset != 0) {
+            ctx.push(insn.offset);
+            ctx.visitInsn(IADD);
+        }
     }
 
-    @NotNull
-    private static InsnList getMem(Context ctx) {
-        return fromAdapter(ctx.externs.mems.get(0)::emitGet);
+    private static void getMem(Context ctx) {
+        ctx.externs.mems.get(0).emitGet(ctx);
     }
 
     private interface Rule<T> {
