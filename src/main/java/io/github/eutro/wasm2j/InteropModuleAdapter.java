@@ -1,18 +1,18 @@
 package io.github.eutro.wasm2j;
 
-import io.github.eutro.jwasm.tree.FuncImportNode;
-import io.github.eutro.jwasm.tree.ModuleNode;
+import io.github.eutro.jwasm.ImportsVisitor;
 import io.github.eutro.jwasm.tree.TypeNode;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.objectweb.asm.Handle;
 import org.objectweb.asm.Label;
 import org.objectweb.asm.Type;
 import org.objectweb.asm.commons.GeneratorAdapter;
-import org.objectweb.asm.tree.ClassNode;
 import org.objectweb.asm.tree.FieldNode;
 import org.objectweb.asm.tree.MethodNode;
 
 import java.util.Arrays;
+import java.util.Optional;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -40,24 +40,36 @@ public class InteropModuleAdapter extends ModuleAdapter {
     public static final String ALLOC_NAME = "__alloc";
     public static final String ALLOC_DESC = "(Ljava/lang/Object;)I";
 
-    public InteropModuleAdapter(@NotNull ModuleNode node) {
-        super(node);
-    }
-
-    public InteropModuleAdapter() {
+    public InteropModuleAdapter(String internalName) {
+        super(internalName);
     }
 
     @Override
-    protected @NotNull FuncExtern resolveFuncImport(ClassNode cn, FuncImportNode imprt) {
+    public @Nullable ImportsVisitor visitImports() {
+        return new ImportsVisitor(super.visitImports()) {
+            @Override
+            public void visitFuncImport(@NotNull String module, @NotNull String name, int type) {
+                Optional<FuncExtern> funcExtern = resolveFuncImport(module, name, type);
+                if (funcExtern.isPresent()) {
+                    FuncExtern e = funcExtern.get();
+                    externs.funcs.add(e);
+                } else {
+                    super.visitFuncImport(module, name, type);
+                }
+            }
+        };
+    }
+
+    protected @NotNull Optional<FuncExtern> resolveFuncImport(@NotNull String module, @NotNull String name, int type) {
         Matcher matcher;
-        if (!MODULE_NAME.equals(imprt.module)) {
-            return super.resolveFuncImport(cn, imprt);
+        if (!MODULE_NAME.equals(module)) {
+            return Optional.empty();
         }
-        TypeNode typeNode = getType(imprt.type);
-        if ("free".equals(imprt.name)) {
+        TypeNode typeNode = getType(type);
+        if ("free".equals(name)) {
             if (!Arrays.equals(typeNode.params, new byte[] { I32 }) ||
                 !Arrays.equals(typeNode.returns, new byte[] {})) {
-                return super.resolveFuncImport(cn, imprt);
+                return Optional.empty();
             }
             FieldNode rn = new FieldNode(ACC_PRIVATE,
                     "__references",
@@ -162,11 +174,11 @@ public class InteropModuleAdapter extends ModuleAdapter {
                 mn.visitInsn(RETURN);
 
                 cn.methods.add(mn);
-                return new FuncExtern.ModuleFuncExtern(cn, mn, typeNode);
+                return Optional.of(new FuncExtern.ModuleFuncExtern(cn, mn, typeNode));
             }
         }
-        if (!(matcher = FUNC_PATTERN.matcher(imprt.name)).matches()) {
-            return super.resolveFuncImport(cn, imprt);
+        if (!(matcher = FUNC_PATTERN.matcher(name)).matches()) {
+            return Optional.empty();
         }
         String pkg = matcher.group("package");
         String accessor = matcher.group("accessor");
@@ -209,7 +221,7 @@ public class InteropModuleAdapter extends ModuleAdapter {
             }
             String methodDesc = desc;
             boolean doCoerceRet = coerceRet;
-            return new FuncExtern() {
+            return Optional.of(new FuncExtern() {
                 @Override
                 public void emitInvoke(GeneratorAdapter mv) {
                     mv.visitMethodInsn(INVOKESTATIC, internalName, methodName, methodDesc, false);
@@ -245,7 +257,7 @@ public class InteropModuleAdapter extends ModuleAdapter {
                                 false);
                     }
                 }
-            };
+            });
         }
         throw new AssertionError();
     }

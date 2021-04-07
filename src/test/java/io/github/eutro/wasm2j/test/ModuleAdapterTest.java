@@ -18,6 +18,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Locale;
+import java.util.function.Function;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -30,13 +31,14 @@ public class ModuleAdapterTest {
         Files.createDirectories(WASMOUT);
     }
 
-    Object adapt(String name, ModuleAdapter ma) throws IOException, NoSuchMethodException, IllegalAccessException, InvocationTargetException, InstantiationException {
+    Object adapt(String name, Function<String, ModuleAdapter> maSupplier) throws IOException, NoSuchMethodException, IllegalAccessException, InvocationTargetException, InstantiationException {
+        String className = name.substring(0, 1).toUpperCase(Locale.ROOT) + name.substring(1) + "Bg";
+        ModuleAdapter ma = maSupplier.apply("jwasm/" + className);
         try (InputStream is = ModuleAdapterTest.class.getResourceAsStream("/" + name + "_bg.wasm")) {
             ModuleReader.fromInputStream(is).accept(ma);
         }
         ClassWriter cw = new ClassWriter(ClassWriter.COMPUTE_FRAMES);
-        String className = name.substring(0, 1).toUpperCase(Locale.ROOT) + name.substring(1) + "Bg";
-        ma.toJava("jwasm/" + className).accept(new CheckClassAdapter(cw));
+        ma.accept(new CheckClassAdapter(cw));
         byte[] bytes = cw.toByteArray();
         Files.write(WASMOUT.resolve(className + ".class"), bytes);
         Object[] out = new Object[1];
@@ -51,12 +53,12 @@ public class ModuleAdapterTest {
 
     @Test
     void simple_bg() throws IOException, NoSuchMethodException, IllegalAccessException, InvocationTargetException, InstantiationException {
-        adapt("simple", new ModuleAdapter());
+        adapt("simple", ModuleAdapter::new);
     }
 
     @Test
     void unsimple() throws Throwable {
-        Object unsimple = adapt("unsimple", new ModuleAdapter());
+        Object unsimple = adapt("unsimple", ModuleAdapter::new);
         MethodHandle div = MethodHandles.insertArguments(MethodHandles.lookup()
                 .unreflect(unsimple.getClass().getMethod("div", int.class, int.class)),
                 0,
@@ -75,7 +77,7 @@ public class ModuleAdapterTest {
 
     @Test
     void interop() throws Throwable {
-        Object interop = adapt("interop", new InteropModuleAdapter());
+        Object interop = adapt("interop", InteropModuleAdapter::new);
         Class<?> clazz = interop.getClass();
         assertEquals(1D / Math.sin(100D),
                 clazz.getMethod("csc", double.class).invoke(interop, 100D));

@@ -1,12 +1,12 @@
 package io.github.eutro.wasm2j;
 
 import io.github.eutro.jwasm.ModuleVisitor;
+import io.github.eutro.jwasm.*;
 import io.github.eutro.jwasm.tree.*;
 import org.jetbrains.annotations.NotNull;
-import org.objectweb.asm.AnnotationVisitor;
-import org.objectweb.asm.Label;
+import org.jetbrains.annotations.Nullable;
 import org.objectweb.asm.Opcodes;
-import org.objectweb.asm.Type;
+import org.objectweb.asm.*;
 import org.objectweb.asm.tree.ClassNode;
 import org.objectweb.asm.tree.FieldNode;
 import org.objectweb.asm.tree.MethodNode;
@@ -19,16 +19,233 @@ import java.util.Objects;
 import static io.github.eutro.jwasm.Opcodes.*;
 import static org.objectweb.asm.Opcodes.*;
 
+/**
+ * An {@link ModuleVisitor} that adapts a WebAssembly module into a Java class,
+ * such that it can {@link #accept} an ObjectWeb ASM {@link ClassVisitor}.
+ */
 public class ModuleAdapter extends ModuleVisitor {
-    public @NotNull ModuleNode node;
+    protected ClassNode cn = new ClassNode();
 
-    public ModuleAdapter(@NotNull ModuleNode node) {
-        super(node);
-        this.node = node;
+    protected final @NotNull TypesNode types = new TypesNode();
+    protected final @NotNull ElementSegmentsNode elems = new ElementSegmentsNode();
+    protected final @NotNull DataSegmentsNode datas = new DataSegmentsNode();
+
+    protected final Externs externs = new Externs();
+
+    protected final List<MethodNode> funcs = new ArrayList<>();
+    protected final List<TypeNode> funcTypes = new ArrayList<>();
+
+    protected final List<FieldNode> mems = new ArrayList<>();
+    protected final List<Limits> memLimits = new ArrayList<>();
+
+    protected final List<FieldNode> globals = new ArrayList<>();
+    protected final List<ExprNode> globalInits = new ArrayList<>();
+
+    protected final List<FieldNode> tables = new ArrayList<>();
+    protected final List<TableNode> tableNodes = new ArrayList<>();
+
+    protected @Nullable Integer start;
+
+    public ModuleAdapter(String internalName) {
+        cn.name = internalName;
+        cn.version = V1_8;
+        cn.access = ACC_PUBLIC | ACC_SUPER;
+        cn.superName = "java/lang/Object";
     }
 
-    public ModuleAdapter() {
-        this(new ModuleNode());
+    @Override
+    public void visitCustom(@NotNull String name, byte @NotNull [] data) {
+        AnnotationVisitor av = cn.visitAnnotation("Lio/github/eutro/wasm2j/runtime/CustomSection;", true);
+        av.visit("name", name);
+        av.visit("data", data);
+    }
+
+    @Override
+    public @Nullable TypesVisitor visitTypes() {
+        return types;
+    }
+
+    @Override
+    public @Nullable ImportsVisitor visitImports() {
+        return new ImportsVisitor(super.visitImports()) {
+            @Override
+            public void visitFuncImport(@NotNull String module, @NotNull String name, int type) {
+                throw new UnsupportedOperationException(String.format("Func import %s from %s not supported", module, name));
+            }
+
+            @Override
+            public void visitTableImport(@NotNull String module, @NotNull String name, int min, @Nullable Integer max, byte type) {
+                throw new UnsupportedOperationException(String.format("Table import %s from %s not supported", module, name));
+            }
+
+            @Override
+            public void visitMemImport(@NotNull String module, @NotNull String name, int min, @Nullable Integer max) {
+                throw new UnsupportedOperationException(String.format("Memory import %s from %s not supported", module, name));
+            }
+
+            @Override
+            public void visitGlobalImport(@NotNull String module, @NotNull String name, byte mut, byte type) {
+                throw new UnsupportedOperationException(String.format("Global import %s from %s not supported", module, name));
+            }
+        };
+    }
+
+    @Override
+    public @Nullable FunctionsVisitor visitFuncs() {
+        return new FunctionsVisitor() {
+            @Override
+            public void visitFunc(int type) {
+                MethodNode mn = new MethodNode();
+                mn.access = ACC_PRIVATE;
+                TypeNode funcType = getType(type);
+                mn.desc = Types.methodDesc(funcType).toString();
+                mn.name = "func" + funcs.size();
+                funcs.add(mn);
+                funcTypes.add(funcType);
+                cn.methods.add(mn);
+                externs.funcs.add(new FuncExtern.ModuleFuncExtern(cn, mn, funcType));
+            }
+        };
+    }
+
+    @Override
+    public @Nullable TablesVisitor visitTables() {
+        return new TablesVisitor() {
+            @Override
+            public void visitTable(int min, @Nullable Integer max, byte type) {
+                FieldNode fn = new FieldNode(ACC_PRIVATE,
+                        "table" + tables.size(),
+                        "[" + Types.toJava(type).getDescriptor(),
+                        null,
+                        null);
+                fn.visitAnnotation("Lio/github/eutro/wasm2j/runtime/Table;", true);
+                tables.add(fn);
+                tableNodes.add(new TableNode(new Limits(min, max), type));
+                cn.fields.add(fn);
+                externs.tables.add(new TypedExtern.ModuleTypedExtern(fn, cn.name, type));
+            }
+        };
+    }
+
+    @Override
+    public @Nullable MemoriesVisitor visitMems() {
+        return new MemoriesVisitor() {
+            @Override
+            public void visitMemory(int min, @Nullable Integer max) {
+                FieldNode fn = new FieldNode(ACC_PRIVATE,
+                        "mem" + mems.size(),
+                        Type.getType(ByteBuffer.class).toString(),
+                        null,
+                        null);
+                AnnotationVisitor av = fn.visitAnnotation("Lio/github/eutro/wasm2j/runtime/LinearMemory;", true);
+                av.visit("min", min);
+                if (max != null) av.visit("max", max);
+                mems.add(fn);
+                memLimits.add(new Limits(min, max));
+                cn.fields.add(fn);
+                externs.mems.add(new Extern.ModuleFieldExtern(fn, cn.name));
+            }
+        };
+    }
+
+    @Override
+    public @Nullable GlobalsVisitor visitGlobals() {
+        return new GlobalsVisitor() {
+            @Override
+            public @NotNull ExprVisitor visitGlobal(byte mut, byte type) {
+                FieldNode fn = new FieldNode(ACC_PRIVATE,
+                        "glob" + globals.size(),
+                        Types.toJava(type).getDescriptor(),
+                        null,
+                        null);
+                fn.visitAnnotation("Lio/github/eutro/wasm2j/runtime/Global;", true);
+                if (mut == MUT_CONST) fn.access |= ACC_FINAL;
+                globals.add(fn);
+                cn.fields.add(fn);
+                externs.globals.add(new TypedExtern.ModuleTypedExtern(fn, cn.name, type));
+                ExprNode init = new ExprNode();
+                globalInits.add(init);
+                return init;
+            }
+        };
+    }
+
+    @Override
+    public @Nullable ExportsVisitor visitExports() {
+        int inFuncsC = externs.funcs.size() - funcs.size();
+        int inMemsC = externs.mems.size() - mems.size();
+        int inGlobalsC = externs.globals.size() - globals.size();
+        int inTablesC = externs.tables.size() - tables.size();
+        return new ExportsVisitor() {
+            @Override
+            public void visitExport(@NotNull String name, byte type, int index) {
+                switch (type) {
+                    case EXPORTS_FUNC:
+                        MethodNode method = funcs.get(index - inFuncsC);
+                        method.name = name;
+                        method.access &= ~ACC_PRIVATE;
+                        method.access |= ACC_PUBLIC;
+                        break;
+                    case EXPORTS_TABLE:
+                        FieldNode table = tables.get(index - inTablesC);
+                        table.name = name;
+                        table.access &= ~ACC_PRIVATE;
+                        table.access |= ACC_PUBLIC;
+                        break;
+                    case EXPORTS_MEM:
+                        FieldNode mem = mems.get(index - inMemsC);
+                        mem.name = name;
+                        mem.access &= ~ACC_PRIVATE;
+                        mem.access |= ACC_PUBLIC;
+                        break;
+                    case EXPORTS_GLOBAL:
+                        FieldNode global = globals.get(index - inGlobalsC);
+                        global.name = name;
+                        global.access &= ~ACC_PRIVATE;
+                        global.access |= ACC_PUBLIC;
+                        break;
+                }
+            }
+        };
+    }
+
+    @Override
+    public @Nullable ElementSegmentsVisitor visitElems() {
+        return elems;
+    }
+
+    @Override
+    public @Nullable DataSegmentsVisitor visitDatas() {
+        return datas;
+    }
+
+    @Override
+    public @Nullable CodesVisitor visitCode() {
+        return new CodesVisitor() {
+            int ci = 0;
+
+            @Override
+            public @NotNull ExprVisitor visitCode(byte @NotNull [] locals) {
+                ExprNode expr = new ExprNode();
+                return new ExprVisitor(expr) {
+                    @Override
+                    public void visitEnd() {
+                        putBody(funcTypes.get(ci), funcs.get(ci), locals, expr);
+                        ++ci;
+                    }
+                };
+            }
+        };
+    }
+
+    @Override
+    public void visitStart(int func) {
+        start = func;
+    }
+
+    @Override
+    public void visitEnd() {
+        cn.methods.add(createConstructor());
     }
 
     protected TypeNode getType(int index) {
@@ -37,187 +254,22 @@ public class ModuleAdapter extends ModuleVisitor {
 
     @NotNull
     protected List<TypeNode> getTypes() {
-        return Objects.requireNonNull(Objects.requireNonNull(node.types).types);
+        return Objects.requireNonNull(types.types);
     }
 
-    public ClassNode toJava(String internalName) {
-        ClassNode cn = new ClassNode();
-        cn.version = V1_8;
-        cn.access = ACC_PUBLIC | ACC_SUPER;
-        cn.name = internalName;
-        cn.superName = "java/lang/Object";
-        return toJava(cn);
-    }
-
-    public ClassNode toJava(ClassNode cn) {
-        addCustoms(cn);
-        Externs externs = new Externs();
-        addImports(cn, externs);
-        List<MethodNode> funcs = new ArrayList<>();
-        List<FieldNode> mems = new ArrayList<>();
-        List<FieldNode> globals = new ArrayList<>();
-        List<FieldNode> tables = new ArrayList<>();
-        createExterns(cn, externs, funcs, mems, globals, tables);
-        cn.methods.add(createConstructor(cn, externs, funcs, mems, globals, tables));
-        if (node.codes != null) {
-            int ci = 0;
-            for (CodeNode code : node.codes) {
-                putBody(cn, externs, ci, code, funcs.get(ci));
-                ++ci;
-            }
-        }
-        return cn;
-    }
-
-    private void addCustoms(ClassNode cn) {
-        for (List<CustomNode> sections : node.customs) {
-            if (sections != null) {
-                for (CustomNode section : sections) {
-                    addCustom(cn, section);
-                }
-            }
-        }
-    }
-
-    protected void addCustom(ClassNode cn, CustomNode section) {
-        AnnotationVisitor av = cn.visitAnnotation("Lio/github/eutro/wasm2j/runtime/CustomSection;", true);
-        av.visit("name", section.name);
-        av.visit("data", section.data);
-    }
-
-    protected void addImports(ClassNode cn, Externs externs) {
-        if (node.imports != null) {
-            for (AbstractImportNode imprt : node.imports) {
-                switch (imprt.importType()) {
-                    case IMPORTS_FUNC:
-                        externs.funcs.add(resolveFuncImport(cn, (FuncImportNode) imprt));
-                        break;
-                    case IMPORTS_MEM:
-                        externs.mems.add(resolveMemImport(cn, (MemImportNode) imprt));
-                        break;
-                    case IMPORTS_GLOBAL:
-                        externs.globals.add(resolveGlobalImport(cn, (GlobalImportNode) imprt));
-                        break;
-                    case IMPORTS_TABLE:
-                        externs.tables.add(resolveTableImport(cn, (TableImportNode) imprt));
-                        break;
-                }
-            }
-        }
-    }
-
-    protected void createExterns(ClassNode cn,
-                                 Externs externs,
-                                 List<MethodNode> funcs,
-                                 List<FieldNode> mems,
-                                 List<FieldNode> globals,
-                                 List<FieldNode> tables) {
-        int inFuncsC = externs.funcs.size();
-        int inMemsC = externs.mems.size();
-        int inGlobalsC = externs.globals.size();
-        int inTablesC = externs.tables.size();
-        if (node.funcs != null) {
-            for (FuncNode func : node.funcs) {
-                MethodNode mn = new MethodNode();
-                mn.access = ACC_PRIVATE;
-                TypeNode funcType = getType(func.type);
-                mn.desc = Types.methodDesc(funcType).toString();
-                mn.name = "func" + cn.methods.size();
-                funcs.add(mn);
-                cn.methods.add(mn);
-                externs.funcs.add(new FuncExtern.ModuleFuncExtern(cn, mn, funcType));
-            }
-        }
-        if (node.mems != null) {
-            for (MemoryNode memory : node.mems) {
-                FieldNode fn = new FieldNode(ACC_PRIVATE,
-                        "mem" + mems.size(),
-                        Type.getType(ByteBuffer.class).toString(),
-                        null,
-                        null);
-                AnnotationVisitor av = fn.visitAnnotation("Lio/github/eutro/wasm2j/runtime/LinearMemory;", true);
-                av.visit("min", memory.limits.min);
-                if (memory.limits.max != null) av.visit("max", memory.limits.max);
-                mems.add(fn);
-                cn.fields.add(fn);
-                externs.mems.add(new Extern.ModuleFieldExtern(fn, cn.name));
-            }
-        }
-        if (node.globals != null) {
-            for (GlobalNode global : node.globals) {
-                FieldNode fn = new FieldNode(ACC_PRIVATE,
-                        "glob" + globals.size(),
-                        Types.toJava(global.type.type).getDescriptor(),
-                        null,
-                        null);
-                fn.visitAnnotation("Lio/github/eutro/wasm2j/runtime/Global;", true);
-                if (global.type.mut == MUT_CONST) fn.access |= ACC_FINAL;
-                globals.add(fn);
-                cn.fields.add(fn);
-                externs.globals.add(new TypedExtern.ModuleTypedExtern(fn, cn.name, global.type.type));
-            }
-        }
-        if (node.tables != null) {
-            for (TableNode table : node.tables) {
-                FieldNode fn = new FieldNode(ACC_PRIVATE,
-                        "table" + tables.size(),
-                        "[" + Types.toJava(table.type).getDescriptor(),
-                        null,
-                        null);
-                fn.visitAnnotation("Lio/github/eutro/wasm2j/runtime/Table;", true);
-                tables.add(fn);
-                cn.fields.add(fn);
-                externs.tables.add(new TypedExtern.ModuleTypedExtern(fn, cn.name, table.type));
-            }
-        }
-        if (node.exports != null) {
-            for (ExportNode export : node.exports) {
-                switch (export.type) {
-                    case EXPORTS_FUNC:
-                        MethodNode method = funcs.get(export.index - inFuncsC);
-                        method.name = export.name;
-                        method.access &= ~ACC_PRIVATE;
-                        method.access |= ACC_PUBLIC;
-                        break;
-                    case EXPORTS_TABLE:
-                        FieldNode table = tables.get(export.index = inTablesC);
-                        table.name = export.name;
-                        table.access &= ~ACC_PRIVATE;
-                        table.access |= ACC_PUBLIC;
-                        break;
-                    case EXPORTS_MEM:
-                        FieldNode mem = mems.get(export.index - inMemsC);
-                        mem.name = export.name;
-                        mem.access &= ~ACC_PRIVATE;
-                        mem.access |= ACC_PUBLIC;
-                        break;
-                    case EXPORTS_GLOBAL:
-                        FieldNode global = globals.get(export.index - inGlobalsC);
-                        global.name = export.name;
-                        global.access &= ~ACC_PRIVATE;
-                        global.access |= ACC_PUBLIC;
-                        break;
-                }
-            }
-        }
+    public void accept(ClassVisitor cv) {
+        cn.accept(cv);
     }
 
     @NotNull
-    private MethodNode createConstructor(ClassNode cn,
-                                         Externs externs,
-                                         List<MethodNode> funcs,
-                                         List<FieldNode> mems,
-                                         List<FieldNode> globals,
-                                         List<FieldNode> tables) {
+    private MethodNode createConstructor() {
         MethodNode mn;
         mn = new MethodNode();
         mn.access = ACC_PUBLIC;
         mn.name = "<init>";
         mn.desc = "()V";
-        FieldNode[] passiveElems = (node.elems != null && node.elems.elems != null) ?
-                new FieldNode[node.elems.elems.size()] : new FieldNode[0];
-        FieldNode[] passiveDatas = (node.datas != null && node.datas.datas != null) ?
-                new FieldNode[node.datas.datas.size()] : new FieldNode[0];
+        FieldNode[] passiveElems = elems.elems != null ? new FieldNode[elems.elems.size()] : new FieldNode[0];
+        FieldNode[] passiveDatas = datas.datas != null ? new FieldNode[datas.datas.size()] : new FieldNode[0];
         Context ctx = new Context(
                 new JumpTrackingVisitor(cn.name, mn.access, mn.name, mn.desc, mn),
                 mn.access,
@@ -233,11 +285,12 @@ public class ModuleAdapter extends ModuleVisitor {
 
         ctx.visitVarInsn(ALOAD, 0);
         ctx.visitMethodInsn(INVOKESPECIAL, "java/lang/Object", "<init>", "()V", false);
-        if (node.mems != null) {
-            int i = 0;
-            for (MemoryNode mem : node.mems) {
+
+        {
+            int mi = 0;
+            for (Limits limits : memLimits) {
                 ctx.visitVarInsn(ALOAD, 0);
-                ctx.visitLdcInsn(mem.limits.min * PAGE_SIZE);
+                ctx.visitLdcInsn(limits.min * PAGE_SIZE);
                 ctx.visitMethodInsn(INVOKESTATIC,
                         "java/nio/ByteBuffer",
                         "allocateDirect",
@@ -252,13 +305,14 @@ public class ModuleAdapter extends ModuleVisitor {
                         "order",
                         "(Ljava/nio/ByteOrder;)Ljava/nio/ByteBuffer;",
                         false);
-                ctx.visitFieldInsn(PUTFIELD, cn.name, mems.get(i).name, Type.getDescriptor(ByteBuffer.class));
-                ++i;
+                ctx.visitFieldInsn(PUTFIELD, cn.name, mems.get(mi).name, Type.getDescriptor(ByteBuffer.class));
+                ++mi;
             }
         }
-        if (node.tables != null) {
+
+        {
             int ti = 0;
-            for (TableNode table : node.tables) {
+            for (TableNode table : tableNodes) {
                 ctx.loadThis();
                 ctx.push(table.limits.min);
                 ctx.newArray(Types.toJava(table.type));
@@ -268,21 +322,21 @@ public class ModuleAdapter extends ModuleVisitor {
             }
         }
 
-        if (node.globals != null) {
-            int i = 0;
-            for (GlobalNode global : node.globals) {
+        {
+            int gi = 0;
+            for (ExprNode init : globalInits) {
                 ctx.loadThis();
-                ExprAdapter.translateInto(global.init, ctx);
-                FieldNode fn = globals.get(i);
+                ExprAdapter.translateInto(init, ctx);
+                FieldNode fn = globals.get(gi);
                 ctx.visitFieldInsn(PUTFIELD, cn.name, fn.name, fn.desc);
-                ++i;
+                ++gi;
             }
         }
 
-        if (node.elems != null && node.elems.elems != null) {
-            int[] actives = new int[node.elems.elems.size()];
+        if (elems.elems != null) {
+            int[] actives = new int[elems.elems.size()];
             int ei = 0;
-            for (ElementNode elem : node.elems) {
+            for (ElementNode elem : elems) {
                 Type elemType = Types.toJava(elem.type);
                 if (elem.offset == null && elem.passive) {
                     ctx.loadThis();
@@ -314,7 +368,7 @@ public class ModuleAdapter extends ModuleVisitor {
             }
 
             ei = 0;
-            for (ElementNode elem : node.elems) {
+            for (ElementNode elem : elems) {
                 if (elem.offset != null) {
                     if (elem.table != 0) throw new IllegalStateException();
                     TypedExtern table = externs.tables.get(elem.table);
@@ -333,45 +387,42 @@ public class ModuleAdapter extends ModuleVisitor {
             }
         }
 
-        if (node.datas != null && node.datas.datas != null) {
-            int di = 0;
-            for (DataNode data : node.datas) {
-                if (data.offset != null) {
-                    if (data.memory != 0) throw new IllegalStateException();
-                    Extern mem = externs.mems.get(0);
-                    mem.emitGet(ctx);
-                    ctx.visitMethodInsn(INVOKEVIRTUAL, "java/nio/ByteBuffer", "duplicate",
-                            "()Ljava/nio/ByteBuffer;",
-                            false);
-                    ExprAdapter.translateInto(data.offset, ctx);
-                    ctx.visitMethodInsn(INVOKEVIRTUAL, "java/nio/ByteBuffer", "position",
-                            "(I)Ljava/nio/ByteBuffer;",
-                            false);
-                    for (int i = 0; i < data.init.length; i++) {
-                        byte b = data.init[i];
-                        ctx.push(b);
-                        ctx.visitMethodInsn(INVOKEVIRTUAL, "java/nio/ByteBuffer", "put",
-                                "(B)Ljava/nio/ByteBuffer;",
-                                false);
-                    }
-                    ctx.pop();
-                } else {
-                    FieldNode fn = passiveDatas[di] = new FieldNode(ACC_PRIVATE, "data" + di, "[B", null, null);
-                    ctx.loadThis();
-                    ctx.newArray(Type.BYTE_TYPE);
-                    for (int i = 0; i < data.init.length; i++) {
-                        ctx.push(i);
-                        ctx.push(data.init[i]);
-                        ctx.arrayStore(Type.BYTE_TYPE);
-                    }
-                    ctx.visitFieldInsn(PUTFIELD, cn.name, fn.name, fn.desc);
-                }
-                ++di;
+        int di = 0;
+        for (DataNode data : datas) {
+            boolean active = data.offset != null;
+            if (active) {
+                if (data.memory != 0) throw new IllegalStateException();
+                Extern mem = externs.mems.get(0);
+                mem.emitGet(ctx);
+                ExprAdapter.translateInto(data.offset, ctx);
+            } else {
+                ctx.loadThis();
             }
+
+            ctx.push(data.init.length);
+            ctx.newArray(Type.BYTE_TYPE);
+            for (int i = 0; i < data.init.length; i++) {
+                ctx.dup();
+                ctx.push(i);
+                ctx.push(data.init[i]);
+                ctx.arrayStore(Type.BYTE_TYPE);
+            }
+
+            if (active) {
+                ctx.visitMethodInsn(INVOKEVIRTUAL, "java/nio/ByteBuffer", "put",
+                        "(I[B)Ljava/nio/ByteBuffer;",
+                        false);
+                ctx.pop();
+            } else {
+                FieldNode fn = passiveDatas[di] = new FieldNode(ACC_PRIVATE, "data" + di, "[B", null, null);
+                cn.fields.add(fn);
+                ctx.visitFieldInsn(PUTFIELD, cn.name, fn.name, fn.desc);
+            }
+            ++di;
         }
 
-        if (node.start != null) {
-            FuncExtern startf = externs.funcs.get(node.start);
+        if (start != null) {
+            FuncExtern startf = externs.funcs.get(start);
             startf.emitInvoke(ctx);
         }
         ctx.visitInsn(Opcodes.RETURN);
@@ -379,17 +430,11 @@ public class ModuleAdapter extends ModuleVisitor {
         return mn;
     }
 
-    protected void putBody(ClassNode cn,
-                           Externs externs,
-                           int ci,
-                           CodeNode code,
-                           MethodNode method) {
+    protected void putBody(TypeNode funcType, MethodNode method, byte[] locals, ExprNode expr) {
         Label start = new Label();
         Label end = new Label();
 
-        TypeNode funcType = getType(Objects.requireNonNull(Objects.requireNonNull(node.funcs).funcs).get(ci).type);
-
-        int[] indeces = new int[funcType.params.length + code.locals.length];
+        int[] indeces = new int[funcType.params.length + locals.length];
         Type[] types = new Type[indeces.length];
         Context ctx = new Context(
                 new JumpTrackingVisitor(cn.name, method.access, method.name, method.desc, method),
@@ -408,41 +453,23 @@ public class ModuleAdapter extends ModuleVisitor {
         for (int ai = 0; ai < funcType.params.length; ai++) {
             Type localType = types[ai] = Types.toJava(funcType.params[ai]);
             indeces[ai] = localIndex;
-            ctx.visitParameter("arg" + ai, 0);
             localIndex += localType.getSize();
         }
 
         ctx.mark(start);
-        for (int li = 0; li < code.locals.length; li++) {
-            byte local = code.locals[li];
+        for (int li = 0; li < locals.length; li++) {
+            byte local = locals[li];
             Type localType = types[funcType.params.length + li] = Types.toJava(local);
             indeces[funcType.params.length + li] = localIndex;
-            ctx.visitLocalVariable("loc" + li, localType.getDescriptor(), null, start, end, localIndex);
             Util.defaultValue(localType).accept(ctx);
             ctx.visitVarInsn(localType.getOpcode(ISTORE), localIndex);
             localIndex += localType.getSize();
         }
-        ExprAdapter.translateInto(code.expr, ctx);
+        ExprAdapter.translateInto(expr, ctx);
         ctx.mark(end);
         ctx.compress(funcType.returns);
         ctx.returnValue();
         ctx.visitMaxs(/* calculated */ 0, 0);
-    }
-
-    protected @NotNull FuncExtern resolveFuncImport(ClassNode cn, FuncImportNode imprt) {
-        throw new UnsupportedOperationException(String.format("Func import %s from %s not supported", imprt.module, imprt.name));
-    }
-
-    protected @NotNull TypedExtern resolveTableImport(ClassNode cn, TableImportNode imprt) {
-        throw new UnsupportedOperationException(String.format("Table import %s from %s not supported", imprt.module, imprt.name));
-    }
-
-    protected @NotNull Extern resolveMemImport(ClassNode cn, MemImportNode imprt) {
-        throw new UnsupportedOperationException(String.format("Memory import %s from %s not supported", imprt.module, imprt.name));
-    }
-
-    protected @NotNull TypedExtern resolveGlobalImport(ClassNode cn, GlobalImportNode imprt) {
-        throw new UnsupportedOperationException(String.format("Global import %s from %s not supported", imprt.module, imprt.name));
     }
 
 }
