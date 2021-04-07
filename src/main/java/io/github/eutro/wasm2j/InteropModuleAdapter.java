@@ -119,6 +119,7 @@ public class InteropModuleAdapter extends ModuleAdapter {
                 mn.visitMethodInsn(INVOKEINTERFACE, "java/util/Map", "put", "(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;", true);
                 mn.visitInsn(POP);
                 mn.visitInsn(IRETURN);
+                mn.visitMaxs(5, 2);
                 cn.methods.add(mn);
             }
             {
@@ -153,6 +154,7 @@ public class InteropModuleAdapter extends ModuleAdapter {
                 mn.visitInsn(DUP);
                 mn.visitMethodInsn(INVOKESPECIAL, "java/util/NoSuchElementException", "<init>", "()V", false);
                 mn.visitInsn(ATHROW);
+                mn.visitMaxs(3, 2);
                 cn.methods.add(mn);
             }
             {
@@ -174,6 +176,7 @@ public class InteropModuleAdapter extends ModuleAdapter {
                 mn.visitInsn(RETURN);
 
                 cn.methods.add(mn);
+                mn.visitMaxs(2, 2);
                 return Optional.of(new FuncExtern.ModuleFuncExtern(cn, mn, typeNode));
             }
         }
@@ -228,7 +231,7 @@ public class InteropModuleAdapter extends ModuleAdapter {
                     if (doCoerceRet) {
                         mv.loadThis();
                         mv.swap();
-                        mv.visitMethodInsn(INVOKEVIRTUAL, internalName, ALLOC_NAME, ALLOC_DESC, false);
+                        mv.visitMethodInsn(INVOKEVIRTUAL, cn.name, ALLOC_NAME, ALLOC_DESC, false);
                     }
                 }
 
@@ -241,7 +244,7 @@ public class InteropModuleAdapter extends ModuleAdapter {
                 public void emitGet(GeneratorAdapter mv) {
                     mv.visitLdcInsn(new Handle(H_INVOKESTATIC, internalName, methodName, methodDesc, false));
                     if (doCoerceRet) {
-                        mv.visitLdcInsn(new Handle(H_INVOKESTATIC, internalName, ALLOC_NAME, ALLOC_DESC, false));
+                        mv.visitLdcInsn(new Handle(H_INVOKESTATIC, cn.name, ALLOC_NAME, ALLOC_DESC, false));
                         mv.push(0);
                         mv.push(1);
                         mv.visitTypeInsn(ANEWARRAY, "java/lang/Object");

@@ -2,7 +2,6 @@ package io.github.eutro.wasm2j;
 
 import org.objectweb.asm.Label;
 import org.objectweb.asm.MethodVisitor;
-import org.objectweb.asm.tree.FrameNode;
 
 abstract class Block {
     public final int type;
@@ -16,13 +15,11 @@ abstract class Block {
     public abstract Label label();
 
     public static class If extends Block {
-        public final FrameNode frame;
         public Label elseLabel = new Label();
         public Label endLabel = null;
 
-        public If(int type, FrameNode frame) {
+        public If(int type) {
             super(type);
-            this.frame = frame;
         }
 
         public Label endLabel() {

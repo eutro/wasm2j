@@ -1,8 +1,10 @@
 package io.github.eutro.wasm2j;
 
+import org.jetbrains.annotations.Nullable;
 import org.objectweb.asm.*;
 import org.objectweb.asm.commons.AnalyzerAdapter;
 import org.objectweb.asm.tree.FrameNode;
+import org.objectweb.asm.util.CheckMethodAdapter;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -11,6 +13,7 @@ import static org.objectweb.asm.Opcodes.*;
 
 class JumpTrackingVisitor extends AnalyzerAdapter {
     private final Map<Label, FrameNode> jumps = new HashMap<>();
+    private @Nullable FrameNode nextFrame;
 
     protected JumpTrackingVisitor(String owner,
                                   int access,
@@ -18,6 +21,7 @@ class JumpTrackingVisitor extends AnalyzerAdapter {
                                   String descriptor,
                                   MethodVisitor methodVisitor) {
         super(ASM9, owner, access, name, descriptor, methodVisitor);
+        visitCode();
     }
 
     private void associate(Label label, FrameNode with) {
@@ -29,8 +33,17 @@ class JumpTrackingVisitor extends AnalyzerAdapter {
         return new FrameNode(F_NEW, locals.size(), locals.toArray(), stack.size(), stack.toArray());
     }
 
+    private void maybeSetFrame() {
+        if (nextFrame != null) {
+            nextFrame.accept(this);
+            nextFrame = null;
+        }
+    }
+
     @Override
     public void visitJumpInsn(int opcode, Label label) {
+        maybeSetFrame();
+
         if (opcode != GOTO) super.visitJumpInsn(opcode, label);
         associate(label, getFrame());
         if (opcode == GOTO) super.visitJumpInsn(opcode, label);
@@ -38,6 +51,8 @@ class JumpTrackingVisitor extends AnalyzerAdapter {
 
     @Override
     public void visitTableSwitchInsn(int min, int max, Label dflt, Label... labels) {
+        maybeSetFrame();
+
         FrameNode frame = getFrame();
         frame.stack.remove(frame.stack.size() - 1);
         associate(dflt, frame);
@@ -49,6 +64,8 @@ class JumpTrackingVisitor extends AnalyzerAdapter {
 
     @Override
     public void visitLookupSwitchInsn(Label dflt, int[] keys, Label[] labels) {
+        maybeSetFrame();
+
         FrameNode frame = getFrame();
         frame.stack.remove(frame.stack.size() - 1);
         associate(dflt, frame);
@@ -62,10 +79,67 @@ class JumpTrackingVisitor extends AnalyzerAdapter {
     public void visitLabel(Label label) {
         super.visitLabel(label);
         if (jumps.containsKey(label)) {
-            FrameNode frame = jumps.remove(label);
-            if (stack == null) {
-                frame.accept(this);
-            }
+            nextFrame = jumps.remove(label);
         }
+    }
+
+    @Override
+    public void visitInsn(int opcode) {
+        maybeSetFrame();
+        super.visitInsn(opcode);
+    }
+
+    @Override
+    public void visitIntInsn(int opcode, int operand) {
+        maybeSetFrame();
+        super.visitIntInsn(opcode, operand);
+    }
+
+    @Override
+    public void visitVarInsn(int opcode, int var) {
+        maybeSetFrame();
+        super.visitVarInsn(opcode, var);
+    }
+
+    @Override
+    public void visitTypeInsn(int opcode, String type) {
+        maybeSetFrame();
+        super.visitTypeInsn(opcode, type);
+    }
+
+    @Override
+    public void visitFieldInsn(int opcode, String owner, String name, String descriptor) {
+        maybeSetFrame();
+        super.visitFieldInsn(opcode, owner, name, descriptor);
+    }
+
+    @Override
+    public void visitMethodInsn(int opcodeAndSource, String owner, String name, String descriptor, boolean isInterface) {
+        maybeSetFrame();
+        super.visitMethodInsn(opcodeAndSource, owner, name, descriptor, isInterface);
+    }
+
+    @Override
+    public void visitInvokeDynamicInsn(String name, String descriptor, Handle bootstrapMethodHandle, Object... bootstrapMethodArguments) {
+        maybeSetFrame();
+        super.visitInvokeDynamicInsn(name, descriptor, bootstrapMethodHandle, bootstrapMethodArguments);
+    }
+
+    @Override
+    public void visitLdcInsn(Object value) {
+        maybeSetFrame();
+        super.visitLdcInsn(value);
+    }
+
+    @Override
+    public void visitIincInsn(int var, int increment) {
+        maybeSetFrame();
+        super.visitIincInsn(var, increment);
+    }
+
+    @Override
+    public void visitMultiANewArrayInsn(String descriptor, int numDimensions) {
+        maybeSetFrame();
+        super.visitMultiANewArrayInsn(descriptor, numDimensions);
     }
 }

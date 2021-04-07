@@ -60,14 +60,13 @@ class ExprAdapter {
                 .match(LOOP).terminal((Rule<BlockInsnNode>) (ctx, insn) ->
                 ctx.pushBlock(new Block.Loop(insn.blockType, ctx.mark())))
                 .match(IF).terminal((Rule<BlockInsnNode>) (ctx, insn) -> {
-            Block.If block = new Block.If(insn.blockType, ctx.getFrame());
+            Block.If block = new Block.If(insn.blockType);
             ctx.visitJumpInsn(IFEQ, block.elseLabel);
             ctx.pushBlock(block);
         })
                 .match(ELSE).terminal((Rule<AbstractInsnNode>) (ctx, insn) -> {
             Block.If ifBlock = (Block.If) ctx.peekBlock();
             ctx.goTo(ifBlock.endLabel());
-            ifBlock.frame.accept(ctx);
             ctx.mark(ifBlock.elseLabel);
         })
                 .match(END).terminal((Rule<AbstractInsnNode>) (ctx, insn) -> {
