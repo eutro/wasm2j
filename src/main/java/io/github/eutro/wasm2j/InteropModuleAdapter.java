@@ -1,6 +1,8 @@
 package io.github.eutro.wasm2j;
 
+import io.github.eutro.jwasm.ExportsVisitor;
 import io.github.eutro.jwasm.ImportsVisitor;
+import io.github.eutro.jwasm.Opcodes;
 import io.github.eutro.jwasm.tree.TypeNode;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -24,23 +26,26 @@ public class InteropModuleAdapter extends ModuleAdapter {
 
     public static final String MODULE_NAME = "java";
 
-    public static final Pattern UNQUALIFIED_NAME_PATTERN = Pattern.compile("(?:[^.;\\[/]+)");
-    public static final Pattern METHOD_NAME_PATTERN = Pattern.compile("(?:[^.;\\[/<>()]+)");
+    public static final Pattern UNQUALIFIED_NAME_PATTERN = Pattern.compile("(?:[^.;\\[/]+?)");
+    public static final Pattern METHOD_NAME_PATTERN = Pattern.compile("(?:[^.;\\[/<>()]+?)");
     public static final Pattern INTERNAL_NAME_PATTERN = Pattern.compile("(?:(?:" + UNQUALIFIED_NAME_PATTERN + "/)*" +
                                                                         UNQUALIFIED_NAME_PATTERN + ")");
     public static final Pattern DESC_PATTERN = Pattern.compile("(?:(?:\\[*)" +
                                                                "(?:(?:[BCDFIJSZ])|" +
                                                                "L" + INTERNAL_NAME_PATTERN + ";))");
     public static final Pattern METHOD_DESC_PATTERN = Pattern.compile("(?:\\(" + DESC_PATTERN + "*\\)(?:" + DESC_PATTERN + "|V))");
-    public static final Pattern FUNC_PATTERN = Pattern.compile("(?<package>(?:" + UNQUALIFIED_NAME_PATTERN + "\\.)*)" +
-                                                               "(?<classname>" + UNQUALIFIED_NAME_PATTERN + ")" +
-                                                               "(?<accessor>\\.{1,3}|/)" +
-                                                               "(?<method>" + METHOD_NAME_PATTERN + ")" +
-                                                               "(?<desc>" + METHOD_DESC_PATTERN + ")");
+    public static final Pattern IMPORT_FUNC_PATTERN = Pattern.compile("(?<package>(?:" + UNQUALIFIED_NAME_PATTERN + "\\.)*)" +
+                                                                      "(?<classname>" + UNQUALIFIED_NAME_PATTERN + ")" +
+                                                                      "(?<accessor>\\.{1,3}|/)" +
+                                                                      "(?<method>" + METHOD_NAME_PATTERN + ")" +
+                                                                      "(?<desc>" + METHOD_DESC_PATTERN + ")");
+    public static final Pattern EXPORT_FUNC_PATTERN = Pattern.compile("(?<method>" + METHOD_NAME_PATTERN + ")" +
+                                                                      "((?<move>\\*)?(?<desc>" + METHOD_DESC_PATTERN + "))?");
 
     private @Nullable FieldNode referencesNode;
     private @Nullable MethodNode allocNode;
     private @Nullable MethodNode derefNode;
+    private @Nullable MethodNode freeNode;
 
     public InteropModuleAdapter(String internalName) {
         super(internalName);
@@ -62,6 +67,112 @@ public class InteropModuleAdapter extends ModuleAdapter {
         };
     }
 
+    @Override
+    public @Nullable ExportsVisitor visitExports() {
+        int inFuncsC = externs.funcs.size() - funcs.size();
+        return new ExportsVisitor(super.visitExports()) {
+            @Override
+            public void visitExport(@NotNull String name, byte type, int index) {
+                if (type == Opcodes.EXPORTS_FUNC) {
+                    Matcher matcher = EXPORT_FUNC_PATTERN.matcher(name);
+                    if (!matcher.matches()) {
+                        throw new IllegalArgumentException("Invalid func export");
+                    }
+                    String methodName = matcher.group("method");
+                    String desc = matcher.group("desc");
+                    if (desc == null) {
+                        super.visitExport(methodName, type, index);
+                        return;
+                    }
+                    boolean move = matcher.group("move") != null;
+
+                    MethodNode method = funcs.get(index - inFuncsC);
+                    Type original = Type.getMethodType(method.desc);
+                    Type override = Type.getMethodType(desc);
+                    Type[] originalArgs = original.getArgumentTypes();
+                    Type[] overrideArgs = override.getArgumentTypes();
+                    Type originalRet = original.getReturnType();
+                    Type overrideRet = override.getReturnType();
+                    if (originalArgs.length != overrideArgs.length) {
+                        throw new IllegalArgumentException("Bad arity for method descriptor");
+                    }
+
+                    if (Arrays.equals(originalArgs, overrideArgs)) {
+                        if (originalRet.equals(overrideRet)) {
+                            super.visitExport(methodName, type, index);
+                            return;
+                        }
+                        method.name = methodName + "0";
+                    } else {
+                        method.name = methodName;
+                    }
+
+                    MethodNode mn = new MethodNode();
+                    cn.methods.add(mn);
+                    mn.name = methodName;
+                    mn.access = ACC_PUBLIC;
+                    mn.desc = override.getDescriptor();
+
+                    GeneratorAdapter ga = new GeneratorAdapter(mn, mn.access, mn.name, mn.desc);
+                    ga.loadThis();
+                    for (int arg = 0; arg < overrideArgs.length; arg++) {
+                        int finalArg = arg;
+                        emitAlloc(ga, originalArgs[arg], overrideArgs[arg], () -> ga.loadArg(finalArg));
+                    }
+                    ga.visitMethodInsn(INVOKEVIRTUAL, cn.name, method.name, method.desc, false);
+                    if (!overrideRet.equals(originalRet)) {
+                        if (overrideRet.getSort() == Type.OBJECT ||
+                            overrideRet.getSort() == Type.ARRAY) {
+                            if (!Type.INT_TYPE.equals(originalRet)) {
+                                throw new IllegalArgumentException("Overridden reference type argument representation must be I32");
+                            }
+                            if (move) {
+                                ga.dup();
+                            }
+                            ga.loadThis();
+                            ga.swap();
+                            invokeDeref(ga);
+                            ga.checkCast(overrideRet);
+                            if (move) {
+                                ga.swap();
+                                ga.loadThis();
+                                ga.swap();
+                                ga.visitMethodInsn(INVOKEVIRTUAL, cn.name, freeNode().name, freeNode().desc, false);
+                            }
+                        }
+                    }
+                    ga.returnValue();
+                    ga.visitMaxs(
+                            Math.min((original.getArgumentsAndReturnSizes() >> 2) + 2, 3),
+                            (override.getArgumentsAndReturnSizes() >> 2) + 1
+                    );
+                    ga.visitEnd();
+                } else {
+                    super.visitExport(name, type, index);
+                }
+            }
+        };
+    }
+
+    private void emitAlloc(GeneratorAdapter ga, Type wasmType, Type javaType, Runnable emit) {
+        if (wasmType.equals(javaType)) {
+            emit.run();
+            return;
+        }
+        if (javaType.getSort() == Type.OBJECT ||
+            javaType.getSort() == Type.ARRAY) {
+            if (!Type.INT_TYPE.equals(wasmType)) {
+                throw new IllegalArgumentException("Overridden reference type argument representation must be I32");
+            }
+            ga.loadThis();
+            emit.run();
+            invokeAlloc(ga);
+        } else {
+            emit.run();
+            ga.cast(javaType, wasmType);
+        }
+    }
+
     protected @NotNull Optional<FuncExtern> resolveFuncImport(@NotNull String module, @NotNull String name, int type) {
         Matcher matcher;
         if (!MODULE_NAME.equals(module)) {
@@ -73,31 +184,9 @@ public class InteropModuleAdapter extends ModuleAdapter {
                 !Arrays.equals(typeNode.returns, new byte[] {})) {
                 return Optional.empty();
             }
-            FieldNode rn = referencesNode();
-            allocNode();
-            derefNode();
-            MethodNode mn = new MethodNode();
-            mn.name = "__free";
-            mn.access = ACC_PRIVATE;
-            mn.desc = "(I)V";
-
-            Label end = new Label();
-            mn.visitVarInsn(ALOAD, 0);
-            mn.visitFieldInsn(GETFIELD, cn.name, rn.name, rn.desc);
-            mn.visitInsn(DUP);
-            mn.visitJumpInsn(IFNULL, end);
-            mn.visitVarInsn(ILOAD, 1);
-            mn.visitMethodInsn(INVOKESTATIC, "java/lang/Integer", "valueOf", "(I)Ljava/lang/Integer;", false);
-            mn.visitMethodInsn(INVOKEINTERFACE, "java/util/Map", "remove", "(Ljava/lang/Object;)Ljava/lang/Object;", true);
-            mn.visitLabel(end);
-            mn.visitInsn(POP);
-            mn.visitInsn(RETURN);
-
-            cn.methods.add(mn);
-            mn.visitMaxs(2, 2);
-            return Optional.of(new FuncExtern.ModuleFuncExtern(cn, mn, typeNode));
+            return Optional.of(new FuncExtern.ModuleFuncExtern(cn, freeNode(), typeNode));
         }
-        if (!(matcher = FUNC_PATTERN.matcher(name)).matches()) {
+        if (!(matcher = IMPORT_FUNC_PATTERN.matcher(name)).matches()) {
             return Optional.empty();
         }
         String pkg = matcher.group("package");
@@ -232,6 +321,32 @@ public class InteropModuleAdapter extends ModuleAdapter {
         });
     }
 
+    @NotNull
+    private MethodNode freeNode() {
+        if (freeNode == null) {
+            freeNode = new MethodNode();
+            freeNode.name = "__free";
+            freeNode.access = ACC_PRIVATE;
+            freeNode.desc = "(I)V";
+
+            Label end = new Label();
+            freeNode.visitVarInsn(ALOAD, 0);
+            freeNode.visitFieldInsn(GETFIELD, cn.name, referencesNode().name, referencesNode().desc);
+            freeNode.visitInsn(DUP);
+            freeNode.visitJumpInsn(IFNULL, end);
+            freeNode.visitVarInsn(ILOAD, 1);
+            freeNode.visitMethodInsn(INVOKESTATIC, "java/lang/Integer", "valueOf", "(I)Ljava/lang/Integer;", false);
+            freeNode.visitMethodInsn(INVOKEINTERFACE, "java/util/Map", "remove", "(Ljava/lang/Object;)Ljava/lang/Object;", true);
+            freeNode.visitLabel(end);
+            freeNode.visitInsn(POP);
+            freeNode.visitInsn(RETURN);
+
+            cn.methods.add(freeNode);
+            freeNode.visitMaxs(2, 2);
+        }
+        return freeNode;
+    }
+
     private @NotNull FieldNode referencesNode() {
         if (referencesNode == null) {
             referencesNode = new FieldNode(ACC_PRIVATE,
@@ -252,6 +367,7 @@ public class InteropModuleAdapter extends ModuleAdapter {
             derefNode.name = "__deref";
             derefNode.access = ACC_PRIVATE;
             derefNode.desc = "(I)Ljava/lang/Object;";
+            derefNode.signature = "<T:Ljava/lang/Object;>(I)TT;";
 
             Label popThrowExn = new Label();
             Label retNull = new Label();
@@ -277,7 +393,8 @@ public class InteropModuleAdapter extends ModuleAdapter {
             derefNode.visitInsn(POP);
             derefNode.visitTypeInsn(NEW, "java/util/NoSuchElementException");
             derefNode.visitInsn(DUP);
-            derefNode.visitMethodInsn(INVOKESPECIAL, "java/util/NoSuchElementException", "<init>", "()V", false);
+            derefNode.visitLdcInsn("Attempted to dereference an invalid pointer");
+            derefNode.visitMethodInsn(INVOKESPECIAL, "java/util/NoSuchElementException", "<init>", "(Ljava/lang/String;)V", false);
             derefNode.visitInsn(ATHROW);
             derefNode.visitMaxs(3, 2);
             cn.methods.add(derefNode);
@@ -301,12 +418,16 @@ public class InteropModuleAdapter extends ModuleAdapter {
             allocNode.desc = "(Ljava/lang/Object;)I";
 
             Label endCreate = new Label();
+            Label inc = new Label();
             allocNode.visitVarInsn(ALOAD, 0);
             allocNode.visitInsn(DUP);
             allocNode.visitInsn(DUP);
             allocNode.visitFieldInsn(GETFIELD, cn.name, ct.name, ct.desc);
+            allocNode.visitLabel(inc);
             allocNode.visitInsn(ICONST_1);
             allocNode.visitInsn(IADD);
+            allocNode.visitInsn(DUP);
+            allocNode.visitJumpInsn(IFEQ, inc);
             allocNode.visitInsn(DUP_X1);
             allocNode.visitFieldInsn(PUTFIELD, cn.name, ct.name, ct.desc);
             allocNode.visitInsn(DUP_X1);

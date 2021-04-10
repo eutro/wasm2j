@@ -18,9 +18,11 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Locale;
+import java.util.Random;
 import java.util.function.Function;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 public class ModuleAdapterTest {
 
@@ -60,7 +62,7 @@ public class ModuleAdapterTest {
     void unsimple() throws Throwable {
         Object unsimple = adapt("unsimple", ModuleAdapter::new);
         MethodHandle div = MethodHandles.insertArguments(MethodHandles.lookup()
-                .unreflect(unsimple.getClass().getMethod("div", int.class, int.class)),
+                        .unreflect(unsimple.getClass().getMethod("div", int.class, int.class)),
                 0,
                 unsimple);
         MethodHandle divU = MethodHandles.insertArguments(MethodHandles.lookup()
@@ -94,5 +96,10 @@ public class ModuleAdapterTest {
             int f = (int) func.invoke(interop, i);
             invoke.invoke(interop, f, 1);
         }
+
+        int i = new Random().nextInt();
+        Integer boxed = (Integer) clazz.getMethod("boxedInt", int.class).invoke(interop, i);
+        assertEquals((Integer) i, boxed);
+        assertEquals(i, clazz.getMethod("intValue", Integer.class).invoke(interop, boxed));
     }
 }

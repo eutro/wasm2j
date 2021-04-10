@@ -55,14 +55,14 @@ impl<'a> JObj<'a, i32> {
     }
 }
 
-#[no_mangle]
-extern fn foo() -> JObj<'static, i32> {
+#[export_name = "boxedInt*(I)Ljava/lang/Integer;"]
+extern fn get_boxed_int(i: i32) -> JObj<'static, i32> {
     drop(JObj::boxed(2));
-    JObj::boxed(100)
+    JObj::boxed(i)
 }
 
-#[no_mangle]
-extern fn bar(v: JObj<'static, i32>) -> i32 {
+#[export_name = "intValue(Ljava/lang/Integer;)I"]
+extern fn get_int_value(v: JObj<'static, i32>) -> i32 {
     v.value()
 }
 
