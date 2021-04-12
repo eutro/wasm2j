@@ -36,7 +36,7 @@ public class InteropModuleAdapter extends ModuleAdapter {
     public static final Pattern METHOD_DESC_PATTERN = Pattern.compile("(?:\\(" + DESC_PATTERN + "*\\)(?:" + DESC_PATTERN + "|V))");
     public static final Pattern IMPORT_FUNC_PATTERN = Pattern.compile("(?<package>(?:" + UNQUALIFIED_NAME_PATTERN + "\\.)*)" +
                                                                       "(?<classname>" + UNQUALIFIED_NAME_PATTERN + ")" +
-                                                                      "(?<accessor>\\.{1,3}|/)" +
+                                                                      "(?<accessor>[.#^/@~])" +
                                                                       "(?<method>" + METHOD_NAME_PATTERN + ")" +
                                                                       "(?<desc>" + METHOD_DESC_PATTERN + ")");
     public static final Pattern EXPORT_FUNC_PATTERN = Pattern.compile("(?<method>" + METHOD_NAME_PATTERN + ")" +
@@ -186,6 +186,37 @@ public class InteropModuleAdapter extends ModuleAdapter {
             }
             return Optional.of(new FuncExtern.ModuleFuncExtern(cn, freeNode(), typeNode));
         }
+
+        if ("memory".equals(name)) {
+            if (!Arrays.equals(typeNode.params, new byte[] {}) ||
+                !Arrays.equals(typeNode.returns, new byte[] { I32 })) {
+                return Optional.empty();
+            }
+            return Optional.of(new FuncExtern() {
+                @Override
+                public void emitInvoke(GeneratorAdapter mv) {
+                    FieldNode fn = mems.get(0);
+                    mv.loadThis();
+                    mv.dup();
+                    mv.visitFieldInsn(GETFIELD, cn.name, fn.name, fn.desc);
+                    invokeAlloc(mv);
+                }
+
+                @Override
+                public TypeNode type() {
+                    return typeNode;
+                }
+
+                @Override
+                public void emitGet(GeneratorAdapter mv) {
+                    FieldNode fn = mems.get(0);
+                    thisHandle(mv, new Handle(H_GETFIELD, cn.name, fn.name, fn.desc, false));
+                    allocHandle(mv);
+                    filterReturn(mv);
+                }
+            });
+        }
+
         if (!(matcher = IMPORT_FUNC_PATTERN.matcher(name)).matches()) {
             return Optional.empty();
         }
@@ -201,26 +232,43 @@ public class InteropModuleAdapter extends ModuleAdapter {
         final int invokeInsn;
         final int handleType;
         final boolean isInterface;
+        final boolean isField;
         switch (accessor) {
             case ".":
                 invokeInsn = INVOKEVIRTUAL;
                 handleType = H_INVOKEVIRTUAL;
                 isInterface = false;
+                isField = false;
                 break;
-            case "..":
+            case "#":
                 invokeInsn = INVOKEINTERFACE;
                 handleType = H_INVOKEINTERFACE;
                 isInterface = true;
+                isField = false;
                 break;
-            case "...":
+            case "^":
                 invokeInsn = INVOKESPECIAL;
                 handleType = H_INVOKESPECIAL;
                 isInterface = false;
+                isField = false;
+                break;
+            case "@":
+                invokeInsn = GETFIELD;
+                handleType = H_GETFIELD;
+                isInterface = false;
+                isField = true;
+                break;
+            case "~":
+                invokeInsn = GETSTATIC;
+                handleType = H_GETSTATIC;
+                isInterface = false;
+                isField = true;
                 break;
             default:
                 invokeInsn = INVOKESTATIC;
                 handleType = H_INVOKESTATIC;
                 isInterface = false;
+                isField = false;
                 break;
         }
 
@@ -229,7 +277,7 @@ public class InteropModuleAdapter extends ModuleAdapter {
         final Type[] argTypes;
         final Type[] callArgTypes;
         Type descType = Type.getType(desc);
-        if ("/".equals(accessor)) {
+        if ("/".equals(accessor) || "~".equals(accessor)) {
             argTypes = descType.getArgumentTypes();
         } else {
             Type[] args = descType.getArgumentTypes();
@@ -271,11 +319,17 @@ public class InteropModuleAdapter extends ModuleAdapter {
                     for (int i = 0; i < locals.length; i++) {
                         if (doCoerce[i]) mv.loadThis();
                         mv.loadLocal(locals[i]);
-                        if (doCoerce[i]) invokeDeref(mv);
-                        mv.checkCast(argTypes[i]);
+                        if (doCoerce[i]) {
+                            invokeDeref(mv);
+                            mv.checkCast(argTypes[i]);
+                        }
                     }
                 }
-                mv.visitMethodInsn(invokeInsn, internalName, methodName, desc, isInterface);
+                if (isField) {
+                    mv.visitFieldInsn(invokeInsn, internalName, methodName, desc.substring(2));
+                } else {
+                    mv.visitMethodInsn(invokeInsn, internalName, methodName, desc, isInterface);
+                }
                 if (doCoerceRet) {
                     mv.loadThis();
                     mv.swap();
@@ -290,7 +344,7 @@ public class InteropModuleAdapter extends ModuleAdapter {
 
             @Override
             public void emitGet(GeneratorAdapter mv) {
-                mv.visitLdcInsn(new Handle(handleType, internalName, methodName, desc, isInterface));
+                mv.visitLdcInsn(new Handle(handleType, internalName, methodName, isField ? desc.substring(2) : desc, isInterface));
                 if (doCoerce != null) {
                     derefHandle(mv);
                     Type mhType = Type.getType(MethodHandle.class);
@@ -313,12 +367,16 @@ public class InteropModuleAdapter extends ModuleAdapter {
                 }
                 if (doCoerceRet) {
                     allocHandle(mv);
-                    mv.visitMethodInsn(INVOKESTATIC, "java/lang/invoke/MethodHandles", "filterReturnValue",
-                            "(Ljava/lang/invoke/MethodHandle;Ljava/lang/invoke/MethodHandle;)Ljava/lang/invoke/MethodHandle;",
-                            false);
+                    filterReturn(mv);
                 }
             }
         });
+    }
+
+    private void filterReturn(GeneratorAdapter mv) {
+        mv.visitMethodInsn(INVOKESTATIC, "java/lang/invoke/MethodHandles", "filterReturnValue",
+                "(Ljava/lang/invoke/MethodHandle;Ljava/lang/invoke/MethodHandle;)Ljava/lang/invoke/MethodHandle;",
+                false);
     }
 
     @NotNull
@@ -474,7 +532,11 @@ public class InteropModuleAdapter extends ModuleAdapter {
     }
 
     private void thisHandle(GeneratorAdapter mv, String derefName, String derefDesc) {
-        mv.visitLdcInsn(new Handle(H_INVOKEVIRTUAL, cn.name, derefName, derefDesc, false));
+        thisHandle(mv, new Handle(H_INVOKEVIRTUAL, cn.name, derefName, derefDesc, false));
+    }
+
+    private void thisHandle(GeneratorAdapter mv, Handle value) {
+        mv.visitLdcInsn(value);
         mv.push(0);
         mv.push(1);
         mv.visitTypeInsn(ANEWARRAY, "java/lang/Object");

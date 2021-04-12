@@ -1,5 +1,6 @@
 plugins {
     `java-library`
+    `maven-publish`
 }
 
 repositories {
@@ -36,4 +37,18 @@ tasks.test {
 
 sourceSets {
     create("runtime")
+}
+
+tasks.register<Jar>("sourceJar") {
+    archiveClassifier.set("sources")
+    from(sourceSets.main.get().allSource)
+}
+
+publishing {
+    publications {
+        register<MavenPublication>("maven") {
+            from(components.named("java").get())
+            artifact(tasks["sourceJar"])
+        }
+    }
 }

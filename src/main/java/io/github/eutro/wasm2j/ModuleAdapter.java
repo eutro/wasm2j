@@ -13,6 +13,7 @@ import org.objectweb.asm.tree.MethodNode;
 
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 
@@ -254,7 +255,7 @@ public class ModuleAdapter extends ModuleVisitor {
 
     @NotNull
     protected List<TypeNode> getTypes() {
-        return Objects.requireNonNull(types.types);
+        return types.types == null ? Collections.emptyList() : types.types;
     }
 
     public void accept(ClassVisitor cv) {
