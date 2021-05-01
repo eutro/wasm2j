@@ -11,7 +11,7 @@ import java.lang.invoke.MethodHandle;
 import static io.github.eutro.jwasm.Opcodes.*;
 import static org.objectweb.asm.Opcodes.*;
 
-class Types {
+public class Types {
     public static Type toJava(byte type) {
         switch (type) {
             case I32:

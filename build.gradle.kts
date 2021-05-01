@@ -10,6 +10,8 @@ repositories {
 
 group = "io.github.eutro.jwasm"
 version = "${properties["ver_major"]}.${properties["ver_minor"]}.${properties["ver_patch"]}"
+val phase = properties["ver_phase"]
+if (phase != null) version = "$version-$phase"
 
 java {
     sourceCompatibility = JavaVersion.VERSION_1_8
