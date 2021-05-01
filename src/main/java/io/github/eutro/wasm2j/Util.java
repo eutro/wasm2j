@@ -29,25 +29,6 @@ class Util {
         return new MethodInsnNode(INVOKEVIRTUAL, owner, name, desc, false);
     }
 
-    @NotNull
-    public static AbstractInsnNode constant(Object v) {
-        if (v instanceof Integer || v instanceof Long || v instanceof Float || v instanceof Double) {
-            MethodNode mn = new MethodNode();
-            InstructionAdapter ia = new InstructionAdapter(mn);
-            if (v instanceof Integer) {
-                ia.iconst((Integer) v);
-            } else if (v instanceof Long) {
-                ia.lconst((Long) v);
-            } else if (v instanceof Float) {
-                ia.fconst((Float) v);
-            } else {
-                ia.dconst((Double) v);
-            }
-            return mn.instructions.getFirst();
-        }
-        return v == null ? new InsnNode(ACONST_NULL) : new LdcInsnNode(v);
-    }
-
     public static AbstractInsnNode defaultValue(Type type) {
         switch (type.getSort()) {
             case Type.BOOLEAN:

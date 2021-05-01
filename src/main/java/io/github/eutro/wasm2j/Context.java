@@ -152,8 +152,4 @@ class Context extends GeneratorAdapter {
         ifj.accept(this);
         mark(endl);
     }
-
-    public void jumpStack(int opcode) {
-        ifThenElse(opcode, makeList(new InsnNode(ICONST_0)), makeList(new InsnNode(ICONST_1)));
-    }
 }

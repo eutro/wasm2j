@@ -1,7 +1,6 @@
 package io.github.eutro.wasm2j.test;
 
 import io.github.eutro.jwasm.ModuleReader;
-import io.github.eutro.wasm2j.InteropModuleAdapter;
 import io.github.eutro.wasm2j.ModuleAdapter;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
@@ -33,7 +32,7 @@ public class ModuleAdapterTest {
         Files.createDirectories(WASMOUT);
     }
 
-    Object adapt(String name, Function<String, ModuleAdapter> maSupplier) throws IOException, NoSuchMethodException, IllegalAccessException, InvocationTargetException, InstantiationException {
+    Object adapt(String name, Function<String, ModuleAdapter> maSupplier) throws Throwable {
         String className = name.substring(0, 1).toUpperCase(Locale.ROOT) + name.substring(1) + "Bg";
         ModuleAdapter ma = maSupplier.apply("jwasm/" + className);
         try (InputStream is = ModuleAdapterTest.class.getResourceAsStream("/" + name + "_bg.wasm")) {
@@ -54,7 +53,7 @@ public class ModuleAdapterTest {
     }
 
     @Test
-    void simple_bg() throws IOException, NoSuchMethodException, IllegalAccessException, InvocationTargetException, InstantiationException {
+    void simple_bg() throws Throwable {
         adapt("simple", ModuleAdapter::new);
     }
 
@@ -75,31 +74,5 @@ public class ModuleAdapterTest {
             @SuppressWarnings("unused")
             int ignored = (int) div.invokeExact(1, 0);
         });
-    }
-
-    @Test
-    void interop() throws Throwable {
-        Object interop = adapt("interop", InteropModuleAdapter::new);
-        Class<?> clazz = interop.getClass();
-        assertEquals(1D / Math.sin(100D),
-                clazz.getMethod("csc", double.class).invoke(interop, 100D));
-        assertEquals(1D / Math.cos(100D),
-                clazz.getMethod("sec", double.class).invoke(interop, 100D));
-        assertEquals(1D / Math.tan(100D),
-                clazz.getMethod("cot", double.class).invoke(interop, 100D));
-        assertEquals(1D / Math.tan(100D),
-                clazz.getMethod("cot", double.class).invoke(interop, 100D));
-
-        Method func = clazz.getMethod("func", int.class);
-        Method invoke = clazz.getMethod("invoke", int.class, double.class);
-        for (int i = 0; i < 6; i++) {
-            int f = (int) func.invoke(interop, i);
-            invoke.invoke(interop, f, 1);
-        }
-
-        int i = new Random().nextInt();
-        Integer boxed = (Integer) clazz.getMethod("boxedInt", int.class).invoke(interop, i);
-        assertEquals((Integer) i, boxed);
-        assertEquals(i, clazz.getMethod("intValue", Integer.class).invoke(interop, boxed));
     }
 }
