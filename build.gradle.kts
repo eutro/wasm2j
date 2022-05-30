@@ -46,6 +46,18 @@ tasks.register<Jar>("sourceJar") {
     from(sourceSets.main.get().allSource)
 }
 
+tasks.javadoc {
+    setDestinationDir(file("docs"))
+    (options as StandardJavadocDocletOptions).run {
+        locale("en")
+        links(
+            "https://docs.oracle.com/javase/8/docs/api",
+            "https://asm.ow2.io/javadoc/",
+            "https://eutro.github.io/jwasm",
+        )
+    }
+}
+
 publishing {
     publications {
         register<MavenPublication>("maven") {
