@@ -17,8 +17,7 @@ import java.nio.file.Paths;
 import java.util.Locale;
 import java.util.function.Function;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.*;
 
 public class ModuleAdapterTest {
 
@@ -65,11 +64,16 @@ public class ModuleAdapterTest {
                         .unreflect(unsimple.getClass().getMethod("div_u", long.class, long.class)),
                 0,
                 unsimple);
+        MethodHandle assembleLongs = MethodHandles.insertArguments(MethodHandles.lookup()
+                        .unreflect(unsimple.getClass().getMethod("assemble_longs", long.class)),
+                0,
+                unsimple);
         assertEquals(50, (int) div.invokeExact(100, 2));
         assertEquals(Long.MAX_VALUE, (long) divU.invokeExact(-1L, 2L));
         assertThrows(AssertionError.class, () -> {
             @SuppressWarnings("unused")
             int ignored = (int) div.invokeExact(1, 0);
         });
+        assertDoesNotThrow(() -> (long) assembleLongs.invokeExact(1L));
     }
 }

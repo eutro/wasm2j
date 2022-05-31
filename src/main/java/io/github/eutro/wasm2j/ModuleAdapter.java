@@ -406,14 +406,13 @@ public class ModuleAdapter extends ModuleVisitor {
                         "([B)Ljava/nio/ByteBuffer;",
                         false);
                 int i = 0;
-                for (; i < data.init.length; i += Long.BYTES) {
+                for (; i + Long.BYTES <= data.init.length; i += Long.BYTES) {
                     ctx.push(buf.getLong());
                     ctx.visitMethodInsn(INVOKEVIRTUAL, "java/nio/ByteBuffer", "putLong",
                             "(J)Ljava/nio/ByteBuffer;",
                             false);
                 }
                 if (i != data.init.length) {
-                    i -= Long.BYTES;
                     for (; i < data.init.length; i++) {
                         ctx.push(buf.get());
                         ctx.visitMethodInsn(INVOKEVIRTUAL, "java/nio/ByteBuffer", "put",

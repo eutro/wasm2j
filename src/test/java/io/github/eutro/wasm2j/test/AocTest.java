@@ -2,6 +2,7 @@ package io.github.eutro.wasm2j.test;
 
 import io.github.eutro.jwasm.ModuleReader;
 import io.github.eutro.jwasm.tree.ModuleNode;
+import io.github.eutro.jwasm.tree.analysis.StackDumper;
 import io.github.eutro.wasm2j.ModuleAdapter;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -12,6 +13,8 @@ import org.objectweb.asm.tree.*;
 import java.io.*;
 import java.lang.reflect.Method;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.Objects;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -64,7 +67,9 @@ public class AocTest extends ModuleAdapterTest {
         try (InputStream is = ModuleAdapter.class.getResourceAsStream("/aoc_bg.wasm")) {
             ModuleReader.fromInputStream(is).accept(mn);
         }
-        System.out.println(mn);
+        try (OutputStream os = new BufferedOutputStream(Files.newOutputStream(Paths.get("build/wasmout/aoc_bg.s")))) {
+            mn.accept(new StackDumper(new PrintStream(os)));
+        }
         Method stdinReadByte = IOImpl.class.getMethod("stdinReadByte");
         Method stdoutWriteByteDesc = IOImpl.class.getMethod("stdoutWriteByte", int.class);
         Object aoc = adapt("aoc", s -> new ModuleAdapter(s) {

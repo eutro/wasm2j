@@ -6,13 +6,13 @@ import org.objectweb.asm.Label;
 import org.objectweb.asm.Type;
 import org.objectweb.asm.commons.GeneratorAdapter;
 import org.objectweb.asm.tree.FieldNode;
-import org.objectweb.asm.tree.FrameNode;
 import org.objectweb.asm.tree.InsnList;
+import org.objectweb.asm.tree.InsnNode;
 
 import java.util.LinkedList;
 import java.util.List;
 
-import static org.objectweb.asm.Opcodes.ASM9;
+import static org.objectweb.asm.Opcodes.*;
 
 class Context extends GeneratorAdapter {
     public Externs externs;
@@ -113,6 +113,34 @@ class Context extends GeneratorAdapter {
         return this;
     }
 
+    public List<Object> getCurrentStack() {
+        return aa.stack;
+    }
+
+    public InsnList popDownToStack(
+            List<Object> currentStack,
+            List<Object> targetStack
+    ) {
+        if (targetStack.size() > currentStack.size()) {
+            throw new IllegalStateException();
+        }
+        if (!targetStack.equals(currentStack.subList(0, targetStack.size()))) {
+            throw new IllegalStateException();
+        }
+        int csi = currentStack.size();
+        InsnList insns = new InsnList();
+        while (csi > targetStack.size()) {
+            if (currentStack.get(csi - 1) == TOP) {
+                insns.add(new InsnNode(POP2));
+                csi -= 2;
+            } else {
+                insns.add(new InsnNode(POP));
+                csi -= 1;
+            }
+        }
+        return insns;
+    }
+
     public int localIndex(int local) {
         return localIndeces[local];
     }
@@ -129,10 +157,42 @@ class Context extends GeneratorAdapter {
         return blocks.pop();
     }
 
-    public Label getLabel(int label) {
-        return blocks.get(label).label();
+    public Block getBlock(int label) {
+        return blocks.get(label);
     }
-    
+
+    public void goTo(Block block) {
+        visitJumpInsn(GOTO, block);
+    }
+
+    public void visitJumpInsn(int opcode, Block block) {
+        if (needsPopping(opcode, block)) {
+            int temp = 0;
+            if (opcode != GOTO) {
+                temp = newLocal(Type.INT_TYPE);
+                storeLocal(temp);
+            }
+            popDownToStack(
+                    getCurrentStack(),
+                    block.stackAtLabel()
+            ).accept(this);
+            if (opcode != GOTO) {
+                loadLocal(temp);
+            }
+        }
+        visitJumpInsn(opcode, block.label());
+    }
+
+    public boolean needsPopping(int opcode, Block block) {
+        List<Object> stackAtLabel = block.stackAtLabel();
+        if (opcode == GOTO) {
+            return !stackAtLabel.equals(getCurrentStack());
+        } else {
+            List<Object> cs = getCurrentStack();
+            return !stackAtLabel.equals(cs.subList(0, cs.size() - 1));
+        }
+    }
+
     public boolean isTopDouble() {
         return aa.isTopDouble();
     }

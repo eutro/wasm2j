@@ -2,16 +2,18 @@ package io.github.eutro.wasm2j;
 
 import io.github.eutro.jwasm.Opcodes;
 import io.github.eutro.jwasm.tree.*;
+import io.github.eutro.jwasm.tree.AbstractInsnNode;
 import org.jetbrains.annotations.Nullable;
 import org.objectweb.asm.Label;
 import org.objectweb.asm.Type;
 import org.objectweb.asm.commons.GeneratorAdapter;
 import org.objectweb.asm.commons.Method;
-import org.objectweb.asm.tree.FieldNode;
+import org.objectweb.asm.tree.*;
 import org.objectweb.asm.tree.InsnNode;
 
 import java.lang.invoke.MethodHandle;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.ListIterator;
 import java.util.function.Consumer;
@@ -57,11 +59,11 @@ class ExprAdapter {
             ctx.throwException();
         })
                 .match(Opcodes.NOP).terminal((ctx, insn) -> { /* NOP */ })
-                .match(BLOCK).terminal((Rule<BlockInsnNode>) (ctx, insn) -> ctx.pushBlock(new Block.BBlock(insn.blockType)))
+                .match(BLOCK).terminal((Rule<BlockInsnNode>) (ctx, insn) -> ctx.pushBlock(new Block.BBlock(ctx, insn.blockType)))
                 .match(LOOP).terminal((Rule<BlockInsnNode>) (ctx, insn) ->
-                ctx.pushBlock(new Block.Loop(insn.blockType, ctx.mark())))
+                ctx.pushBlock(new Block.Loop(ctx, insn.blockType, ctx.mark())))
                 .match(IF).terminal((Rule<BlockInsnNode>) (ctx, insn) -> {
-            Block.If block = new Block.If(insn.blockType);
+            Block.If block = new Block.If(ctx, insn.blockType);
             ctx.visitJumpInsn(IFEQ, block.elseLabel);
             ctx.pushBlock(block);
         })
@@ -75,17 +77,49 @@ class ExprAdapter {
                 ctx.popBlock().end(ctx);
             }
         })
-                .match(BR).terminal((Rule<BreakInsnNode>) (ctx, insn) -> ctx.goTo(ctx.getLabel(insn.label)))
-                .match(BR_IF).terminal((Rule<BreakInsnNode>) (ctx, insn) -> ctx.visitJumpInsn(IFNE, ctx.getLabel(insn.label)))
+                .match(BR).match(ELSE).terminal(new Rule<BreakInsnNode>() {
+                    @Override
+                    public void apply(Context ctx, BreakInsnNode insn) {
+                        applyTo(ctx, Collections.singletonList(insn));
+                    }
+
+                    @Override
+                    public void applyTo(Context ctx, List<BreakInsnNode> matched) {
+                        Block.If ifBlock = (Block.If) ctx.peekBlock();
+                        ctx.goTo(ctx.getBlock(matched.get(0).label));
+                        ctx.mark(ifBlock.elseLabel);
+                    }
+                })
+                .terminal((Rule<BreakInsnNode>) (ctx, insn) -> ctx.goTo(ctx.getBlock(insn.label)))
+                .match(BR_IF).terminal((Rule<BreakInsnNode>) (ctx, insn) -> ctx.visitJumpInsn(IFNE, ctx.getBlock(insn.label)))
                 .match(BR_TABLE).terminal((Rule<TableBreakInsnNode>) (ctx, insn) -> {
             Label[] labels = new Label[insn.labels.length];
-            for (int i2 = 0; i2 < insn.labels.length; i2++) {
-                labels[i2] = ctx.getLabel(insn.labels[i2]);
+            InsnList append = new InsnList();
+            List<Object> postJumpStack = ctx.getCurrentStack();
+            class H {
+                Label poppingLabel(Block block) {
+                    Label ret;
+                    if (ctx.needsPopping(TABLESWITCH, block)) {
+                        Label label = ctx.newLabel();
+                        ret = label;
+                        append.add(new LabelNode(label));
+                        append.add(ctx.popDownToStack(postJumpStack, block.stackAtLabel()));
+                        append.add(new JumpInsnNode(GOTO, new LabelNode(block.label())));
+                    } else {
+                        ret = block.label();
+                    }
+                    return ret;
+                }
+            }
+            H helper = new H();
+            for (int i = 0; i < insn.labels.length; i++) {
+                labels[i] = helper.poppingLabel(ctx.getBlock(insn.labels[i]));
             }
             ctx.visitTableSwitchInsn(0,
                     insn.labels.length - 1,
-                    ctx.getLabel(insn.defaultLabel),
+                    helper.poppingLabel(ctx.getBlock(insn.defaultLabel)),
                     labels);
+            append.accept(ctx);
         })
                 .match(Opcodes.RETURN).terminal((ctx, insn) -> {
             for (byte retType : ctx.funcType.returns) {
@@ -793,14 +827,14 @@ class ExprAdapter {
     ) {
         return builder
                 .match(IF).terminal((Rule<BlockInsnNode>) (ctx, insn) -> {
-                    Block.If block = new Block.If(insn.blockType);
+                    Block.If block = new Block.If(ctx, insn.blockType);
                     emit.apply(ctx, (I) insn);
                     ctx.visitJumpInsn(invertJump(jumpInsn), block.elseLabel);
                     ctx.pushBlock(block);
                 })
                 .match(BR_IF).terminal((Rule<BreakInsnNode>) (ctx, insn) -> {
                     emit.apply(ctx, (I) insn);
-                    ctx.visitJumpInsn(jumpInsn, ctx.getLabel(insn.label));
+                    ctx.visitJumpInsn(jumpInsn, ctx.getBlock(insn.label));
                 })
                 .terminal((ctx, insn) -> {
                     emit.apply(ctx, (I) insn);
