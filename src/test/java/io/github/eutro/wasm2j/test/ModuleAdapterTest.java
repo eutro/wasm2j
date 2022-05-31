@@ -11,13 +11,10 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Locale;
-import java.util.Random;
 import java.util.function.Function;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -53,7 +50,7 @@ public class ModuleAdapterTest {
     }
 
     @Test
-    void simple_bg() throws Throwable {
+    void simple() throws Throwable {
         adapt("simple", ModuleAdapter::new);
     }
 

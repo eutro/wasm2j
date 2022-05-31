@@ -1,19 +1,18 @@
 package io.github.eutro.wasm2j;
 
 import io.github.eutro.jwasm.tree.TypeNode;
+import org.jetbrains.annotations.Contract;
 import org.objectweb.asm.Label;
 import org.objectweb.asm.Type;
 import org.objectweb.asm.commons.GeneratorAdapter;
 import org.objectweb.asm.tree.FieldNode;
 import org.objectweb.asm.tree.FrameNode;
 import org.objectweb.asm.tree.InsnList;
-import org.objectweb.asm.tree.InsnNode;
 
 import java.util.LinkedList;
 import java.util.List;
 
-import static io.github.eutro.wasm2j.Util.makeList;
-import static org.objectweb.asm.Opcodes.*;
+import static org.objectweb.asm.Opcodes.ASM9;
 
 class Context extends GeneratorAdapter {
     public Externs externs;
@@ -49,14 +48,17 @@ class Context extends GeneratorAdapter {
         this.passiveDatas = passiveDatas;
     }
 
+    @Contract(pure = true)
     public Type jfuncType(int index) {
         return Types.methodDesc(funcType(index));
     }
 
+    @Contract(pure = true)
     public TypeNode funcType(int index) {
         return funcTypes.get(index);
     }
 
+    @Contract(pure = true)
     public Type localType(int local) {
         return localTypes[local];
     }
@@ -130,9 +132,9 @@ class Context extends GeneratorAdapter {
     public Label getLabel(int label) {
         return blocks.get(label).label();
     }
-
-    public FrameNode getFrame() {
-        return aa.getFrame();
+    
+    public boolean isTopDouble() {
+        return aa.isTopDouble();
     }
 
     public Context addInsns(org.objectweb.asm.tree.AbstractInsnNode... insns) {

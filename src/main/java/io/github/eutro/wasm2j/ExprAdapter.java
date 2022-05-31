@@ -1,18 +1,17 @@
 package io.github.eutro.wasm2j;
 
 import io.github.eutro.jwasm.Opcodes;
-import io.github.eutro.jwasm.tree.AbstractInsnNode;
 import io.github.eutro.jwasm.tree.*;
 import org.jetbrains.annotations.Nullable;
 import org.objectweb.asm.Label;
 import org.objectweb.asm.Type;
 import org.objectweb.asm.commons.GeneratorAdapter;
 import org.objectweb.asm.commons.Method;
+import org.objectweb.asm.tree.FieldNode;
 import org.objectweb.asm.tree.InsnNode;
-import org.objectweb.asm.tree.*;
 
 import java.lang.invoke.MethodHandle;
-import java.util.LinkedList;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.ListIterator;
 import java.util.function.Consumer;
@@ -25,8 +24,9 @@ class ExprAdapter {
     public static void translateInto(ExprNode expr, Context ctx) {
         if (expr.instructions == null) return;
         ListIterator<AbstractInsnNode> li = expr.instructions.listIterator();
+        List<AbstractInsnNode> matched = new ArrayList<>();
         while (li.hasNext()) {
-            List<AbstractInsnNode> matched = new LinkedList<>();
+            matched.clear();
             Rule<AbstractInsnNode> rule = SIMPLE.fullMatch(li, matched);
             if (rule == null) {
                 throw new UnsupportedOperationException(String.format("Opcode 0x%02x not supported", li.next().opcode));
@@ -136,8 +136,7 @@ class ExprAdapter {
             // JVM: if the top stack value is not 0, pop the top value, otherwise swap before popping
             Label end = new Label();
             ctx.ifZCmp(GeneratorAdapter.NE, end);
-            List<Object> stack = ctx.getFrame().stack;
-            boolean two = stack.get(stack.size() - 1).equals(TOP);
+            boolean two = ctx.isTopDouble();
             if (two) {
                 ctx.dup2X2();
                 ctx.pop2();
@@ -153,8 +152,7 @@ class ExprAdapter {
         };
         b
                 .match(DROP).terminal((ctx, insn) -> {
-            List<Object> stack = ctx.getFrame().stack;
-            if (stack.get(stack.size() - 1).equals(TOP)) {
+            if (ctx.isTopDouble()) {
                 ctx.pop2();
             } else {
                 ctx.pop();
@@ -165,14 +163,10 @@ class ExprAdapter {
         // endregion
         // region Variable
         b
-                .match(LOCAL_GET).terminal((Rule<VariableInsnNode>) (ctx, insn) -> {
-            ctx.localType(insn.variable);
-            ctx.visitVarInsn(ctx.localType(insn.variable).getOpcode(ILOAD), ctx.localIndex(insn.variable));
-        })
-                .match(LOCAL_SET).terminal((Rule<VariableInsnNode>) (ctx, insn) -> {
-            ctx.localType(insn.variable);
-            ctx.visitVarInsn(ctx.localType(insn.variable).getOpcode(ISTORE), ctx.localIndex(insn.variable));
-        })
+                .match(LOCAL_GET).terminal((Rule<VariableInsnNode>) (ctx, insn) ->
+                        ctx.visitVarInsn(ctx.localType(insn.variable).getOpcode(ILOAD), ctx.localIndex(insn.variable)))
+                .match(LOCAL_SET).terminal((Rule<VariableInsnNode>) (ctx, insn) ->
+                        ctx.visitVarInsn(ctx.localType(insn.variable).getOpcode(ISTORE), ctx.localIndex(insn.variable)))
                 .match(LOCAL_TEE).terminal((Rule<VariableInsnNode>) (ctx, insn) -> {
             Type type = ctx.localType(insn.variable);
             if (type.getSize() == 2) {
@@ -650,9 +644,9 @@ class ExprAdapter {
                 .match(I64_AND).terminal(Rule.insn(LAND))
                 .match(I64_OR).terminal(Rule.insn(LOR))
                 .match(I64_XOR).terminal(Rule.insn(LXOR))
-                .match(I64_SHL).terminal(Rule.insn(LSHL))
-                .match(I64_SHR_S).terminal(Rule.insn(LSHR))
-                .match(I64_SHR_U).terminal(Rule.insn(LUSHR))
+                .match(I64_SHL).terminal(Rule.insn(L2I).comp(Rule.insn(LSHL)))
+                .match(I64_SHR_S).terminal(Rule.insn(L2I).comp(Rule.insn(LSHR)))
+                .match(I64_SHR_U).terminal(Rule.insn(L2I).comp(Rule.insn(LUSHR)))
                 .match(I64_ROTL).terminal(Rule.insn(L2I).comp(Rule.staticRule("java/lang/Long", "rotateLeft", "(JI)J")))
                 .match(I64_ROTR).terminal(Rule.insn(L2I).comp(Rule.staticRule("java/lang/Long", "rotateRight", "(JI)J")));
         // endregion

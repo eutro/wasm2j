@@ -6,7 +6,9 @@ import org.objectweb.asm.commons.AnalyzerAdapter;
 import org.objectweb.asm.tree.FrameNode;
 import org.objectweb.asm.util.CheckMethodAdapter;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import static org.objectweb.asm.Opcodes.*;
@@ -30,7 +32,24 @@ class JumpTrackingVisitor extends AnalyzerAdapter {
 
     public FrameNode getFrame() {
         if (stack == null) throw new IllegalStateException("Unknown frame");
-        return new FrameNode(F_NEW, locals.size(), locals.toArray(), stack.size(), stack.toArray());
+        // NB: visitFrame has a single element per long/double; AnalyzerAdapter keeps 2
+        Object[] localsS = removeTops(locals);
+        Object[] stackS = removeTops(stack);
+        return new FrameNode(F_NEW, localsS.length, localsS, stackS.length, stackS);
+    }
+
+    private static Object[] removeTops(List<Object> input) {
+        List<Object> list = new ArrayList<>();
+        for (Object it : input) {
+            if (it != TOP) {
+                list.add(it);
+            }
+        }
+        return list.toArray();
+    }
+
+    public boolean isTopDouble() {
+        return stack.get(stack.size() - 1) == TOP;
     }
 
     private void maybeSetFrame() {

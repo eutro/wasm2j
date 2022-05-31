@@ -12,10 +12,7 @@ import org.objectweb.asm.tree.FieldNode;
 import org.objectweb.asm.tree.MethodNode;
 
 import java.nio.ByteBuffer;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 
 import static io.github.eutro.jwasm.Opcodes.*;
 import static org.objectweb.asm.Opcodes.*;
@@ -400,13 +397,31 @@ public class ModuleAdapter extends ModuleVisitor {
                 ctx.loadThis();
             }
 
+            ByteBuffer buf = ByteBuffer.wrap(data.init);
             ctx.push(data.init.length);
             ctx.newArray(Type.BYTE_TYPE);
-            for (int i = 0; i < data.init.length; i++) {
+            if (data.init.length != 0) {
                 ctx.dup();
-                ctx.push(i);
-                ctx.push(data.init[i]);
-                ctx.arrayStore(Type.BYTE_TYPE);
+                ctx.visitMethodInsn(INVOKESTATIC, "java/nio/ByteBuffer", "wrap",
+                        "([B)Ljava/nio/ByteBuffer;",
+                        false);
+                int i = 0;
+                for (; i < data.init.length; i += Long.BYTES) {
+                    ctx.push(buf.getLong());
+                    ctx.visitMethodInsn(INVOKEVIRTUAL, "java/nio/ByteBuffer", "putLong",
+                            "(J)Ljava/nio/ByteBuffer;",
+                            false);
+                }
+                if (i != data.init.length) {
+                    i -= Long.BYTES;
+                    for (; i < data.init.length; i++) {
+                        ctx.push(buf.get());
+                        ctx.visitMethodInsn(INVOKEVIRTUAL, "java/nio/ByteBuffer", "put",
+                                "(B)Ljava/nio/ByteBuffer;",
+                                false);
+                    }
+                }
+                ctx.pop();
             }
 
             if (active) {
