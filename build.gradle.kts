@@ -26,10 +26,10 @@ dependencies {
 
     implementation("org.jetbrains:annotations:23.0.0")
 
-    implementation("io.github.eutro.jwasm:jwasm:0.2.3")
-    implementation("io.github.eutro.jwasm:jwasm-tree:0.2.3")
-    implementation("io.github.eutro.jwasm:jwasm-analysis:0.2.3")
-    testImplementation("io.github.eutro.jwasm:jwasm-test:0.2.3")
+    implementation("io.github.eutro.jwasm:jwasm:0.3.1")
+    implementation("io.github.eutro.jwasm:jwasm-tree:0.3.1")
+    implementation("io.github.eutro.jwasm:jwasm-analysis:0.3.1")
+    testImplementation("io.github.eutro.jwasm:jwasm-test:0.3.1")
 
     testImplementation("org.junit.jupiter:junit-jupiter-api:5.8.2")
     testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine")

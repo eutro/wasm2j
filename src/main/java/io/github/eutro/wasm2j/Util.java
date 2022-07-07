@@ -2,6 +2,7 @@ package io.github.eutro.wasm2j;
 
 import org.jetbrains.annotations.NotNull;
 import org.objectweb.asm.Type;
+import org.objectweb.asm.commons.GeneratorAdapter;
 import org.objectweb.asm.commons.InstructionAdapter;
 import org.objectweb.asm.tree.*;
 
@@ -10,7 +11,7 @@ import java.util.function.Consumer;
 import static io.github.eutro.jwasm.Opcodes.*;
 import static org.objectweb.asm.Opcodes.*;
 
-class Util {
+public class Util {
     public static InsnList makeList(AbstractInsnNode... nodes) {
         InsnList list = new InsnList();
         for (AbstractInsnNode node : nodes) {
@@ -27,6 +28,12 @@ class Util {
     @NotNull
     public static MethodInsnNode virtualNode(String owner, String name, String desc) {
         return new MethodInsnNode(INVOKEVIRTUAL, owner, name, desc, false);
+    }
+
+    public static InsnList build(Consumer<GeneratorAdapter> consume) {
+        MethodNode mn = new MethodNode();
+        consume.accept(new GeneratorAdapter(mn, 0, "build", "()V"));
+        return mn.instructions;
     }
 
     public static AbstractInsnNode defaultValue(Type type) {

@@ -59,11 +59,11 @@ class ExprAdapter {
             ctx.throwException();
         })
                 .match(Opcodes.NOP).terminal((ctx, insn) -> { /* NOP */ })
-                .match(BLOCK).terminal((Rule<BlockInsnNode>) (ctx, insn) -> ctx.pushBlock(new Block.BBlock(ctx, insn.blockType)))
+                .match(BLOCK).terminal((Rule<BlockInsnNode>) (ctx, insn) -> ctx.pushBlock(new Block.BBlock(ctx, insn.blockType.get())))
                 .match(LOOP).terminal((Rule<BlockInsnNode>) (ctx, insn) ->
-                ctx.pushBlock(new Block.Loop(ctx, insn.blockType, ctx.mark())))
+                ctx.pushBlock(new Block.Loop(ctx, insn.blockType.get(), ctx.mark())))
                 .match(IF).terminal((Rule<BlockInsnNode>) (ctx, insn) -> {
-            Block.If block = new Block.If(ctx, insn.blockType);
+            Block.If block = new Block.If(ctx, insn.blockType.get());
             ctx.visitJumpInsn(IFEQ, block.elseLabel);
             ctx.pushBlock(block);
         })
@@ -827,7 +827,7 @@ class ExprAdapter {
     ) {
         return builder
                 .match(IF).terminal((Rule<BlockInsnNode>) (ctx, insn) -> {
-                    Block.If block = new Block.If(ctx, insn.blockType);
+                    Block.If block = new Block.If(ctx, insn.blockType.get());
                     emit.apply(ctx, (I) insn);
                     ctx.visitJumpInsn(invertJump(jumpInsn), block.elseLabel);
                     ctx.pushBlock(block);
