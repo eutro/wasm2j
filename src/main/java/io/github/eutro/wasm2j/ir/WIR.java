@@ -12,8 +12,42 @@ import java.util.stream.Stream;
 import static io.github.eutro.jwasm.Opcodes.*;
 
 public class WIR {
+    public static class Var {
+        public String name;
+
+        public Var(String name) {
+            this.name = name;
+        }
+
+        @Override
+        public String toString() {
+            return name;
+        }
+    }
+
     public static class Function {
         public List<BasicBlock> blocks = new ArrayList<>();
+        public Map<String, Set<Var>> vars = new HashMap<>();
+
+        public Var newVar(String name) {
+            Var var;
+            if (vars.containsKey(name)) {
+                Set<Var> varSet = vars.get(name);
+                if (name.isEmpty()) {
+                    name = Integer.toString(varSet.size());
+                } else {
+                    name += "." + varSet.size();
+                }
+                var = new Var(name);
+                varSet.add(var);
+            } else {
+                var = new Var(name);
+                HashSet<Var> set = new HashSet<>();
+                set.add(var);
+                vars.put(name, set);
+            }
+            return var;
+        }
 
         @Override
         public String toString() {
@@ -185,9 +219,9 @@ public class WIR {
         public abstract Collection<Expr> exprs();
 
         public static class VarDest extends AssignmentDest {
-            public int var;
+            public Var var;
 
-            public VarDest(int var) {
+            public VarDest(Var var) {
                 this.var = var;
             }
 
@@ -211,7 +245,7 @@ public class WIR {
 
             @Override
             public String toString() {
-                return "$g" + var;
+                return "globals[" + var + "]";
             }
 
             @Override
@@ -265,9 +299,9 @@ public class WIR {
         public abstract Iterable<Expr> children();
 
         public static class VarExpr extends Expr {
-            public int var;
+            public Var var;
 
-            public VarExpr(int var) {
+            public VarExpr(Var var) {
                 this.var = var;
             }
 
@@ -291,7 +325,7 @@ public class WIR {
 
             @Override
             public String toString() {
-                return "$g" + var;
+                return "globals[" + var + "]";
             }
 
             @Override
@@ -317,6 +351,36 @@ public class WIR {
             @Override
             public Iterable<Expr> children() {
                 return Collections.singletonList(index);
+            }
+        }
+
+        public static class FuncArgExpr extends Expr {
+            public final int arg;
+
+            public FuncArgExpr(int arg) {
+                this.arg = arg;
+            }
+
+            @Override
+            public Iterable<Expr> children() {
+                return Collections.emptyList();
+            }
+
+            @Override
+            public String toString() {
+                return "args[" + arg + "]";
+            }
+        }
+
+        public static class ZeroInitExpr extends Expr {
+            @Override
+            public Iterable<Expr> children() {
+                return Collections.emptyList();
+            }
+
+            @Override
+            public String toString() {
+                return "zeroinit";
             }
         }
 
@@ -569,6 +633,10 @@ public class WIR {
             return ++vals;
         }
 
+        public Var pushVar() {
+            return refVar(pushV());
+        }
+
         public int popV() {
             CtrlFrame frame = ctrlsRef(0);
             if (vals == frame.height
@@ -576,6 +644,10 @@ public class WIR {
                 return -1;
             }
             return vals--;
+        }
+
+        public Var popVar() {
+            return refVar(popV());
         }
 
         public void popVs(int n) {
@@ -594,7 +666,11 @@ public class WIR {
         }
 
         public CtrlFrame popC() {
-            return ctrls.remove(ctrls.size() - 1);
+            CtrlFrame frame = ctrls.remove(ctrls.size() - 1);
+            if (!frame.unreachable && frame.height != vals - frame.type.returns.length) {
+                throw new RuntimeException("Frame height mismatch, likely a bug or an unverified module");
+            }
+            return frame;
         }
 
         public int labelArity(CtrlFrame frame) {
@@ -619,6 +695,15 @@ public class WIR {
         public final TypeNode[] funcTypes;
         public final FuncNode[] referencableFuncs;
         public final int returns;
+        public final int locals;
+        public final List<Var> varVals = new ArrayList<>();
+
+        public Var refVar(int n) {
+            while (n >= varVals.size()) {
+                varVals.add(func.newVar("stack" + (varVals.size() - locals)));
+            }
+            return varVals.get(n);
+        }
 
         public BasicBlock newBb() {
             BasicBlock bb = new BasicBlock();
@@ -637,7 +722,7 @@ public class WIR {
             }
         }
 
-        public static void copyStack(
+        public void copyStack(
                 BasicBlock bb,
                 int arity,
                 int from,
@@ -648,8 +733,8 @@ public class WIR {
             }
             for (int i = 1; i <= arity; ++i) {
                 bb.effects.add(new Effect.AssignmentStmt(
-                        new Expr.VarExpr(from + i),
-                        new AssignmentDest.VarDest(to + i)
+                        new Expr.VarExpr(refVar(from + i)),
+                        new AssignmentDest.VarDest(refVar(to + i))
                 ));
             }
         }
@@ -657,6 +742,7 @@ public class WIR {
         public ConvertState(TypeNode[] funcTypes, FuncNode[] referencableFuncs, int stackDepth, int returns) {
             this.funcTypes = funcTypes;
             this.referencableFuncs = referencableFuncs;
+            this.locals = stackDepth;
             this.returns = returns;
             this.func = new Function();
             this.vals = stackDepth;
@@ -689,10 +775,11 @@ public class WIR {
         CONVERTERS.put(IF, (cs, node) -> {
             TypeNode type = cs.expand(((BlockInsnNode) node).blockType);
             ConvertState.CtrlFrame inFrame = cs.ctrlsRef(0);
+            Var cond = cs.popVar();
             ConvertState.CtrlFrame newFrame = cs.pushC(node.opcode, type);
             newFrame.elseBb = cs.newBb();
             inFrame.bb.control = Control.Break.brIf(
-                    new Expr.VarExpr(cs.popV()),
+                    new Expr.VarExpr(cond),
                     newFrame.bb,
                     newFrame.elseBb
             );
@@ -700,6 +787,8 @@ public class WIR {
         });
         CONVERTERS.put(ELSE, (cs, node) -> {
             ConvertState.CtrlFrame frame = cs.ctrlsRef(0);
+            cs.popVs(frame.type.returns.length);
+            cs.vals += frame.type.params.length;
             frame.opcode = node.opcode;
             frame.unreachable = false;
             frame.bb.control = Control.Break.br(cs.ctrlsRef(1).bb);
@@ -712,7 +801,7 @@ public class WIR {
         cs.popVs(cs.returns);
         Expr[] exprs = new Expr[cs.returns];
         for (int i = 0; i < exprs.length; i++) {
-            exprs[i] = new Expr.VarExpr(cs.vals + i + 1);
+            exprs[i] = new Expr.VarExpr(cs.refVar(cs.vals + i + 1));
         }
         bb.control = new Control.Return(exprs);
     }
@@ -737,7 +826,7 @@ public class WIR {
             ConvertState.CtrlFrame targetFrame = cs.ctrlsRef(depth);
             int arity = cs.labelArity(targetFrame);
             cs.popVs(arity);
-            ConvertState.copyStack(topFrame.bb, arity, cs.vals, targetFrame.height);
+            cs.copyStack(topFrame.bb, arity, cs.vals, targetFrame.height);
             topFrame.bb.control = Control.Break.br(cs.labelTarget(depth));
             cs.unreachable();
         });
@@ -745,14 +834,13 @@ public class WIR {
             BasicBlock thenBb = cs.newBb();
             BasicBlock elseBb = cs.newBb();
             ConvertState.CtrlFrame topFrame = cs.ctrlsRef(0);
-            topFrame.bb.control = Control.Break.brIf(new Expr.VarExpr(cs.popV()), thenBb, elseBb);
+            topFrame.bb.control = Control.Break.brIf(new Expr.VarExpr(cs.popVar()), thenBb, elseBb);
             topFrame.bb = elseBb;
 
             int depth = ((BreakInsnNode) node).label;
             ConvertState.CtrlFrame targetFrame = cs.ctrlsRef(depth);
             int arity = cs.labelArity(targetFrame);
-            cs.popVs(arity);
-            ConvertState.copyStack(thenBb, arity, cs.vals, targetFrame.height);
+            cs.copyStack(thenBb, arity, cs.vals - arity, targetFrame.height);
             thenBb.control = Control.Break.br(cs.labelTarget(depth));
         });
         CONVERTERS.put(BR_TABLE, (cs, node) -> {
@@ -762,15 +850,15 @@ public class WIR {
 
             ConvertState.CtrlFrame defaultFrame = cs.ctrlsRef(tblBr.defaultLabel);
             int arity = cs.labelArity(defaultFrame);
-            int condVal = cs.popV();
+            Var condVal = cs.popVar();
             cs.popVs(arity);
 
-            ConvertState.copyStack(elseBb, arity, cs.vals, defaultFrame.height);
+            cs.copyStack(elseBb, arity, cs.vals, defaultFrame.height);
             elseBb.control = Control.Break.br(cs.labelTarget(tblBr.defaultLabel));
             for (int i = 0; i < bbs.length; i++) {
                 BasicBlock bb = cs.newBb();
                 ConvertState.CtrlFrame frame = cs.ctrlsRef(tblBr.labels[i]);
-                ConvertState.copyStack(bb, arity, cs.vals, frame.height);
+                cs.copyStack(bb, arity, cs.vals, frame.height);
                 bb.control = Control.Break.br(cs.labelTarget(tblBr.labels[i]));
                 bbs[i] = bb;
             }
@@ -798,13 +886,13 @@ public class WIR {
                 type = cs.funcTypes[func.type];
             } else {
                 CallIndirectInsnNode ciNode = (CallIndirectInsnNode) node;
-                callee = new Expr.TableRefExpr(ciNode.table, new Expr.VarExpr(cs.popV()));
+                callee = new Expr.TableRefExpr(ciNode.table, new Expr.VarExpr(cs.popVar()));
                 type = cs.funcTypes[ciNode.type];
             }
             Expr[] args = new Expr[type.params.length];
             cs.popVs(args.length);
             for (int i = 0; i < args.length; i++) {
-                args[i] = new Expr.VarExpr(cs.vals + i + 1);
+                args[i] = new Expr.VarExpr(cs.refVar(cs.vals + i + 1));
             }
             Expr call;
             if (node.opcode == CALL) {
@@ -813,11 +901,11 @@ public class WIR {
                 call = new Expr.CallIndirectExpr(callee, args);
             }
             if (type.returns.length == 1) {
-                bb.effects.add(new Effect.AssignmentStmt(call, new AssignmentDest.VarDest(cs.pushV())));
+                bb.effects.add(new Effect.AssignmentStmt(call, new AssignmentDest.VarDest(cs.pushVar())));
             } else {
                 AssignmentDest[] assignees = new AssignmentDest[type.returns.length];
                 for (int i = 0; i < assignees.length; i++) {
-                    assignees[i] = new AssignmentDest.VarDest(cs.pushV());
+                    assignees[i] = new AssignmentDest.VarDest(cs.pushVar());
                 }
                 bb.effects.add(new Effect.AssignManyStmt(assignees, call));
             }
@@ -827,15 +915,15 @@ public class WIR {
     static {
         CONVERTERS.put(REF_NULL, (cs, node) -> cs.ctrlsRef(0).bb.effects.add(new Effect.AssignmentStmt(
                 new Expr.ConstExpr(null),
-                new AssignmentDest.VarDest(cs.pushV())
+                new AssignmentDest.VarDest(cs.pushVar())
         )));
         CONVERTERS.put(REF_IS_NULL, (cs, node) -> cs.ctrlsRef(0).bb.effects.add(new Effect.AssignmentStmt(
-                new Expr.IsNullExpr(new Expr.VarExpr(cs.popV())),
-                new AssignmentDest.VarDest(cs.pushV())
+                new Expr.IsNullExpr(new Expr.VarExpr(cs.popVar())),
+                new AssignmentDest.VarDest(cs.pushVar())
         )));
         CONVERTERS.put(REF_FUNC, (cs, node) -> cs.ctrlsRef(0).bb.effects.add(new Effect.AssignmentStmt(
                 new Expr.FuncRefExpr(((FuncRefInsnNode) node).function),
-                new AssignmentDest.VarDest(cs.pushV())
+                new AssignmentDest.VarDest(cs.pushVar())
         )));
     }
 
@@ -846,45 +934,45 @@ public class WIR {
                 SELECTT
         }, (cs, node) -> cs.ctrlsRef(0).bb.effects.add(new Effect.AssignmentStmt(
                 new Expr.SelectExpr(
-                        new Expr.VarExpr(cs.popV()), // cond
-                        new Expr.VarExpr(cs.popV()),
-                        new Expr.VarExpr(cs.popV())
+                        new Expr.VarExpr(cs.popVar()), // cond
+                        new Expr.VarExpr(cs.popVar()),
+                        new Expr.VarExpr(cs.popVar())
                 ),
-                new AssignmentDest.VarDest(cs.pushV())
+                new AssignmentDest.VarDest(cs.pushVar())
         )));
     }
 
     static {
         CONVERTERS.put(LOCAL_GET, (cs, node) -> cs.ctrlsRef(0).bb.effects.add(new Effect.AssignmentStmt(
-                new Expr.VarExpr(((VariableInsnNode) node).variable),
-                new AssignmentDest.VarDest(cs.pushV())
+                new Expr.VarExpr(cs.refVar(((VariableInsnNode) node).variable)),
+                new AssignmentDest.VarDest(cs.pushVar())
         )));
         CONVERTERS.put(new byte[]{
                 LOCAL_SET,
                 LOCAL_TEE
         }, (cs, node) -> cs.ctrlsRef(0).bb.effects.add(new Effect.AssignmentStmt(
-                new Expr.VarExpr(node.opcode == LOCAL_SET ? cs.popV() : cs.vals),
-                new AssignmentDest.VarDest(((VariableInsnNode) node).variable)
+                new Expr.VarExpr(cs.refVar(node.opcode == LOCAL_SET ? cs.popV() : cs.vals)),
+                new AssignmentDest.VarDest(cs.refVar(((VariableInsnNode) node).variable))
         )));
         CONVERTERS.put(GLOBAL_GET, (cs, node) -> cs.ctrlsRef(0).bb.effects.add(new Effect.AssignmentStmt(
                 new Expr.GlobalRefExpr(((VariableInsnNode) node).variable),
-                new AssignmentDest.VarDest(cs.pushV())
+                new AssignmentDest.VarDest(cs.pushVar())
         )));
         CONVERTERS.put(GLOBAL_SET, (cs, node) -> cs.ctrlsRef(0).bb.effects.add(new Effect.AssignmentStmt(
-                new Expr.VarExpr(cs.popV()),
+                new Expr.VarExpr(cs.popVar()),
                 new AssignmentDest.GlobalDest(((VariableInsnNode) node).variable)
         )));
     }
 
     static {
         CONVERTERS.put(TABLE_GET, (cs, node) -> cs.ctrlsRef(0).bb.effects.add(new Effect.AssignmentStmt(
-                new Expr.TableRefExpr(((TableInsnNode) node).table, new Expr.VarExpr(cs.popV())),
-                new AssignmentDest.VarDest(cs.pushV())
+                new Expr.TableRefExpr(((TableInsnNode) node).table, new Expr.VarExpr(cs.popVar())),
+                new AssignmentDest.VarDest(cs.pushVar())
         )));
         CONVERTERS.put(TABLE_SET, (cs, node) -> cs.ctrlsRef(0).bb.effects.add(new Effect.AssignmentStmt(
-                new Expr.VarExpr(cs.popV()),
+                new Expr.VarExpr(cs.popVar()),
                 new AssignmentDest.TableDest(((TableInsnNode) node).table,
-                        new Expr.VarExpr(cs.popV()))
+                        new Expr.VarExpr(cs.popVar()))
         )));
         CONVERTERS.putInt(new int[]{
                 TABLE_INIT,
@@ -901,12 +989,12 @@ public class WIR {
     private static Converter makeLoadInsn(byte outType, int bytesRead, boolean extUnsigned) {
         return (cs, node) -> cs.ctrlsRef(0).bb.effects.add(new Effect.AssignmentStmt(
                 new Expr.DerefExpr(
-                        new Expr.VarExpr(cs.popV()),
+                        new Expr.VarExpr(cs.popVar()),
                         outType,
                         bytesRead,
                         extUnsigned
                 ),
-                new AssignmentDest.VarDest(cs.pushV())
+                new AssignmentDest.VarDest(cs.pushVar())
         ));
     }
 
@@ -931,8 +1019,8 @@ public class WIR {
 
     private static Converter makeStoreInsn(int bytesWritten) {
         return (cs, node) -> cs.ctrlsRef(0).bb.effects.add(new Effect.AssignmentStmt(
-                new Expr.VarExpr(cs.popV()),
-                new AssignmentDest.MemoryDest(new Expr.VarExpr(cs.popV()), bytesWritten)
+                new Expr.VarExpr(cs.popVar()),
+                new AssignmentDest.MemoryDest(new Expr.VarExpr(cs.popVar()), bytesWritten)
         ));
     }
 
@@ -953,11 +1041,11 @@ public class WIR {
     static {
         CONVERTERS.put(MEMORY_SIZE, (cs, node) -> cs.ctrlsRef(0).bb.effects.add(new Effect.AssignmentStmt(
                 new Expr.MemorySizeExpr(),
-                new AssignmentDest.VarDest(cs.pushV())
+                new AssignmentDest.VarDest(cs.pushVar())
         )));
         CONVERTERS.put(MEMORY_GROW, (cs, node) -> cs.ctrlsRef(0).bb.effects.add(new Effect.AssignmentStmt(
-                new Expr.MemoryGrowExpr(new Expr.VarExpr(cs.popV())),
-                new AssignmentDest.VarDest(cs.pushV())
+                new Expr.MemoryGrowExpr(new Expr.VarExpr(cs.popVar())),
+                new AssignmentDest.VarDest(cs.pushVar())
         )));
         CONVERTERS.putInt(new int[]{
                 MEMORY_INIT,
@@ -977,7 +1065,7 @@ public class WIR {
                 F64_CONST,
         }, (cs, node) -> cs.ctrlsRef(0).bb.effects.add(new Effect.AssignmentStmt(
                 new Expr.ConstExpr(((ConstInsnNode) node).value),
-                new AssignmentDest.VarDest(cs.pushV())
+                new AssignmentDest.VarDest(cs.pushVar())
         )));
     }
 
@@ -986,7 +1074,7 @@ public class WIR {
             cs.popVs(arity);
             Expr[] args = new Expr[arity];
             for (int i = 0; i < args.length; i++) {
-                args[i] = new Expr.VarExpr(cs.vals + i + 1);
+                args[i] = new Expr.VarExpr(cs.refVar(cs.vals + i + 1));
             }
             cs.ctrlsRef(0).bb.effects.add(new Effect.AssignmentStmt(
                     new Expr.OperatorExpr(
@@ -994,7 +1082,7 @@ public class WIR {
                             node instanceof PrefixInsnNode ? ((PrefixInsnNode) node).intOpcode : 0,
                             args
                     ),
-                    new AssignmentDest.VarDest(cs.pushV())
+                    new AssignmentDest.VarDest(cs.pushVar())
             ));
         };
     }
@@ -1002,8 +1090,8 @@ public class WIR {
     static {
         // comparisons
         {
+            CONVERTERS.put(I32_EQZ, makeOpInsn(1));
             CONVERTERS.put(new byte[]{
-                    I32_EQZ,
                     I32_EQ,
                     I32_NE,
                     I32_LT_S,
@@ -1016,8 +1104,8 @@ public class WIR {
                     I32_GE_U,
             }, makeOpInsn(2));
 
+            CONVERTERS.put(I64_EQZ, makeOpInsn(1));
             CONVERTERS.put(new byte[]{
-                    I64_EQZ,
                     I64_EQ,
                     I64_NE,
                     I64_LT_S,
@@ -1196,12 +1284,30 @@ public class WIR {
     public static Function convert(
             TypeNode[] funcTypes,
             FuncNode[] referencableFuncs,
-            byte[] localTypes,
+            int argC,
+            int localsC,
             int returns,
             ExprNode expr
     ) {
-        ConvertState state = new ConvertState(funcTypes, referencableFuncs, localTypes.length, returns);
-        state.pushC(END, new TypeNode(new byte[0], new byte[0]));
+        ConvertState state = new ConvertState(funcTypes, referencableFuncs, argC + localsC, returns);
+        state.pushC(END, new TypeNode(new byte[0], new byte[returns]));
+        BasicBlock firstBb = state.ctrlsRef(0).bb;
+        for (int i = 0; i < argC; i++) {
+            Var argVar = new Var("arg" + i);
+            state.varVals.add(argVar);
+            firstBb.effects.add(new Effect.AssignmentStmt(
+                    new Expr.FuncArgExpr(i),
+                    new AssignmentDest.VarDest(argVar)
+            ));
+        }
+        for (int i = 0; i < localsC; ++i) {
+            Var localVar = new Var("local" + i);
+            state.varVals.add(localVar);
+            firstBb.effects.add(new Effect.AssignmentStmt(
+                    new Expr.ZeroInitExpr(),
+                    new AssignmentDest.VarDest(localVar)
+            ));
+        }
         for (AbstractInsnNode insn : expr) {
             Converter converter = CONVERTERS.get(insn);
             if (converter == null) {
@@ -1440,21 +1546,21 @@ public class WIR {
 
     public static void assignVariables(Function func) {
         class BlockData {
-            final Set<Integer>
+            final Set<Var>
                     gen = new HashSet<>(),
                     kill = new HashSet<>(),
-                    liveIn = new LinkedHashSet<>();
-            final Set<Integer> liveOut = new HashSet<>();
+                    liveIn = new LinkedHashSet<>(),
+                    liveOut = new HashSet<>();
             final Set<BasicBlock> succ = new HashSet<>();
             final Set<BasicBlock> idominates = new LinkedHashSet<>();
 
-            final Map<Integer, Effect.AssignmentStmt> phis = new LinkedHashMap<>();
+            final Map<Var, Effect.AssignmentStmt> phis = new LinkedHashMap<>();
         }
         for (BasicBlock block : func.blocks) {
             BlockData data = new BlockData();
             block.data = data;
-            Set<Integer> used = data.gen;
-            Set<Integer> assigned = data.kill;
+            Set<Var> used = data.gen;
+            Set<Var> assigned = data.kill;
 
             List<Expr> stack = new ArrayList<>();
             class S {
@@ -1462,7 +1568,7 @@ public class WIR {
                     while (!stack.isEmpty()) {
                         Expr next = stack.remove(stack.size() - 1);
                         if (next instanceof Expr.VarExpr) {
-                            int var = ((Expr.VarExpr) next).var;
+                            Var var = ((Expr.VarExpr) next).var;
                             if (!assigned.contains(var)) {
                                 used.add(var);
                             }
@@ -1513,7 +1619,7 @@ public class WIR {
             BlockData data = (BlockData) next.data;
             boolean changed = false;
             for (BasicBlock succ : data.succ) {
-                for (Integer varIn : ((BlockData) succ.data).liveIn) {
+                for (Var varIn : ((BlockData) succ.data).liveIn) {
                     if (data.liveOut.add(varIn)) {
                         if (!data.kill.contains(varIn)) {
                             changed = true;
@@ -1534,24 +1640,24 @@ public class WIR {
             ((BlockData) block.idom.data).idominates.add(block);
         }
 
-        Set<Integer> globals = new LinkedHashSet<>();
-        Map<Integer, Set<BasicBlock>> varKilledIn = new HashMap<>();
+        Set<Var> globals = new LinkedHashSet<>();
+        Map<Var, Set<BasicBlock>> varKilledIn = new HashMap<>();
         for (BasicBlock block : func.blocks) {
             BlockData data = (BlockData) block.data;
-            for (Integer killed : data.kill) {
+            for (Var killed : data.kill) {
                 varKilledIn.computeIfAbsent(killed, $ -> new HashSet<>()).add(block);
                 globals.addAll(data.liveOut);
             }
         }
 
-        for (Integer global : globals) {
+        for (Var global : globals) {
             List<BasicBlock> workList = new ArrayList<>(varKilledIn.getOrDefault(global, Collections.emptySet()));
             while (!workList.isEmpty()) {
                 BasicBlock next = workList.remove(workList.size() - 1);
                 for (BasicBlock fBlock : next.domFrontier) {
                     BlockData data = (BlockData) fBlock.data;
                     if (data.liveIn.contains(global)) {
-                        Map<Integer, Effect.AssignmentStmt> phis = data.phis;
+                        Map<Var, Effect.AssignmentStmt> phis = data.phis;
                         if (!phis.containsKey(global)) {
                             phis.put(global, new Effect.AssignmentStmt(
                                     new Expr.PhiExpr(new LinkedHashMap<>()),
@@ -1569,8 +1675,7 @@ public class WIR {
         }
 
         class Renamer {
-            final Map<Integer, List<Integer>> varStacks = new HashMap<>();
-            int varCounter = -1;
+            final Map<Var, List<Var>> varStacks = new HashMap<>();
 
             void replaceUsages(Expr expr) {
                 if (expr instanceof Expr.VarExpr) {
@@ -1583,8 +1688,8 @@ public class WIR {
                 }
             }
 
-            Integer top(Integer var) {
-                List<Integer> stack = varStacks.get(var);
+            Var top(Var var) {
+                List<Var> stack = varStacks.get(var);
                 if (stack != null && !stack.isEmpty()) {
                     return stack.get(stack.size() - 1);
                 }
@@ -1592,14 +1697,14 @@ public class WIR {
             }
 
             void dfs(BasicBlock block) {
-                Map<Integer, Integer> varsReplaced = new HashMap<>();
+                Map<Var, Integer> varsReplaced = new HashMap<>();
                 for (Effect effect : block.effects) {
                     replaceUsages(effect.expr());
                     for (AssignmentDest dest : effect.dests()) {
                         if (dest instanceof AssignmentDest.VarDest) {
                             AssignmentDest.VarDest varDest = (AssignmentDest.VarDest) dest;
-                            int newVar = varCounter--;
-                            List<Integer> varStack = varStacks.computeIfAbsent(varDest.var, $ -> new ArrayList<>());
+                            Var newVar = func.newVar(varDest.var.name);
+                            List<Var> varStack = varStacks.computeIfAbsent(varDest.var, $ -> new ArrayList<>());
                             varsReplaced.put(varDest.var, varStack.size());
                             varStack.add(newVar);
                             varDest.var = newVar;
@@ -1617,7 +1722,7 @@ public class WIR {
                 BlockData data = (BlockData) block.data;
                 for (BasicBlock succ : data.succ) {
                     BlockData bData = (BlockData) succ.data;
-                    for (Map.Entry<Integer, Effect.AssignmentStmt> entry : bData.phis.entrySet()) {
+                    for (Map.Entry<Var, Effect.AssignmentStmt> entry : bData.phis.entrySet()) {
                         ((Expr.PhiExpr) entry.getValue().value)
                                 .branches
                                 .put(block, new Expr.VarExpr(top(entry.getKey())));
@@ -1627,10 +1732,10 @@ public class WIR {
                 for (BasicBlock next : data.idominates) {
                     dfs(next);
                 }
-                for (Map.Entry<Integer, Integer> entry : varsReplaced.entrySet()) {
-                    Integer origVar = entry.getKey();
+                for (Map.Entry<Var, Integer> entry : varsReplaced.entrySet()) {
+                    Var origVar = entry.getKey();
                     Integer stackSize = entry.getValue();
-                    List<Integer> stack = varStacks.get(origVar);
+                    List<Var> stack = varStacks.get(origVar);
                     stack.subList(stackSize + 1, stack.size()).clear();
                 }
             }
