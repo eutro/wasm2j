@@ -6,10 +6,11 @@ import io.github.eutro.jwasm.tree.analysis.StackDumper;
 import io.github.eutro.wasm2j.ir.WIR;
 import org.junit.jupiter.api.Test;
 
-import java.io.ByteArrayOutputStream;
+import java.io.FileOutputStream;
 import java.io.InputStream;
 import java.io.PrintStream;
-import java.io.StringWriter;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 
 public class WIRTest {
     @Test
@@ -18,29 +19,13 @@ public class WIRTest {
         try (InputStream stream = WIRTest.class.getResourceAsStream("/unsimple_bg.wasm")) {
             ModuleReader.fromInputStream(stream).accept(mn);
         }
-        assert mn.imports == null;
-        assert mn.funcs != null;
-        assert mn.funcs.funcs != null;
-        assert mn.types != null;
-        assert mn.types.types != null;
-        assert mn.codes != null;
+        WIR.augmentWithWir(mn);
 
-        FuncNode[] referencableFuncs = mn.funcs.funcs.toArray(new FuncNode[0]);
-        int i = 0;
-        TypeNode[] funcTypes = mn.types.types.toArray(new TypeNode[0]);
-        for (CodeNode code : mn.codes) {
-            TypeNode funcType = mn.types.types.get(mn.funcs.funcs.get(i).type);
-            WIR.Function wir = WIR.convert(
-                    funcTypes,
-                    referencableFuncs,
-                    funcType.params.length,
-                    code.locals.length,
-                    funcType.returns.length,
-                    code.expr
-            );
-            System.out.println("--- WIR");
-            System.out.println(wir);
-            i++;
+        if (mn.codes != null) {
+            for (CodeNode code : mn.codes) {
+                System.out.println("-- WIR");
+                System.out.println(((WIR.WIRExprNode) code.expr).wir);
+            }
         }
     }
 }
