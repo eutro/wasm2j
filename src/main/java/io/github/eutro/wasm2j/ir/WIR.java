@@ -8,7 +8,6 @@ import io.github.eutro.wasm2j.ir.SSA.AssignmentDest.VarDest;
 import io.github.eutro.wasm2j.ir.SSA.Effect.AssignmentStmt;
 import org.jetbrains.annotations.Nullable;
 
-import java.lang.reflect.Method;
 import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -421,7 +420,9 @@ public class WIR extends SSA {
         }
 
         public void popVs(int n) {
-            vals -= n;
+            for (int i = 0; i < n; i++) {
+                popV();
+            }
         }
 
         public CtrlFrame pushC(int opcode, TypeNode type, BasicBlock bb) {
@@ -582,7 +583,6 @@ public class WIR extends SSA {
     }
 
     private static void doReturn(ConvertState cs, BasicBlock bb) {
-        cs.popVs(cs.returns);
         Expr[] exprs = new Expr[cs.returns];
         for (int i = 0; i < exprs.length; i++) {
             exprs[i] = new Expr.VarExpr(cs.refVar(cs.vals + i + 1));
@@ -594,6 +594,7 @@ public class WIR extends SSA {
         CONVERTERS.put(END, (cs, node) -> {
             ConvertState.CtrlFrame frame = cs.popC();
             if (cs.ctrls.isEmpty()) {
+                cs.vals = frame.height;
                 doReturn(cs, frame.bb);
             } else {
                 frame.bb.control = Control.Break.br(cs.ctrlsRef(0).bb);
@@ -652,6 +653,7 @@ public class WIR extends SSA {
             cs.unreachable();
         });
         CONVERTERS.put(RETURN, (cs, node) -> {
+            cs.popVs(cs.returns);
             doReturn(cs, cs.ctrlsRef(0).bb);
             cs.unreachable();
         });

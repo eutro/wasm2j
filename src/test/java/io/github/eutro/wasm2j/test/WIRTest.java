@@ -1,24 +1,21 @@
 package io.github.eutro.wasm2j.test;
 
 import io.github.eutro.jwasm.ModuleReader;
-import io.github.eutro.jwasm.tree.*;
-import io.github.eutro.jwasm.tree.analysis.StackDumper;
+import io.github.eutro.jwasm.tree.CodeNode;
+import io.github.eutro.jwasm.tree.ModuleNode;
 import io.github.eutro.wasm2j.ir.WIR;
 import org.junit.jupiter.api.Test;
 
-import java.io.FileOutputStream;
 import java.io.InputStream;
-import java.io.PrintStream;
-import java.nio.file.Files;
-import java.nio.file.Paths;
 
 public class WIRTest {
     @Test
     void testWir() throws Throwable {
         ModuleNode mn = new ModuleNode();
-        try (InputStream stream = WIRTest.class.getResourceAsStream("/unsimple_bg.wasm")) {
+        try (InputStream stream = WIRTest.class.getResourceAsStream("/aoc_bg.wasm")) {
             ModuleReader.fromInputStream(stream).accept(mn);
         }
+        // mn.accept(new StackDumper(new PrintStream("build/dump.txt")));
         WIR.augmentWithWir(mn);
 
         if (mn.codes != null) {
