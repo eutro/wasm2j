@@ -475,6 +475,12 @@ public class SSA {
             sb.append("}");
             return sb.toString();
         }
+
+        public BasicBlock newBb() {
+            BasicBlock bb = new BasicBlock();
+            blocks.add(bb);
+            return bb;
+        }
     }
 
     public static class BasicBlock {
@@ -596,6 +602,24 @@ public class SSA {
         public abstract Expr expr();
 
         public abstract List<AssignmentDest> dests();
+
+        public static class SideEffectStmt extends Effect {
+            public final Expr value;
+
+            public SideEffectStmt(Expr value) {
+                this.value = value;
+            }
+
+            @Override
+            public Expr expr() {
+                return value;
+            }
+
+            @Override
+            public List<AssignmentDest> dests() {
+                return Collections.emptyList();
+            }
+        }
 
         public static class AssignmentStmt extends Effect {
             public final AssignmentDest dest;

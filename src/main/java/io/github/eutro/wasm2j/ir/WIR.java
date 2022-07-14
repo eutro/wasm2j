@@ -483,9 +483,7 @@ public class WIR extends SSA {
         }
 
         public BasicBlock newBb() {
-            BasicBlock bb = new BasicBlock();
-            func.blocks.add(bb);
-            return bb;
+            return func.newBb();
         }
 
         public TypeNode expand(BlockType blockType) {

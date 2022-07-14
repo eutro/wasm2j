@@ -14,6 +14,7 @@ import java.awt.font.FontRenderContext;
 import java.awt.font.LineBreakMeasurer;
 import java.awt.font.TextLayout;
 import java.awt.geom.AffineTransform;
+import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.UncheckedIOException;
@@ -41,7 +42,9 @@ public class SSADisplay {
     public static final int LINE_LIMIT = 300;
 
     public static void debugDisplayToFile(Document img, String file) {
-        try (FileWriter writer = new FileWriter(file)) {
+        File jFile = new File(file);
+        jFile.getParentFile().mkdirs();
+        try (FileWriter writer = new FileWriter(jFile)) {
             TransformerFactory.newInstance()
                     .newTransformer()
                     .transform(
