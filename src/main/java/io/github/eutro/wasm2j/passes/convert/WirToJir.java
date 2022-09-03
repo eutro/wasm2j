@@ -1,0 +1,178 @@
+package io.github.eutro.wasm2j.passes.convert;
+
+import io.github.eutro.wasm2j.conf.WirJavaConvention;
+import io.github.eutro.wasm2j.conf.WirJavaConventionFactory;
+import io.github.eutro.wasm2j.ext.CommonExts;
+import io.github.eutro.wasm2j.ops.CommonOps;
+import io.github.eutro.wasm2j.ops.JavaOps;
+import io.github.eutro.wasm2j.ops.OpKey;
+import io.github.eutro.wasm2j.ops.WasmOps;
+import io.github.eutro.wasm2j.passes.ForPass;
+import io.github.eutro.wasm2j.passes.InPlaceIrPass;
+import io.github.eutro.wasm2j.ssa.Module;
+import io.github.eutro.wasm2j.ssa.*;
+
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+import static io.github.eutro.jwasm.Opcodes.*;
+
+public class WirToJir implements InPlaceIrPass<Module> {
+    private final WirJavaConventionFactory conventionsFactory;
+
+    public WirToJir(WirJavaConventionFactory conventionsFactory) {
+        this.conventionsFactory = conventionsFactory;
+    }
+
+    @Override
+    public void runInPlace(Module module) {
+        if (module.getExt(CommonExts.CODE_TYPE).orElse(null) != CommonExts.CodeType.WASM) {
+            throw new IllegalArgumentException("module must be in WASM code type");
+        }
+
+        WirJavaConvention conventions = conventionsFactory.create(module);
+        ForPass.liftFunctions(new WirToJirPerFunc(conventions)).runInPlace(module);
+
+        module.attachExt(CommonExts.CODE_TYPE, CommonExts.CodeType.JAVA);
+    }
+
+    public static class WirToJirPerFunc implements InPlaceIrPass<Function> {
+        private final WirJavaConvention conventions;
+
+        public WirToJirPerFunc(WirJavaConvention conventions) {
+            this.conventions = conventions;
+        }
+
+        @Override
+        public void runInPlace(Function function) {
+            new Runner(function).run();
+        }
+
+        private interface Converter<T> {
+            void convert(T t, IRBuilder jb, WirToJirPerFunc slf);
+        }
+
+        private static final Map<OpKey, Converter<Effect>> FX_CONVERTERS = new HashMap<>();
+
+        static {
+            for (OpKey key : new OpKey[]{
+                    CommonOps.IDENTITY.key,
+                    CommonOps.PHI,
+                    CommonOps.ARG,
+                    CommonOps.CONST,
+            }) {
+                FX_CONVERTERS.put(key, (fx, jb, slf) -> jb.insert(fx));
+            }
+
+            FX_CONVERTERS.put(WasmOps.GLOBAL_REF, (fx, jb, slf) -> slf.conventions.emitGlobalRef(jb, fx));
+            FX_CONVERTERS.put(WasmOps.GLOBAL_SET, (fx, jb, slf) -> slf.conventions.emitGlobalStore(jb, fx));
+            FX_CONVERTERS.put(WasmOps.MEM_STORE, (fx, jb, slf) -> slf.conventions.emitMemStore(jb, fx));
+            FX_CONVERTERS.put(WasmOps.MEM_LOAD, (fx, jb, slf) -> slf.conventions.emitMemLoad(jb, fx));
+            FX_CONVERTERS.put(WasmOps.MEM_SIZE, (fx, jb, slf) -> slf.conventions.emitMemSize(jb, fx));
+            FX_CONVERTERS.put(WasmOps.MEM_GROW, (fx, jb, slf) -> slf.conventions.emitMemGrow(jb, fx));
+            FX_CONVERTERS.put(WasmOps.TABLE_STORE, (fx, jb, slf) -> slf.conventions.emitTableStore(jb, fx));
+            FX_CONVERTERS.put(WasmOps.TABLE_REF, (fx, jb, slf) -> slf.conventions.emitTableRef(jb, fx));
+            FX_CONVERTERS.put(WasmOps.FUNC_REF, (fx, jb, slf) -> slf.conventions.emitFuncRef(jb, fx));
+            FX_CONVERTERS.put(WasmOps.CALL, (fx, jb, slf) -> slf.conventions.emitCall(jb, fx));
+            FX_CONVERTERS.put(WasmOps.CALL_INDIRECT, (fx, jb, slf) -> slf.conventions.emitCallIndirect(jb, fx));
+
+            FX_CONVERTERS.put(WasmOps.ZEROINIT, (fx, jb, slf) -> {
+                Object value;
+                switch (WasmOps.ZEROINIT.cast(fx.insn.op).arg) {
+                    case I32:
+                        value = 0;
+                        break;
+                    case I64:
+                        value = 0L;
+                        break;
+                    case F32:
+                        value = 0F;
+                        break;
+                    case F64:
+                        value = 0D;
+                        break;
+                    case FUNCREF:
+                    case EXTERNREF:
+                        value = null;
+                        break;
+                    default:
+                        throw new IllegalArgumentException();
+                }
+                jb.insert(CommonOps.CONST.create(value).copyFrom(fx));
+            });
+            FX_CONVERTERS.put(WasmOps.IS_NULL, (fx, jb, slf) ->
+                    jb.insert(JavaOps.BOOL_SELECT.create(JavaOps.JumpType.IFNULL).copyFrom(fx)));
+
+            FX_CONVERTERS.put(WasmOps.SELECT, (fx, jb, slf) ->
+                    jb.insert(JavaOps.SELECT.create(JavaOps.JumpType.IFNE).copyFrom(fx)));
+
+            FX_CONVERTERS.put(WasmOps.OPERATOR, (fx, jb, slf) -> {
+                WasmOps.OperatorType opTy = WasmOps.OPERATOR.cast(fx.insn.op).arg;
+                fx.insn.op = JavaOps.INTRINSIC.create(opTy.toString());
+                jb.insert(fx);
+            });
+        }
+
+        private static final Map<OpKey, Converter<Control>> CTRL_CONVERTERS = new HashMap<>();
+
+        static {
+            for (OpKey key : new OpKey[]{
+                    CommonOps.BR.key,
+                    CommonOps.RETURN.key,
+                    CommonOps.UNREACHABLE.key,
+            }) {
+                CTRL_CONVERTERS.put(key, (ctrl, jb, slf) -> {
+                    // noop
+                });
+            }
+
+            CTRL_CONVERTERS.put(WasmOps.BR_IF.key, (ctrl, jb, slf) ->
+                    ctrl.insn.op = JavaOps.BR_COND.create(JavaOps.JumpType.IFEQ));
+            CTRL_CONVERTERS.put(WasmOps.BR_TABLE.key, (ctrl, jb, slf) ->
+                    ctrl.insn.op = JavaOps.TABLESWITCH.create());
+        }
+
+        private class Runner {
+            public final Function func;
+
+            private Runner(Function func) {
+                this.func = func;
+            }
+
+            void run() {
+                for (BasicBlock block : func.blocks) {
+                    processBlock(block);
+                }
+            }
+
+            private void processBlock(BasicBlock bb) {
+                IRBuilder ib = new IRBuilder(func, bb);
+
+                List<Effect> oldEffects = new ArrayList<>(bb.getEffects());
+                bb.getEffects().clear();
+                for (Effect effect : oldEffects) {
+                    translateEffect(effect, ib);
+                }
+                translateControl(bb.getControl(), ib);
+            }
+
+            private void translateEffect(Effect fct, IRBuilder jb) {
+                Converter<Effect> cc = FX_CONVERTERS.get(fct.insn.op.key);
+                if (cc == null) {
+                    throw new IllegalArgumentException(fct.insn.op.key + " is not supported");
+                }
+                cc.convert(fct, jb, WirToJirPerFunc.this);
+            }
+
+            private void translateControl(Control ctrl, IRBuilder jb) {
+                Converter<Control> cc = CTRL_CONVERTERS.get(ctrl.insn.op.key);
+                if (cc == null) {
+                    throw new IllegalArgumentException(ctrl.insn.op.key + " is not supported");
+                }
+                cc.convert(ctrl, jb, WirToJirPerFunc.this);
+            }
+        }
+    }
+}

@@ -1,12 +1,18 @@
 package io.github.eutro.wasm2j.test;
 
 import io.github.eutro.jwasm.ModuleReader;
-import io.github.eutro.jwasm.tree.CodeNode;
 import io.github.eutro.jwasm.tree.ModuleNode;
-import io.github.eutro.wasm2j.ir.JIR;
-import io.github.eutro.wasm2j.ir.SSA;
-import io.github.eutro.wasm2j.ir.SSADisplay;
-import io.github.eutro.wasm2j.ir.WIR;
+import io.github.eutro.wasm2j.conf.Conventions;
+import io.github.eutro.wasm2j.passes.ForPass;
+import io.github.eutro.wasm2j.passes.IRPass;
+import io.github.eutro.wasm2j.passes.convert.WasmToWir;
+import io.github.eutro.wasm2j.passes.convert.WirToJir;
+import io.github.eutro.wasm2j.passes.meta.ComputeDomFrontier;
+import io.github.eutro.wasm2j.passes.opts.SSAify;
+import io.github.eutro.wasm2j.ssa.display.DisplayInteraction;
+import io.github.eutro.wasm2j.ssa.display.SSADisplay;
+import io.github.eutro.wasm2j.ssa.Function;
+import io.github.eutro.wasm2j.ssa.Module;
 import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.Test;
 
@@ -14,6 +20,7 @@ import java.io.IOException;
 import java.io.InputStream;
 
 public class IRTest {
+
     @NotNull
     private ModuleNode getRawModuleNode(String name) throws IOException {
         ModuleNode mn = new ModuleNode();
@@ -23,37 +30,43 @@ public class IRTest {
         return mn;
     }
 
-    @Test
-    void testWir() throws Throwable {
-        ModuleNode mn = getRawModuleNode("/simple_bg.wasm");
-        // mn.accept(new StackDumper(new PrintStream("build/dump.txt")));
-        WIR.augmentWithWir(mn);
+    void testPass(IRPass<ModuleNode, ?> pass) throws Throwable {
+        ModuleNode mn = getRawModuleNode("/unsimple_bg.wasm");
+        pass.run(mn);
+    }
 
-        if (mn.codes != null) {
+    IRPass<Module, Module> debugDisplay(String prefix) {
+        return module -> {
             int i = 0;
-            for (CodeNode code : mn.codes) {
-                SSA.Function func = ((WIR.WIRExprNode) code.expr).wir;
+            for (Function func : module.funcions) {
                 SSADisplay.debugDisplayToFile(
-                        SSADisplay.displaySSA(func),
-                        "build/ssa/ssa" + i + ".svg"
+                        SSADisplay.displaySSA(func, DisplayInteraction.HIGHLIGHT_INTERESTING),
+                        "build/ssa/" + prefix + i + ".svg"
                 );
                 i++;
             }
-        }
+            return module;
+        };
+    }
+
+    @Test
+    void testWir() throws Throwable {
+        testPass(WasmToWir.INSTANCE
+                .then(ForPass.liftFunctions(
+                        ComputeDomFrontier.INSTANCE
+                                .then(SSAify.INSTANCE)
+                ))
+                .then(debugDisplay("wir")));
     }
 
     @Test
     void testJir() throws Throwable {
-        ModuleNode mn = getRawModuleNode("/simple_bg.wasm");
-        WIR.augmentWithWir(mn);
-        JIR.Class jirClass = JIR.convertFromWir(mn);
-        int i = 0;
-        for (JIR.Method method : jirClass.methods) {
-            SSADisplay.debugDisplayToFile(
-                    SSADisplay.displaySSA(method.func),
-                    "build/ssa/jir" + i + ".svg"
-            );
-            i++;
-        }
+        testPass(WasmToWir.INSTANCE
+                .then(ForPass.liftFunctions(
+                        ComputeDomFrontier.INSTANCE
+                                .then(SSAify.INSTANCE)
+                ))
+                .then(new WirToJir(Conventions.DEFAULT_CONVENTIONS))
+                .then(debugDisplay("jir")));
     }
 }
