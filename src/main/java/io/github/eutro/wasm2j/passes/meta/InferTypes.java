@@ -15,6 +15,7 @@ import org.jetbrains.annotations.NotNull;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
 import org.objectweb.asm.tree.AbstractInsnNode;
+import org.objectweb.asm.tree.FieldInsnNode;
 import org.objectweb.asm.tree.MethodInsnNode;
 
 import java.lang.reflect.Array;
@@ -257,6 +258,12 @@ public abstract class InferTypes<Ty> implements InPlaceIrPass<BasicBlock> {
                             return withArity(arity, $ -> res);
                         },
                         INVOKESPECIAL, INVOKEVIRTUAL, INVOKEINTERFACE, INVOKESTATIC)
+                .put(insn -> {
+                            String desc = ((FieldInsnNode) insn).desc;
+                            Type[] res = {Type.getType(desc)};
+                            return withArity(insn.getOpcode() == GETSTATIC ? 0 : 1, $ -> res);
+                        },
+                        GETSTATIC, GETFIELD)
 
                 .put(" -> ", NOP)
 
@@ -323,6 +330,18 @@ public abstract class InferTypes<Ty> implements InPlaceIrPass<BasicBlock> {
         )
                 .put(Java::getArgTys, CommonOps.IDENTITY.key)
 
+                .put($ -> {
+                            throw new IllegalStateException("please lower intrinsics first");
+                        },
+                        JavaOps.INTRINSIC)
+
+                .put("I a -> ", JavaOps.MEM_SET)
+
+                .put(insn -> new Type[]{Type.getType(JavaOps.GET_FIELD.cast(insn.op).arg.descriptor)},
+                        JavaOps.GET_FIELD)
+
+                .put(" -> Ljava/lang/Object;", JavaOps.THIS.key)
+
                 .put((Insn insn) -> {
                     Object cst = CommonOps.CONST.cast(insn.op).arg;
                     Type ty;
@@ -364,10 +383,10 @@ public abstract class InferTypes<Ty> implements InPlaceIrPass<BasicBlock> {
                             List<Type> stack = new ArrayList<>(Arrays.asList(getArgTys(insn)));
                             for (AbstractInsnNode insnN : JavaOps.INSNS.cast(insn.op).arg) {
                                 int opc = insnN.getOpcode();
-                                FuncType<Type> inf = OPCODE_MAP.get(opc).apply(insnN);
-                                if (inf == null) {
+                                if (!OPCODE_MAP.containsKey(opc)) {
                                     throw new IllegalStateException("unsupported opcode " + opc);
                                 }
+                                FuncType<Type> inf = OPCODE_MAP.get(opc).apply(insnN);
                                 Type[] argTys = new Type[inf.arity()];
                                 for (int i = inf.arity() - 1; i >= 0; i--) {
                                     argTys[i] = stack.remove(stack.size() - 1);

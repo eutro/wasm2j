@@ -97,7 +97,7 @@ public class WasmOps {
 
         @Override
         public String toString() {
-            return op == Opcodes.INSN_PREFIX ? String.format("%02x", op) : Integer.toString(intOp);
+            return op == Opcodes.INSN_PREFIX ? Integer.toString(intOp) : String.format("0x%02x", op);
         }
     }
 }

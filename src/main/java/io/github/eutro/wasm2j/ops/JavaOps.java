@@ -1,6 +1,7 @@
 package io.github.eutro.wasm2j.ops;
 
 import io.github.eutro.wasm2j.ext.CommonExts;
+import io.github.eutro.wasm2j.intrinsics.IntrinsicImpl;
 import io.github.eutro.wasm2j.util.Disassembler;
 import io.github.eutro.wasm2j.ext.JavaExts.*;
 import org.intellij.lang.annotations.Language;
@@ -9,7 +10,7 @@ import org.objectweb.asm.tree.AbstractInsnNode;
 import org.objectweb.asm.tree.InsnList;
 
 public class JavaOps {
-    public static final UnaryOpKey</* name */ String> INTRINSIC = new UnaryOpKey<>("intr");
+    public static final UnaryOpKey<IntrinsicImpl> INTRINSIC = new UnaryOpKey<>("intr");
 
     public static final SimpleOpKey TABLESWITCH = new SimpleOpKey("tableswitch");
 

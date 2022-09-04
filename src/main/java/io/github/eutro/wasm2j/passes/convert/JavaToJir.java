@@ -48,6 +48,9 @@ public class JavaToJir implements IRPass<MethodNode, Function> {
                 Var paramVar = func.newVar("param" + i);
                 bb.addEffect(CommonOps.ARG.create(i).insn().assignTo(paramVar));
                 vars.add(paramVar);
+                if (paramTypes[i].getSize() > 1) {
+                    vars.add(null);
+                }
             }
             for (AbstractInsnNode insn : method.instructions) {
                 execute(insn);

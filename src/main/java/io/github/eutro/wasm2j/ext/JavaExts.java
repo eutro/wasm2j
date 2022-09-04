@@ -31,9 +31,9 @@ public class JavaExts {
     }
 
     public static class JavaMethod extends ExtHolder {
-        public final JavaClass owner;
-        public final String name, descriptor;
-        public final Type type;
+        public JavaClass owner;
+        public String name, descriptor;
+        public Type type;
 
         public JavaMethod(JavaClass owner, String name, String descriptor, Type type) {
             this.owner = owner;

@@ -1,8 +1,11 @@
 package io.github.eutro.wasm2j.passes.convert;
 
+import io.github.eutro.jwasm.Opcodes;
 import io.github.eutro.wasm2j.conf.WirJavaConvention;
 import io.github.eutro.wasm2j.conf.WirJavaConventionFactory;
 import io.github.eutro.wasm2j.ext.CommonExts;
+import io.github.eutro.wasm2j.intrinsics.IntrinsicImpl;
+import io.github.eutro.wasm2j.intrinsics.JavaIntrinsics;
 import io.github.eutro.wasm2j.ops.CommonOps;
 import io.github.eutro.wasm2j.ops.JavaOps;
 import io.github.eutro.wasm2j.ops.OpKey;
@@ -110,7 +113,11 @@ public class WirToJir implements InPlaceIrPass<Module> {
 
             FX_CONVERTERS.put(WasmOps.OPERATOR, (fx, jb, slf) -> {
                 WasmOps.OperatorType opTy = WasmOps.OPERATOR.cast(fx.insn().op).arg;
-                fx.insn().op = JavaOps.INTRINSIC.create(opTy.toString());
+                IntrinsicImpl intr = opTy.op == INSN_PREFIX
+                        ? JavaIntrinsics.INTRINSICS.getInt(opTy.intOp)
+                        : JavaIntrinsics.INTRINSICS.getByte(opTy.op);
+                if (intr == null) throw new RuntimeException("operator " + opTy + " is not implemented");
+                fx.insn().op = JavaOps.INTRINSIC.create(intr);
                 jb.insert(fx);
             });
         }
