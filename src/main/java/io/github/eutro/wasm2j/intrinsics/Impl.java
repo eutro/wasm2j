@@ -12,7 +12,7 @@ public final class Impl {
     @Intrinsic(I32_EQZ) static int i32Eqz(int x) { return x == 0 ? 1 : 0; }
 
     @Intrinsic(iOp = -1)
-    static short iq15mulrsat_s16(short a, short b) {
+    static int iq15mulrsat_s16(int a, int b) {
         int n = (a * b + (2 << 14)) >> 15;
         if (n < Short.MIN_VALUE) return Short.MIN_VALUE;
         if (n > Short.MAX_VALUE) return Short.MAX_VALUE;

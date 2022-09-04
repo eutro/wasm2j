@@ -17,10 +17,10 @@ public class IdentityElimination implements InPlaceIrPass<Insn> {
         while (iter.hasNext()) {
             Var arg = iter.next();
             arg.getExt(CommonExts.ASSIGNED_AT).ifPresent(assigned -> {
-                if (assigned.insn.op.key != CommonOps.IDENTITY.key) return;
+                if (assigned.insn().op.key != CommonOps.IDENTITY.key) return;
                 if (assigned.getAssignsTo().size() != 1) return;
-                if (assigned.insn.args.size() != 1) return;
-                iter.set(assigned.insn.args.get(0));
+                if (assigned.insn().args.size() != 1) return;
+                iter.set(assigned.insn().args.get(0));
             });
         }
     }

@@ -4,7 +4,6 @@ import io.github.eutro.wasm2j.ext.CommonExts;
 import io.github.eutro.wasm2j.ext.DelegatingExtHolder;
 import io.github.eutro.wasm2j.ext.ExtContainer;
 import io.github.eutro.wasm2j.ext.TrackedList;
-import io.github.eutro.wasm2j.ext.*;
 
 import java.util.List;
 import java.util.Objects;
@@ -21,16 +20,16 @@ public final class Effect extends DelegatingExtHolder {
         protected void onRemoved(Var elt) {
         }
     };
-    public Insn insn;
+    private Insn insn;
 
     public Effect(List<Var> assignsTo, Insn insn) {
         this.setAssignsTo(assignsTo);
-        this.insn = insn;
+        this.setInsn(insn);
     }
 
     @Override
     protected ExtContainer getDelegate() {
-        return insn;
+        return insn();
     }
 
     @Override
@@ -48,7 +47,7 @@ public final class Effect extends DelegatingExtHolder {
                         .collect(Collectors.joining(", ", "", " = ")));
                 break;
         }
-        sb.append(insn);
+        sb.append(insn());
         return sb.toString();
     }
 
@@ -58,5 +57,14 @@ public final class Effect extends DelegatingExtHolder {
 
     public void setAssignsTo(List<Var> assignsTo) {
         this.assignsTo.setViewed(assignsTo);
+    }
+
+    public Insn insn() {
+        return insn;
+    }
+
+    public void setInsn(Insn insn) {
+        insn.attachExt(CommonExts.OWNING_EFFECT, this);
+        this.insn = insn;
     }
 }

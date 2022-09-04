@@ -17,7 +17,7 @@ public class DeadVarElimination implements InPlaceIrPass<Function> {
         Map<Var, Integer> usageCount = new HashMap<>();
         for (BasicBlock block : function.blocks) {
             for (Effect effect : block.getEffects()) {
-                for (Var arg : effect.insn.args) {
+                for (Var arg : effect.insn().args) {
                     usageCount.compute(arg, (var, integer) -> integer == null ? 1 : integer + 1);
                 }
                 for (Var var : effect.getAssignsTo()) {
@@ -47,7 +47,7 @@ public class DeadVarElimination implements InPlaceIrPass<Function> {
                     if (!dead.contains(var)) return;
                 }
                 deadEffects.add(effect);
-                for (Var arg : effect.insn.args) {
+                for (Var arg : effect.insn().args) {
                     usageCount.compute(arg, (var, integer) -> {
                         int n = integer == null ? 0 : integer - 1;
                         if (n == 0) {

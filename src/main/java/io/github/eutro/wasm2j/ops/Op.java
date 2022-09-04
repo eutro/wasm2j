@@ -38,6 +38,6 @@ public /* virtual */ class Op extends DelegatingExtHolder {
     }
 
     public Effect copyFrom(Effect fx) {
-        return copyFrom(fx.insn).copyFrom(fx);
+        return copyFrom(fx.insn()).copyFrom(fx);
     }
 }

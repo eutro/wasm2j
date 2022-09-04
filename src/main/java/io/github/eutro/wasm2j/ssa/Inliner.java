@@ -23,12 +23,12 @@ public class Inliner {
         for (BasicBlock thisBb : from.blocks) {
             BasicBlock iBb = blockMap.computeIfAbsent(thisBb, $ -> into.newBb());
             for (Effect effect : thisBb.getEffects()) {
-                Integer argIdx = CommonOps.ARG.check(effect.insn.op).map(it -> it.arg).orElse(null);
+                Integer argIdx = CommonOps.ARG.check(effect.insn().op).map(it -> it.arg).orElse(null);
                 Insn insn;
                 if (argIdx != null) {
                     insn = CommonOps.IDENTITY.insn(args.get(argIdx));
                 } else {
-                    insn = effect.insn.op.insn(refreshVars(effect.insn.args));
+                    insn = effect.insn().op.insn(refreshVars(effect.insn().args));
                 }
                 iBb.addEffect(insn.assignTo(refreshVars(effect.getAssignsTo())));
             }

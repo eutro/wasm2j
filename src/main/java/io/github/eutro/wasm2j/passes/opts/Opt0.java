@@ -39,7 +39,8 @@ public class Opt0 implements InPlaceIrPass<Function> {
                 if (alive.add(target)) queue.add(target);
             }
         }
-        func.blocks = new ArrayList<>(alive);
+        func.blocks.clear();
+        func.blocks.addAll(alive);
     }
 
     private static void collapseJumpTargets(BasicBlock bb) {

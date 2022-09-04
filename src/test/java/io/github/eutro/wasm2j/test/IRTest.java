@@ -3,7 +3,7 @@ package io.github.eutro.wasm2j.test;
 import io.github.eutro.jwasm.ModuleReader;
 import io.github.eutro.jwasm.tree.ModuleNode;
 import io.github.eutro.wasm2j.conf.Conventions;
-import io.github.eutro.wasm2j.passes.ForPass;
+import io.github.eutro.wasm2j.passes.misc.ForPass;
 import io.github.eutro.wasm2j.passes.IRPass;
 import io.github.eutro.wasm2j.passes.convert.WasmToWir;
 import io.github.eutro.wasm2j.passes.convert.WirToJir;

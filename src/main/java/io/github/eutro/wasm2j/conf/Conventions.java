@@ -93,7 +93,7 @@ public class Conventions {
 
                 @Override
                 public void emitGlobalRef(IRBuilder ib, Effect effect) {
-                    int global = WasmOps.GLOBAL_REF.cast(effect.insn.op).arg;
+                    int global = WasmOps.GLOBAL_REF.cast(effect.insn().op).arg;
                     ib.insert(JavaOps.GET_FIELD.create(globals.get(global))
                             .insn(getThis(ib))
                             .copyFrom(effect));
@@ -101,19 +101,19 @@ public class Conventions {
 
                 @Override
                 public void emitGlobalStore(IRBuilder ib, Effect effect) {
-                    int global = WasmOps.GLOBAL_SET.cast(effect.insn.op).arg;
+                    int global = WasmOps.GLOBAL_SET.cast(effect.insn().op).arg;
                     ib.insert(JavaOps.PUT_FIELD.create(globals.get(global))
-                            .insn(getThis(ib), effect.insn.args.get(0))
+                            .insn(getThis(ib), effect.insn().args.get(0))
                             .copyFrom(effect));
                 }
 
                 @Override
                 public void emitCall(IRBuilder ib, Effect effect) {
-                    WasmOps.CallType callType = WasmOps.CALL.cast(effect.insn.op).arg;
+                    WasmOps.CallType callType = WasmOps.CALL.cast(effect.insn().op).arg;
                     JavaExts.JavaMethod method = funcs.get(callType.func);
                     List<Var> args = new ArrayList<>();
                     args.add(getThis(ib));
-                    args.addAll(effect.insn.args);
+                    args.addAll(effect.insn().args);
                     ib.insert(JavaOps.INVOKE.create(method)
                             .insn(args)
                             .copyFrom(effect));
@@ -140,7 +140,7 @@ public class Conventions {
                             "mem");
                     List<Var> args = new ArrayList<>();
                     args.add(mem);
-                    args.addAll(effect.insn.args);
+                    args.addAll(effect.insn().args);
                     // FIXME
                     ib.insert(JavaOps.INTRINSIC.create("memload")
                             .insn(args)
@@ -156,7 +156,7 @@ public class Conventions {
                             "mem");
                     List<Var> args = new ArrayList<>();
                     args.add(mem);
-                    args.addAll(effect.insn.args);
+                    args.addAll(effect.insn().args);
                     // FIXME
                     ib.insert(JavaOps.INTRINSIC.create("memstore")
                             .insn(args)

@@ -7,7 +7,7 @@ import io.github.eutro.wasm2j.ops.CommonOps;
 import io.github.eutro.wasm2j.ops.JavaOps;
 import io.github.eutro.wasm2j.ops.OpKey;
 import io.github.eutro.wasm2j.ops.WasmOps;
-import io.github.eutro.wasm2j.passes.ForPass;
+import io.github.eutro.wasm2j.passes.misc.ForPass;
 import io.github.eutro.wasm2j.passes.InPlaceIrPass;
 import io.github.eutro.wasm2j.ssa.Module;
 import io.github.eutro.wasm2j.ssa.*;
@@ -80,7 +80,7 @@ public class WirToJir implements InPlaceIrPass<Module> {
 
             FX_CONVERTERS.put(WasmOps.ZEROINIT, (fx, jb, slf) -> {
                 Object value;
-                switch (WasmOps.ZEROINIT.cast(fx.insn.op).arg) {
+                switch (WasmOps.ZEROINIT.cast(fx.insn().op).arg) {
                     case I32:
                         value = 0;
                         break;
@@ -109,8 +109,8 @@ public class WirToJir implements InPlaceIrPass<Module> {
                     jb.insert(JavaOps.SELECT.create(JavaOps.JumpType.IFNE).copyFrom(fx)));
 
             FX_CONVERTERS.put(WasmOps.OPERATOR, (fx, jb, slf) -> {
-                WasmOps.OperatorType opTy = WasmOps.OPERATOR.cast(fx.insn.op).arg;
-                fx.insn.op = JavaOps.INTRINSIC.create(opTy.toString());
+                WasmOps.OperatorType opTy = WasmOps.OPERATOR.cast(fx.insn().op).arg;
+                fx.insn().op = JavaOps.INTRINSIC.create(opTy.toString());
                 jb.insert(fx);
             });
         }
@@ -159,9 +159,9 @@ public class WirToJir implements InPlaceIrPass<Module> {
             }
 
             private void translateEffect(Effect fct, IRBuilder jb) {
-                Converter<Effect> cc = FX_CONVERTERS.get(fct.insn.op.key);
+                Converter<Effect> cc = FX_CONVERTERS.get(fct.insn().op.key);
                 if (cc == null) {
-                    throw new IllegalArgumentException(fct.insn.op.key + " is not supported");
+                    throw new IllegalArgumentException(fct.insn().op.key + " is not supported");
                 }
                 cc.convert(fct, jb, WirToJirPerFunc.this);
             }

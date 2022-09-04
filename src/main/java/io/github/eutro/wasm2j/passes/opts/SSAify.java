@@ -7,7 +7,6 @@ import io.github.eutro.wasm2j.passes.InPlaceIrPass;
 import io.github.eutro.wasm2j.passes.meta.ComputeDomFrontier;
 import io.github.eutro.wasm2j.ssa.*;
 import io.github.eutro.wasm2j.ops.CommonOps;
-import io.github.eutro.wasm2j.ssa.*;
 
 import java.util.*;
 
@@ -46,7 +45,7 @@ public class SSAify implements InPlaceIrPass<Function> {
             Set<Var> assigned = data.kill;
 
             for (Effect effect : block.getEffects()) {
-                for (Var arg : effect.insn.args) {
+                for (Var arg : effect.insn().args) {
                     if (!assigned.contains(arg)) used.add(arg);
                 }
                 assigned.addAll(effect.getAssignsTo());
@@ -148,7 +147,7 @@ public class SSAify implements InPlaceIrPass<Function> {
             void dfs(BasicBlock block) {
                 Map<Var, Integer> varsReplaced = new HashMap<>();
                 for (Effect effect : block.getEffects()) {
-                    replaceUsages(effect.insn);
+                    replaceUsages(effect.insn());
                     ListIterator<Var> it = effect.getAssignsTo().listIterator();
                     while (it.hasNext()) {
                         Var dest = it.next();
@@ -165,7 +164,7 @@ public class SSAify implements InPlaceIrPass<Function> {
                 for (BasicBlock succ : data.succ) {
                     BlockData succData = succ.getExtOrThrow(bdExt);
                     for (Map.Entry<Var, Effect> entry : succData.phis.entrySet()) {
-                        Insn phiInsn = entry.getValue().insn;
+                        Insn phiInsn = entry.getValue().insn();
                         UnaryOpKey<List<BasicBlock>>.UnaryOp phi
                                 = CommonOps.PHI.check(phiInsn.op).orElseThrow(RuntimeException::new);
                         Var branchVal = top(entry.getKey());

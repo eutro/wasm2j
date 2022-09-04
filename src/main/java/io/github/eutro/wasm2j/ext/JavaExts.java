@@ -1,10 +1,24 @@
 package io.github.eutro.wasm2j.ext;
 
+import io.github.eutro.wasm2j.ssa.Function;
+import org.objectweb.asm.Opcodes;
+import org.objectweb.asm.Type;
+
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Locale;
 
 public class JavaExts {
-    public static class JavaClass {
+    public static final Ext<Function> METHOD_IMPL = Ext.create(Function.class);
+    public static final Ext<Type> TYPE = Ext.create(Type.class);
+    public static final Ext<String> FUNCTION_DESCRIPTOR = Ext.create(String.class);
+
+    public static Type BOTTOM_TYPE = Type.getType(Void.class);
+
+    public static class JavaClass extends ExtHolder {
         public String name; // internal name
+        public List<JavaMethod> methods = new ArrayList<>();
+        public List<JavaField> fields = new ArrayList<>();
 
         public JavaClass(String name) {
             this.name = name;
@@ -16,7 +30,7 @@ public class JavaExts {
         }
     }
 
-    public static class JavaMethod {
+    public static class JavaMethod extends ExtHolder {
         public final JavaClass owner;
         public final String name, descriptor;
         public final Type type;
@@ -29,9 +43,17 @@ public class JavaExts {
         }
 
         public enum Type {
-            STATIC,
-            VIRTUAL,
-            FINAL,
+            STATIC(Opcodes.ACC_STATIC | Opcodes.ACC_PUBLIC),
+            STATIC_PRIVATE(Opcodes.ACC_STATIC | Opcodes.ACC_PRIVATE),
+            VIRTUAL(Opcodes.ACC_PUBLIC),
+            FINAL(Opcodes.ACC_PRIVATE),
+            ;
+
+            public final int access;
+
+            Type(int access) {
+                this.access = access;
+            }
         }
 
         @Override
@@ -44,7 +66,7 @@ public class JavaExts {
         }
     }
 
-    public static class JavaField {
+    public static class JavaField extends ExtHolder {
         public JavaClass owner;
         public String name, descriptor;
         public boolean isStatic;

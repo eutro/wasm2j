@@ -1,8 +1,9 @@
-package io.github.eutro.wasm2j.passes;
+package io.github.eutro.wasm2j.passes.misc;
 
+import io.github.eutro.wasm2j.passes.IRPass;
+import io.github.eutro.wasm2j.passes.InPlaceIrPass;
 import io.github.eutro.wasm2j.ssa.*;
 import io.github.eutro.wasm2j.ssa.Module;
-import io.github.eutro.wasm2j.ssa.*;
 
 import java.util.AbstractList;
 import java.util.ListIterator;
@@ -65,7 +66,7 @@ public class ForPass {
                 @Override
                 public Insn get(int index) {
                     if (index == effectsSize) return basicBlock.getControl().insn;
-                    return basicBlock.getEffects().get(index).insn;
+                    return basicBlock.getEffects().get(index).insn();
                 }
 
                 @Override
@@ -77,8 +78,8 @@ public class ForPass {
                         return old;
                     }
                     Effect effect = basicBlock.getEffects().get(index);
-                    Insn old = effect.insn;
-                    effect.insn = element;
+                    Insn old = effect.insn();
+                    effect.setInsn(element);
                     return old;
                 }
             }.listIterator();

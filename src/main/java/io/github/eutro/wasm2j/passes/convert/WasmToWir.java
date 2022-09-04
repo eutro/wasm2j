@@ -4,7 +4,7 @@ import io.github.eutro.jwasm.BlockType;
 import io.github.eutro.jwasm.tree.*;
 import io.github.eutro.wasm2j.ext.CommonExts;
 import io.github.eutro.wasm2j.ext.WasmExts;
-import io.github.eutro.wasm2j.passes.ForPass;
+import io.github.eutro.wasm2j.passes.misc.ForPass;
 import io.github.eutro.wasm2j.passes.IRPass;
 import io.github.eutro.wasm2j.passes.opts.Opt0;
 import io.github.eutro.wasm2j.ops.CommonOps;
@@ -12,7 +12,6 @@ import io.github.eutro.wasm2j.ops.WasmOps;
 import io.github.eutro.wasm2j.ssa.*;
 import io.github.eutro.wasm2j.ssa.Module;
 import io.github.eutro.wasm2j.util.InsnMap;
-import io.github.eutro.wasm2j.ssa.*;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
@@ -774,10 +773,8 @@ public class WasmToWir implements IRPass<ModuleNode, Module> {
     private static class FullConvertState {
         private final TypeNode[] funcTypes;
         private final FuncNode[] referencableFuncs;
-        private final ModuleNode node;
 
         public FullConvertState(ModuleNode node) {
-            this.node = node;
             TypeNode[] funcTypes = new TypeNode[0];
             if (node.types != null && node.types.types != null) {
                 funcTypes = node.types.types.toArray(funcTypes);

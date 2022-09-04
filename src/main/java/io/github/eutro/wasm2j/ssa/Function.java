@@ -1,11 +1,23 @@
 package io.github.eutro.wasm2j.ssa;
 
+import io.github.eutro.wasm2j.ext.CommonExts;
 import io.github.eutro.wasm2j.ext.ExtHolder;
+import io.github.eutro.wasm2j.ext.TrackedList;
 
 import java.util.*;
 
 public final class Function extends ExtHolder {
-    public List<BasicBlock> blocks = new ArrayList<>(); // [0] is entry
+    public final List<BasicBlock> blocks = new TrackedList<BasicBlock>(new ArrayList<>()) {
+        @Override
+        protected void onAdded(BasicBlock elt) {
+            elt.attachExt(CommonExts.OWNING_FUNCTION, Function.this);
+        }
+
+        @Override
+        protected void onRemoved(BasicBlock elt) {
+            elt.removeExt(CommonExts.OWNING_FUNCTION);
+        }
+    }; // [0] is entry
 
     private final Map<String, Set<Var>> vars = new HashMap<>();
     public Var newVar(String name) {

@@ -1,5 +1,6 @@
 package io.github.eutro.wasm2j.passes.convert;
 
+import io.github.eutro.wasm2j.ext.JavaExts;
 import io.github.eutro.wasm2j.ops.CommonOps;
 import io.github.eutro.wasm2j.ops.JavaOps;
 import io.github.eutro.wasm2j.ops.Op;
@@ -21,6 +22,7 @@ public class JavaToJir implements IRPass<MethodNode, Function> {
     @Override
     public Function run(MethodNode method) {
         Function func = new Function();
+        func.attachExt(JavaExts.FUNCTION_DESCRIPTOR, method.desc);
         new Converter(func).convert(method);
         return func;
     }
@@ -171,6 +173,9 @@ public class JavaToJir implements IRPass<MethodNode, Function> {
                 case Opcodes.D2F:
                     bb.addEffect(insnOp(insn).insn(popVar()).assignTo(pushVar()));
                     break;
+                case Opcodes.LDC:
+                    bb.addEffect(CommonOps.CONST.create(((LdcInsnNode) insn).cst).insn().assignTo(pushVar()));
+                    break;
                 case Opcodes.ACONST_NULL:
                 case Opcodes.ICONST_M1:
                 case Opcodes.ICONST_0:
@@ -189,7 +194,6 @@ public class JavaToJir implements IRPass<MethodNode, Function> {
                 case Opcodes.DCONST_0:
                 case Opcodes.DCONST_1:
                 case Opcodes.GETSTATIC:
-                case Opcodes.LDC:
                 case Opcodes.NEW:
                     bb.addEffect(insnOp(insn).insn().assignTo(pushVar()));
                     break;
