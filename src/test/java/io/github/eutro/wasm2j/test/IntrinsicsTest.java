@@ -13,6 +13,7 @@ import io.github.eutro.wasm2j.passes.misc.JoinPass;
 import io.github.eutro.wasm2j.passes.opts.DeadVarElimination;
 import io.github.eutro.wasm2j.passes.opts.IdentityElimination;
 import io.github.eutro.wasm2j.passes.opts.SSAify;
+import io.github.eutro.wasm2j.passes.opts.Stackify;
 import io.github.eutro.wasm2j.ssa.Function;
 import io.github.eutro.wasm2j.ssa.Module;
 import io.github.eutro.wasm2j.ssa.display.DisplayInteraction;
@@ -57,8 +58,9 @@ public class IntrinsicsTest {
                                 .then(SSAify.INSTANCE)
                                 .then(ForPass.liftInsns(IdentityElimination.INSTANCE).lift())
                                 .then(DeadVarElimination.INSTANCE)
-                                .then(ForPass.liftBasicBlocks(InferTypes.Java.INSTANCE))
-                                .then(LowerPhis.INSTANCE),
+                                .then(LowerPhis.INSTANCE)
+                                .then(Stackify.INSTANCE)
+                                .then(ForPass.liftBasicBlocks(InferTypes.Java.INSTANCE)),
                         mn -> {
                             JavaExts.JavaClass clazz = new JavaExts.JavaClass("dev/eutro/Test");
                             clazz.methods.add(new JavaExts.JavaMethod(

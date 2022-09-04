@@ -238,15 +238,20 @@ public class JirToJava implements IRPass<Module, ClassNode> {
     }
 
     static {
-        CTRL_CONVERTERS.put(CommonOps.BR.key, (jb, ct) ->
-                jb.goTo(ct.targets.get(0).getExtOrThrow(LABEL_EXT)));
+        CTRL_CONVERTERS.put(CommonOps.BR.key, (jb, ct) -> {
+            BasicBlock target = ct.targets.get(0);
+            if (ct.getExtOrThrow(CommonExts.OWNING_BLOCK)
+                    .getExt(NEXT_BLOCK_EXT).orElse(null) != target) {
+                jb.goTo(target.getExtOrThrow(LABEL_EXT));
+            }
+        });
         CTRL_CONVERTERS.put(JavaOps.BR_COND, (jb, ct) -> {
             JavaOps.JumpType ty = JavaOps.BR_COND.cast(ct.insn.op).arg;
             BasicBlock targetBlock = ct.targets.get(0);
             BasicBlock fallthroughBlock = ct.targets.get(1);
             jb.visitJumpInsn(ty.opcode, targetBlock.getExtOrThrow(LABEL_EXT));
             BasicBlock nextBlock = ct.getExtOrThrow(CommonExts.OWNING_BLOCK)
-                    .getExtOrThrow(NEXT_BLOCK_EXT);
+                    .getExt(NEXT_BLOCK_EXT).orElse(null);
             if (fallthroughBlock != nextBlock) {
                 jb.goTo(fallthroughBlock.getExtOrThrow(LABEL_EXT));
             }
@@ -257,6 +262,9 @@ public class JirToJava implements IRPass<Module, ClassNode> {
 
     private static void emitLoads(JavaBuilder jb, Insn insn) {
         for (Var arg : insn.args) {
+            if (arg.getExt(CommonExts.STACKIFIED).orElse(false)) {
+                continue;
+            }
             jb.loadLocal(
                     arg.getExtOrThrow(LOCAL_EXT),
                     arg.getExtOrThrow(JavaExts.TYPE)
@@ -268,6 +276,9 @@ public class JirToJava implements IRPass<Module, ClassNode> {
         ListIterator<Var> it = fx.getAssignsTo().listIterator(fx.getAssignsTo().size());
         while (it.hasPrevious()) {
             Var var = it.previous();
+            if (var.getExt(CommonExts.STACKIFIED).orElse(false)) {
+                continue;
+            }
             jb.storeLocal(
                     var.getExtOrThrow(LOCAL_EXT),
                     var.getExtOrThrow(JavaExts.TYPE)

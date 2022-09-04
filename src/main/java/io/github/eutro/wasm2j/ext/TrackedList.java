@@ -2,8 +2,9 @@ package io.github.eutro.wasm2j.ext;
 
 import java.util.AbstractList;
 import java.util.List;
+import java.util.RandomAccess;
 
-public abstract class TrackedList<E> extends AbstractList<E> {
+public abstract class TrackedList<E> extends AbstractList<E> implements RandomAccess /* probably */ {
     private List<E> viewed;
 
     public TrackedList(List<E> viewed) {
