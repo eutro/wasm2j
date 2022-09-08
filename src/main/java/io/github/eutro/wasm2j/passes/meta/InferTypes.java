@@ -7,25 +7,23 @@ import io.github.eutro.wasm2j.ops.CommonOps;
 import io.github.eutro.wasm2j.ops.JavaOps;
 import io.github.eutro.wasm2j.ops.OpKey;
 import io.github.eutro.wasm2j.passes.InPlaceIrPass;
-import io.github.eutro.wasm2j.ssa.BasicBlock;
-import io.github.eutro.wasm2j.ssa.Effect;
-import io.github.eutro.wasm2j.ssa.Insn;
-import io.github.eutro.wasm2j.ssa.Var;
+import io.github.eutro.wasm2j.ssa.*;
+import io.github.eutro.wasm2j.util.F;
+import io.github.eutro.wasm2j.util.Preorder;
 import org.jetbrains.annotations.NotNull;
-import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
 import org.objectweb.asm.tree.AbstractInsnNode;
 import org.objectweb.asm.tree.FieldInsnNode;
 import org.objectweb.asm.tree.MethodInsnNode;
+import org.objectweb.asm.tree.TypeInsnNode;
 
 import java.lang.reflect.Array;
 import java.util.*;
-import java.util.function.Function;
 
 import static io.github.eutro.wasm2j.passes.meta.InferTypes.FuncType.withArity;
 import static org.objectweb.asm.Opcodes.*;
 
-public abstract class InferTypes<Ty> implements InPlaceIrPass<BasicBlock> {
+public abstract class InferTypes<Ty> implements InPlaceIrPass<Function> {
     protected final Ext<Ty> tyExt;
 
     public InferTypes(Ext<Ty> tyExt) {
@@ -33,21 +31,30 @@ public abstract class InferTypes<Ty> implements InPlaceIrPass<BasicBlock> {
     }
 
     @Override
-    public void runInPlace(BasicBlock basicBlock) {
-        for (Effect effect : basicBlock.getEffects()) {
-            try {
-                Ty[] retTys = inferInsn(effect.insn());
-                if (retTys == null) continue;
-                List<Var> assignsTo = effect.getAssignsTo();
-                if (assignsTo.size() != retTys.length) {
-                    throw new IllegalStateException("insn return type mismatch");
+    public void runInPlace(Function func) {
+        for (BasicBlock block : new Preorder<>(func.blocks.get(0), $ -> $.getControl().targets)) {
+            for (Effect effect : block.getEffects()) {
+                try {
+                    Ty[] retTys = inferInsn(effect.insn());
+                    if (retTys == null) continue;
+                    List<Var> assignsTo = effect.getAssignsTo();
+                    if (assignsTo.size() != retTys.length) {
+                        throw new IllegalStateException(String.format(
+                                "insn return type mismatch, assigns %d, inferred %d",
+                                assignsTo.size(), retTys.length
+                        ));
+                    }
+                    int i = 0;
+                    for (Var var : assignsTo) {
+                        var.attachExt(tyExt, retTys[i++]);
+                    }
+                } catch (Exception e) {
+                    throw new RuntimeException(String.format(
+                            "error inferring %s; in block: %s",
+                            effect,
+                            block.toTargetString()
+                    ), e);
                 }
-                int i = 0;
-                for (Var var : assignsTo) {
-                    var.attachExt(tyExt, retTys[i++]);
-                }
-            } catch (Exception e) {
-                throw new RuntimeException("error inferring " + effect.insn(), e);
             }
         }
     }
@@ -59,7 +66,7 @@ public abstract class InferTypes<Ty> implements InPlaceIrPass<BasicBlock> {
 
         int arity();
 
-        static <Ty> FuncType<Ty> withArity(int n, Function<Ty[], Ty[]> f) {
+        static <Ty> FuncType<Ty> withArity(int n, F<Ty[], Ty[]> f) {
             return new FuncType<Ty>() {
                 @Override
                 public Ty[] inferResult(Ty[] args) {
@@ -114,7 +121,10 @@ public abstract class InferTypes<Ty> implements InPlaceIrPass<BasicBlock> {
                         toCheck = t;
                     }
                     if (argTy != null && !Objects.equals(toCheck, argTy)) {
-                        throw new IllegalArgumentException("type mismatch");
+                        throw new IllegalArgumentException(String.format(
+                                "type mismatch: expected %s at index %d, got %s",
+                                toCheck, i, argTy
+                        ));
                     }
                 }
             }
@@ -141,9 +151,9 @@ public abstract class InferTypes<Ty> implements InPlaceIrPass<BasicBlock> {
         }
 
         public static class Parser<Ty> {
-            private final Function<String, Ty> parseTy;
+            private final F<String, Ty> parseTy;
 
-            public Parser(Function<String, Ty> parseTy) {
+            public Parser(F<String, Ty> parseTy) {
                 this.parseTy = parseTy;
             }
 
@@ -211,16 +221,16 @@ public abstract class InferTypes<Ty> implements InPlaceIrPass<BasicBlock> {
             Type[] argTys = new Type[insn.args.size()];
             int i = 0;
             for (Var arg : insn.args) {
-                argTys[i] = arg.getExt(JavaExts.TYPE).orElse(null);
+                argTys[i++] = arg.getExt(JavaExts.TYPE).orElse(null);
             }
             return argTys;
         }
 
         private static class MapBuilder<T, R> {
-            private final Function<String, R> mapper;
+            private final F<String, R> mapper;
             private final Map<T, R> map = new HashMap<>();
 
-            private MapBuilder(Function<String, R> mapper) {
+            private MapBuilder(F<String, R> mapper) {
                 this.mapper = mapper;
             }
 
@@ -242,8 +252,8 @@ public abstract class InferTypes<Ty> implements InPlaceIrPass<BasicBlock> {
             }
         }
 
-        private static final Map<Integer, Function<AbstractInsnNode, FuncType<Type>>> OPCODE_MAP = new MapBuilder<Integer, Function<AbstractInsnNode, FuncType<Type>>>(
-                ((Function<String, FuncType<Type>>)
+        private static final Map<Integer, F<AbstractInsnNode, FuncType<Type>>> OPCODE_MAP = new MapBuilder<Integer, F<AbstractInsnNode, FuncType<Type>>>(
+                ((F<String, FuncType<Type>>)
                         new SFuncType.Parser<>(Type::getType)::parse)
                         .andThen(it -> $ -> it))
                 .put(insn -> {
@@ -264,14 +274,18 @@ public abstract class InferTypes<Ty> implements InPlaceIrPass<BasicBlock> {
                             return withArity(insn.getOpcode() == GETSTATIC ? 0 : 1, $ -> res);
                         },
                         GETSTATIC, GETFIELD)
+                .put(insn ->
+                        withArity(0, $ -> new Type[]{Type.getObjectType(((TypeInsnNode) insn).desc)}), NEW)
 
                 .put(" -> ", NOP)
+                .put("a -> ", POP)
 
                 .put("I -> J", I2L)
                 .put("I -> F", I2F)
                 .put("I -> D", I2D)
                 .put("F -> I", F2I)
                 .put("F -> J", F2L)
+                .put("F -> D", F2D)
                 .put("D -> J", D2L)
                 .put("D -> I", D2I)
                 .put("D -> F", D2F)
@@ -325,7 +339,7 @@ public abstract class InferTypes<Ty> implements InPlaceIrPass<BasicBlock> {
                 .build();
 
         private static final Map<OpKey, Inferer> OP_MAP = new MapBuilder<OpKey, Inferer>(
-                ((Function<String, SFuncType<Type>>) new SFuncType.Parser<>(Type::getType)::parse)
+                ((F<String, SFuncType<Type>>) new SFuncType.Parser<>(Type::getType)::parse)
                         .andThen(Inferer::fromFuncType)
         )
                 .put(Java::getArgTys, CommonOps.IDENTITY.key)
@@ -335,10 +349,21 @@ public abstract class InferTypes<Ty> implements InPlaceIrPass<BasicBlock> {
                         },
                         JavaOps.INTRINSIC)
 
-                .put("I a -> ", JavaOps.MEM_SET)
-
                 .put(insn -> new Type[]{Type.getType(JavaOps.GET_FIELD.cast(insn.op).arg.descriptor)},
                         JavaOps.GET_FIELD)
+
+                .put(insn -> {
+                            Type retTy = Type.getReturnType(JavaOps.INVOKE.cast(insn.op).arg.descriptor);
+                            return retTy.getSize() == 0 ? new Type[0] : new Type[]{retTy};
+                        },
+                        JavaOps.INVOKE)
+
+                .put(insn -> new Type[]{insn.args.get(0).getExt(JavaExts.TYPE)
+                        .map(Type::getElementType)
+                        .orElse(null)},
+                        JavaOps.ARRAY_GET)
+
+                .put(insn -> new Type[]{}, JavaOps.PUT_FIELD, JavaOps.ARRAY_SET)
 
                 .put(" -> Ljava/lang/Object;", JavaOps.THIS.key)
 

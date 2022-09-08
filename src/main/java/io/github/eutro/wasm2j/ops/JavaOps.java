@@ -2,9 +2,9 @@ package io.github.eutro.wasm2j.ops;
 
 import io.github.eutro.wasm2j.ext.CommonExts;
 import io.github.eutro.wasm2j.intrinsics.IntrinsicImpl;
+import io.github.eutro.wasm2j.ssa.Insn;
 import io.github.eutro.wasm2j.util.Disassembler;
 import io.github.eutro.wasm2j.ext.JavaExts.*;
-import org.intellij.lang.annotations.Language;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.tree.AbstractInsnNode;
 import org.objectweb.asm.tree.InsnList;
@@ -16,29 +16,32 @@ public class JavaOps {
 
     public static final Op THIS = new SimpleOpKey("this").create();
 
+    public static final UnaryOpKey<JavaMethod> HANDLE_OF = new UnaryOpKey<>("handle_of");
     public static final UnaryOpKey<JavaMethod> INVOKE = new UnaryOpKey<>("invoke");
 
-    public static final UnaryOpKey<JavaField> GET_FIELD = new UnaryOpKey<>("get");
-    public static final UnaryOpKey<JavaField> PUT_FIELD = new UnaryOpKey<>("put");
+    public static final UnaryOpKey<JavaField> GET_FIELD = new UnaryOpKey<>("get_field");
+    public static final UnaryOpKey<JavaField> PUT_FIELD = new UnaryOpKey<>("put_field");
 
     public static final UnaryOpKey<JumpType> BR_COND = new UnaryOpKey<>("br_cond");
     public static final UnaryOpKey<JumpType> SELECT = new UnaryOpKey<>("select");
     public static final UnaryOpKey<JumpType> BOOL_SELECT = new UnaryOpKey<>("bool");
 
-    public static final UnaryOpKey<MemoryType> MEM_GET = new UnaryOpKey<>("mem_get");
-    public static final UnaryOpKey<MemoryType> MEM_SET = new UnaryOpKey<>("mem_set");
-
     public static final SimpleOpKey ARRAY_GET = new SimpleOpKey("array_get");
     public static final SimpleOpKey ARRAY_SET = new SimpleOpKey("array_set");
 
-    public static final UnaryOpKey<InsnList> INSNS = new UnaryOpKey<>("insns", insns -> {
-        StringBuilder sb = new StringBuilder();
-        for (AbstractInsnNode insn : insns) {
-            Disassembler.disassembleInsn(sb, insn);
-            if (insn != insns.getLast()) sb.append("; ");
+    public static final UnaryOpKey<InsnList> INSNS = new UnaryOpKey<>("insns", Disassembler::disassembleList);
+
+    public static Op insns(InsnList insns) {
+        return INSNS.create(insns);
+    }
+
+    public static Op insns(AbstractInsnNode... in) {
+        InsnList il = new InsnList();
+        for (AbstractInsnNode node : in) {
+            il.add(node);
         }
-        return sb.toString();
-    });
+        return insns(il);
+    }
 
     public enum JumpType {
         IFNE(Opcodes.IFNE),
@@ -86,37 +89,6 @@ public class JavaOps {
                     throw new IllegalArgumentException();
             }
             // @formatter:on
-        }
-    }
-
-    public enum MemoryType {
-        BYTE("get", "put"),
-        SHORT("getShort", "putShort"),
-        INT("getInt", "putInt"),
-        LONG("getLong", "putLong"),
-        FLOAT("getFloat", "putFloat"),
-        DOUBLE("getDouble", "putDouble"),
-        ;
-
-        public final String get;
-        public final String put;
-
-        MemoryType(
-                @Language(
-                        value = "JAVA",
-                        prefix = "class X{{ByteBuffer.wrap(new byte[0]).",
-                        suffix = "(0);}}"
-                )
-                String get,
-                @Language(
-                        value = "JAVA",
-                        prefix = "class X{{ByteBuffer.wrap(new byte[0]).",
-                        suffix = "(0, (byte) 0);}}"
-                )
-                String put
-        ) {
-            this.get = get;
-            this.put = put;
         }
     }
 

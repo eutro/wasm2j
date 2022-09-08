@@ -1,6 +1,7 @@
 package io.github.eutro.wasm2j.ssa;
 
 import io.github.eutro.wasm2j.ops.CommonOps;
+import io.github.eutro.wasm2j.ops.Op;
 
 import java.util.*;
 
@@ -23,12 +24,17 @@ public class Inliner {
         for (BasicBlock thisBb : from.blocks) {
             BasicBlock iBb = blockMap.computeIfAbsent(thisBb, $ -> into.newBb());
             for (Effect effect : thisBb.getEffects()) {
-                Integer argIdx = CommonOps.ARG.check(effect.insn().op).map(it -> it.arg).orElse(null);
+                Op op = effect.insn().op;
+                Integer argIdx = CommonOps.ARG.check(op).map(it -> it.arg).orElse(null);
                 Insn insn;
                 if (argIdx != null) {
                     insn = CommonOps.IDENTITY.insn(args.get(argIdx));
+                } else if (op.key == CommonOps.PHI) {
+                    insn = CommonOps.PHI.create(new ArrayList<>(
+                            Arrays.asList(refreshBbs(CommonOps.PHI.cast(op).arg))))
+                            .insn(refreshVars(effect.insn().args));
                 } else {
-                    insn = effect.insn().op.insn(refreshVars(effect.insn().args));
+                    insn = op.insn(refreshVars(effect.insn().args));
                 }
                 iBb.addEffect(insn.assignTo(refreshVars(effect.getAssignsTo())));
             }

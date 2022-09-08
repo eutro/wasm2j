@@ -5,6 +5,7 @@ import io.github.eutro.wasm2j.passes.convert.JirToJava;
 import io.github.eutro.wasm2j.passes.misc.ForPass;
 import io.github.eutro.wasm2j.passes.opts.DeadVarElimination;
 import io.github.eutro.wasm2j.passes.opts.IdentityElimination;
+import io.github.eutro.wasm2j.passes.opts.Opt0;
 import io.github.eutro.wasm2j.passes.opts.SSAify;
 import io.github.eutro.wasm2j.ssa.Function;
 import org.objectweb.asm.Type;

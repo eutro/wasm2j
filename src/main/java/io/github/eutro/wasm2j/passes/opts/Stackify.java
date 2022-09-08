@@ -147,7 +147,11 @@ public class Stackify implements InPlaceIrPass<Function> {
                     getOrCreateUses(arg).add(effect.insn());
                 }
             }
-            list.last.insertAfter(null);
+            if (list.last == null) {
+                list.first = list.last = new Node<>(null, null, null, list);
+            } else {
+                list.last.insertAfter(null);
+            }
             Control ctrl = block.getControl();
             for (Var arg : ctrl.insn.args) {
                 getOrCreateUses(arg).add(ctrl.insn);

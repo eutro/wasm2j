@@ -2,6 +2,7 @@ package io.github.eutro.wasm2j.test;
 
 import io.github.eutro.jwasm.tree.ModuleNode;
 import io.github.eutro.wasm2j.conf.Conventions;
+import io.github.eutro.wasm2j.passes.meta.LowerIntrinsics;
 import io.github.eutro.wasm2j.passes.misc.ForPass;
 import io.github.eutro.wasm2j.passes.IRPass;
 import io.github.eutro.wasm2j.passes.convert.WasmToWir;
@@ -12,7 +13,7 @@ import org.junit.jupiter.api.Test;
 
 public class IRTest {
     void testPass(IRPass<ModuleNode, ?> pass) throws Throwable {
-        ModuleNode mn = Utils.getRawModuleNode("/unsimple_bg.wasm");
+        ModuleNode mn = Utils.getRawModuleNode("/simple_bg.wasm");
         pass.run(mn);
     }
 

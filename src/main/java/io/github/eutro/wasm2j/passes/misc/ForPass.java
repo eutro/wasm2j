@@ -103,7 +103,11 @@ public class ForPass {
         public void runInPlace(Lifted lifted) {
             ListIterator<T> iter = getListIter(lifted);
             while (iter.hasNext()) {
-                iter.set(pass.run(iter.next()));
+                try {
+                    iter.set(pass.run(iter.next()));
+                } catch (RuntimeException e) {
+                    throw new RuntimeException("error running pass on element " + iter.previousIndex(), e);
+                }
             }
         }
     }

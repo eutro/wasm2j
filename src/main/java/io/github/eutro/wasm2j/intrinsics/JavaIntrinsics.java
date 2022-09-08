@@ -20,9 +20,9 @@ public class JavaIntrinsics {
         ImplClassBytes.getClassReader().accept(IMPL_NODE, ClassReader.SKIP_DEBUG);
 
         for (MethodNode method : IMPL_NODE.methods) {
-            if (method.invisibleAnnotations == null) continue;
+            if (method.visibleAnnotations == null) continue;
             AnnotationNode intrinsicAnnot = null;
-            for (AnnotationNode annot : method.invisibleAnnotations) {
+            for (AnnotationNode annot : method.visibleAnnotations) {
                 if (Type.getDescriptor(Intrinsic.class).equals(annot.desc)) {
                     intrinsicAnnot = annot;
                     break;

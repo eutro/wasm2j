@@ -9,6 +9,7 @@ import io.github.eutro.wasm2j.ops.OpKey;
 import io.github.eutro.wasm2j.passes.IRPass;
 import io.github.eutro.wasm2j.ssa.*;
 import io.github.eutro.wasm2j.ssa.Module;
+import io.github.eutro.wasm2j.util.Preorder;
 import org.objectweb.asm.Type;
 import org.objectweb.asm.Label;
 import org.objectweb.asm.Opcodes;
@@ -19,6 +20,7 @@ import org.objectweb.asm.tree.FieldNode;
 import org.objectweb.asm.tree.MethodNode;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 public class JirToJava implements IRPass<Module, ClassNode> {
     public static final Ext<Integer> LOCAL_EXT = Ext.create(Integer.class);
@@ -84,25 +86,11 @@ public class JirToJava implements IRPass<Module, ClassNode> {
 
         // 1.
         List<BasicBlock> blockOrder = new ArrayList<>();
-        {
-            List<BasicBlock> stack = new ArrayList<>();
-            Set<BasicBlock> seen = new HashSet<>();
-            BasicBlock root = impl.blocks.get(0);
-            stack.add(root);
-            seen.add(root);
-
-            while (!stack.isEmpty()) {
-                BasicBlock block = stack.remove(stack.size() - 1);
-                blockOrder.add(block);
-                // order is important here, the last one to be pushed is visited first
-                // in the next cycle; in this case we want the fallthrough branch
-                // to be visited next, which we have put as the last target
-                for (BasicBlock target : block.getControl().targets) {
-                    if (seen.add(target)) {
-                        stack.add(target);
-                    }
-                }
-            }
+        // order is important here, the last one to be pushed is visited first
+        // in the next cycle; in this case we want the fallthrough branch
+        // to be visited next, which we have put as the last target
+        for (BasicBlock bb : new Preorder<>(impl.blocks.get(0), $ -> $.getControl().targets)) {
+            blockOrder.add(bb);
         }
 
         // 2.
@@ -135,7 +123,9 @@ public class JirToJava implements IRPass<Module, ClassNode> {
                     for (Var var : effect.getAssignsTo()) {
                         if (!allVars.add(var)) continue;
                         Type ty = var.getExt(JavaExts.TYPE).orElseThrow(() ->
-                                new IllegalStateException("types have not been inferred"));
+                                new IllegalStateException(String.format(
+                                        "type of var %s has not been inferred",
+                                        var)));
                         Object v = getLocalForType(ty);
                         localsList.add(v);
                         var.attachExt(LOCAL_EXT, localC);
@@ -188,7 +178,7 @@ public class JirToJava implements IRPass<Module, ClassNode> {
         else if (ty == Type.DOUBLE_TYPE) v = Opcodes.DOUBLE;
         else if (ty == Type.LONG_TYPE) v = Opcodes.LONG;
         else if (ty == JavaExts.BOTTOM_TYPE) v = Opcodes.NULL;
-        else v = ty.getDescriptor();
+        else v = ty.getInternalName();
         return v;
     }
 
@@ -212,9 +202,15 @@ public class JirToJava implements IRPass<Module, ClassNode> {
     static {
         FX_CONVERTERS.put(CommonOps.ARG, (jb, fx) ->
                 jb.loadArg(CommonOps.ARG.cast(fx.insn().op).arg));
-        FX_CONVERTERS.put(JavaOps.INTRINSIC, (jb, fx) -> {
-            throw new IllegalStateException("intrinsic not lowered");
-        });
+        for (OpKey key : new OpKey[]{JavaOps.INTRINSIC, JavaOps.SELECT, JavaOps.BOOL_SELECT}) {
+            FX_CONVERTERS.put(key, (jb, fx) -> {
+                throw new IllegalStateException(
+                        String.format(
+                                "intrinsic not lowered: %s",
+                                fx.insn().op
+                        ));
+            });
+        }
         FX_CONVERTERS.put(CommonOps.PHI, (jb, fx) -> {
             // not our responsibility :P
             if (!fx.getExt(CommonExts.PHI_LOWERED).orElse(false)) {
@@ -233,8 +229,31 @@ public class JirToJava implements IRPass<Module, ClassNode> {
             else jb.visitLdcInsn(cst);
         });
         FX_CONVERTERS.put(JavaOps.INSNS, (jb, fx) ->
-                JavaOps.INSNS.cast(fx.insn().op).arg
-                        .accept(jb));
+                JavaOps.INSNS.cast(fx.insn().op).arg.accept(jb));
+        FX_CONVERTERS.put(JavaOps.THIS.key, (jb, fx) ->
+                jb.loadThis());
+        FX_CONVERTERS.put(JavaOps.GET_FIELD, (jb, fx) -> {
+            JavaExts.JavaField field = JavaOps.GET_FIELD.cast(fx.insn().op).arg;
+            jb.getField(Type.getObjectType(field.owner.name), field.name, Type.getType(field.descriptor));
+        });
+        FX_CONVERTERS.put(JavaOps.PUT_FIELD, (jb, fx) -> {
+            JavaExts.JavaField field = JavaOps.PUT_FIELD.cast(fx.insn().op).arg;
+            jb.putField(Type.getObjectType(field.owner.name), field.name, Type.getType(field.descriptor));
+        });
+        FX_CONVERTERS.put(JavaOps.INVOKE, (jb, fx) -> {
+            JavaExts.JavaMethod method = JavaOps.INVOKE.cast(fx.insn().op).arg;
+            jb.visitMethodInsn(
+                    method.type.opcode,
+                    method.owner.name,
+                    method.name,
+                    method.descriptor,
+                    false
+            );
+        });
+        FX_CONVERTERS.put(JavaOps.ARRAY_GET, (jb, fx) ->
+                jb.arrayLoad(fx.insn().args.get(0).getExtOrThrow(JavaExts.TYPE).getElementType()));
+        FX_CONVERTERS.put(JavaOps.ARRAY_SET, (jb, fx) ->
+                jb.arrayStore(fx.insn().args.get(0).getExtOrThrow(JavaExts.TYPE).getElementType()));
     }
 
     static {
@@ -258,6 +277,23 @@ public class JirToJava implements IRPass<Module, ClassNode> {
         });
         CTRL_CONVERTERS.put(CommonOps.RETURN.key, (jb, ct) ->
                 jb.returnValue());
+        CTRL_CONVERTERS.put(JavaOps.INSNS, (jb, ct) ->
+                JavaOps.INSNS.cast(ct.insn.op).arg.accept(jb));
+        CTRL_CONVERTERS.put(JavaOps.TABLESWITCH, (jb, ct) -> {
+            Label[] labels = new Label[ct.targets.size() - 1];
+            for (int i = 0; i < labels.length; i++) {
+                BasicBlock bb = ct.targets.get(i);
+                labels[i] = bb.getExtOrThrow(LABEL_EXT);
+            }
+            jb.visitTableSwitchInsn(
+                    0,
+                    ct.targets.size() - 1,
+                    ct.targets.get(ct.targets.size() - 1).getExtOrThrow(LABEL_EXT),
+                    labels
+            );
+        });
+        CTRL_CONVERTERS.put(CommonOps.UNREACHABLE.key, (jb, ct) ->
+                jb.throwException(Type.getType(RuntimeException.class), "unreachable reached"));
     }
 
     private static void emitLoads(JavaBuilder jb, Insn insn) {

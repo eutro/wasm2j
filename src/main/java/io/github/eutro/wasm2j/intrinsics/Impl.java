@@ -20,33 +20,33 @@ public final class Impl {
     @Intrinsic(I32_GE_U) public static int i32GeU(int x, int y) { return Integer.compareUnsigned(x, y) >= 0 ? 1 : 0; }
     // endregion
     // region i64
-    @Intrinsic(I64_EQZ) public static long i64Eqz(long x) { return x == 0 ? 1 : 0; }
-    @Intrinsic(I64_EQ) public static long i64Eq(long x, long y) { return x == y ? 1 : 0; }
-    @Intrinsic(I64_NE) public static long i64Ne(long x, long y) { return x != y ? 1 : 0; }
-    @Intrinsic(I64_LT_S) public static long i64LtS(long x, long y) { return x < y ? 1 : 0; }
-    @Intrinsic(I64_LT_U) public static long i64LtU(long x, long y) { return Long.compareUnsigned(x, y) < 0 ? 1 : 0; }
-    @Intrinsic(I64_GT_S) public static long i64GtS(long x, long y) { return x > y ? 1 : 0; }
-    @Intrinsic(I64_GT_U) public static long i64GtU(long x, long y) { return Long.compareUnsigned(x, y) > 0 ? 1 : 0; }
-    @Intrinsic(I64_LE_S) public static long i64LeS(long x, long y) { return x <= y ? 1 : 0; }
-    @Intrinsic(I64_LE_U) public static long i64LeU(long x, long y) { return Long.compareUnsigned(x, y) <= 0 ? 1 : 0; }
-    @Intrinsic(I64_GE_S) public static long i64GeS(long x, long y) { return x >= y ? 1 : 0; }
-    @Intrinsic(I64_GE_U) public static long i64GeU(long x, long y) { return Long.compareUnsigned(x, y) >= 0 ? 1 : 0; }
+    @Intrinsic(I64_EQZ) public static int i64Eqz(long x) { return x == 0 ? 1 : 0; }
+    @Intrinsic(I64_EQ) public static int i64Eq(long x, long y) { return x == y ? 1 : 0; }
+    @Intrinsic(I64_NE) public static int i64Ne(long x, long y) { return x != y ? 1 : 0; }
+    @Intrinsic(I64_LT_S) public static int i64LtS(long x, long y) { return x < y ? 1 : 0; }
+    @Intrinsic(I64_LT_U) public static int i64LtU(long x, long y) { return Long.compareUnsigned(x, y) < 0 ? 1 : 0; }
+    @Intrinsic(I64_GT_S) public static int i64GtS(long x, long y) { return x > y ? 1 : 0; }
+    @Intrinsic(I64_GT_U) public static int i64GtU(long x, long y) { return Long.compareUnsigned(x, y) > 0 ? 1 : 0; }
+    @Intrinsic(I64_LE_S) public static int i64LeS(long x, long y) { return x <= y ? 1 : 0; }
+    @Intrinsic(I64_LE_U) public static int i64LeU(long x, long y) { return Long.compareUnsigned(x, y) <= 0 ? 1 : 0; }
+    @Intrinsic(I64_GE_S) public static int i64GeS(long x, long y) { return x >= y ? 1 : 0; }
+    @Intrinsic(I64_GE_U) public static int i64GeU(long x, long y) { return Long.compareUnsigned(x, y) >= 0 ? 1 : 0; }
     // endregion
     // region f32
-    @Intrinsic(F32_EQ) public static float f32Eq(float x, float y) { return x == y ? 1 : 0; }
-    @Intrinsic(F32_NE) public static float f32Ne(float x, float y) { return x != y ? 1 : 0; }
-    @Intrinsic(F32_LT) public static float f32Lt(float x, float y) { return x < y ? 1 : 0; }
-    @Intrinsic(F32_GT) public static float f32Gt(float x, float y) { return x > y ? 1 : 0; }
-    @Intrinsic(F32_LE) public static float f32Le(float x, float y) { return x <= y ? 1 : 0; }
-    @Intrinsic(F32_GE) public static float f32Ge(float x, float y) { return x >= y ? 1 : 0; }
+    @Intrinsic(F32_EQ) public static int f32Eq(float x, float y) { return x == y ? 1 : 0; }
+    @Intrinsic(F32_NE) public static int f32Ne(float x, float y) { return x != y ? 1 : 0; }
+    @Intrinsic(F32_LT) public static int f32Lt(float x, float y) { return x < y ? 1 : 0; }
+    @Intrinsic(F32_GT) public static int f32Gt(float x, float y) { return x > y ? 1 : 0; }
+    @Intrinsic(F32_LE) public static int f32Le(float x, float y) { return x <= y ? 1 : 0; }
+    @Intrinsic(F32_GE) public static int f32Ge(float x, float y) { return x >= y ? 1 : 0; }
     // endregion
     // region f64
-    @Intrinsic(F64_EQ) public static double f64Eq(double x, double y) { return x == y ? 1 : 0; }
-    @Intrinsic(F64_NE) public static double f64Ne(double x, double y) { return x != y ? 1 : 0; }
-    @Intrinsic(F64_LT) public static double f64Lt(double x, double y) { return x < y ? 1 : 0; }
-    @Intrinsic(F64_GT) public static double f64Gt(double x, double y) { return x > y ? 1 : 0; }
-    @Intrinsic(F64_LE) public static double f64Le(double x, double y) { return x <= y ? 1 : 0; }
-    @Intrinsic(F64_GE) public static double f64Ge(double x, double y) { return x >= y ? 1 : 0; }
+    @Intrinsic(F64_EQ) public static int f64Eq(double x, double y) { return x == y ? 1 : 0; }
+    @Intrinsic(F64_NE) public static int f64Ne(double x, double y) { return x != y ? 1 : 0; }
+    @Intrinsic(F64_LT) public static int f64Lt(double x, double y) { return x < y ? 1 : 0; }
+    @Intrinsic(F64_GT) public static int f64Gt(double x, double y) { return x > y ? 1 : 0; }
+    @Intrinsic(F64_LE) public static int f64Le(double x, double y) { return x <= y ? 1 : 0; }
+    @Intrinsic(F64_GE) public static int f64Ge(double x, double y) { return x >= y ? 1 : 0; }
     // endregion
     // endregion
     // region Mathematical

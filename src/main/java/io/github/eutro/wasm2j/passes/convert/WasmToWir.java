@@ -3,7 +3,11 @@ package io.github.eutro.wasm2j.passes.convert;
 import io.github.eutro.jwasm.BlockType;
 import io.github.eutro.jwasm.tree.*;
 import io.github.eutro.wasm2j.ext.CommonExts;
+import io.github.eutro.wasm2j.ext.Ext;
 import io.github.eutro.wasm2j.ext.WasmExts;
+import io.github.eutro.wasm2j.ops.WasmOps.DerefType.ExtType;
+import io.github.eutro.wasm2j.ops.WasmOps.DerefType.LoadType;
+import io.github.eutro.wasm2j.ops.WasmOps.StoreType;
 import io.github.eutro.wasm2j.passes.misc.ForPass;
 import io.github.eutro.wasm2j.passes.IRPass;
 import io.github.eutro.wasm2j.passes.opts.Opt0;
@@ -471,35 +475,37 @@ public class WasmToWir implements IRPass<ModuleNode, Module> {
         });
     }
 
-    private static Converter makeLoadInsn(byte outType, int bytesRead, boolean extUnsigned) {
+    private static Converter makeLoadInsn(byte outType, LoadType load, ExtType ext) {
         return (cs, node, topB) -> topB.addEffect(WasmOps.MEM_LOAD
-                .create(new WasmOps.DerefType(outType, bytesRead, extUnsigned))
+                .create(new WasmOps.WithMemArg<>(
+                        new WasmOps.DerefType(outType, load, ext),
+                        ((MemInsnNode) node).offset))
                 .insn(cs.popVar())
                 .assignTo(cs.pushVar()));
     }
 
     static {
-        CONVERTERS.put(I32_LOAD, makeLoadInsn(I32, 4, false));
-        CONVERTERS.put(I64_LOAD, makeLoadInsn(I64, 8, false));
-        CONVERTERS.put(F32_LOAD, makeLoadInsn(F32, 4, false));
-        CONVERTERS.put(F64_LOAD, makeLoadInsn(F64, 8, false));
+        CONVERTERS.put(I32_LOAD, makeLoadInsn(I32, LoadType.I32, ExtType.NOEXT));
+        CONVERTERS.put(I64_LOAD, makeLoadInsn(I64, LoadType.I64, ExtType.NOEXT));
+        CONVERTERS.put(F32_LOAD, makeLoadInsn(F32, LoadType.F32, ExtType.NOEXT));
+        CONVERTERS.put(F64_LOAD, makeLoadInsn(F64, LoadType.F64, ExtType.NOEXT));
 
-        CONVERTERS.put(I32_LOAD8_S, makeLoadInsn(I32, 1, false));
-        CONVERTERS.put(I32_LOAD8_U, makeLoadInsn(I32, 1, true));
-        CONVERTERS.put(I32_LOAD16_S, makeLoadInsn(I32, 2, false));
-        CONVERTERS.put(I32_LOAD16_U, makeLoadInsn(I32, 2, true));
+        CONVERTERS.put(I32_LOAD8_S, makeLoadInsn(I32, LoadType.I8, ExtType.S8_32));
+        CONVERTERS.put(I32_LOAD8_U, makeLoadInsn(I32, LoadType.I8, ExtType.U8_32));
+        CONVERTERS.put(I32_LOAD16_S, makeLoadInsn(I32, LoadType.I16, ExtType.S16_32));
+        CONVERTERS.put(I32_LOAD16_U, makeLoadInsn(I32, LoadType.I16, ExtType.U16_32));
 
-        CONVERTERS.put(I64_LOAD8_S, makeLoadInsn(I64, 1, false));
-        CONVERTERS.put(I64_LOAD8_U, makeLoadInsn(I64, 1, true));
-        CONVERTERS.put(I64_LOAD16_S, makeLoadInsn(I64, 2, false));
-        CONVERTERS.put(I64_LOAD16_U, makeLoadInsn(I64, 2, true));
-        CONVERTERS.put(I64_LOAD32_S, makeLoadInsn(I64, 4, false));
-        CONVERTERS.put(I64_LOAD32_U, makeLoadInsn(I64, 4, true));
+        CONVERTERS.put(I64_LOAD8_S, makeLoadInsn(I64, LoadType.I8, ExtType.S8_64));
+        CONVERTERS.put(I64_LOAD8_U, makeLoadInsn(I64, LoadType.I8, ExtType.U8_64));
+        CONVERTERS.put(I64_LOAD16_S, makeLoadInsn(I64, LoadType.I16, ExtType.S16_64));
+        CONVERTERS.put(I64_LOAD16_U, makeLoadInsn(I64, LoadType.I16, ExtType.U16_64));
+        CONVERTERS.put(I64_LOAD32_S, makeLoadInsn(I64, LoadType.I32, ExtType.S32_64));
+        CONVERTERS.put(I64_LOAD32_U, makeLoadInsn(I64, LoadType.I32, ExtType.U32_64));
     }
 
-    private static Converter makeStoreInsn(int bytesWritten) {
+    private static Converter makeStoreInsn(StoreType storeType) {
         return (cs, node, topB) -> topB.addEffect(WasmOps.MEM_STORE
-                .create(bytesWritten)
+                .create(new WasmOps.WithMemArg<>(storeType, ((MemInsnNode) node).offset))
                 .insn(
                         cs.popVar(), // value
                         cs.popVar() // addr
@@ -509,17 +515,17 @@ public class WasmToWir implements IRPass<ModuleNode, Module> {
     }
 
     static {
-        CONVERTERS.put(I32_STORE, makeStoreInsn(4));
-        CONVERTERS.put(I64_STORE, makeStoreInsn(8));
-        CONVERTERS.put(F32_STORE, makeStoreInsn(4));
-        CONVERTERS.put(F64_STORE, makeStoreInsn(8));
+        CONVERTERS.put(I32_STORE, makeStoreInsn(StoreType.I32));
+        CONVERTERS.put(I64_STORE, makeStoreInsn(StoreType.I64));
+        CONVERTERS.put(F32_STORE, makeStoreInsn(StoreType.F32));
+        CONVERTERS.put(F64_STORE, makeStoreInsn(StoreType.F64));
 
-        CONVERTERS.put(I32_STORE8, makeStoreInsn(1));
-        CONVERTERS.put(I32_STORE16, makeStoreInsn(2));
+        CONVERTERS.put(I32_STORE8, makeStoreInsn(StoreType.I32_8));
+        CONVERTERS.put(I32_STORE16, makeStoreInsn(StoreType.I32_16));
 
-        CONVERTERS.put(I64_STORE8, makeStoreInsn(1));
-        CONVERTERS.put(I64_STORE16, makeStoreInsn(2));
-        CONVERTERS.put(I64_STORE32, makeStoreInsn(4));
+        CONVERTERS.put(I64_STORE8, makeStoreInsn(StoreType.I64_8));
+        CONVERTERS.put(I64_STORE16, makeStoreInsn(StoreType.I64_16));
+        CONVERTERS.put(I64_STORE32, makeStoreInsn(StoreType.I64_32));
     }
 
     static {

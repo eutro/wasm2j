@@ -1,5 +1,6 @@
 package io.github.eutro.wasm2j.test;
 
+import io.github.eutro.jwasm.Opcodes;
 import io.github.eutro.wasm2j.ext.JavaExts;
 import io.github.eutro.wasm2j.intrinsics.Impl;
 import io.github.eutro.wasm2j.intrinsics.Intrinsic;
@@ -62,18 +63,14 @@ public class IntrinsicsTest {
 
     @Test
     void testIntrinsicsRoundTrip() throws IOException {
-        int i = 0;
         IRPass<MethodNode, ClassNode> pass =
                 new JoinPass<>(
                         JavaToJir.INSTANCE
                                 .then(SSAify.INSTANCE)
-                                .then(ForPass.liftInsns(IdentityElimination.INSTANCE).lift())
-                                .then(DeadVarElimination.INSTANCE)
-                                .then(LowerPhis.INSTANCE)
-                                .then(Stackify.INSTANCE)
-                                .then(ForPass.liftBasicBlocks(InferTypes.Java.INSTANCE)),
+                                .then(Passes.SSA_OPTS)
+                                .then(Passes.JAVA_PREEMIT),
                         mn -> {
-                            JavaExts.JavaClass clazz = new JavaExts.JavaClass("dev/eutro/Test");
+                            JavaExts.JavaClass clazz = new JavaExts.JavaClass("intrinsics/" + mn.name);
                             clazz.methods.add(new JavaExts.JavaMethod(
                                     clazz,
                                     mn.name,
@@ -95,7 +92,7 @@ public class IntrinsicsTest {
             ClassWriter cw = new ClassWriter(ClassWriter.COMPUTE_MAXS);
             node.accept(cw);
             byte[] classBytes = cw.toByteArray();
-            File fileName = new File("build/jbytes/intr" + i++ + ".class");
+            File fileName = new File("build/jbytes/" + intr.method.name + ".class");
             fileName.getParentFile().mkdirs();
             try (FileOutputStream os = new FileOutputStream(fileName)) {
                 os.write(classBytes);

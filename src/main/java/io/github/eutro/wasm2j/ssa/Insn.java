@@ -14,11 +14,11 @@ public final class Insn extends DelegatingExtHolder {
 
     public Insn(Op op, List<Var> args) {
         this.op = op;
-        this.args = args;
+        this.args = new ArrayList<>(args);
     }
 
     public Insn(Op op, Var... args) {
-        this(op, new ArrayList<>(Arrays.asList(args)));
+        this(op, Arrays.asList(args));
     }
 
     @Override

@@ -1,11 +1,20 @@
 package io.github.eutro.wasm2j.ops;
 
-import io.github.eutro.jwasm.Opcodes;
 import io.github.eutro.jwasm.tree.TypeNode;
 import io.github.eutro.wasm2j.ext.CommonExts;
 import io.github.eutro.wasm2j.ssa.BasicBlock;
 import io.github.eutro.wasm2j.ssa.Control;
 import io.github.eutro.wasm2j.ssa.Var;
+import org.objectweb.asm.Opcodes;
+import org.objectweb.asm.Type;
+import org.objectweb.asm.tree.AbstractInsnNode;
+import org.objectweb.asm.tree.InsnList;
+import org.objectweb.asm.tree.InsnNode;
+import org.objectweb.asm.tree.MethodInsnNode;
+
+import java.nio.ByteBuffer;
+
+import static io.github.eutro.jwasm.Opcodes.INSN_PREFIX;
 
 public class WasmOps {
     public static final Op BR_IF = new SimpleOpKey("br_if").create();
@@ -14,8 +23,8 @@ public class WasmOps {
     public static final UnaryOpKey</* var */ Integer> GLOBAL_REF = new UnaryOpKey<>("global.ref");
     public static final UnaryOpKey</* var */ Integer> GLOBAL_SET = new UnaryOpKey<>("global.set");
 
-    public static final UnaryOpKey</* bytes */ Integer> MEM_STORE = new UnaryOpKey<>("mem.set");
-    public static final UnaryOpKey<DerefType> MEM_LOAD = new UnaryOpKey<>("mem.load");
+    public static final UnaryOpKey<WithMemArg<StoreType>> MEM_STORE = new UnaryOpKey<>("mem.set");
+    public static final UnaryOpKey<WithMemArg<DerefType>> MEM_LOAD = new UnaryOpKey<>("mem.load");
 
     public static final SimpleOpKey MEM_SIZE = new SimpleOpKey("mem.length");
     public static final SimpleOpKey MEM_GROW = new SimpleOpKey("mem.grow");
@@ -67,20 +76,125 @@ public class WasmOps {
         }
     }
 
-    public static class DerefType {
-        public byte outType;
-        public int loadBytes;
-        public boolean extendUnsigned;
+    public static class WithMemArg<T> {
+        public T value;
+        public int offset;
 
-        public DerefType(byte outType, int loadBytes, boolean extendUnsigned) {
-            this.outType = outType;
-            this.loadBytes = loadBytes;
-            this.extendUnsigned = extendUnsigned;
+        public WithMemArg(T value, int offset) {
+            this.value = value;
+            this.offset = offset;
         }
 
         @Override
         public String toString() {
-            return String.format("ty: 0x%02x, len: %d, %sext", outType, loadBytes, extendUnsigned ? "z" : "s");
+            return "offset=" + offset + " " + value;
+        }
+    }
+
+    public static class DerefType {
+        public byte outType;
+        public LoadType load;
+        public ExtType ext;
+
+        public DerefType(byte outType, LoadType load, ExtType ext) {
+            this.outType = outType;
+            this.load = load;
+            this.ext = ext;
+        }
+
+        @Override
+        public String toString() {
+            return String.format("(%s) load %s", ext, load);
+        }
+
+        public enum LoadType {
+            I8("getByte", "(I)B"),
+            I16("getShort", "(I)S"),
+            I32("getInt", "(I)I"),
+            I64("getLong", "(I)J"),
+            F32("getFloat", "(I)F"),
+            F64("getDouble", "(I)D"),
+            ;
+
+            public final String funcName;
+            public final String desc;
+
+            LoadType(String funcName, String desc) {
+                this.funcName = funcName;
+                this.desc = desc;
+            }
+        }
+
+        public enum ExtType {
+            NOEXT,
+
+            S8_32(/* noop */),
+            S16_32(/* noop */),
+            S8_64(Opcodes.I2L),
+            S16_64(Opcodes.I2L),
+            S32_64(Opcodes.I2L),
+
+            U8_32(Byte.class, "toUnsignedInt", "(B)I"),
+            U16_32(Short.class, "toUnsignedInt", "(S)I"),
+            U8_64(Byte.class, "toUnsignedLong", "(B)J"),
+            U16_64(Short.class, "toUnsignedLong", "(S)J"),
+            U32_64(Integer.class, "toUnsignedLong", "(I)J"),
+            ;
+
+            public final InsnList insns;
+
+            ExtType(int opcode) {
+                this(new InsnNode(opcode));
+            }
+
+            ExtType(Class<?> cls, String name, String desc) {
+                this(new MethodInsnNode(
+                        Opcodes.INVOKESTATIC,
+                        Type.getInternalName(cls),
+                        name,
+                        desc,
+                        false
+                ));
+            }
+
+            ExtType(AbstractInsnNode... insns) {
+                this.insns = new InsnList();
+                for (AbstractInsnNode insn : insns) {
+                    this.insns.add(insn);
+                }
+            }
+        }
+    }
+
+    public enum StoreType {
+        F32("putFloat", "(IF)Ljava/nio/ByteBuffer;"),
+        F64("putDouble", "(ID)Ljava/nio/ByteBuffer;"),
+
+        I32_8("putByte", "(IB)Ljava/nio/ByteBuffer;"),
+        I32_16("putShort", "(IS)Ljava/nio/ByteBuffer;"),
+        I32("putInt", "(II)Ljava/nio/ByteBuffer;"),
+
+        I64_8(Opcodes.L2I, "putByte", "(IB)Ljava/nio/ByteBuffer;"),
+        I64_16(Opcodes.L2I, "putShort", "(IS)Ljava/nio/ByteBuffer;"),
+        I64_32(Opcodes.L2I, "putInt", "(II)Ljava/nio/ByteBuffer;"),
+        I64("putLong", "(IJ)Ljava/nio/ByteBuffer;"),
+        ;
+
+        public final InsnList insns = new InsnList();
+
+        StoreType(int ext, String name, String desc) {
+            this(name, desc);
+            insns.insert(new InsnNode(ext));
+        }
+
+        StoreType(String name, String desc) {
+            insns.add(new MethodInsnNode(
+                    Opcodes.INVOKEVIRTUAL,
+                    Type.getInternalName(ByteBuffer.class),
+                    name,
+                    desc,
+                    false
+            ));
         }
     }
 
@@ -97,7 +211,7 @@ public class WasmOps {
 
         @Override
         public String toString() {
-            return op == Opcodes.INSN_PREFIX ? Integer.toString(intOp) : String.format("0x%02x", op);
+            return op == INSN_PREFIX ? Integer.toString(intOp) : String.format("0x%02x", op);
         }
     }
 }

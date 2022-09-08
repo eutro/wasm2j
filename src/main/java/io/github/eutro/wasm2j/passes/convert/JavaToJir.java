@@ -174,6 +174,8 @@ public class JavaToJir implements IRPass<MethodNode, Function> {
                 case Opcodes.CHECKCAST:
                 case Opcodes.L2F:
                 case Opcodes.D2F:
+                case Opcodes.L2I:
+                case Opcodes.D2I:
                     bb.addEffect(insnOp(insn).insn(popVar()).assignTo(pushVar()));
                     break;
                 case Opcodes.LDC:
@@ -251,8 +253,6 @@ public class JavaToJir implements IRPass<MethodNode, Function> {
                 case Opcodes.ISHL:
                 case Opcodes.ISHR:
                 case Opcodes.IUSHR:
-                case Opcodes.L2I:
-                case Opcodes.D2I:
                 case Opcodes.FCMPL:
                 case Opcodes.FCMPG:
                 case Opcodes.FALOAD:

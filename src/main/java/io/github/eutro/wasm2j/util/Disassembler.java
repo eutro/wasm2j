@@ -3,6 +3,7 @@ package io.github.eutro.wasm2j.util;
 import org.jetbrains.annotations.Nullable;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.tree.AbstractInsnNode;
+import org.objectweb.asm.tree.InsnList;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
@@ -16,6 +17,15 @@ public class Disassembler {
     public static String getMnemonic(int opcode) {
         if (opcodeMnemonics == null) generateMnemonics();
         return opcodeMnemonics.get(opcode);
+    }
+
+    public static String disassembleList(InsnList insns) {
+        StringBuilder sb = new StringBuilder();
+        for (AbstractInsnNode insn : insns) {
+            disassembleInsn(sb, insn);
+            if (insn != insns.getLast()) sb.append("; ");
+        }
+        return sb.toString();
     }
 
     public static void disassembleInsn(StringBuilder sb, AbstractInsnNode insn) {

@@ -24,6 +24,13 @@ public class CommonExts {
     public static final Ext<BasicBlock> OWNING_BLOCK = Ext.create(BasicBlock.class);
     public static final Ext<Effect> OWNING_EFFECT = Ext.create(Effect.class);
 
+    public static final Ext<CodeType> CODE_TYPE = Ext.create(CodeType.class);
+
+    public static <T extends ExtContainer> T markPure(T t) {
+        t.attachExt(IS_PURE, true);
+        return t;
+    }
+
     public static final class CodeType {
         public static final CodeType WASM = new CodeType("wasm");
         public static final CodeType JAVA = new CodeType("java");
@@ -39,6 +46,4 @@ public class CommonExts {
             return name;
         }
     }
-
-    public static final Ext<CodeType> CODE_TYPE = Ext.create(CodeType.class);
 }
