@@ -133,6 +133,11 @@ public class Stackify implements InPlaceIRPass<Function> {
         void setReg(Var v) {
             insn.args.set(index, v);
         }
+
+        @Override
+        public String toString() {
+            return index + " of: " + insn;
+        }
     }
 
     @Override
@@ -174,7 +179,8 @@ public class Stackify implements InPlaceIRPass<Function> {
                     boolean sameBlock = defBlock == block;
                     boolean canMove = sameBlock && isSafeToMove(def, insert) &&
                             !regOnStack(stackTop, reg);
-                    if (canMove && reg.getExtOrRun(CommonExts.USED_AT, func, ComputeUses.INSTANCE)
+                    if (canMove && reg
+                            .getExtOrRun(CommonExts.USED_AT, func, ComputeUses.INSTANCE)
                             .size() == 1) {
                         insert = moveForSingleUse(reg, def, insert);
                     } else if (shouldRematerialize(def)) {
@@ -217,18 +223,22 @@ public class Stackify implements InPlaceIRPass<Function> {
     private void checkStackIntegrity(Function func) {
         Deque<Var> stack = new ArrayDeque<>();
         for (BasicBlock block : func.blocks) {
-            for (Effect effect : block.getEffects()) {
-                Insn insn = effect.insn();
-                checkInsn(stack, insn);
-                for (Var assigned : effect.getAssignsTo()) {
-                    if (assigned.getExt(CommonExts.STACKIFIED).orElse(false)) {
-                        stack.addLast(assigned);
+            try {
+                for (Effect effect : block.getEffects()) {
+                    Insn insn = effect.insn();
+                    checkInsn(stack, insn);
+                    for (Var assigned : effect.getAssignsTo()) {
+                        if (assigned.getExt(CommonExts.STACKIFIED).orElse(false)) {
+                            stack.addLast(assigned);
+                        }
                     }
                 }
-            }
-            checkInsn(stack, block.getControl().insn);
-            if (!stack.isEmpty()) {
-                throw new IllegalStateException("unmatched stack pushes");
+                checkInsn(stack, block.getControl().insn);
+                if (!stack.isEmpty()) {
+                    throw new IllegalStateException("unmatched stack pushes");
+                }
+            } catch (RuntimeException e) {
+                throw new RuntimeException("error checking in block " + block.toTargetString(), e);
             }
         }
     }
@@ -240,7 +250,7 @@ public class Stackify implements InPlaceIRPass<Function> {
             Var arg = iter.previous();
             if (arg.getExt(CommonExts.STACKIFIED).orElse(false)) {
                 if (stack.pollLast() != arg) {
-                    throw new IllegalStateException("unmatched stack pop");
+                    throw new IllegalStateException("unmatched stack pop in insn: " + insn);
                 }
             }
         }
@@ -275,9 +285,12 @@ public class Stackify implements InPlaceIRPass<Function> {
         for (Var arg : reDef.insn().args) {
             arg.getExtOrThrow(CommonExts.USED_AT).add(reDef.insn());
         }
-        Set<Insn> regUses = use.getReg().getExtOrThrow(CommonExts.USED_AT);
-        regUses.remove(use.insn);
+        Var origReg = use.getReg();
         use.setReg(remat);
+        Set<Insn> regUses = origReg.getExtOrThrow(CommonExts.USED_AT);
+        if (!use.insn.args.contains(origReg)) {
+            regUses.remove(use.insn);
+        }
 
         return insertBefore(insert, block, reDef);
     }
@@ -300,11 +313,13 @@ public class Stackify implements InPlaceIRPass<Function> {
         stacked.attachExt(CommonExts.STACKIFIED, true);
 
         Var reg = use.getReg();
+        use.setReg(stacked);
         Effect load = CommonOps.IDENTITY.insn(reg).assignTo(stacked);
         Set<Insn> regUses = reg.getExtOrRun(CommonExts.USED_AT, func, ComputeUses.INSTANCE);
-        regUses.remove(use.insn);
+        if (!use.insn.args.contains(reg)) {
+            regUses.remove(use.insn);
+        }
         regUses.add(load.insn());
-        use.setReg(stacked);
 
         return insertBefore(insert, block, load);
     }

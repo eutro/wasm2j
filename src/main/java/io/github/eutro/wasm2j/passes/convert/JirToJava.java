@@ -63,7 +63,7 @@ public class JirToJava implements IRPass<Module, ClassNode> {
             );
             cn.methods.add(mn);
             try {
-                compileFuncInto(mn, impl);
+                compileFuncInto(jClass, mn, impl);
             } catch (RuntimeException e) {
                 throw new RuntimeException("error generating code for method " + method.name, e);
             }
@@ -72,7 +72,7 @@ public class JirToJava implements IRPass<Module, ClassNode> {
         return cn;
     }
 
-    private void compileFuncInto(MethodNode mn, Function impl) {
+    private void compileFuncInto(JavaExts.JavaClass jClass, MethodNode mn, Function impl) {
         // steps:
         // 1. sort blocks into a nice order (no need to overthink it, just do a pre-order)
         // 2. tag each block with a label for a jump target
@@ -118,6 +118,7 @@ public class JirToJava implements IRPass<Module, ClassNode> {
         Set<Var> allVars = new HashSet<>();
         {
             List<Object> localsList = new ArrayList<>();
+            localsList.add(jClass.name);
             for (Type argTy : Type.getArgumentTypes(mn.desc)) {
                 localsList.add(getLocalForType(argTy));
             }
@@ -133,14 +134,6 @@ public class JirToJava implements IRPass<Module, ClassNode> {
                         Object v = getLocalForType(ty);
                         localsList.add(v);
                         var.attachExt(LOCAL_EXT, localC);
-                        mn.localVariables.add(new LocalVariableNode(
-                                munge(var.name),
-                                ty.getDescriptor(),
-                                null,
-                                startLabel,
-                                endLabel,
-                                localC
-                        ));
                         localC += ty.getSize();
                     }
                 }
@@ -150,9 +143,15 @@ public class JirToJava implements IRPass<Module, ClassNode> {
 
         // 4.
         JavaBuilder jb = new JavaBuilder(mn);
+        mn.visitFrame(Opcodes.F_FULL, locals.length, locals, 0, new Object[0]);
+        boolean isFirst = true;
         for (BasicBlock block : blockOrder) {
             mn.visitLabel(block.getExtOrThrow(LABEL_EXT));
-            mn.visitFrame(Opcodes.F_NEW, locals.length, locals, 0, new Object[0]);
+            if (isFirst) {
+                isFirst = false;
+            } else {
+                mn.visitFrame(Opcodes.F_SAME, locals.length, null, 0, null);
+            }
             AbstractInsnNode frameNode = mn.instructions.getLast();
             for (Effect effect : block.getEffects()) {
                 if (effect.insn().op.key == CommonOps.PHI) continue;
@@ -189,12 +188,6 @@ public class JirToJava implements IRPass<Module, ClassNode> {
         for (Var var : allVars) {
             var.removeExt(LOCAL_EXT);
         }
-    }
-
-    private static final Pattern MUNGE_PATTERN = Pattern.compile("[.;\\[/]");
-
-    private static String munge(String name) {
-        return MUNGE_PATTERN.matcher(name).replaceAll("_");
     }
 
     private Object getLocalForType(Type ty) {

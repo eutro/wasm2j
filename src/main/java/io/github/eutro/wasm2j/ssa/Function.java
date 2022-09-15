@@ -4,6 +4,7 @@ import io.github.eutro.wasm2j.ext.CommonExts;
 import io.github.eutro.wasm2j.ext.ExtHolder;
 import io.github.eutro.wasm2j.ext.TrackedList;
 
+import java.lang.ref.SoftReference;
 import java.util.*;
 
 public final class Function extends ExtHolder {
@@ -19,23 +20,27 @@ public final class Function extends ExtHolder {
         }
     }; // [0] is entry
 
-    private final Map<String, Set<Var>> vars = new HashMap<>();
+    // if we hold on to them forever we can easily OOM, but we don't really
+    // care about names except for debugging, so let the JVM clear it up if it has to
+    private SoftReference<Map<String, Integer>> varsRef = new SoftReference<>(new HashMap<>());
+
+    public void clearVarNames() {
+        varsRef = new SoftReference<>(new HashMap<>());
+    }
+
     public Var newVar(String name) {
         Var var;
+        Map<String, Integer> vars = varsRef.get();
+        if (vars == null) {
+            vars = new HashMap<>();
+            varsRef = new SoftReference<>(vars);
+        }
         if (vars.containsKey(name)) {
-            Set<Var> varSet = vars.get(name);
-            if (name.isEmpty()) {
-                name = Integer.toString(varSet.size());
-            } else {
-                name += "." + varSet.size();
-            }
-            var = new Var(name);
-            varSet.add(var);
+            var = new Var(name, vars.get(name));
+            vars.computeIfPresent(name, ($, i) -> i + 1);
         } else {
-            var = new Var(name);
-            HashSet<Var> set = new HashSet<>();
-            set.add(var);
-            vars.put(name, set);
+            var = new Var(name, 0);
+            vars.put(name, 0);
         }
         return var;
     }

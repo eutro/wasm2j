@@ -12,6 +12,7 @@ public class JavaExts {
     public static final Ext<Function> METHOD_IMPL = Ext.create(Function.class);
     public static final Ext<Type> TYPE = Ext.create(Type.class);
     public static final Ext<String> FUNCTION_DESCRIPTOR = Ext.create(String.class);
+    public static final Ext<JavaClass> FUNCTION_OWNER = Ext.create(JavaClass.class);
 
     public static Type BOTTOM_TYPE = Type.getType(Void.class);
 

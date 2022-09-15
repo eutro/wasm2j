@@ -1,9 +1,13 @@
 package io.github.eutro.wasm2j.ext;
 
 import java.util.Optional;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public class Ext<T> {
+    private static final AtomicInteger ID_COUNTER = new AtomicInteger(0);
+
     private final Class<T> type;
+    public final int id = ID_COUNTER.getAndIncrement();
 
     public Ext(Class<T> type) {
         this.type = type;

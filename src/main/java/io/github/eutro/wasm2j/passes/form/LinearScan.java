@@ -17,6 +17,8 @@ public class LinearScan implements InPlaceIRPass<Function> {
 
     @Override
     public void runInPlace(Function func) {
+        func.clearVarNames();
+
         List<BasicBlock> order = new ArrayList<>();
         {
             Set<BasicBlock> preVisit = new HashSet<>();

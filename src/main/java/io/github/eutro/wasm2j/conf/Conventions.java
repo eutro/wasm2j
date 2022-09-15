@@ -66,6 +66,7 @@ public class Conventions {
                     Function implFunc = funcMap.get(it.next().expr);
                     method.attachExt(JavaExts.METHOD_IMPL, implFunc);
                     implFunc.attachExt(JavaExts.FUNCTION_DESCRIPTOR, method.descriptor);
+                    implFunc.attachExt(JavaExts.FUNCTION_OWNER, jClass);
                 }
             }
 

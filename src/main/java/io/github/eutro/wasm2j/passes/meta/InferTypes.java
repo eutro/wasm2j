@@ -252,6 +252,20 @@ public abstract class InferTypes<Ty> implements InPlaceIRPass<Function> {
             }
         }
 
+        private static Type[] intifyPrimitives(Type[] types) {
+            for (int i = 0; i < types.length; i++) {
+                switch (types[i].getSort()) {
+                    case Type.BOOLEAN:
+                    case Type.CHAR:
+                    case Type.BYTE:
+                    case Type.SHORT:
+                        types[i] = Type.INT_TYPE;
+                        break;
+                }
+            }
+            return types;
+        }
+
         private static final Map<Integer, F<AbstractInsnNode, FuncType<Type>>> OPCODE_MAP = new MapBuilder<Integer, F<AbstractInsnNode, FuncType<Type>>>(
                 ((F<String, FuncType<Type>>)
                         new SFuncType.Parser<>(Type::getType)::parse)
@@ -261,6 +275,7 @@ public abstract class InferTypes<Ty> implements InPlaceIRPass<Function> {
                             Type[] argTys = Type.getArgumentTypes(desc);
                             Type retTy = Type.getReturnType(desc);
                             Type[] res = retTy.getSize() == 0 ? new Type[0] : new Type[]{retTy};
+                            intifyPrimitives(res);
                             int arity = argTys.length;
                             if (insn.getOpcode() != INVOKESTATIC) {
                                 arity += 1;
@@ -271,11 +286,13 @@ public abstract class InferTypes<Ty> implements InPlaceIRPass<Function> {
                 .put(insn -> {
                             String desc = ((FieldInsnNode) insn).desc;
                             Type[] res = {Type.getType(desc)};
+                            intifyPrimitives(res);
                             return withArity(insn.getOpcode() == GETSTATIC ? 0 : 1, $ -> res);
                         },
                         GETSTATIC, GETFIELD)
                 .put(insn ->
-                        withArity(0, $ -> new Type[]{Type.getObjectType(((TypeInsnNode) insn).desc)}), NEW)
+                                withArity(0, $ -> new Type[]{Type.getObjectType(((TypeInsnNode) insn).desc)}),
+                        NEW)
 
                 .put(" -> ", NOP)
                 .put("a -> ", POP)
@@ -349,23 +366,30 @@ public abstract class InferTypes<Ty> implements InPlaceIRPass<Function> {
                         },
                         JavaOps.INTRINSIC)
 
-                .put(insn -> new Type[]{Type.getType(JavaOps.GET_FIELD.cast(insn.op).arg.descriptor)},
+                .put(insn -> intifyPrimitives(new Type[]{Type.getType(JavaOps.GET_FIELD.cast(insn.op).arg.descriptor)}),
                         JavaOps.GET_FIELD)
 
                 .put(insn -> {
                             Type retTy = Type.getReturnType(JavaOps.INVOKE.cast(insn.op).arg.descriptor);
-                            return retTy.getSize() == 0 ? new Type[0] : new Type[]{retTy};
+                            return intifyPrimitives(retTy.getSize() == 0 ? new Type[0] : new Type[]{retTy});
                         },
                         JavaOps.INVOKE)
 
-                .put(insn -> new Type[]{insn.args.get(0).getExt(JavaExts.TYPE)
-                                .map(Type::getElementType)
-                                .orElseThrow(RuntimeException::new)},
+                .put(insn -> intifyPrimitives(new Type[]{
+                                insn.args.get(0).getExt(JavaExts.TYPE)
+                                        .map(Type::getElementType)
+                                        .orElseThrow(RuntimeException::new)}),
                         JavaOps.ARRAY_GET)
 
                 .put(insn -> new Type[]{}, JavaOps.PUT_FIELD, JavaOps.ARRAY_SET)
 
-                .put(" -> Ljava/lang/Object;", JavaOps.THIS.key)
+                .put(insn -> new Type[]{Type.getObjectType(insn
+                                .getExtOrThrow(CommonExts.OWNING_EFFECT)
+                                .getExtOrThrow(CommonExts.OWNING_BLOCK)
+                                .getExtOrThrow(CommonExts.OWNING_FUNCTION)
+                                .getExtOrThrow(JavaExts.FUNCTION_OWNER)
+                                .name)},
+                        JavaOps.THIS.key)
 
                 .put((Insn insn) -> {
                     Object cst = CommonOps.CONST.cast(insn.op).arg;

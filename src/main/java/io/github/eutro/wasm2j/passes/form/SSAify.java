@@ -21,6 +21,8 @@ public class SSAify implements InPlaceIRPass<Function> {
     }
 
     private static void assignVariables(Function func) {
+        func.clearVarNames();
+
         for (BasicBlock block : func.blocks) {
             if (!block.getExt(CommonExts.DOM_FRONTIER).isPresent()) {
                 ComputeDomFrontier.INSTANCE.runInPlace(func);
