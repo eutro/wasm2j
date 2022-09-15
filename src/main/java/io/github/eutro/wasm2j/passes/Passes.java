@@ -1,9 +1,9 @@
 package io.github.eutro.wasm2j.passes;
 
 import io.github.eutro.wasm2j.passes.meta.InferTypes;
-import io.github.eutro.wasm2j.passes.meta.LowerIntrinsics;
-import io.github.eutro.wasm2j.passes.meta.LowerPhis;
-import io.github.eutro.wasm2j.passes.meta.LowerSelects;
+import io.github.eutro.wasm2j.passes.form.LowerIntrinsics;
+import io.github.eutro.wasm2j.passes.form.LowerPhis;
+import io.github.eutro.wasm2j.passes.form.LowerSelects;
 import io.github.eutro.wasm2j.passes.misc.ForPass;
 import io.github.eutro.wasm2j.passes.opts.EliminateDeadVars;
 import io.github.eutro.wasm2j.passes.opts.IdentityElimination;

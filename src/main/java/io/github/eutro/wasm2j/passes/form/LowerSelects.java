@@ -1,4 +1,4 @@
-package io.github.eutro.wasm2j.passes.meta;
+package io.github.eutro.wasm2j.passes.form;
 
 import io.github.eutro.wasm2j.ops.CommonOps;
 import io.github.eutro.wasm2j.ops.JavaOps;

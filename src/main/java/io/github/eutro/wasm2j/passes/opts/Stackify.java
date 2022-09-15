@@ -4,6 +4,7 @@ import io.github.eutro.wasm2j.ext.CommonExts;
 import io.github.eutro.wasm2j.ext.Ext;
 import io.github.eutro.wasm2j.ops.CommonOps;
 import io.github.eutro.wasm2j.passes.InPlaceIRPass;
+import io.github.eutro.wasm2j.passes.meta.ComputeUses;
 import io.github.eutro.wasm2j.ssa.*;
 import org.jetbrains.annotations.NotNull;
 
@@ -115,7 +116,6 @@ public class Stackify implements InPlaceIRPass<Function> {
 
     private static final Ext<Node<Effect>> NODE_EXT = Ext.create(Node.class);
     private static final Ext<LinkedList<Effect>> LIST_EXT = Ext.create(LinkedList.class);
-    private static final Ext<Set<Insn>> USES_EXT = Ext.create(Set.class);
 
     private static class Use {
         final Insn insn;
@@ -143,18 +143,11 @@ public class Stackify implements InPlaceIRPass<Function> {
             for (Node<Effect> node : list) {
                 Effect effect = node.value;
                 effect.attachExt(NODE_EXT, node);
-                for (Var arg : effect.insn().args) {
-                    getOrCreateUses(arg).add(effect.insn());
-                }
             }
             if (list.last == null) {
                 list.first = list.last = new Node<>(null, null, null, list);
             } else {
                 list.last.insertAfter(null);
-            }
-            Control ctrl = block.getControl();
-            for (Var arg : ctrl.insn.args) {
-                getOrCreateUses(arg).add(ctrl.insn);
             }
         }
 
@@ -181,7 +174,8 @@ public class Stackify implements InPlaceIRPass<Function> {
                     boolean sameBlock = defBlock == block;
                     boolean canMove = sameBlock && isSafeToMove(def, insert) &&
                             !regOnStack(stackTop, reg);
-                    if (canMove && reg.getExtOrThrow(USES_EXT).size() == 1) {
+                    if (canMove && reg.getExtOrRun(CommonExts.USED_AT, func, ComputeUses.INSTANCE)
+                            .size() == 1) {
                         insert = moveForSingleUse(reg, def, insert);
                     } else if (shouldRematerialize(def)) {
                         insert = rematerializeCheapDef(use, def, insert, block, func);
@@ -213,9 +207,6 @@ public class Stackify implements InPlaceIRPass<Function> {
             for (Node<Effect> node : list) {
                 if (node.value == null) continue;
                 node.value.removeExt(NODE_EXT);
-                for (Var var : node.value.getAssignsTo()) {
-                    var.removeExt(USES_EXT);
-                }
                 block.addEffect(node.value);
             }
         }
@@ -255,15 +246,6 @@ public class Stackify implements InPlaceIRPass<Function> {
         }
     }
 
-    @NotNull
-    private Set<Insn> getOrCreateUses(Var arg) {
-        return arg.getExt(USES_EXT).orElseGet(() -> {
-            HashSet<Insn> set = new HashSet<>();
-            arg.attachExt(USES_EXT, set);
-            return set;
-        });
-    }
-
     private boolean isSafeToMove(Effect def, Node<Effect> insert) {
         // if there are multiple assignments it gets too annoying...
         if (def.getAssignsTo().size() > 1) return false;
@@ -291,9 +273,9 @@ public class Stackify implements InPlaceIRPass<Function> {
 
         Effect reDef = def.insn().op.insn(def.insn().args).assignTo(remat);
         for (Var arg : reDef.insn().args) {
-            arg.getExtOrThrow(USES_EXT).add(reDef.insn());
+            arg.getExtOrThrow(CommonExts.USED_AT).add(reDef.insn());
         }
-        Set<Insn> regUses = use.getReg().getExtOrThrow(USES_EXT);
+        Set<Insn> regUses = use.getReg().getExtOrThrow(CommonExts.USED_AT);
         regUses.remove(use.insn);
         use.setReg(remat);
 
@@ -319,7 +301,7 @@ public class Stackify implements InPlaceIRPass<Function> {
 
         Var reg = use.getReg();
         Effect load = CommonOps.IDENTITY.insn(reg).assignTo(stacked);
-        Set<Insn> regUses = reg.getExtOrThrow(USES_EXT);
+        Set<Insn> regUses = reg.getExtOrRun(CommonExts.USED_AT, func, ComputeUses.INSTANCE);
         regUses.remove(use.insn);
         regUses.add(load.insn());
         use.setReg(stacked);

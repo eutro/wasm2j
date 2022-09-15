@@ -3,7 +3,7 @@ package io.github.eutro.wasm2j.intrinsics;
 import io.github.eutro.wasm2j.passes.convert.JavaToJir;
 import io.github.eutro.wasm2j.passes.misc.ForPass;
 import io.github.eutro.wasm2j.passes.opts.*;
-import io.github.eutro.wasm2j.passes.meta.SSAify;
+import io.github.eutro.wasm2j.passes.form.SSAify;
 import io.github.eutro.wasm2j.ssa.Function;
 import org.objectweb.asm.Type;
 import org.objectweb.asm.tree.MethodNode;

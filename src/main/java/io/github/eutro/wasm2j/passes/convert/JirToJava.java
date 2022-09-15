@@ -14,12 +14,10 @@ import org.objectweb.asm.Label;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
 import org.objectweb.asm.commons.GeneratorAdapter;
-import org.objectweb.asm.tree.AbstractInsnNode;
-import org.objectweb.asm.tree.ClassNode;
-import org.objectweb.asm.tree.FieldNode;
-import org.objectweb.asm.tree.MethodNode;
+import org.objectweb.asm.tree.*;
 
 import java.util.*;
+import java.util.regex.Pattern;
 
 public class JirToJava implements IRPass<Module, ClassNode> {
     public static final Ext<Integer> LOCAL_EXT = Ext.create(Integer.class);
@@ -113,6 +111,9 @@ public class JirToJava implements IRPass<Module, ClassNode> {
         }
 
         // 3.
+        LabelNode startLabel = new LabelNode();
+        LabelNode endLabel = new LabelNode();
+        mn.localVariables = new ArrayList<>();
         Object[] locals;
         Set<Var> allVars = new HashSet<>();
         {
@@ -132,6 +133,14 @@ public class JirToJava implements IRPass<Module, ClassNode> {
                         Object v = getLocalForType(ty);
                         localsList.add(v);
                         var.attachExt(LOCAL_EXT, localC);
+                        mn.localVariables.add(new LocalVariableNode(
+                                munge(var.name),
+                                ty.getDescriptor(),
+                                null,
+                                startLabel,
+                                endLabel,
+                                localC
+                        ));
                         localC += ty.getSize();
                     }
                 }
@@ -169,6 +178,9 @@ public class JirToJava implements IRPass<Module, ClassNode> {
             }
         }
 
+        mn.instructions.insert(startLabel);
+        mn.instructions.add(endLabel);
+
         for (BasicBlock block : blockOrder) {
             block.removeExt(LABEL_EXT);
             block.removeExt(NEXT_BLOCK_EXT);
@@ -177,6 +189,12 @@ public class JirToJava implements IRPass<Module, ClassNode> {
         for (Var var : allVars) {
             var.removeExt(LOCAL_EXT);
         }
+    }
+
+    private static final Pattern MUNGE_PATTERN = Pattern.compile("[.;\\[/]");
+
+    private static String munge(String name) {
+        return MUNGE_PATTERN.matcher(name).replaceAll("_");
     }
 
     private Object getLocalForType(Type ty) {

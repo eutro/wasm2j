@@ -7,7 +7,7 @@ import io.github.eutro.wasm2j.passes.IRPass;
 import io.github.eutro.wasm2j.passes.convert.WasmToWir;
 import io.github.eutro.wasm2j.passes.convert.WirToJir;
 import io.github.eutro.wasm2j.passes.meta.ComputeDomFrontier;
-import io.github.eutro.wasm2j.passes.meta.SSAify;
+import io.github.eutro.wasm2j.passes.form.SSAify;
 import org.junit.jupiter.api.Test;
 
 public class IRTest {

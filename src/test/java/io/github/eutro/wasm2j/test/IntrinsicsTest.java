@@ -9,7 +9,7 @@ import io.github.eutro.wasm2j.passes.*;
 import io.github.eutro.wasm2j.passes.convert.JavaToJir;
 import io.github.eutro.wasm2j.passes.convert.JirToJava;
 import io.github.eutro.wasm2j.passes.misc.JoinPass;
-import io.github.eutro.wasm2j.passes.meta.SSAify;
+import io.github.eutro.wasm2j.passes.form.SSAify;
 import io.github.eutro.wasm2j.ssa.Function;
 import io.github.eutro.wasm2j.ssa.Module;
 import io.github.eutro.wasm2j.ssa.display.DisplayInteraction;

@@ -1,9 +1,12 @@
-package io.github.eutro.wasm2j.passes.meta;
+package io.github.eutro.wasm2j.passes.form;
 
 import io.github.eutro.wasm2j.ext.CommonExts;
+import io.github.eutro.wasm2j.ext.CommonExts.LiveData;
 import io.github.eutro.wasm2j.ext.Ext;
 import io.github.eutro.wasm2j.ops.UnaryOpKey;
 import io.github.eutro.wasm2j.passes.InPlaceIRPass;
+import io.github.eutro.wasm2j.passes.meta.ComputeDomFrontier;
+import io.github.eutro.wasm2j.passes.meta.ComputeLiveVars;
 import io.github.eutro.wasm2j.ssa.*;
 import io.github.eutro.wasm2j.ops.CommonOps;
 
@@ -25,62 +28,21 @@ public class SSAify implements InPlaceIRPass<Function> {
             }
         }
 
+        for (BasicBlock block : func.blocks) {
+            if (!block.getExt(CommonExts.LIVE_DATA).isPresent()) {
+                ComputeLiveVars.INSTANCE.runInPlace(func);
+                break;
+            }
+        }
+
         class BlockData {
-            final Set<Var>
-                    gen = new HashSet<>(),
-                    kill = new HashSet<>(),
-                    liveIn = new LinkedHashSet<>(),
-                    liveOut = new HashSet<>();
-            final Set<BasicBlock> succ = new HashSet<>();
             final Set<BasicBlock> idominates = new LinkedHashSet<>();
 
             final Map<Var, Effect> phis = new LinkedHashMap<>();
         }
         Ext<BlockData> bdExt = new Ext<>(BlockData.class);
         for (BasicBlock block : func.blocks) {
-            BlockData data = new BlockData();
-            block.attachExt(bdExt, data);
-            Set<Var> used = data.gen;
-            Set<Var> assigned = data.kill;
-
-            for (Effect effect : block.getEffects()) {
-                for (Var arg : effect.insn().args) {
-                    if (!assigned.contains(arg)) used.add(arg);
-                }
-                assigned.addAll(effect.getAssignsTo());
-            }
-            for (Var arg : block.getControl().insn.args) {
-                if (!assigned.contains(arg)) used.add(arg);
-            }
-
-            data.succ.addAll(block.getControl().targets);
-            data.liveIn.addAll(data.gen);
-        }
-
-        Set<BasicBlock> workQueue = new LinkedHashSet<>();
-        for (int i = func.blocks.size() - 1; i >= 0; i--) {
-            workQueue.add(func.blocks.get(i));
-        }
-        while (!workQueue.isEmpty()) {
-            Iterator<BasicBlock> iterator = workQueue.iterator();
-            BasicBlock next = iterator.next();
-            iterator.remove();
-            BlockData data = next.getExtOrThrow(bdExt);
-            boolean changed = false;
-            for (BasicBlock succ : data.succ) {
-                BlockData succData = succ.getExtOrThrow(bdExt);
-                for (Var varIn : succData.liveIn) {
-                    if (data.liveOut.add(varIn)) {
-                        if (!data.kill.contains(varIn)) {
-                            changed = true;
-                            data.liveIn.add(varIn);
-                        }
-                    }
-                }
-            }
-            if (changed) {
-                workQueue.addAll(next.getExtOrThrow(CommonExts.PREDS));
-            }
+            block.attachExt(bdExt, new BlockData());
         }
 
         Iterator<BasicBlock> iter = func.blocks.iterator();
@@ -94,7 +56,7 @@ public class SSAify implements InPlaceIRPass<Function> {
         Set<Var> globals = new LinkedHashSet<>();
         Map<Var, Set<BasicBlock>> varKilledIn = new HashMap<>();
         for (BasicBlock block : func.blocks) {
-            BlockData data = block.getExtOrThrow(bdExt);
+            LiveData data = block.getExtOrThrow(CommonExts.LIVE_DATA);
             for (Var killed : data.kill) {
                 varKilledIn.computeIfAbsent(killed, $ -> new HashSet<>()).add(block);
                 globals.addAll(data.liveOut);
@@ -107,7 +69,8 @@ public class SSAify implements InPlaceIRPass<Function> {
                 BasicBlock next = workList.remove(workList.size() - 1);
                 for (BasicBlock fBlock : next.getExtOrThrow(CommonExts.DOM_FRONTIER)) {
                     BlockData data = fBlock.getExtOrThrow(bdExt);
-                    if (data.liveIn.contains(global)) {
+                    LiveData liveData = fBlock.getExtOrThrow(CommonExts.LIVE_DATA);
+                    if (liveData.liveIn.contains(global)) {
                         Map<Var, Effect> phis = data.phis;
                         if (!phis.containsKey(global)) {
                             Effect phiEffect = CommonOps.PHI.create(new ArrayList<>()).insn().assignTo(global);
@@ -160,7 +123,7 @@ public class SSAify implements InPlaceIRPass<Function> {
                 replaceUsages(block.getControl().insn);
 
                 BlockData data = block.getExtOrThrow(bdExt);
-                for (BasicBlock succ : data.succ) {
+                for (BasicBlock succ : block.getControl().targets) {
                     BlockData succData = succ.getExtOrThrow(bdExt);
                     for (Map.Entry<Var, Effect> entry : succData.phis.entrySet()) {
                         Insn phiInsn = entry.getValue().insn();
@@ -191,6 +154,8 @@ public class SSAify implements InPlaceIRPass<Function> {
 
         for (BasicBlock block : func.blocks) {
             block.removeExt(bdExt);
+            // we've renamed all the variables, none of it is valid anymore
+            block.removeExt(CommonExts.LIVE_DATA);
         }
     }
 }

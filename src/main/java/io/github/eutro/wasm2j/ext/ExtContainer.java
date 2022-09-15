@@ -1,5 +1,7 @@
 package io.github.eutro.wasm2j.ext;
 
+import io.github.eutro.wasm2j.passes.IRPass;
+
 import java.util.Optional;
 
 public interface ExtContainer {
@@ -11,5 +13,12 @@ public interface ExtContainer {
 
     default <T> T getExtOrThrow(Ext<T> ext) {
         return getExt(ext).orElseThrow(RuntimeException::new);
+    }
+
+    default <T, O> T getExtOrRun(Ext<T> ext, O o, IRPass<O, ?> pass) {
+        Optional<T> extV = getExt(ext);
+        if (extV.isPresent()) return extV.get();
+        pass.run(o);
+        return getExtOrThrow(ext);
     }
 }
