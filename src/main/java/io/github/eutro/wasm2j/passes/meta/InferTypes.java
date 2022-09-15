@@ -6,7 +6,7 @@ import io.github.eutro.wasm2j.ext.JavaExts;
 import io.github.eutro.wasm2j.ops.CommonOps;
 import io.github.eutro.wasm2j.ops.JavaOps;
 import io.github.eutro.wasm2j.ops.OpKey;
-import io.github.eutro.wasm2j.passes.InPlaceIrPass;
+import io.github.eutro.wasm2j.passes.InPlaceIRPass;
 import io.github.eutro.wasm2j.ssa.*;
 import io.github.eutro.wasm2j.util.F;
 import io.github.eutro.wasm2j.util.Preorder;
@@ -23,7 +23,7 @@ import java.util.*;
 import static io.github.eutro.wasm2j.passes.meta.InferTypes.FuncType.withArity;
 import static org.objectweb.asm.Opcodes.*;
 
-public abstract class InferTypes<Ty> implements InPlaceIrPass<Function> {
+public abstract class InferTypes<Ty> implements InPlaceIRPass<Function> {
     protected final Ext<Ty> tyExt;
 
     public InferTypes(Ext<Ty> tyExt) {
@@ -36,7 +36,7 @@ public abstract class InferTypes<Ty> implements InPlaceIrPass<Function> {
             for (Effect effect : block.getEffects()) {
                 try {
                     Ty[] retTys = inferInsn(effect.insn());
-                    if (retTys == null) continue;
+                    if (retTys == null) throw new RuntimeException("failed to infer");
                     List<Var> assignsTo = effect.getAssignsTo();
                     if (assignsTo.size() != retTys.length) {
                         throw new IllegalStateException(String.format(
@@ -221,7 +221,7 @@ public abstract class InferTypes<Ty> implements InPlaceIrPass<Function> {
             Type[] argTys = new Type[insn.args.size()];
             int i = 0;
             for (Var arg : insn.args) {
-                argTys[i++] = arg.getExt(JavaExts.TYPE).orElse(null);
+                argTys[i++] = arg.getExt(JavaExts.TYPE).orElseThrow(() -> new RuntimeException(arg + " has no type"));
             }
             return argTys;
         }
@@ -359,8 +359,8 @@ public abstract class InferTypes<Ty> implements InPlaceIrPass<Function> {
                         JavaOps.INVOKE)
 
                 .put(insn -> new Type[]{insn.args.get(0).getExt(JavaExts.TYPE)
-                        .map(Type::getElementType)
-                        .orElse(null)},
+                                .map(Type::getElementType)
+                                .orElseThrow(RuntimeException::new)},
                         JavaOps.ARRAY_GET)
 
                 .put(insn -> new Type[]{}, JavaOps.PUT_FIELD, JavaOps.ARRAY_SET)
@@ -380,20 +380,17 @@ public abstract class InferTypes<Ty> implements InPlaceIrPass<Function> {
                 }, CommonOps.CONST)
 
                 .put("I b b -> b", JavaOps.SELECT)
-                .put("I -> I", JavaOps.BOOL_SELECT)
+                .put(insn -> new Type[]{Type.INT_TYPE}, JavaOps.BOOL_SELECT)
                 .put((Insn insn) -> {
-                    boolean isBot = false;
                     for (Var arg : insn.args) {
                         Type ty = arg.getExt(JavaExts.TYPE).orElse(null);
                         if (ty != null) {
                             if (ty != JavaExts.BOTTOM_TYPE) {
                                 return new Type[]{ty};
-                            } else {
-                                isBot = true;
                             }
                         }
                     }
-                    return isBot ? new Type[]{JavaExts.BOTTOM_TYPE} : null;
+                    throw new RuntimeException("could not infer phi type");
                 }, CommonOps.PHI)
                 .put((Insn insn) -> {
                             String desc = insn.getExtOrThrow(CommonExts.OWNING_EFFECT)

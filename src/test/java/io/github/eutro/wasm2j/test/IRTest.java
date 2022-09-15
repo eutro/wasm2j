@@ -2,13 +2,12 @@ package io.github.eutro.wasm2j.test;
 
 import io.github.eutro.jwasm.tree.ModuleNode;
 import io.github.eutro.wasm2j.conf.Conventions;
-import io.github.eutro.wasm2j.passes.meta.LowerIntrinsics;
 import io.github.eutro.wasm2j.passes.misc.ForPass;
 import io.github.eutro.wasm2j.passes.IRPass;
 import io.github.eutro.wasm2j.passes.convert.WasmToWir;
 import io.github.eutro.wasm2j.passes.convert.WirToJir;
 import io.github.eutro.wasm2j.passes.meta.ComputeDomFrontier;
-import io.github.eutro.wasm2j.passes.opts.SSAify;
+import io.github.eutro.wasm2j.passes.meta.SSAify;
 import org.junit.jupiter.api.Test;
 
 public class IRTest {

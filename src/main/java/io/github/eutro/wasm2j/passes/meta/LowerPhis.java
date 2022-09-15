@@ -2,7 +2,7 @@ package io.github.eutro.wasm2j.passes.meta;
 
 import io.github.eutro.wasm2j.ext.CommonExts;
 import io.github.eutro.wasm2j.ops.CommonOps;
-import io.github.eutro.wasm2j.passes.InPlaceIrPass;
+import io.github.eutro.wasm2j.passes.InPlaceIRPass;
 import io.github.eutro.wasm2j.ssa.BasicBlock;
 import io.github.eutro.wasm2j.ssa.Effect;
 import io.github.eutro.wasm2j.ssa.Function;
@@ -12,7 +12,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.ListIterator;
 
-public class LowerPhis implements InPlaceIrPass<Function> {
+public class LowerPhis implements InPlaceIRPass<Function> {
     public static final LowerPhis INSTANCE = new LowerPhis();
 
     @Override

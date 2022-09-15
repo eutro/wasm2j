@@ -1,12 +1,9 @@
 package io.github.eutro.wasm2j.intrinsics;
 
 import io.github.eutro.wasm2j.passes.convert.JavaToJir;
-import io.github.eutro.wasm2j.passes.convert.JirToJava;
 import io.github.eutro.wasm2j.passes.misc.ForPass;
-import io.github.eutro.wasm2j.passes.opts.DeadVarElimination;
-import io.github.eutro.wasm2j.passes.opts.IdentityElimination;
-import io.github.eutro.wasm2j.passes.opts.Opt0;
-import io.github.eutro.wasm2j.passes.opts.SSAify;
+import io.github.eutro.wasm2j.passes.opts.*;
+import io.github.eutro.wasm2j.passes.meta.SSAify;
 import io.github.eutro.wasm2j.ssa.Function;
 import org.objectweb.asm.Type;
 import org.objectweb.asm.tree.MethodNode;
@@ -24,8 +21,11 @@ public class IntrinsicImpl {
         } else {
             impl = JavaToJir.INSTANCE
                     .then(SSAify.INSTANCE)
+                    .then(FindBoolSelects.INSTANCE)
+                    .then(EliminateDeadBlocks.INSTANCE)
+                    .then(CollapseJumps.INSTANCE)
                     .then(ForPass.liftInsns(IdentityElimination.INSTANCE).lift())
-                    .then(DeadVarElimination.INSTANCE)
+                    .then(EliminateDeadVars.INSTANCE)
                     .run(method);
         }
     }

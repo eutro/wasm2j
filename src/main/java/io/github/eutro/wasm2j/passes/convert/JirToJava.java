@@ -7,20 +7,19 @@ import io.github.eutro.wasm2j.ops.CommonOps;
 import io.github.eutro.wasm2j.ops.JavaOps;
 import io.github.eutro.wasm2j.ops.OpKey;
 import io.github.eutro.wasm2j.passes.IRPass;
-import io.github.eutro.wasm2j.ssa.*;
 import io.github.eutro.wasm2j.ssa.Module;
+import io.github.eutro.wasm2j.ssa.*;
 import io.github.eutro.wasm2j.util.Preorder;
-import org.objectweb.asm.Type;
 import org.objectweb.asm.Label;
 import org.objectweb.asm.Opcodes;
-import org.objectweb.asm.commons.AnalyzerAdapter;
+import org.objectweb.asm.Type;
 import org.objectweb.asm.commons.GeneratorAdapter;
+import org.objectweb.asm.tree.AbstractInsnNode;
 import org.objectweb.asm.tree.ClassNode;
 import org.objectweb.asm.tree.FieldNode;
 import org.objectweb.asm.tree.MethodNode;
 
 import java.util.*;
-import java.util.stream.Collectors;
 
 public class JirToJava implements IRPass<Module, ClassNode> {
     public static final Ext<Integer> LOCAL_EXT = Ext.create(Integer.class);
@@ -65,7 +64,11 @@ public class JirToJava implements IRPass<Module, ClassNode> {
                     null
             );
             cn.methods.add(mn);
-            compileFuncInto(mn, impl);
+            try {
+                compileFuncInto(mn, impl);
+            } catch (RuntimeException e) {
+                throw new RuntimeException("error generating code for method " + method.name, e);
+            }
         }
 
         return cn;
@@ -141,6 +144,7 @@ public class JirToJava implements IRPass<Module, ClassNode> {
         for (BasicBlock block : blockOrder) {
             mn.visitLabel(block.getExtOrThrow(LABEL_EXT));
             mn.visitFrame(Opcodes.F_NEW, locals.length, locals, 0, new Object[0]);
+            AbstractInsnNode frameNode = mn.instructions.getLast();
             for (Effect effect : block.getEffects()) {
                 if (effect.insn().op.key == CommonOps.PHI) continue;
 
@@ -159,6 +163,10 @@ public class JirToJava implements IRPass<Module, ClassNode> {
             }
             emitLoads(jb, ctrl.insn);
             converter.convert(jb, ctrl);
+
+            if (mn.instructions.getLast() == frameNode) {
+                mn.instructions.remove(frameNode);
+            }
         }
 
         for (BasicBlock block : blockOrder) {
@@ -287,7 +295,7 @@ public class JirToJava implements IRPass<Module, ClassNode> {
             }
             jb.visitTableSwitchInsn(
                     0,
-                    ct.targets.size() - 1,
+                    labels.length - 1,
                     ct.targets.get(ct.targets.size() - 1).getExtOrThrow(LABEL_EXT),
                     labels
             );

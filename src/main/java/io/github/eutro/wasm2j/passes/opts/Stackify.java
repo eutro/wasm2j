@@ -3,7 +3,7 @@ package io.github.eutro.wasm2j.passes.opts;
 import io.github.eutro.wasm2j.ext.CommonExts;
 import io.github.eutro.wasm2j.ext.Ext;
 import io.github.eutro.wasm2j.ops.CommonOps;
-import io.github.eutro.wasm2j.passes.InPlaceIrPass;
+import io.github.eutro.wasm2j.passes.InPlaceIRPass;
 import io.github.eutro.wasm2j.ssa.*;
 import org.jetbrains.annotations.NotNull;
 
@@ -11,7 +11,7 @@ import java.util.*;
 
 // inspired by https://github.com/llvm/llvm-project/blob/main/llvm/lib/Target/WebAssembly/WebAssemblyRegStackify.cpp,
 // see that for notes
-public class Stackify implements InPlaceIrPass<Function> {
+public class Stackify implements InPlaceIRPass<Function> {
     public static Stackify INSTANCE = new Stackify();
 
     public static boolean CHECK_STACK_INTEGRITY = true;

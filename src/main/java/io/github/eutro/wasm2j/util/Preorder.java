@@ -13,6 +13,14 @@ public class Preorder<T> implements Iterable<T> {
         this.f = f;
     }
 
+    public List<T> toList() {
+        List<T> ret = new ArrayList<>();
+        for (T t : this) {
+            ret.add(t);
+        }
+        return ret;
+    }
+
     @NotNull
     @Override
     public Iterator<T> iterator() {

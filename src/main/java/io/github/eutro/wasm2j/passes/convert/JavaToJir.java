@@ -181,14 +181,17 @@ public class JavaToJir implements IRPass<MethodNode, Function> {
                 case Opcodes.LDC:
                     bb.addEffect(CommonOps.CONST.create(((LdcInsnNode) insn).cst).insn().assignTo(pushVar()));
                     break;
-                case Opcodes.ACONST_NULL:
-                case Opcodes.ICONST_M1:
-                case Opcodes.ICONST_0:
-                case Opcodes.ICONST_1:
-                case Opcodes.ICONST_2:
-                case Opcodes.ICONST_3:
-                case Opcodes.ICONST_4:
-                case Opcodes.ICONST_5:
+
+                // @formatter:off
+                case Opcodes.ACONST_NULL: bb.addEffect(CommonOps.CONST.create(null).insn().assignTo(pushVar())); break;
+                case Opcodes.ICONST_M1: bb.addEffect(CommonOps.CONST.create(-1).insn().assignTo(pushVar())); break;
+                case Opcodes.ICONST_0: bb.addEffect(CommonOps.CONST.create(0).insn().assignTo(pushVar())); break;
+                case Opcodes.ICONST_1: bb.addEffect(CommonOps.CONST.create(1).insn().assignTo(pushVar())); break;
+                case Opcodes.ICONST_2: bb.addEffect(CommonOps.CONST.create(2).insn().assignTo(pushVar())); break;
+                case Opcodes.ICONST_3: bb.addEffect(CommonOps.CONST.create(3).insn().assignTo(pushVar())); break;
+                case Opcodes.ICONST_4: bb.addEffect(CommonOps.CONST.create(4).insn().assignTo(pushVar())); break;
+                case Opcodes.ICONST_5: bb.addEffect(CommonOps.CONST.create(5).insn().assignTo(pushVar())); break;
+                // @formatter:on
                 case Opcodes.BIPUSH:
                 case Opcodes.SIPUSH:
                 case Opcodes.LCONST_0:

@@ -3,14 +3,11 @@ package io.github.eutro.wasm2j.passes.convert;
 import io.github.eutro.jwasm.BlockType;
 import io.github.eutro.jwasm.tree.*;
 import io.github.eutro.wasm2j.ext.CommonExts;
-import io.github.eutro.wasm2j.ext.Ext;
 import io.github.eutro.wasm2j.ext.WasmExts;
 import io.github.eutro.wasm2j.ops.WasmOps.DerefType.ExtType;
 import io.github.eutro.wasm2j.ops.WasmOps.DerefType.LoadType;
 import io.github.eutro.wasm2j.ops.WasmOps.StoreType;
-import io.github.eutro.wasm2j.passes.misc.ForPass;
 import io.github.eutro.wasm2j.passes.IRPass;
-import io.github.eutro.wasm2j.passes.opts.Opt0;
 import io.github.eutro.wasm2j.ops.CommonOps;
 import io.github.eutro.wasm2j.ops.WasmOps;
 import io.github.eutro.wasm2j.ssa.*;
@@ -84,7 +81,6 @@ public class WasmToWir implements IRPass<ModuleNode, Module> {
             }
         }
 
-        ForPass.liftFunctions(Opt0.INSTANCE).runInPlace(module);
         return module;
     }
 

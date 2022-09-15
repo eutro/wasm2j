@@ -1,7 +1,7 @@
 package io.github.eutro.wasm2j.passes.opts;
 
 import io.github.eutro.wasm2j.ext.CommonExts;
-import io.github.eutro.wasm2j.passes.InPlaceIrPass;
+import io.github.eutro.wasm2j.passes.InPlaceIRPass;
 import io.github.eutro.wasm2j.ssa.BasicBlock;
 import io.github.eutro.wasm2j.ssa.Effect;
 import io.github.eutro.wasm2j.ssa.Function;
@@ -9,8 +9,8 @@ import io.github.eutro.wasm2j.ssa.Var;
 
 import java.util.*;
 
-public class DeadVarElimination implements InPlaceIrPass<Function> {
-    public static final DeadVarElimination INSTANCE = new DeadVarElimination();
+public class EliminateDeadVars implements InPlaceIRPass<Function> {
+    public static final EliminateDeadVars INSTANCE = new EliminateDeadVars();
 
     @Override
     public void runInPlace(Function function) {

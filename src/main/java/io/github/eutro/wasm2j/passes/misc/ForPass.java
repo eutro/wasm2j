@@ -1,7 +1,7 @@
 package io.github.eutro.wasm2j.passes.misc;
 
 import io.github.eutro.wasm2j.passes.IRPass;
-import io.github.eutro.wasm2j.passes.InPlaceIrPass;
+import io.github.eutro.wasm2j.passes.InPlaceIRPass;
 import io.github.eutro.wasm2j.ssa.*;
 import io.github.eutro.wasm2j.ssa.Module;
 
@@ -90,7 +90,7 @@ public class ForPass {
         }
     }
 
-    private static abstract class AbstractForPass<T, Lifted> implements InPlaceIrPass<Lifted> {
+    private static abstract class AbstractForPass<T, Lifted> implements InPlaceIRPass<Lifted> {
         private final IRPass<T, T> pass;
 
         private AbstractForPass(IRPass<T, T> pass) {

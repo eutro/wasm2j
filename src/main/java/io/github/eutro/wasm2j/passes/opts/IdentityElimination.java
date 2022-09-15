@@ -2,13 +2,13 @@ package io.github.eutro.wasm2j.passes.opts;
 
 import io.github.eutro.wasm2j.ext.CommonExts;
 import io.github.eutro.wasm2j.ops.CommonOps;
-import io.github.eutro.wasm2j.passes.InPlaceIrPass;
+import io.github.eutro.wasm2j.passes.InPlaceIRPass;
 import io.github.eutro.wasm2j.ssa.Insn;
 import io.github.eutro.wasm2j.ssa.Var;
 
 import java.util.ListIterator;
 
-public class IdentityElimination implements InPlaceIrPass<Insn> {
+public class IdentityElimination implements InPlaceIRPass<Insn> {
     public static final IdentityElimination INSTANCE = new IdentityElimination();
 
     @Override

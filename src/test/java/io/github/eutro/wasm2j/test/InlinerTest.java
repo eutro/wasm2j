@@ -4,7 +4,7 @@ import io.github.eutro.wasm2j.intrinsics.ImplClassBytes;
 import io.github.eutro.wasm2j.ops.CommonOps;
 import io.github.eutro.wasm2j.passes.IRPass;
 import io.github.eutro.wasm2j.passes.convert.JavaToJir;
-import io.github.eutro.wasm2j.passes.opts.SSAify;
+import io.github.eutro.wasm2j.passes.meta.SSAify;
 import io.github.eutro.wasm2j.ssa.BasicBlock;
 import io.github.eutro.wasm2j.ssa.Function;
 import io.github.eutro.wasm2j.ssa.Inliner;
@@ -21,6 +21,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class InlinerTest {
+    @SuppressWarnings("unused")
     private static class Tested {
         public static int add(int lhs, int rhs) {
             return lhs + rhs;

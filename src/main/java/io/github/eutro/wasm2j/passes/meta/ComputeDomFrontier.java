@@ -1,14 +1,14 @@
 package io.github.eutro.wasm2j.passes.meta;
 
 import io.github.eutro.wasm2j.ext.CommonExts;
-import io.github.eutro.wasm2j.passes.InPlaceIrPass;
+import io.github.eutro.wasm2j.passes.InPlaceIRPass;
 import io.github.eutro.wasm2j.ssa.BasicBlock;
 import io.github.eutro.wasm2j.ssa.Function;
 
 import java.util.HashSet;
 import java.util.List;
 
-public class ComputeDomFrontier implements InPlaceIrPass<Function> {
+public class ComputeDomFrontier implements InPlaceIRPass<Function> {
     public static final ComputeDomFrontier INSTANCE = new ComputeDomFrontier();
 
     @Override

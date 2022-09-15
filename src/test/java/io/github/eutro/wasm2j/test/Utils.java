@@ -9,6 +9,7 @@ import io.github.eutro.wasm2j.ssa.display.DisplayInteraction;
 import io.github.eutro.wasm2j.ssa.display.SSADisplay;
 import org.jetbrains.annotations.NotNull;
 
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 
@@ -33,6 +34,21 @@ public class Utils {
                 i++;
             }
             return module;
+        };
+    }
+
+    public static IRPass<Function, Function> debugDisplayOnError(String prefix, IRPass<Function, Function> pass) {
+        return func -> {
+            try {
+                return pass.run(func);
+            } catch (RuntimeException e) {
+                String file = "build/ssa/" + prefix + System.identityHashCode(e) + ".svg";
+                SSADisplay.debugDisplayToFile(
+                        SSADisplay.displaySSA(func, DisplayInteraction.HIGHLIGHT_INTERESTING),
+                        file
+                );
+                throw new RuntimeException("function written to file: " + new File(file).getAbsolutePath(), e);
+            }
         };
     }
 }

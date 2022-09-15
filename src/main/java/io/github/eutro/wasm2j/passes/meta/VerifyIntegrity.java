@@ -1,7 +1,7 @@
 package io.github.eutro.wasm2j.passes.meta;
 
 import io.github.eutro.wasm2j.ops.CommonOps;
-import io.github.eutro.wasm2j.passes.InPlaceIrPass;
+import io.github.eutro.wasm2j.passes.InPlaceIRPass;
 import io.github.eutro.wasm2j.ssa.BasicBlock;
 import io.github.eutro.wasm2j.ssa.Effect;
 import io.github.eutro.wasm2j.ssa.Function;
@@ -11,7 +11,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 
-public class VerifyIntegrity implements InPlaceIrPass<Function> {
+public class VerifyIntegrity implements InPlaceIRPass<Function> {
     public static final VerifyIntegrity INSTANCE = new VerifyIntegrity();
 
     @Override

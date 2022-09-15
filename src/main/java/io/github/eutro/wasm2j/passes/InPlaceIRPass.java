@@ -1,6 +1,6 @@
 package io.github.eutro.wasm2j.passes;
 
-public interface InPlaceIrPass<T> extends IRPass<T, T> {
+public interface InPlaceIRPass<T> extends IRPass<T, T> {
     void runInPlace(T t);
 
     @Override

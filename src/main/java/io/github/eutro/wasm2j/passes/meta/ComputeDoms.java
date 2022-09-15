@@ -2,11 +2,11 @@ package io.github.eutro.wasm2j.passes.meta;
 
 import io.github.eutro.wasm2j.ext.CommonExts;
 import io.github.eutro.wasm2j.ext.Ext;
-import io.github.eutro.wasm2j.passes.InPlaceIrPass;
-import io.github.eutro.wasm2j.ssa.*;
+import io.github.eutro.wasm2j.passes.InPlaceIRPass;
 import io.github.eutro.wasm2j.ssa.BasicBlock;
 import io.github.eutro.wasm2j.ssa.Control;
 import io.github.eutro.wasm2j.ssa.Function;
+import io.github.eutro.wasm2j.util.Preorder;
 
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -17,7 +17,7 @@ import java.util.Set;
  Thomas Lengauer and Robert Endre Tarjan. A fast algorithm for finding dominators in a flow-graph.
  ACM Transactions on Programming Languages and Systems, 1(1):121-141, July 1979.
 */
-public class ComputeDoms implements InPlaceIrPass<Function> {
+public class ComputeDoms implements InPlaceIRPass<Function> {
     public static final ComputeDoms INSTANCE = new ComputeDoms();
 
     @Override
@@ -26,6 +26,12 @@ public class ComputeDoms implements InPlaceIrPass<Function> {
     }
 
     private static void computeDoms(Function func) {
+        Preorder<BasicBlock> preorder = new Preorder<>(func.blocks.get(0), $ -> $.getControl().targets);
+        func.blocks.clear();
+        for (BasicBlock basicBlock : preorder) {
+            func.blocks.add(basicBlock);
+        }
+
         class Runner {
             int n = func.blocks.size();
             final int[][] succ = new int[n + 1][];

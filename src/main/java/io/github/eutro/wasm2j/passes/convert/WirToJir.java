@@ -1,6 +1,5 @@
 package io.github.eutro.wasm2j.passes.convert;
 
-import io.github.eutro.jwasm.Opcodes;
 import io.github.eutro.wasm2j.conf.WirJavaConvention;
 import io.github.eutro.wasm2j.conf.WirJavaConventionFactory;
 import io.github.eutro.wasm2j.ext.CommonExts;
@@ -11,7 +10,7 @@ import io.github.eutro.wasm2j.ops.JavaOps;
 import io.github.eutro.wasm2j.ops.OpKey;
 import io.github.eutro.wasm2j.ops.WasmOps;
 import io.github.eutro.wasm2j.passes.misc.ForPass;
-import io.github.eutro.wasm2j.passes.InPlaceIrPass;
+import io.github.eutro.wasm2j.passes.InPlaceIRPass;
 import io.github.eutro.wasm2j.ssa.Module;
 import io.github.eutro.wasm2j.ssa.*;
 
@@ -22,7 +21,7 @@ import java.util.Map;
 
 import static io.github.eutro.jwasm.Opcodes.*;
 
-public class WirToJir implements InPlaceIrPass<Module> {
+public class WirToJir implements InPlaceIRPass<Module> {
     private final WirJavaConventionFactory conventionsFactory;
 
     public WirToJir(WirJavaConventionFactory conventionsFactory) {
@@ -41,7 +40,7 @@ public class WirToJir implements InPlaceIrPass<Module> {
         module.attachExt(CommonExts.CODE_TYPE, CommonExts.CodeType.JAVA);
     }
 
-    public static class WirToJirPerFunc implements InPlaceIrPass<Function> {
+    public static class WirToJirPerFunc implements InPlaceIRPass<Function> {
         private final WirJavaConvention conventions;
 
         public WirToJirPerFunc(WirJavaConvention conventions) {

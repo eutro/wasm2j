@@ -1,16 +1,15 @@
-package io.github.eutro.wasm2j.passes.opts;
+package io.github.eutro.wasm2j.passes.meta;
 
 import io.github.eutro.wasm2j.ext.CommonExts;
 import io.github.eutro.wasm2j.ext.Ext;
 import io.github.eutro.wasm2j.ops.UnaryOpKey;
-import io.github.eutro.wasm2j.passes.InPlaceIrPass;
-import io.github.eutro.wasm2j.passes.meta.ComputeDomFrontier;
+import io.github.eutro.wasm2j.passes.InPlaceIRPass;
 import io.github.eutro.wasm2j.ssa.*;
 import io.github.eutro.wasm2j.ops.CommonOps;
 
 import java.util.*;
 
-public class SSAify implements InPlaceIrPass<Function> {
+public class SSAify implements InPlaceIRPass<Function> {
     public static final SSAify INSTANCE = new SSAify();
 
     @Override

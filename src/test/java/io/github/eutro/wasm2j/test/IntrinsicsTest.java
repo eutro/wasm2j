@@ -1,22 +1,15 @@
 package io.github.eutro.wasm2j.test;
 
-import io.github.eutro.jwasm.Opcodes;
 import io.github.eutro.wasm2j.ext.JavaExts;
 import io.github.eutro.wasm2j.intrinsics.Impl;
 import io.github.eutro.wasm2j.intrinsics.Intrinsic;
 import io.github.eutro.wasm2j.intrinsics.IntrinsicImpl;
 import io.github.eutro.wasm2j.intrinsics.JavaIntrinsics;
 import io.github.eutro.wasm2j.passes.*;
-import io.github.eutro.wasm2j.passes.meta.InferTypes;
-import io.github.eutro.wasm2j.passes.meta.LowerPhis;
-import io.github.eutro.wasm2j.passes.misc.ForPass;
 import io.github.eutro.wasm2j.passes.convert.JavaToJir;
 import io.github.eutro.wasm2j.passes.convert.JirToJava;
 import io.github.eutro.wasm2j.passes.misc.JoinPass;
-import io.github.eutro.wasm2j.passes.opts.DeadVarElimination;
-import io.github.eutro.wasm2j.passes.opts.IdentityElimination;
-import io.github.eutro.wasm2j.passes.opts.SSAify;
-import io.github.eutro.wasm2j.passes.opts.Stackify;
+import io.github.eutro.wasm2j.passes.meta.SSAify;
 import io.github.eutro.wasm2j.ssa.Function;
 import io.github.eutro.wasm2j.ssa.Module;
 import io.github.eutro.wasm2j.ssa.display.DisplayInteraction;
@@ -34,7 +27,6 @@ import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodType;
 import java.lang.reflect.Method;
 import java.util.*;
-import java.util.stream.Collectors;
 
 public class IntrinsicsTest {
 
@@ -43,21 +35,13 @@ public class IntrinsicsTest {
     @Test
     void testIntrinsicsJir() {
         int i = 0;
-        IRPass<MethodNode, Function> pass = JavaToJir.INSTANCE
-                .then(SSAify.INSTANCE)
-                .then(ForPass.liftInsns(IdentityElimination.INSTANCE).lift())
-                .then(DeadVarElimination.INSTANCE);
         for (IntrinsicImpl intr : JavaIntrinsics.INTRINSICS.getValues()) {
-            try {
-                Function jir = pass
-                        .run(intr.method);
-                SSADisplay.debugDisplayToFile(
-                        SSADisplay.displaySSA(jir, DisplayInteraction.HIGHLIGHT_INTERESTING),
-                        "build/ssa/intr" + i++ + ".svg"
-                );
-            } catch (Exception error) {
-                error.printStackTrace();
-            }
+            Function jir = intr.impl;
+            if (jir == null) continue;
+            SSADisplay.debugDisplayToFile(
+                    SSADisplay.displaySSA(jir, DisplayInteraction.HIGHLIGHT_INTERESTING),
+                    "build/ssa/intr" + i++ + ".svg"
+            );
         }
     }
 
