@@ -17,7 +17,6 @@ import org.objectweb.asm.commons.GeneratorAdapter;
 import org.objectweb.asm.tree.*;
 
 import java.util.*;
-import java.util.regex.Pattern;
 
 public class JirToJava implements IRPass<Module, ClassNode> {
     public static final Ext<Integer> LOCAL_EXT = Ext.create(Integer.class);
@@ -126,6 +125,7 @@ public class JirToJava implements IRPass<Module, ClassNode> {
             for (BasicBlock block : blockOrder) {
                 for (Effect effect : block.getEffects()) {
                     for (Var var : effect.getAssignsTo()) {
+                        if (var.getExt(CommonExts.STACKIFIED).orElse(false)) continue;
                         if (!allVars.add(var)) continue;
                         Type ty = var.getExt(JavaExts.TYPE).orElseThrow(() ->
                                 new IllegalStateException(String.format(
@@ -143,6 +143,7 @@ public class JirToJava implements IRPass<Module, ClassNode> {
 
         // 4.
         JavaBuilder jb = new JavaBuilder(mn);
+        // FIXME calculate frames and stack map properly...
         mn.visitFrame(Opcodes.F_FULL, locals.length, locals, 0, new Object[0]);
         boolean isFirst = true;
         for (BasicBlock block : blockOrder) {

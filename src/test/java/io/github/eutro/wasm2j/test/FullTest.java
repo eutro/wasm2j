@@ -48,6 +48,7 @@ public class FullTest {
 
                 .then(ForPass.liftFunctions(VerifyIntegrity.INSTANCE))
 
+                //.then(Utils.debugDisplay("preemit"))
                 .then(JirToJava.INSTANCE)
                 .then(CheckJava.INSTANCE)
                 .run(mn);
@@ -66,6 +67,12 @@ public class FullTest {
 
         byte[] classBytes = cw.toByteArray();
 
+        File file = new File("build/wasmout/" + node.name + ".clazz");
+        file.getParentFile().mkdirs();
+        try (FileOutputStream os = new FileOutputStream(file)) {
+            os.write(classBytes);
+        }
+
         AtomicReference<Class<?>> clazzRef = new AtomicReference<>();
         new ClassLoader() {{
             clazzRef.set(defineClass("com.example.FIXME", classBytes, 0, classBytes.length));
@@ -73,11 +80,5 @@ public class FullTest {
         Class<?> clazz = clazzRef.get();
         clazz.getMethods();
         System.out.println(clazz);
-
-        File file = new File("build/wasmout/" + node.name + ".clazz");
-        file.getParentFile().mkdirs();
-        try (FileOutputStream os = new FileOutputStream(file)) {
-            os.write(classBytes);
-        }
     }
 }
