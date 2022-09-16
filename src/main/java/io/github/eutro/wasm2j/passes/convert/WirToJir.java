@@ -9,8 +9,8 @@ import io.github.eutro.wasm2j.ops.CommonOps;
 import io.github.eutro.wasm2j.ops.JavaOps;
 import io.github.eutro.wasm2j.ops.OpKey;
 import io.github.eutro.wasm2j.ops.WasmOps;
-import io.github.eutro.wasm2j.passes.misc.ForPass;
 import io.github.eutro.wasm2j.passes.InPlaceIRPass;
+import io.github.eutro.wasm2j.passes.misc.ForPass;
 import io.github.eutro.wasm2j.ssa.Module;
 import io.github.eutro.wasm2j.ssa.*;
 
@@ -36,6 +36,8 @@ public class WirToJir implements InPlaceIRPass<Module> {
 
         WirJavaConvention conventions = conventionsFactory.create(module);
         ForPass.liftFunctions(new WirToJirPerFunc(conventions)).runInPlace(module);
+
+        conventions.buildConstructor();
 
         module.attachExt(CommonExts.CODE_TYPE, CommonExts.CodeType.JAVA);
     }
@@ -108,7 +110,11 @@ public class WirToJir implements InPlaceIRPass<Module> {
                     jb.insert(JavaOps.BOOL_SELECT.create(JavaOps.JumpType.IFNULL).copyFrom(fx)));
 
             FX_CONVERTERS.put(WasmOps.SELECT, (fx, jb, slf) ->
-                    jb.insert(JavaOps.SELECT.create(JavaOps.JumpType.IFNE).copyFrom(fx)));
+                    jb.insert(JavaOps.SELECT.create(JavaOps.JumpType.IFNE)
+                            .insn(fx.insn().args.get(0 /* cond */),
+                                    fx.insn().args.get(1 /* ift -> taken */),
+                                    fx.insn().args.get(2 /* iff -> fallthrough */))
+                            .copyFrom(fx)));
 
             FX_CONVERTERS.put(WasmOps.OPERATOR, (fx, jb, slf) -> {
                 WasmOps.OperatorType opTy = WasmOps.OPERATOR.cast(fx.insn().op).arg;
@@ -135,7 +141,7 @@ public class WirToJir implements InPlaceIRPass<Module> {
             }
 
             CTRL_CONVERTERS.put(WasmOps.BR_IF.key, (ctrl, jb, slf) ->
-                    ctrl.insn.op = JavaOps.BR_COND.create(JavaOps.JumpType.IFEQ));
+                    ctrl.insn.op = JavaOps.BR_COND.create(JavaOps.JumpType.IFNE));
             CTRL_CONVERTERS.put(WasmOps.BR_TABLE.key, (ctrl, jb, slf) ->
                     ctrl.insn.op = JavaOps.TABLESWITCH.create());
         }

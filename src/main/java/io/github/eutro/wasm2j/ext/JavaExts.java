@@ -48,6 +48,7 @@ public class JavaExts {
             STATIC_PRIVATE(Opcodes.ACC_STATIC | Opcodes.ACC_PRIVATE, Opcodes.INVOKESTATIC),
             VIRTUAL(Opcodes.ACC_PUBLIC, Opcodes.INVOKEVIRTUAL),
             FINAL(Opcodes.ACC_PRIVATE, Opcodes.INVOKESPECIAL),
+            ABSTRACT(Opcodes.ACC_ABSTRACT | Opcodes.ACC_PROTECTED, Opcodes.INVOKEVIRTUAL),
             ;
 
             public final int access;
@@ -73,6 +74,7 @@ public class JavaExts {
         public JavaClass owner;
         public String name, descriptor;
         public boolean isStatic;
+        public int otherAccess = Opcodes.ACC_PRIVATE;
 
         public JavaField(JavaClass owner, String name, String descriptor, boolean isStatic) {
             this.owner = owner;

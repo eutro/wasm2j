@@ -71,6 +71,7 @@ public class DisplayInteraction implements Interaction {
                     String triggerClass = String.format("bb%s-%s", System.identityHashCode(bb), id);
                     for (BasicBlock target : targets) {
                         Element targetElt = bbs.get(target);
+                        if (targetElt == null) continue;
                         String tClass = targetElt.getAttribute("class");
                         targetElt.setAttribute(
                                 "class",

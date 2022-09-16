@@ -24,16 +24,18 @@ public class CollapseJumps implements InPlaceIRPass<Function> {
 
         Map<BasicBlock, BasicBlock> killed = new HashMap<>();
         for (BasicBlock block : function.blocks) {
-            if (block.getControl().insn.op.key != CommonOps.BR.key) continue;
-            BasicBlock target = block.getControl().targets.get(0);
-            if (target.getExtOrThrow(CommonExts.PREDS).size() != 1) continue;
+            if (killed.containsKey(block)) continue;
+            while (block.getControl().insn.op.key == CommonOps.BR.key) {
+                BasicBlock target = block.getControl().targets.get(0);
+                if (target.getExtOrThrow(CommonExts.PREDS).size() != 1) break;
 
-            ArrayList<Effect> insns = new ArrayList<>(target.getEffects());
-            target.getEffects().clear();
-            block.getEffects().addAll(insns);
-            block.setControl(target.getControl());
+                ArrayList<Effect> insns = new ArrayList<>(target.getEffects());
+                target.getEffects().clear();
+                block.getEffects().addAll(insns);
+                block.setControl(target.getControl());
 
-            killed.put(target, block);
+                killed.put(target, block);
+            }
         }
 
         function.blocks.removeAll(killed.keySet());

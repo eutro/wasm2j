@@ -16,8 +16,6 @@ import io.github.eutro.wasm2j.passes.opts.MergeConds;
 import io.github.eutro.wasm2j.passes.opts.Stackify;
 import org.junit.jupiter.api.Test;
 import org.objectweb.asm.ClassWriter;
-import org.objectweb.asm.MethodVisitor;
-import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.tree.ClassNode;
 
 import java.io.File;
@@ -27,7 +25,18 @@ import java.util.concurrent.atomic.AtomicReference;
 public class FullTest {
     @Test
     void testFull() throws Throwable {
-        ModuleNode mn = Utils.getRawModuleNode("/unsimple_bg.wasm");
+        ModuleNode mn = Utils.getRawModuleNode("/aoc_bg.wasm");
+        /*
+        assert mn.codes != null && mn.codes.codes != null;
+        ListIterator<CodeNode> it = mn.codes.codes.listIterator();
+        while (it.hasNext()) {
+            CodeNode code = it.next();
+            if (it.previousIndex() != 11) {
+                code.expr.instructions = Collections.singletonList(new InsnNode(Opcodes.UNREACHABLE));
+            }
+        }
+         */
+
         ClassNode node = WasmToWir.INSTANCE
                 //.then(Utils.debugDisplay("wasm"))
                 .then(ForPass.liftFunctions(SSAify.INSTANCE))
@@ -48,26 +57,18 @@ public class FullTest {
 
                 .then(ForPass.liftFunctions(VerifyIntegrity.INSTANCE))
 
+                //.then(ForPass.liftFunctions(ComputeDomFrontier.INSTANCE))
                 //.then(Utils.debugDisplay("preemit"))
                 .then(JirToJava.INSTANCE)
                 .then(CheckJava.INSTANCE)
                 .run(mn);
-
-        {
-            MethodVisitor ctor = node.visitMethod(Opcodes.ACC_PUBLIC, "<init>", "()V", null, null);
-            ctor.visitCode();
-            ctor.visitVarInsn(Opcodes.ALOAD, 0);
-            ctor.visitMethodInsn(Opcodes.INVOKESPECIAL, "java/lang/Object", "<init>", "()V", false);
-            ctor.visitInsn(Opcodes.RETURN);
-            ctor.visitEnd();
-        }
 
         ClassWriter cw = new ClassWriter(ClassWriter.COMPUTE_FRAMES);
         node.accept(cw);
 
         byte[] classBytes = cw.toByteArray();
 
-        File file = new File("build/wasmout/" + node.name + ".clazz");
+        File file = new File("build/wasmout/" + node.name + ".class");
         file.getParentFile().mkdirs();
         try (FileOutputStream os = new FileOutputStream(file)) {
             os.write(classBytes);
@@ -78,7 +79,6 @@ public class FullTest {
             clazzRef.set(defineClass("com.example.FIXME", classBytes, 0, classBytes.length));
         }};
         Class<?> clazz = clazzRef.get();
-        clazz.getMethods();
-        System.out.println(clazz);
+        clazz.getConstructor().newInstance();
     }
 }

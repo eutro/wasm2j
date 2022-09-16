@@ -5,6 +5,7 @@ import io.github.eutro.wasm2j.ext.CommonExts;
 import io.github.eutro.wasm2j.ssa.BasicBlock;
 import io.github.eutro.wasm2j.ssa.Control;
 import io.github.eutro.wasm2j.ssa.Var;
+import io.github.eutro.wasm2j.util.Disassembler;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
 import org.objectweb.asm.tree.AbstractInsnNode;
@@ -14,9 +15,8 @@ import org.objectweb.asm.tree.MethodInsnNode;
 
 import java.nio.ByteBuffer;
 
-import static io.github.eutro.jwasm.Opcodes.INSN_PREFIX;
-
 public class WasmOps {
+    // break convention is that the last target is the fallback, while the first targets are taken conditionally
     public static final Op BR_IF = new SimpleOpKey("br_if").create();
     public static final Op BR_TABLE = new SimpleOpKey("br_table").create();
 
@@ -40,7 +40,7 @@ public class WasmOps {
 
     public static final SimpleOpKey IS_NULL = new SimpleOpKey("is_null");
 
-    public static final SimpleOpKey SELECT = new SimpleOpKey("select");
+    public static final SimpleOpKey SELECT = new SimpleOpKey("select"); /* cond ift iff */
 
     public static final UnaryOpKey<OperatorType> OPERATOR = new UnaryOpKey<>("op");
 
@@ -211,7 +211,7 @@ public class WasmOps {
 
         @Override
         public String toString() {
-            return op == INSN_PREFIX ? Integer.toString(intOp) : String.format("0x%02x", op);
+            return Disassembler.getWasmMnemonic(op, intOp);
         }
     }
 }

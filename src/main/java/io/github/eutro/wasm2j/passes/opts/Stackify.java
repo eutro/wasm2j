@@ -174,14 +174,15 @@ public class Stackify implements InPlaceIRPass<Function> {
                     Var reg = use.getReg();
                     stackTop = stackTop.prev;
 
+                    // definitely compute uses now (if absent)
+                    Set<Insn> uses = reg.getExtOrRun(CommonExts.USED_AT, func, ComputeUses.INSTANCE);
+
                     Effect def = reg.getExtOrThrow(CommonExts.ASSIGNED_AT);
                     BasicBlock defBlock = def.getExtOrThrow(CommonExts.OWNING_BLOCK);
                     boolean sameBlock = defBlock == block;
                     boolean canMove = sameBlock && isSafeToMove(def, insert) &&
                             !regOnStack(stackTop, reg);
-                    if (canMove && reg
-                            .getExtOrRun(CommonExts.USED_AT, func, ComputeUses.INSTANCE)
-                            .size() == 1) {
+                    if (canMove && uses.size() == 1) {
                         insert = moveForSingleUse(reg, def, insert);
                     } else if (shouldRematerialize(def)) {
                         insert = rematerializeCheapDef(use, def, insert, block, func);
@@ -238,6 +239,7 @@ public class Stackify implements InPlaceIRPass<Function> {
                     throw new IllegalStateException("unmatched stack pushes");
                 }
             } catch (RuntimeException e) {
+                checkStackIntegrity(func);
                 throw new RuntimeException("error checking in block " + block.toTargetString(), e);
             }
         }
@@ -315,7 +317,7 @@ public class Stackify implements InPlaceIRPass<Function> {
         Var reg = use.getReg();
         use.setReg(stacked);
         Effect load = CommonOps.IDENTITY.insn(reg).assignTo(stacked);
-        Set<Insn> regUses = reg.getExtOrRun(CommonExts.USED_AT, func, ComputeUses.INSTANCE);
+        Set<Insn> regUses = reg.getExtOrThrow(CommonExts.USED_AT);
         if (!use.insn.args.contains(reg)) {
             regUses.remove(use.insn);
         }

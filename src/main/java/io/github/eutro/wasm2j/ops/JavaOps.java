@@ -22,8 +22,8 @@ public class JavaOps {
     public static final UnaryOpKey<JavaField> GET_FIELD = new UnaryOpKey<>("get_field");
     public static final UnaryOpKey<JavaField> PUT_FIELD = new UnaryOpKey<>("put_field");
 
-    public static final UnaryOpKey<JumpType> BR_COND = new UnaryOpKey<>("br_cond");
-    public static final UnaryOpKey<JumpType> SELECT = new UnaryOpKey<>("select");
+    public static final UnaryOpKey<JumpType> BR_COND = new UnaryOpKey<>("br_cond"); /* takenB fallthroughB */
+    public static final UnaryOpKey<JumpType> SELECT = new UnaryOpKey<>("select"); /* cond taken fallthrough */
     public static final UnaryOpKey<JumpType> BOOL_SELECT = new UnaryOpKey<>("bool");
 
     public static final SimpleOpKey ARRAY_GET = new SimpleOpKey("array_get");

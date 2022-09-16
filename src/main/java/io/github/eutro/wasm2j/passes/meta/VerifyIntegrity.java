@@ -1,5 +1,6 @@
 package io.github.eutro.wasm2j.passes.meta;
 
+import io.github.eutro.wasm2j.ext.CommonExts;
 import io.github.eutro.wasm2j.ops.CommonOps;
 import io.github.eutro.wasm2j.passes.InPlaceIRPass;
 import io.github.eutro.wasm2j.ssa.BasicBlock;
@@ -43,6 +44,22 @@ public class VerifyIntegrity implements InPlaceIRPass<Function> {
                             block));
                 }
             }
+
+            for (Effect effect : block.getEffects()) {
+                if (effect.getExtOrThrow(CommonExts.OWNING_BLOCK) != block) {
+                    throw new IllegalStateException(String.format(
+                            "effect not owned by block\n  effect: %s\n  block: %s",
+                            effect,
+                            block));
+                }
+            }
+            if (block.getControl().getExtOrThrow(CommonExts.OWNING_BLOCK) != block) {
+                throw new IllegalStateException(String.format(
+                        "control not owned by block\n  control: %s\n  block: %s",
+                        block.getControl(),
+                        block));
+            }
+
             for (BasicBlock target : block.getControl().targets) {
                 if (!blockSet.contains(target)) {
                     throwInvalidReference(block, block.getControl(), target);

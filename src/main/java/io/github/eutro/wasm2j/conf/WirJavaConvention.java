@@ -47,4 +47,6 @@ public interface WirJavaConvention {
     default void emitGlobalStore(IRBuilder ib, Effect effect) {
         throw new UnsupportedOperationException();
     }
+
+    default void buildConstructor() {}
 }

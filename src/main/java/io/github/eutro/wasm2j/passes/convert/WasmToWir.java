@@ -304,7 +304,7 @@ public class WasmToWir implements IRPass<ModuleNode, Module> {
             } else {
                 frame.bb.setControl(Control.br(cs.ctrlsRef(0).bb));
                 if (frame.elseBb != null) {
-                    frame.elseBb.setControl(frame.bb.getControl());
+                    frame.elseBb.setControl(Control.br(cs.ctrlsRef(0).bb));
                 }
             }
             assert frame.bb.getControl() != null;
@@ -425,8 +425,8 @@ public class WasmToWir implements IRPass<ModuleNode, Module> {
         }, (cs, node, topB) -> topB.addEffect(WasmOps.SELECT
                 .create().insn(
                         cs.popVar(), // cond
-                        cs.popVar(),
-                        cs.popVar()
+                        cs.popVar(), // ift
+                        cs.popVar()  // iff
                 ).assignTo(cs.pushVar())));
     }
 

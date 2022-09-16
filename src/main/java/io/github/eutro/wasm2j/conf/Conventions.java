@@ -57,7 +57,7 @@ public class Conventions {
                     TypeNode typeNode = node.types.types.get(fn.type);
                     JavaExts.JavaMethod method = new JavaExts.JavaMethod(
                             jClass,
-                            "func" + i++, // FIXME
+                            "func" + i++,
                             getCC().getDescriptor(typeNode).getDescriptor(),
                             JavaExts.JavaMethod.Type.FINAL
                     );
@@ -112,9 +112,81 @@ public class Conventions {
                 }
             }
 
+            if (node.exports != null) {
+                for (ExportNode export : node.exports) {
+                    switch (export.type) {
+                        case EXPORTS_FUNC:
+                            JavaExts.JavaMethod func = funcs.get(export.index);
+                            func.type = JavaExts.JavaMethod.Type.VIRTUAL;
+                            func.name = export.name;
+                            break;
+                        case EXPORTS_TABLE:
+                            JavaExts.JavaField table = tables.get(export.index);
+                            table.name = export.name;
+                            table.otherAccess = (table.otherAccess & ~Opcodes.ACC_PRIVATE) | Opcodes.ACC_PUBLIC;
+                            break;
+                        case EXPORTS_MEM:
+                            JavaExts.JavaField mem = memories.get(export.index);
+                            mem.name = export.name;
+                            mem.otherAccess = (mem.otherAccess & ~Opcodes.ACC_PRIVATE) | Opcodes.ACC_PUBLIC;
+                            break;
+                        case EXPORTS_GLOBAL:
+                            JavaExts.JavaField glob = globals.get(export.index);
+                            glob.name = export.name;
+                            glob.otherAccess = (glob.otherAccess & ~Opcodes.ACC_PRIVATE) | Opcodes.ACC_PUBLIC;
+                            break;
+                        default:
+                            throw new AssertionError();
+                    }
+                }
+            }
+
             return new WirJavaConvention() {
                 private Var getThis(IRBuilder ib) {
                     return ib.insert(JavaOps.THIS.insn(), "this");
+                }
+
+                @Override
+                public void buildConstructor() {
+                    JavaExts.JavaMethod ctorMethod = new JavaExts.JavaMethod(
+                            jClass,
+                            "<init>",
+                            "()V",
+                            JavaExts.JavaMethod.Type.VIRTUAL
+                    );
+                    jClass.methods.add(ctorMethod);
+                    {
+                        Function ctorImpl = new Function();
+                        module.funcions.add(ctorImpl);
+                        ctorImpl.attachExt(JavaExts.FUNCTION_DESCRIPTOR, ctorMethod.descriptor);
+                        ctorImpl.attachExt(JavaExts.FUNCTION_OWNER, ctorMethod.owner);
+                        ctorMethod.attachExt(JavaExts.METHOD_IMPL, ctorImpl);
+
+                        IRBuilder ib = new IRBuilder(ctorImpl, ctorImpl.newBb());
+                        Var thisVar = ib.insert(JavaOps.THIS.insn(), "this");
+                        ib.insert(JavaOps.INVOKE.create(new JavaExts.JavaMethod(
+                                new JavaExts.JavaClass("java/lang/Object"),
+                                "<init>",
+                                "()V",
+                                JavaExts.JavaMethod.Type.FINAL
+                        )).insn(thisVar).assignTo());
+
+                        Var outVar = ib.insert(JavaOps.GET_FIELD.create(new JavaExts.JavaField(
+                                new JavaExts.JavaClass("java/lang/System"),
+                                "out",
+                                "Ljava/io/PrintStream;",
+                                true
+                        )).insn(), "out");
+                        Var hwString = ib.insert(CommonOps.CONST.create("Hello, world!").insn(), "hwString");
+                        ib.insert(JavaOps.INVOKE.create(new JavaExts.JavaMethod(
+                                new JavaExts.JavaClass("java/io/PrintStream"),
+                                "println",
+                                "(Ljava/lang/String;)V",
+                                JavaExts.JavaMethod.Type.VIRTUAL
+                        )).insn(outVar, hwString).assignTo());
+
+                        ib.insertCtrl(CommonOps.RETURN.insn().jumpsTo());
+                    }
                 }
 
                 @Override

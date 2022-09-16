@@ -32,20 +32,20 @@ public class LowerSelects extends LowerCommon {
             BasicBlock ifT = func.newBb();
             BasicBlock ifF = func.newBb();
             sourceBlock.setControl(JavaOps.BR_COND.create(jt)
-                    .insn(isBool ? insn.args : insn.args.subList(2, insn.args.size()))
-                    .jumpsTo(ifT, ifF));
+                    .insn(isBool ? insn.args : insn.args.subList(0, insn.args.size() - 2))
+                    .jumpsTo(ifF, ifT));
             ifT.setControl(Control.br(targetBlock));
             ifF.setControl(Control.br(targetBlock));
 
             Var ifTV = func.newVar("ift");
             ifT.addEffect((isBool
                     ? CommonOps.CONST.create(1).insn()
-                    : CommonOps.IDENTITY.insn(insn.args.get(0)))
+                    : CommonOps.IDENTITY.insn(insn.args.get(1)))
                     .assignTo(ifTV));
             Var ifFV = func.newVar("iff");
             ifF.addEffect((isBool
                     ? CommonOps.CONST.create(0).insn()
-                    : CommonOps.IDENTITY.insn(insn.args.get(1)))
+                    : CommonOps.IDENTITY.insn(insn.args.get(2)))
                     .assignTo(ifFV));
             targetBlock.addEffect(CommonOps.PHI
                     .create(Arrays.asList(ifF, ifT))

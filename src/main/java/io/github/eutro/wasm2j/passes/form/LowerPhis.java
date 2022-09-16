@@ -1,6 +1,5 @@
 package io.github.eutro.wasm2j.passes.form;
 
-import io.github.eutro.wasm2j.ext.CommonExts;
 import io.github.eutro.wasm2j.ops.CommonOps;
 import io.github.eutro.wasm2j.passes.InPlaceIRPass;
 import io.github.eutro.wasm2j.ssa.BasicBlock;
@@ -10,7 +9,6 @@ import io.github.eutro.wasm2j.ssa.Var;
 
 import java.util.Iterator;
 import java.util.List;
-import java.util.ListIterator;
 
 public class LowerPhis implements InPlaceIRPass<Function> {
     public static final LowerPhis INSTANCE = new LowerPhis();
@@ -18,7 +16,9 @@ public class LowerPhis implements InPlaceIRPass<Function> {
     @Override
     public void runInPlace(Function func) {
         for (BasicBlock block : func.blocks) {
-            for (Effect phi : block.getEffects()) {
+            Iterator<Effect> iter = block.getEffects().iterator();
+            while (iter.hasNext()) {
+                Effect phi = iter.next();
                 if (phi.insn().op.key != CommonOps.PHI) {
                     break;
                 }
@@ -32,14 +32,8 @@ public class LowerPhis implements InPlaceIRPass<Function> {
                     Var var = varIt.next();
                     pred.getEffects().add(CommonOps.IDENTITY.insn(var).copyFrom(phi));
                 }
-                Var phiVar = phi.getAssignsTo().get(0);
-                phiVar.attachExt(CommonExts.ASSIGNED_AT, phi);
-                ListIterator<Var> it = phi.insn().args.listIterator();
-                while (it.hasNext()) {
-                    it.next();
-                    it.set(phiVar);
-                }
-                phi.attachExt(CommonExts.PHI_LOWERED, true);
+
+                iter.remove();
             }
         }
     }

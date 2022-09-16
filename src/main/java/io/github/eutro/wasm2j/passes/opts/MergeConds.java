@@ -16,7 +16,7 @@ public class MergeConds implements InPlaceIRPass<BasicBlock> {
     public void runInPlace(BasicBlock basicBlock) {
         Control jump = basicBlock.getControl();
         Insn insn = jump.insn;
-        if (insn.op.key != JavaOps.BR_COND || insn.args.size() == 1) return;
+        if (insn.op.key != JavaOps.BR_COND || insn.args.size() != 1) return;
         Var arg = insn.args.get(0);
         Optional<Effect> assignedAt = arg.getExt(CommonExts.ASSIGNED_AT);
         if (!assignedAt.isPresent()) return;

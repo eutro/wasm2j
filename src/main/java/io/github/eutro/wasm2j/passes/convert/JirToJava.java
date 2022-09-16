@@ -43,7 +43,7 @@ public class JirToJava implements IRPass<Module, ClassNode> {
         for (JavaExts.JavaField field : jClass.fields) {
             cn.fields.add(new FieldNode(
                     (field.isStatic ? Opcodes.ACC_STATIC : 0)
-                            | Opcodes.ACC_PRIVATE,
+                            | field.otherAccess,
                     field.name,
                     field.descriptor,
                     null,
@@ -97,14 +97,14 @@ public class JirToJava implements IRPass<Module, ClassNode> {
         {
             Iterator<BasicBlock> it = blockOrder.iterator();
             BasicBlock next = it.next();
-            while (next != null) {
+            while (true) {
                 BasicBlock curr = next;
                 curr.attachExt(LABEL_EXT, new Label());
                 if (it.hasNext()) {
                     next = it.next();
                     curr.attachExt(NEXT_BLOCK_EXT, next);
                 } else {
-                    next = null;
+                    break;
                 }
             }
         }
@@ -254,11 +254,23 @@ public class JirToJava implements IRPass<Module, ClassNode> {
                 jb.loadThis());
         FX_CONVERTERS.put(JavaOps.GET_FIELD, (jb, fx) -> {
             JavaExts.JavaField field = JavaOps.GET_FIELD.cast(fx.insn().op).arg;
-            jb.getField(Type.getObjectType(field.owner.name), field.name, Type.getType(field.descriptor));
+            Type owner = Type.getObjectType(field.owner.name);
+            Type type = Type.getType(field.descriptor);
+            if (field.isStatic) {
+                jb.getStatic(owner, field.name, type);
+            } else {
+                jb.getField(owner, field.name, type);
+            }
         });
         FX_CONVERTERS.put(JavaOps.PUT_FIELD, (jb, fx) -> {
             JavaExts.JavaField field = JavaOps.PUT_FIELD.cast(fx.insn().op).arg;
-            jb.putField(Type.getObjectType(field.owner.name), field.name, Type.getType(field.descriptor));
+            Type owner = Type.getObjectType(field.owner.name);
+            Type type = Type.getType(field.descriptor);
+            if (field.isStatic) {
+                jb.putStatic(owner, field.name, type);
+            } else {
+                jb.putField(owner, field.name, type);
+            }
         });
         FX_CONVERTERS.put(JavaOps.INVOKE, (jb, fx) -> {
             JavaExts.JavaMethod method = JavaOps.INVOKE.cast(fx.insn().op).arg;
