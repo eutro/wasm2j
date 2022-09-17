@@ -290,9 +290,10 @@ public abstract class InferTypes<Ty> implements InPlaceIRPass<Function> {
                             return withArity(insn.getOpcode() == GETSTATIC ? 0 : 1, $ -> res);
                         },
                         GETSTATIC, GETFIELD)
-                .put(insn ->
-                                withArity(0, $ -> new Type[]{Type.getObjectType(((TypeInsnNode) insn).desc)}),
+                .put(insn -> withArity(0, $ -> new Type[]{Type.getObjectType(((TypeInsnNode) insn).desc)}),
                         NEW)
+                .put(insn -> withArity(1, $ -> new Type[]{Type.getType("[L" + ((TypeInsnNode) insn).desc + ";")}),
+                        ANEWARRAY)
 
                 .put(" -> ", NOP)
                 .put("a -> ", POP)

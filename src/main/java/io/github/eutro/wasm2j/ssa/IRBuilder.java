@@ -9,6 +9,10 @@ public class IRBuilder {
         this.bb = bb;
     }
 
+    public BasicBlock getBlock() {
+        return bb;
+    }
+
     public void setBlock(BasicBlock bb) {
         this.bb = bb;
     }

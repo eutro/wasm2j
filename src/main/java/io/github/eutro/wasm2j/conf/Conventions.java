@@ -13,6 +13,7 @@ import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
 import org.objectweb.asm.tree.InsnList;
 import org.objectweb.asm.tree.InsnNode;
+import org.objectweb.asm.tree.TypeInsnNode;
 
 import java.lang.invoke.MethodHandle;
 import java.nio.Buffer;
@@ -27,6 +28,9 @@ public class Conventions {
     public static final DefaultCC DEFAULT_CC = new DefaultCC();
 
     private static class DefaultFactory implements WirJavaConventionFactory {
+
+        public static final JavaExts.JavaClass BYTE_BUFFER_CLASS = new JavaExts.JavaClass(Type.getInternalName(ByteBuffer.class));
+
         protected CallingConvention getCC() {
             return DEFAULT_CC;
         }
@@ -187,19 +191,122 @@ public class Conventions {
                                 JavaExts.JavaMethod.Type.FINAL
                         )).insn(thisVar).assignTo());
 
-                        Var outVar = ib.insert(JavaOps.GET_FIELD.create(new JavaExts.JavaField(
-                                new JavaExts.JavaClass("java/lang/System"),
-                                "out",
-                                "Ljava/io/PrintStream;",
-                                true
-                        )).insn(), "out");
-                        Var hwString = ib.insert(CommonOps.CONST.create("Hello, world!").insn(), "hwString");
-                        ib.insert(JavaOps.INVOKE.create(new JavaExts.JavaMethod(
-                                new JavaExts.JavaClass("java/io/PrintStream"),
-                                "println",
-                                "(Ljava/lang/String;)V",
-                                JavaExts.JavaMethod.Type.VIRTUAL
-                        )).insn(outVar, hwString).assignTo());
+                        if (node.mems != null) {
+                            int i = 0;
+                            for (MemoryNode mem : node.mems) {
+                                JavaExts.JavaField memField = lMems.get(i++);
+                                Var memV = ib.insert(JavaOps.INVOKE.create(new JavaExts.JavaMethod(
+                                                BYTE_BUFFER_CLASS,
+                                                "allocateDirect",
+                                                "(I)Ljava/nio/ByteBuffer;",
+                                                JavaExts.JavaMethod.Type.STATIC
+                                        )).insn(ib.insert(CommonOps.CONST.create(mem.limits.min * PAGE_SIZE).insn(),
+                                                "size")),
+                                        "mem");
+                                ib.insert(JavaOps.PUT_FIELD.create(memField)
+                                        .insn(ib.insert(JavaOps.THIS.insn(), "this"),
+                                                memV)
+                                        .assignTo());
+                            }
+                        }
+
+                        if (node.tables != null) {
+                            int i = 0;
+                            for (TableNode table : node.tables) {
+                                JavaExts.JavaField tableField = lTables.get(i++);
+                                InsnList insns = new InsnList();
+                                insns.add(new TypeInsnNode(Opcodes.ANEWARRAY, Type.getInternalName(MethodHandle.class)));
+                                Var tableV = ib.insert(JavaOps.INSNS.create(insns)
+                                                .insn(ib.insert(CommonOps.CONST.create(table.limits.min).insn(), "size")),
+                                        "table");
+                                ib.insert(JavaOps.PUT_FIELD.create(tableField)
+                                        .insn(ib.insert(JavaOps.THIS.insn(), "this"),
+                                                tableV)
+                                        .assignTo());
+                            }
+                        }
+
+                        if (node.globals != null) {
+                            int i = 0;
+                            for (GlobalNode global : node.globals) {
+                                JavaExts.JavaField globalField = lGlobals.get(i++);
+                                BasicBlock sourceBlock = ib.getBlock();
+                                BasicBlock targetBlock = ib.func.newBb();
+                                Insn inlined = new Inliner(funcMap.get(global.init), ib.func)
+                                        .inline(Collections.emptyList(), sourceBlock, targetBlock);
+                                ib.setBlock(targetBlock);
+                                Var glInit = ib.insert(inlined, "global_init");
+                                ib.insert(JavaOps.PUT_FIELD.create(globalField)
+                                        .insn(ib.insert(JavaOps.THIS.insn(), "this"),
+                                                glInit)
+                                        .assignTo());
+                            }
+                        }
+
+                        // TODO elems
+
+                        if (node.datas != null) {
+                            for (DataNode data : node.datas) {
+                                JavaExts.JavaField mem = lMems.get(data.memory);
+
+                                BasicBlock sourceBlock = ib.getBlock();
+                                BasicBlock targetBlock = ib.func.newBb();
+                                Insn inlined = new Inliner(funcMap.get(data.offset), ib.func)
+                                        .inline(Collections.emptyList(), sourceBlock, targetBlock);
+                                ib.setBlock(targetBlock);
+                                Var dataOffset = ib.insert(inlined, "data_offset");
+
+                                Var memV = ib.insert(JavaOps.GET_FIELD.create(mem)
+                                        .insn(ib.insert(JavaOps.THIS.insn(), "this")),
+                                        "mem");
+                                memV = ib.insert(JavaOps.INVOKE.create(new JavaExts.JavaMethod(
+                                        BYTE_BUFFER_CLASS,
+                                        "slice",
+                                        "()Ljava/nio/ByteBuffer;",
+                                        JavaExts.JavaMethod.Type.VIRTUAL
+                                )).insn(memV), "sliced");
+                                memV = ib.insert(JavaOps.INVOKE.create(new JavaExts.JavaMethod(
+                                        BYTE_BUFFER_CLASS,
+                                        "position",
+                                        "(I)Ljava/nio/ByteBuffer;",
+                                        JavaExts.JavaMethod.Type.VIRTUAL
+                                )).insn(memV, dataOffset), "positioned");
+
+                                ByteBuffer buf = ByteBuffer.wrap(data.init);
+
+                                JavaExts.JavaMethod putLong = new JavaExts.JavaMethod(
+                                        BYTE_BUFFER_CLASS,
+                                        "putLong",
+                                        "(J)Ljava/nio/ByteBuffer;",
+                                        JavaExts.JavaMethod.Type.VIRTUAL
+                                );
+                                JavaExts.JavaMethod putByte = new JavaExts.JavaMethod(
+                                        BYTE_BUFFER_CLASS,
+                                        "put",
+                                        "(B)Ljava/nio/ByteBuffer;",
+                                        JavaExts.JavaMethod.Type.VIRTUAL
+                                );
+
+                                while (buf.remaining() > Long.SIZE) {
+                                    memV = ib.insert(JavaOps.INVOKE.create(putLong)
+                                            .insn(memV, ib.insert(CommonOps.CONST.create(buf.getLong()).insn(), "j")),
+                                            "put");
+                                }
+
+                                while (buf.hasRemaining()) {
+                                    memV = ib.insert(JavaOps.INVOKE.create(putByte)
+                                            .insn(memV, ib.insert(CommonOps.CONST.create((int) buf.get()).insn(), "b")),
+                                            "put");
+                                }
+                            }
+                        }
+
+                        if (node.start != null) {
+                            JavaExts.JavaMethod startMethod = funcs.get(node.start);
+                            ib.insert(JavaOps.INVOKE.create(startMethod)
+                                    .insn(ib.insert(JavaOps.THIS.insn(), "this"))
+                                    .assignTo());
+                        }
 
                         ib.insertCtrl(CommonOps.RETURN.insn().jumpsTo());
                     }
@@ -269,7 +376,7 @@ public class Conventions {
                     WasmOps.DerefType derefType = wmArg.value;
 
                     JavaExts.JavaMethod toInvoke = new JavaExts.JavaMethod(
-                            new JavaExts.JavaClass(Type.getInternalName(ByteBuffer.class)),
+                            BYTE_BUFFER_CLASS,
                             derefType.load.funcName,
                             derefType.load.desc,
                             JavaExts.JavaMethod.Type.VIRTUAL
