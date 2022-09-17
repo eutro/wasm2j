@@ -40,12 +40,28 @@ public class Conventions {
             Map<ExprNode, Function> funcMap = module.getExtOrThrow(WasmExts.FUNC_MAP);
 
             List<JavaExts.JavaMethod> funcs = new ArrayList<>();
-            List<JavaExts.JavaField> globals = new ArrayList<>();
-            List<JavaExts.JavaField> memories = new ArrayList<>();
-            List<JavaExts.JavaField> tables = new ArrayList<>();
+            List<JavaExts.JavaField> lGlobals = new ArrayList<>();
+            List<JavaExts.JavaField> lMems = new ArrayList<>();
+            List<JavaExts.JavaField> lTables = new ArrayList<>();
 
             if (node.imports != null && node.imports.imports != null) {
-                throw new UnsupportedOperationException(); // FIXME
+                for (AbstractImportNode importNode : node.imports) {
+                    if (importNode.importType() == IMPORTS_FUNC) {
+                        FuncImportNode funcImport = (FuncImportNode) importNode;
+                        assert node.types != null && node.types.types != null;
+                        JavaExts.JavaMethod method = new JavaExts.JavaMethod(
+                                jClass,
+                                importNode.name,
+                                getCC().getDescriptor(node.types.types.get(funcImport.type))
+                                        .getDescriptor(),
+                                JavaExts.JavaMethod.Type.ABSTRACT
+                        );
+                        funcs.add(method);
+                        jClass.methods.add(method);
+                    } else {
+                        throw new UnsupportedOperationException();
+                    }
+                }
             }
 
             if (node.funcs != null && node.funcs.funcs != null) {
@@ -80,7 +96,7 @@ public class Conventions {
                             false
                     );
                     jClass.fields.add(field);
-                    globals.add(field);
+                    lGlobals.add(field);
                 }
             }
 
@@ -94,7 +110,7 @@ public class Conventions {
                             false
                     );
                     jClass.fields.add(field);
-                    memories.add(field);
+                    lMems.add(field);
                 }
             }
 
@@ -108,7 +124,7 @@ public class Conventions {
                             false
                     );
                     jClass.fields.add(field);
-                    tables.add(field);
+                    lTables.add(field);
                 }
             }
 
@@ -121,17 +137,17 @@ public class Conventions {
                             func.name = export.name;
                             break;
                         case EXPORTS_TABLE:
-                            JavaExts.JavaField table = tables.get(export.index);
+                            JavaExts.JavaField table = lTables.get(export.index);
                             table.name = export.name;
                             table.otherAccess = (table.otherAccess & ~Opcodes.ACC_PRIVATE) | Opcodes.ACC_PUBLIC;
                             break;
                         case EXPORTS_MEM:
-                            JavaExts.JavaField mem = memories.get(export.index);
+                            JavaExts.JavaField mem = lMems.get(export.index);
                             mem.name = export.name;
                             mem.otherAccess = (mem.otherAccess & ~Opcodes.ACC_PRIVATE) | Opcodes.ACC_PUBLIC;
                             break;
                         case EXPORTS_GLOBAL:
-                            JavaExts.JavaField glob = globals.get(export.index);
+                            JavaExts.JavaField glob = lGlobals.get(export.index);
                             glob.name = export.name;
                             glob.otherAccess = (glob.otherAccess & ~Opcodes.ACC_PRIVATE) | Opcodes.ACC_PUBLIC;
                             break;
@@ -192,7 +208,7 @@ public class Conventions {
                 @Override
                 public void emitGlobalRef(IRBuilder ib, Effect effect) {
                     int global = WasmOps.GLOBAL_REF.cast(effect.insn().op).arg;
-                    ib.insert(JavaOps.GET_FIELD.create(globals.get(global))
+                    ib.insert(JavaOps.GET_FIELD.create(lGlobals.get(global))
                             .insn(getThis(ib))
                             .copyFrom(effect));
                 }
@@ -200,7 +216,7 @@ public class Conventions {
                 @Override
                 public void emitGlobalStore(IRBuilder ib, Effect effect) {
                     int global = WasmOps.GLOBAL_SET.cast(effect.insn().op).arg;
-                    ib.insert(JavaOps.PUT_FIELD.create(globals.get(global))
+                    ib.insert(JavaOps.PUT_FIELD.create(lGlobals.get(global))
                             .insn(getThis(ib), effect.insn().args.get(0))
                             .copyFrom(effect));
                 }
@@ -296,7 +312,7 @@ public class Conventions {
 
                 private Var getMem(IRBuilder ib) {
                     return ib.insert(JavaOps.GET_FIELD
-                                    .create(memories.get(0))
+                                    .create(lMems.get(0))
                                     .insn(getThis(ib)),
                             "mem");
                 }
@@ -305,7 +321,7 @@ public class Conventions {
                 public void emitTableRef(IRBuilder ib, Effect effect) {
                     int table = WasmOps.TABLE_REF.cast(effect.insn().op).arg;
                     Var tableV = ib.insert(JavaOps.GET_FIELD
-                                    .create(tables.get(table))
+                                    .create(lTables.get(table))
                                     .insn(getThis(ib)),
                             "table");
                     ib.insert(JavaOps.ARRAY_GET.create()
@@ -317,7 +333,7 @@ public class Conventions {
                 public void emitTableStore(IRBuilder ib, Effect effect) {
                     int table = WasmOps.TABLE_STORE.cast(effect.insn().op).arg;
                     Var tableV = ib.insert(JavaOps.GET_FIELD
-                                    .create(tables.get(table))
+                                    .create(lTables.get(table))
                                     .insn(getThis(ib)),
                             "table");
                     ib.insert(JavaOps.ARRAY_SET.create()

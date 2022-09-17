@@ -52,7 +52,6 @@ public class JirToJava implements IRPass<Module, ClassNode> {
         }
 
         for (JavaExts.JavaMethod method : jClass.methods) {
-            Function impl = method.getExtOrThrow(JavaExts.METHOD_IMPL);
             MethodNode mn = new MethodNode(
                     method.type.access,
                     method.name,
@@ -61,10 +60,17 @@ public class JirToJava implements IRPass<Module, ClassNode> {
                     null
             );
             cn.methods.add(mn);
-            try {
-                compileFuncInto(jClass, mn, impl);
-            } catch (RuntimeException e) {
-                throw new RuntimeException("error generating code for method " + method.name, e);
+            Optional<Function> maybeImpl = method.getExt(JavaExts.METHOD_IMPL);
+            if (maybeImpl.isPresent()) {
+                try {
+                    compileFuncInto(jClass, mn, maybeImpl.get());
+                } catch (RuntimeException e) {
+                    throw new RuntimeException("error generating code for method " + method.name, e);
+                }
+            } else {
+                if (method.type != JavaExts.JavaMethod.Type.ABSTRACT) {
+                    throw new RuntimeException("method impl missing for non-abstract function");
+                }
             }
         }
 
