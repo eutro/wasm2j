@@ -9,7 +9,7 @@ import io.github.eutro.wasm2j.ops.OpKey;
 import io.github.eutro.wasm2j.passes.IRPass;
 import io.github.eutro.wasm2j.ssa.Module;
 import io.github.eutro.wasm2j.ssa.*;
-import io.github.eutro.wasm2j.util.Preorder;
+import io.github.eutro.wasm2j.util.GraphWalker;
 import org.objectweb.asm.Label;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
@@ -85,13 +85,11 @@ public class JirToJava implements IRPass<Module, ClassNode> {
         //    c. emit the jump and then another if the fallthrough block isn't immediately after
 
         // 1.
-        List<BasicBlock> blockOrder = new ArrayList<>();
         // order is important here, the last one to be pushed is visited first
         // in the next cycle; in this case we want the fallthrough branch
         // to be visited next, which we have put as the last target
-        for (BasicBlock bb : new Preorder<>(impl.blocks.get(0), $ -> $.getControl().targets)) {
-            blockOrder.add(bb);
-        }
+        List<BasicBlock> blockOrder = GraphWalker.blockWalker(impl, true).postOrder().toList();
+        Collections.reverse(blockOrder);
 
         // 2.
         {

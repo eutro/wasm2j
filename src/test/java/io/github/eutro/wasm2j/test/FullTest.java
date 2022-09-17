@@ -1,5 +1,8 @@
 package io.github.eutro.wasm2j.test;
 
+import io.github.eutro.jwasm.Opcodes;
+import io.github.eutro.jwasm.tree.CodeNode;
+import io.github.eutro.jwasm.tree.InsnNode;
 import io.github.eutro.jwasm.tree.ModuleNode;
 import io.github.eutro.wasm2j.conf.Conventions;
 import io.github.eutro.wasm2j.passes.Passes;
@@ -12,6 +15,7 @@ import io.github.eutro.wasm2j.passes.meta.ComputeDomFrontier;
 import io.github.eutro.wasm2j.passes.meta.InferTypes;
 import io.github.eutro.wasm2j.passes.meta.VerifyIntegrity;
 import io.github.eutro.wasm2j.passes.misc.ForPass;
+import io.github.eutro.wasm2j.passes.opts.CollapseJumps;
 import io.github.eutro.wasm2j.passes.opts.MergeConds;
 import io.github.eutro.wasm2j.passes.opts.Stackify;
 import org.junit.jupiter.api.Test;
@@ -20,6 +24,8 @@ import org.objectweb.asm.tree.ClassNode;
 
 import java.io.File;
 import java.io.FileOutputStream;
+import java.util.Collections;
+import java.util.ListIterator;
 import java.util.concurrent.atomic.AtomicReference;
 
 public class FullTest {
@@ -31,7 +37,7 @@ public class FullTest {
         ListIterator<CodeNode> it = mn.codes.codes.listIterator();
         while (it.hasNext()) {
             CodeNode code = it.next();
-            if (it.previousIndex() != 11) {
+            if (it.previousIndex() != 5) {
                 code.expr.instructions = Collections.singletonList(new InsnNode(Opcodes.UNREACHABLE));
             }
         }
@@ -46,6 +52,7 @@ public class FullTest {
                 .then(ForPass.liftFunctions(LowerIntrinsics.INSTANCE))
                 .then(ForPass.liftFunctions(ComputeDomFrontier.INSTANCE))
                 //.then(Utils.debugDisplay("postop"))
+                .then(ForPass.liftFunctions(CollapseJumps.INSTANCE))
                 .then(ForPass.liftFunctions(Utils.debugDisplayOnError("lower",
                         ForPass.liftBasicBlocks(MergeConds.INSTANCE)
                                 .then(LowerSelects.INSTANCE)

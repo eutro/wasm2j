@@ -1,5 +1,6 @@
 package io.github.eutro.wasm2j.passes.form;
 
+import io.github.eutro.wasm2j.ext.CommonExts;
 import io.github.eutro.wasm2j.ops.CommonOps;
 import io.github.eutro.wasm2j.passes.InPlaceIRPass;
 import io.github.eutro.wasm2j.ssa.BasicBlock;
@@ -31,6 +32,10 @@ public class LowerPhis implements InPlaceIRPass<Function> {
                     BasicBlock pred = bbIt.next();
                     Var var = varIt.next();
                     pred.getEffects().add(CommonOps.IDENTITY.insn(var).copyFrom(phi));
+                }
+
+                for (Var var : phi.getAssignsTo()) {
+                    var.attachExt(CommonExts.STACKIFIED, false);
                 }
 
                 iter.remove();

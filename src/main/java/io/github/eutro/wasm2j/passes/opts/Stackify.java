@@ -172,10 +172,17 @@ public class Stackify implements InPlaceIRPass<Function> {
                 while (stackTop != null) {
                     Use use = stackTop.value;
                     Var reg = use.getReg();
+
                     stackTop = stackTop.prev;
 
                     // definitely compute uses now (if absent)
                     Set<Insn> uses = reg.getExtOrRun(CommonExts.USED_AT, func, ComputeUses.INSTANCE);
+
+                    if (reg.getExt(CommonExts.STACKIFIED).orElse(null) == Boolean.FALSE) {
+                        // explicitly real variable, force load
+                        insert = emitLoad(use, insert, block, func);
+                        continue;
+                    }
 
                     Effect def = reg.getExtOrThrow(CommonExts.ASSIGNED_AT);
                     BasicBlock defBlock = def.getExtOrThrow(CommonExts.OWNING_BLOCK);
@@ -239,7 +246,6 @@ public class Stackify implements InPlaceIRPass<Function> {
                     throw new IllegalStateException("unmatched stack pushes");
                 }
             } catch (RuntimeException e) {
-                checkStackIntegrity(func);
                 throw new RuntimeException("error checking in block " + block.toTargetString(), e);
             }
         }

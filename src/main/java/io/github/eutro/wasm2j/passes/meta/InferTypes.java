@@ -9,7 +9,7 @@ import io.github.eutro.wasm2j.ops.OpKey;
 import io.github.eutro.wasm2j.passes.InPlaceIRPass;
 import io.github.eutro.wasm2j.ssa.*;
 import io.github.eutro.wasm2j.util.F;
-import io.github.eutro.wasm2j.util.Preorder;
+import io.github.eutro.wasm2j.util.GraphWalker;
 import org.jetbrains.annotations.NotNull;
 import org.objectweb.asm.Type;
 import org.objectweb.asm.tree.AbstractInsnNode;
@@ -32,7 +32,7 @@ public abstract class InferTypes<Ty> implements InPlaceIRPass<Function> {
 
     @Override
     public void runInPlace(Function func) {
-        for (BasicBlock block : new Preorder<>(func.blocks.get(0), $ -> $.getControl().targets)) {
+        for (BasicBlock block : GraphWalker.blockWalker(func).preOrder()) {
             for (Effect effect : block.getEffects()) {
                 try {
                     Ty[] retTys = inferInsn(effect.insn());

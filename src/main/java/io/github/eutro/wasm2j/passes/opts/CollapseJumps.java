@@ -28,6 +28,7 @@ public class CollapseJumps implements InPlaceIRPass<Function> {
             while (block.getControl().insn.op.key == CommonOps.BR.key) {
                 BasicBlock target = block.getControl().targets.get(0);
                 if (target.getExtOrThrow(CommonExts.PREDS).size() != 1) break;
+                // if the block has only one predecessor then it won't have phis either
 
                 ArrayList<Effect> insns = new ArrayList<>(target.getEffects());
                 target.getEffects().clear();

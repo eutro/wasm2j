@@ -6,6 +6,7 @@ import io.github.eutro.wasm2j.ext.JavaExts;
 import io.github.eutro.wasm2j.passes.InPlaceIRPass;
 import io.github.eutro.wasm2j.passes.meta.ComputeUses;
 import io.github.eutro.wasm2j.ssa.*;
+import io.github.eutro.wasm2j.util.GraphWalker;
 import org.objectweb.asm.Type;
 
 import java.util.*;
@@ -19,27 +20,7 @@ public class LinearScan implements InPlaceIRPass<Function> {
     public void runInPlace(Function func) {
         func.clearVarNames();
 
-        List<BasicBlock> order = new ArrayList<>();
-        {
-            Set<BasicBlock> preVisit = new HashSet<>();
-            Set<BasicBlock> postVisit = new HashSet<>();
-            Deque<BasicBlock> stack = new ArrayDeque<>();
-            stack.add(func.blocks.get(0));
-            preVisit.add(func.blocks.get(0));
-            while (!stack.isEmpty()) {
-                BasicBlock block = stack.getLast();
-                if (postVisit.add(block)) {
-                    for (BasicBlock target : block.getControl().targets) {
-                        if (preVisit.add(target)) {
-                            stack.add(target);
-                        }
-                    }
-                } else {
-                    stack.removeLast();
-                    order.add(block);
-                }
-            }
-        }
+        List<BasicBlock> order = GraphWalker.blockWalker(func, true).postOrder().toList();
         Collections.reverse(order);
 
 
@@ -131,7 +112,7 @@ public class LinearScan implements InPlaceIRPass<Function> {
                 end = useIc;
             }
         }
-        return new Interval(end);
+        return new Interval(end + 1);
     }
 
     private static class Interval {

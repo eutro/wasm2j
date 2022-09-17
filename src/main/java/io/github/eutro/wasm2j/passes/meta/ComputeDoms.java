@@ -6,7 +6,7 @@ import io.github.eutro.wasm2j.passes.InPlaceIRPass;
 import io.github.eutro.wasm2j.ssa.BasicBlock;
 import io.github.eutro.wasm2j.ssa.Control;
 import io.github.eutro.wasm2j.ssa.Function;
-import io.github.eutro.wasm2j.util.Preorder;
+import io.github.eutro.wasm2j.util.GraphWalker;
 
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -26,9 +26,9 @@ public class ComputeDoms implements InPlaceIRPass<Function> {
     }
 
     private static void computeDoms(Function func) {
-        Preorder<BasicBlock> preorder = new Preorder<>(func.blocks.get(0), $ -> $.getControl().targets);
+        GraphWalker<BasicBlock> walker = GraphWalker.blockWalker(func);
         func.blocks.clear();
-        for (BasicBlock basicBlock : preorder) {
+        for (BasicBlock basicBlock : walker.preOrder()) {
             func.blocks.add(basicBlock);
         }
 
