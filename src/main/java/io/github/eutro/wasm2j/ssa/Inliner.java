@@ -6,23 +6,28 @@ import io.github.eutro.wasm2j.ops.Op;
 import java.util.*;
 
 public class Inliner {
-    private final Function from, into;
     private final HashMap<Var, Var> varMap = new HashMap<>();
     private final HashMap<BasicBlock, BasicBlock> blockMap = new HashMap<>();
     private final Map<BasicBlock, Var[]> returnVars = new HashMap<>();
+    private final IRBuilder ib;
 
-    public Inliner(Function from, Function into) {
-        this.from = from;
-        this.into = into;
+    public Inliner(IRBuilder ib) {
+        this.ib = ib;
     }
 
     public Insn inline(
-            List<Var> args,
-            BasicBlock sourceBlock,
-            BasicBlock targetBlock
+            Function func,
+            List<Var> args
     ) {
-        for (BasicBlock thisBb : from.blocks) {
-            BasicBlock iBb = blockMap.computeIfAbsent(thisBb, $ -> into.newBb());
+        BasicBlock startBlock = ib.getBlock();
+        BasicBlock targetBlock = null;
+        blockMap.put(func.blocks.get(0), startBlock);
+        if (func.blocks.size() > 1) {
+            targetBlock = ib.func.newBb();
+        }
+        for (BasicBlock thisBb : func.blocks) {
+            BasicBlock iBb = blockMap.computeIfAbsent(thisBb, $ -> ib.func.newBb());
+            ib.setBlock(iBb);
             for (Effect effect : thisBb.getEffects()) {
                 Op op = effect.insn().op;
                 Integer argIdx = CommonOps.ARG.check(op).map(it -> it.arg).orElse(null);
@@ -31,24 +36,29 @@ public class Inliner {
                     insn = CommonOps.IDENTITY.insn(args.get(argIdx));
                 } else if (op.key == CommonOps.PHI) {
                     insn = CommonOps.PHI.create(new ArrayList<>(
-                            Arrays.asList(refreshBbs(CommonOps.PHI.cast(op).arg))))
+                                    Arrays.asList(refreshBbs(CommonOps.PHI.cast(op).arg))))
                             .insn(refreshVars(effect.insn().args));
                 } else {
                     insn = op.insn(refreshVars(effect.insn().args));
                 }
-                iBb.addEffect(insn.assignTo(refreshVars(effect.getAssignsTo())));
+                ib.insert(insn.assignTo(refreshVars(effect.getAssignsTo())));
             }
             Control ctrl = thisBb.getControl();
             if (ctrl.insn.op.key == CommonOps.RETURN.key) {
                 returnVars.put(iBb, refreshVars(ctrl.insn.args));
-                iBb.setControl(Control.br(targetBlock));
+                if (targetBlock != null) {
+                    ib.insertCtrl(Control.br(targetBlock));
+                }
             } else {
-                iBb.setControl(ctrl.insn.op
+                ib.insertCtrl(ctrl.insn.op
                         .insn(refreshVars(ctrl.insn.args))
                         .jumpsTo(refreshBbs(ctrl.targets)));
             }
         }
-        sourceBlock.setControl(Control.br(blockMap.get(from.blocks.get(0))));
+        if (targetBlock != null) {
+            ib.insertCtrl(Control.br(blockMap.get(func.blocks.get(0))));
+            ib.setBlock(targetBlock);
+        }
 
         if (returnVars.isEmpty()) {
             return CommonOps.UNREACHABLE.insn();
@@ -59,6 +69,7 @@ public class Inliner {
         if (returnVars.size() == 1) {
             returns = new ArrayList<>(Arrays.asList(returnVars.values().iterator().next()));
         } else {
+            assert targetBlock != null;
             List<List<BasicBlock>> phiSources = new ArrayList<>();
             List<List<Var>> phiVars = new ArrayList<>();
             for (Map.Entry<BasicBlock, Var[]> entry : returnVars.entrySet()) {
@@ -69,7 +80,7 @@ public class Inliner {
                         phiVars.add(new ArrayList<>());
                     }
                 } else if (expectedLength != entry.getValue().length) {
-                    throw new IllegalStateException("Function has differing return counts");
+                    throw new IllegalStateException("function has varying return counts");
                 }
                 for (List<BasicBlock> phiSource : phiSources) {
                     phiSource.add(entry.getKey());
@@ -81,9 +92,9 @@ public class Inliner {
             }
             returns = new ArrayList<>(expectedLength);
             for (int i = 0; i < expectedLength; i++) {
-                Var outVar = into.newVar("ret." + i);
+                Var outVar = ib.func.newVar("ret." + i);
                 returns.add(outVar);
-                targetBlock.addEffect(CommonOps.PHI
+                ib.insert(CommonOps.PHI
                         .create(phiSources.get(i))
                         .insn(phiVars.get(i))
                         .assignTo(outVar));
@@ -96,7 +107,7 @@ public class Inliner {
         BasicBlock[] ret = new BasicBlock[targets.size()];
         int i = 0;
         for (BasicBlock target : targets) {
-            ret[i++] = blockMap.computeIfAbsent(target, $ -> into.newBb());
+            ret[i++] = blockMap.computeIfAbsent(target, $ -> ib.func.newBb());
         }
         return ret;
     }
@@ -107,7 +118,7 @@ public class Inliner {
         for (Var var : vars) {
             ret[i++] = varMap.computeIfAbsent(
                     var,
-                    old -> into.newVar(old.name)
+                    old -> ib.func.newVar(old.name)
             );
         }
         return ret;

@@ -404,6 +404,8 @@ public abstract class InferTypes<Ty> implements InPlaceIRPass<Function> {
                     return new Type[]{ty};
                 }, CommonOps.CONST)
 
+                .put(" -> Ljava/lang/invoke/MethodHandle;", JavaOps.HANDLE_OF)
+
                 .put("I b b -> b", JavaOps.SELECT)
                 .put(insn -> new Type[]{Type.INT_TYPE}, JavaOps.BOOL_SELECT)
                 .put((Insn insn) -> {

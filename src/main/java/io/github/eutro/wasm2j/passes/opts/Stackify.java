@@ -168,7 +168,8 @@ public class Stackify implements InPlaceIRPass<Function> {
 
                 Node<Use> stackTop = pushOperands(insert.value == null
                         ? block.getControl().insn
-                        : insert.value.insn());
+                        : insert.value.insn())
+                        .last;
                 while (stackTop != null) {
                     Use use = stackTop.value;
                     Var reg = use.getReg();
@@ -201,12 +202,12 @@ public class Stackify implements InPlaceIRPass<Function> {
                         continue;
                     }
 
-                    Node<Use> operands = pushOperands(insert.value.insn());
+                    LinkedList<Use> operands = pushOperands(insert.value.insn());
                     if (stackTop != null) {
-                        stackTop.linkAfter(operands);
+                        stackTop.linkAfter(operands.first);
                     }
-                    if (operands != null) {
-                        stackTop = operands;
+                    if (operands.last != null) {
+                        stackTop = operands.last;
                     }
                 }
             }
@@ -254,12 +255,18 @@ public class Stackify implements InPlaceIRPass<Function> {
     private void checkInsn(Deque<Var> stack, Insn insn) {
         List<Var> args = insn.args;
         ListIterator<Var> iter = args.listIterator(args.size());
+        boolean hasStackified = false;
         while (iter.hasPrevious()) {
             Var arg = iter.previous();
             if (arg.getExt(CommonExts.STACKIFIED).orElse(false)) {
+                hasStackified = true;
                 if (stack.pollLast() != arg) {
                     throw new IllegalStateException("unmatched stack pop in insn: " + insn);
                 }
+            } else if (hasStackified) {
+                throw new IllegalStateException(
+                        "non-stack variable " + arg + " precedes stack variable(s) in arguments in insn: " + insn
+                );
             }
         }
     }
@@ -340,7 +347,7 @@ public class Stackify implements InPlaceIRPass<Function> {
         return insert;
     }
 
-    private Node<Use> pushOperands(Insn insn) {
+    private LinkedList<Use> pushOperands(Insn insn) {
         ListIterator<Var> iter = insn.args.listIterator();
         return LinkedList.fromIterator(new Iterator<Use>() {
             @Override
@@ -353,7 +360,7 @@ public class Stackify implements InPlaceIRPass<Function> {
                 iter.next();
                 return new Use(insn, iter.previousIndex());
             }
-        }).last;
+        });
     }
 
     private boolean regOnStack(Node<Use> haystack, Var needle) {

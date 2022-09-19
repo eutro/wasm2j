@@ -29,19 +29,21 @@ import java.util.ListIterator;
 import java.util.concurrent.atomic.AtomicReference;
 
 public class FullTest {
+    public static Integer OMIT_EXCEPT = null;
+
     @Test
     void testFull() throws Throwable {
         ModuleNode mn = Utils.getRawModuleNode("/aoc_bg.wasm");
-        /*
-        assert mn.codes != null && mn.codes.codes != null;
-        ListIterator<CodeNode> it = mn.codes.codes.listIterator();
-        while (it.hasNext()) {
-            CodeNode code = it.next();
-            if (it.previousIndex() != 5) {
-                code.expr.instructions = Collections.singletonList(new InsnNode(Opcodes.UNREACHABLE));
+        if (OMIT_EXCEPT != null) {
+            assert mn.codes != null && mn.codes.codes != null;
+            ListIterator<CodeNode> it = mn.codes.codes.listIterator();
+            while (it.hasNext()) {
+                CodeNode code = it.next();
+                if (it.previousIndex() != OMIT_EXCEPT) {
+                    code.expr.instructions = Collections.singletonList(new InsnNode(Opcodes.UNREACHABLE));
+                }
             }
         }
-         */
 
         ClassNode node = WasmToWir.INSTANCE
                 //.then(Utils.debugDisplay("wasm"))
@@ -62,7 +64,7 @@ public class FullTest {
                 .then(ForPass.liftFunctions(Utils.debugDisplayOnError("infer", InferTypes.Java.INSTANCE)))
                 .then(ForPass.liftFunctions(LinearScan.INSTANCE))
 
-                .then(ForPass.liftFunctions(VerifyIntegrity.INSTANCE))
+                .then(ForPass.liftFunctions(Utils.debugDisplayOnError("verify", VerifyIntegrity.INSTANCE)))
 
                 //.then(ForPass.liftFunctions(ComputeDomFrontier.INSTANCE))
                 //.then(Utils.debugDisplay("preemit"))

@@ -44,19 +44,21 @@ public class JavaExts {
         }
 
         public enum Type {
-            STATIC(Opcodes.ACC_STATIC | Opcodes.ACC_PUBLIC, Opcodes.INVOKESTATIC),
-            STATIC_PRIVATE(Opcodes.ACC_STATIC | Opcodes.ACC_PRIVATE, Opcodes.INVOKESTATIC),
-            VIRTUAL(Opcodes.ACC_PUBLIC, Opcodes.INVOKEVIRTUAL),
-            FINAL(Opcodes.ACC_PRIVATE, Opcodes.INVOKESPECIAL),
-            ABSTRACT(Opcodes.ACC_ABSTRACT | Opcodes.ACC_PROTECTED, Opcodes.INVOKEVIRTUAL),
+            STATIC(Opcodes.ACC_STATIC | Opcodes.ACC_PUBLIC, Opcodes.INVOKESTATIC, Opcodes.H_INVOKESTATIC),
+            STATIC_PRIVATE(Opcodes.ACC_STATIC | Opcodes.ACC_PRIVATE, Opcodes.INVOKESTATIC, Opcodes.H_INVOKESTATIC),
+            VIRTUAL(Opcodes.ACC_PUBLIC, Opcodes.INVOKEVIRTUAL, Opcodes.H_INVOKEVIRTUAL),
+            FINAL(Opcodes.ACC_PRIVATE, Opcodes.INVOKESPECIAL, Opcodes.H_INVOKESPECIAL),
+            ABSTRACT(Opcodes.ACC_ABSTRACT | Opcodes.ACC_PROTECTED, Opcodes.INVOKEVIRTUAL, Opcodes.H_INVOKEVIRTUAL),
             ;
 
             public final int access;
             public final int opcode;
+            public final int handleType;
 
-            Type(int access, int opcode) {
+            Type(int access, int opcode, int handleType) {
                 this.access = access;
                 this.opcode = opcode;
+                this.handleType = handleType;
             }
         }
 

@@ -38,7 +38,8 @@ public class VerifyIntegrity implements InPlaceIRPass<Function> {
                 }
             }
             while (it.hasNext()) {
-                if (it.next().insn().op.key == CommonOps.PHI) {
+                Effect effect = it.next();
+                if (effect.insn().op.key == CommonOps.PHI) {
                     throw new RuntimeException(String.format(
                             "phi not at block start\n  in block: %s",
                             block));

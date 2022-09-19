@@ -12,7 +12,7 @@ public class LowerSelects extends LowerCommon {
     public static final LowerSelects INSTANCE = new LowerSelects();
 
     @Override
-    protected BasicBlock lowerEffect(Function func, BasicBlock sourceBlock, Effect effect) {
+    protected boolean lowerEffect(IRBuilder ib, Effect effect) {
         Insn insn = effect.insn();
         Op op = insn.op;
         if (op.key == JavaOps.SELECT || op.key == JavaOps.BOOL_SELECT) {
@@ -26,34 +26,36 @@ public class LowerSelects extends LowerCommon {
                 isBool = true;
             }
 
-            BasicBlock targetBlock = func.newBb();
-            targetBlock.setControl(sourceBlock.getControl());
+            BasicBlock targetBlock = ib.func.newBb();
 
-            BasicBlock ifT = func.newBb();
-            BasicBlock ifF = func.newBb();
-            sourceBlock.setControl(JavaOps.BR_COND.create(jt)
+            BasicBlock ifT = ib.func.newBb();
+            BasicBlock ifF = ib.func.newBb();
+            ib.insertCtrl(JavaOps.BR_COND.create(jt)
                     .insn(isBool ? insn.args : insn.args.subList(0, insn.args.size() - 2))
                     .jumpsTo(ifF, ifT));
             ifT.setControl(Control.br(targetBlock));
             ifF.setControl(Control.br(targetBlock));
 
-            Var ifTV = func.newVar("ift");
-            ifT.addEffect((isBool
-                    ? CommonOps.CONST.create(1).insn()
-                    : CommonOps.IDENTITY.insn(insn.args.get(1)))
-                    .assignTo(ifTV));
-            Var ifFV = func.newVar("iff");
-            ifF.addEffect((isBool
-                    ? CommonOps.CONST.create(0).insn()
-                    : CommonOps.IDENTITY.insn(insn.args.get(2)))
-                    .assignTo(ifFV));
-            targetBlock.addEffect(CommonOps.PHI
+            ib.setBlock(ifT);
+            Var ifTV = ib.insert((isBool
+                            ? CommonOps.CONST.create(1).insn()
+                            : CommonOps.IDENTITY.insn(insn.args.get(1))),
+                    "ift");
+
+            ib.setBlock(ifF);
+            Var ifFV = ib.insert((isBool
+                            ? CommonOps.CONST.create(0).insn()
+                            : CommonOps.IDENTITY.insn(insn.args.get(2))),
+                    "iff");
+
+            ib.setBlock(targetBlock);
+            ib.insert(CommonOps.PHI
                     .create(Arrays.asList(ifF, ifT))
                     .insn(ifFV, ifTV)
                     .copyFrom(effect));
 
-            return targetBlock;
+            return true;
         }
-        return null;
+        return false;
     }
 }

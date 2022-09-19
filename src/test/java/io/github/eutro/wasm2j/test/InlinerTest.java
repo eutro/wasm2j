@@ -5,10 +5,7 @@ import io.github.eutro.wasm2j.ops.CommonOps;
 import io.github.eutro.wasm2j.passes.IRPass;
 import io.github.eutro.wasm2j.passes.convert.JavaToJir;
 import io.github.eutro.wasm2j.passes.form.SSAify;
-import io.github.eutro.wasm2j.ssa.BasicBlock;
-import io.github.eutro.wasm2j.ssa.Function;
-import io.github.eutro.wasm2j.ssa.Inliner;
-import io.github.eutro.wasm2j.ssa.Var;
+import io.github.eutro.wasm2j.ssa.*;
 import io.github.eutro.wasm2j.ssa.display.SSADisplay;
 import org.junit.jupiter.api.Test;
 import org.objectweb.asm.ClassReader;
@@ -57,25 +54,12 @@ public class InlinerTest {
         SSADisplay.debugDisplayToFile(SSADisplay.displaySSA(mul), "build/ssa/mul.svg");
 
         Function addAndMul = new Function();
-        BasicBlock bb = addAndMul.newBb();
-        Var lhs = addAndMul.newVar("lhs");
-        bb.addEffect(CommonOps.ARG.create(0).insn().assignTo(lhs));
-        Var rhs = addAndMul.newVar("rhs");
-        bb.addEffect(CommonOps.ARG.create(1).insn().assignTo(rhs));
-        Var res = addAndMul.newVar("res");
-        BasicBlock nbb;
-        nbb = addAndMul.newBb();
-        nbb.addEffect(new Inliner(add, addAndMul)
-                .inline(Arrays.asList(lhs, rhs), bb, nbb)
-                .assignTo(res));
-        bb = nbb;
-        Var ret = addAndMul.newVar("ret");
-        nbb = addAndMul.newBb();
-        nbb.addEffect(new Inliner(mul, addAndMul)
-                .inline(Arrays.asList(res, rhs), bb, nbb)
-                .assignTo(ret));
-        bb = nbb;
-        bb.setControl(CommonOps.RETURN.insn(ret).jumpsTo());
+        IRBuilder ib = new IRBuilder(addAndMul, addAndMul.newBb());
+        Var lhs = ib.insert(CommonOps.ARG.create(0).insn(), "lhs");
+        Var rhs = ib.insert(CommonOps.ARG.create(1).insn(), "rhs");
+        Var res = ib.insert(new Inliner(ib).inline(add, Arrays.asList(lhs, rhs)), "res");
+        Var ret = ib.insert(new Inliner(ib).inline(mul, Arrays.asList(res, rhs)), "ret");
+        ib.insertCtrl(CommonOps.RETURN.insn(ret).jumpsTo());
 
         SSADisplay.debugDisplayToFile(
                 SSADisplay.displaySSA(addAndMul),

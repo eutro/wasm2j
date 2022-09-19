@@ -38,7 +38,9 @@ public final class BasicBlock extends ExtHolder {
     }
 
     private <T extends ExtContainer> T registerWithThis(T extable) {
-        extable.attachExt(CommonExts.OWNING_BLOCK, this);
+        if (extable != null) {
+            extable.attachExt(CommonExts.OWNING_BLOCK, this);
+        }
         return extable;
     }
 

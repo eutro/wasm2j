@@ -27,9 +27,9 @@ public class Conventions {
     public static final WirJavaConventionFactory DEFAULT_CONVENTIONS = new DefaultFactory();
     public static final DefaultCC DEFAULT_CC = new DefaultCC();
 
-    private static class DefaultFactory implements WirJavaConventionFactory {
-
+    public static class DefaultFactory implements WirJavaConventionFactory {
         public static final JavaExts.JavaClass BYTE_BUFFER_CLASS = new JavaExts.JavaClass(Type.getInternalName(ByteBuffer.class));
+        public static final JavaExts.JavaClass METHOD_HANDLE_CLASS = new JavaExts.JavaClass(Type.getInternalName(MethodHandle.class));
 
         protected CallingConvention getCC() {
             return DEFAULT_CC;
@@ -230,12 +230,9 @@ public class Conventions {
                             int i = 0;
                             for (GlobalNode global : node.globals) {
                                 JavaExts.JavaField globalField = lGlobals.get(i++);
-                                BasicBlock sourceBlock = ib.getBlock();
-                                BasicBlock targetBlock = ib.func.newBb();
-                                Insn inlined = new Inliner(funcMap.get(global.init), ib.func)
-                                        .inline(Collections.emptyList(), sourceBlock, targetBlock);
-                                ib.setBlock(targetBlock);
-                                Var glInit = ib.insert(inlined, "global_init");
+                                Var glInit = ib.insert(new Inliner(ib)
+                                        .inline(funcMap.get(global.init), Collections.emptyList()),
+                                        "global_init");
                                 ib.insert(JavaOps.PUT_FIELD.create(globalField)
                                         .insn(ib.insert(JavaOps.THIS.insn(), "this"),
                                                 glInit)
@@ -243,18 +240,61 @@ public class Conventions {
                             }
                         }
 
-                        // TODO elems
+                        if (node.elems != null) {
+                            for (ElementNode elem : node.elems) {
+                                if (elem.offset == null) continue;
+
+                                Var offset = ib.insert(new Inliner(ib)
+                                                .inline(funcMap.get(elem.offset), Collections.emptyList()),
+                                        "elem_offset");
+
+                                Var table = ib.insert(JavaOps.GET_FIELD
+                                                .create(lTables.get(elem.table))
+                                                .insn(ib.insert(JavaOps.THIS.insn(), "this")),
+                                        "table");
+
+                                if (elem.indices != null) {
+                                    for (int i = 0; i < elem.indices.length; i++) {
+                                        Var j = ib.insert(JavaOps.insns(new InsnNode(Opcodes.IADD))
+                                                        .insn(offset,
+                                                                ib.insert(CommonOps.CONST.create(i)
+                                                                        .insn(), "i")),
+                                                "j");
+                                        Var f = ib.func.newVar("f");
+                                        emitFuncRef(ib,
+                                                WasmOps.FUNC_REF
+                                                        .create(elem.indices[i])
+                                                        .insn()
+                                                        .assignTo(f));
+                                        ib.insert(JavaOps.ARRAY_SET.create()
+                                                .insn(table, j, f)
+                                                .assignTo());
+                                    }
+                                } else {
+                                    int i = 0;
+                                    for (ExprNode expr : elem.init) {
+                                        Var j = ib.insert(JavaOps.insns(new InsnNode(Opcodes.IADD))
+                                                        .insn(offset,
+                                                                ib.insert(CommonOps.CONST.create(i)
+                                                                        .insn(), "i")),
+                                                "j");
+                                        Var f = ib.insert(new Inliner(ib).inline(funcMap.get(expr), Collections.emptyList()), "f");
+                                        ib.insert(JavaOps.ARRAY_SET.create()
+                                                .insn(table, j, f)
+                                                .assignTo());
+                                        i++;
+                                    }
+                                }
+                            }
+                        }
 
                         if (node.datas != null) {
                             for (DataNode data : node.datas) {
                                 JavaExts.JavaField mem = lMems.get(data.memory);
 
-                                BasicBlock sourceBlock = ib.getBlock();
-                                BasicBlock targetBlock = ib.func.newBb();
-                                Insn inlined = new Inliner(funcMap.get(data.offset), ib.func)
-                                        .inline(Collections.emptyList(), sourceBlock, targetBlock);
-                                ib.setBlock(targetBlock);
-                                Var dataOffset = ib.insert(inlined, "data_offset");
+                                Var dataOffset = ib.insert(new Inliner(ib)
+                                        .inline(funcMap.get(data.offset), Collections.emptyList()),
+                                        "data_offset");
 
                                 Var memV = ib.insert(JavaOps.GET_FIELD.create(mem)
                                         .insn(ib.insert(JavaOps.THIS.insn(), "this")),
@@ -358,7 +398,7 @@ public class Conventions {
                             ? new Var[0]
                             : new Var[]{ib.func.newVar("ret")};
                     ib.insert(JavaOps.INVOKE.create(new JavaExts.JavaMethod(
-                                    new JavaExts.JavaClass(Type.getInternalName(MethodHandle.class)),
+                                    METHOD_HANDLE_CLASS,
                                     "invokeExact",
                                     ty.getDescriptor(),
                                     JavaExts.JavaMethod.Type.VIRTUAL
@@ -453,12 +493,11 @@ public class Conventions {
                 @Override
                 public void emitFuncRef(IRBuilder ib, Effect effect) {
                     int func = WasmOps.FUNC_REF.cast(effect.insn().op).arg;
-                    Var handle = ib.insert(JavaOps.HANDLE_OF
-                                    .create(funcs.get(func)).insn(),
+                    Var handle = ib.insert(JavaOps.HANDLE_OF.create(funcs.get(func)).insn(),
                             "handle");
                     ib.insert(JavaOps.INVOKE
                             .create(new JavaExts.JavaMethod(
-                                    new JavaExts.JavaClass(Type.getInternalName(MethodHandle.class)),
+                                    METHOD_HANDLE_CLASS,
                                     "bindTo",
                                     "(Ljava/lang/Object;)Ljava/lang/invoke/MethodHandle;",
                                     JavaExts.JavaMethod.Type.VIRTUAL
