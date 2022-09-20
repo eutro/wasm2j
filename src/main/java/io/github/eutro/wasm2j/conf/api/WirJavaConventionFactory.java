@@ -1,4 +1,4 @@
-package io.github.eutro.wasm2j.conf;
+package io.github.eutro.wasm2j.conf.api;
 
 import io.github.eutro.wasm2j.ssa.Module;
 

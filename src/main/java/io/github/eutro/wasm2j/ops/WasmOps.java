@@ -108,7 +108,7 @@ public class WasmOps {
         }
 
         public enum LoadType {
-            I8("getByte", "(I)B"),
+            I8("get", "(I)B"),
             I16("getShort", "(I)S"),
             I32("getInt", "(I)I"),
             I64("getLong", "(I)J"),
@@ -170,11 +170,11 @@ public class WasmOps {
         F32("putFloat", "(IF)Ljava/nio/ByteBuffer;"),
         F64("putDouble", "(ID)Ljava/nio/ByteBuffer;"),
 
-        I32_8("putByte", "(IB)Ljava/nio/ByteBuffer;"),
+        I32_8("put", "(IB)Ljava/nio/ByteBuffer;"),
         I32_16("putShort", "(IS)Ljava/nio/ByteBuffer;"),
         I32("putInt", "(II)Ljava/nio/ByteBuffer;"),
 
-        I64_8(Opcodes.L2I, "putByte", "(IB)Ljava/nio/ByteBuffer;"),
+        I64_8(Opcodes.L2I, "put", "(IB)Ljava/nio/ByteBuffer;"),
         I64_16(Opcodes.L2I, "putShort", "(IS)Ljava/nio/ByteBuffer;"),
         I64_32(Opcodes.L2I, "putInt", "(II)Ljava/nio/ByteBuffer;"),
         I64("putLong", "(IJ)Ljava/nio/ByteBuffer;"),

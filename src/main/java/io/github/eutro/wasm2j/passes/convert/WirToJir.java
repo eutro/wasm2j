@@ -1,7 +1,7 @@
 package io.github.eutro.wasm2j.passes.convert;
 
-import io.github.eutro.wasm2j.conf.WirJavaConvention;
-import io.github.eutro.wasm2j.conf.WirJavaConventionFactory;
+import io.github.eutro.wasm2j.conf.api.WirJavaConvention;
+import io.github.eutro.wasm2j.conf.api.WirJavaConventionFactory;
 import io.github.eutro.wasm2j.ext.CommonExts;
 import io.github.eutro.wasm2j.intrinsics.IntrinsicImpl;
 import io.github.eutro.wasm2j.intrinsics.JavaIntrinsics;
@@ -35,8 +35,9 @@ public class WirToJir implements InPlaceIRPass<Module> {
         }
 
         WirJavaConvention conventions = conventionsFactory.create(module);
-        ForPass.liftFunctions(new WirToJirPerFunc(conventions)).runInPlace(module);
 
+        conventions.preEmit();
+        ForPass.liftFunctions(new WirToJirPerFunc(conventions)).runInPlace(module);
         conventions.buildConstructor();
 
         module.attachExt(CommonExts.CODE_TYPE, CommonExts.CodeType.JAVA);
@@ -70,17 +71,29 @@ public class WirToJir implements InPlaceIRPass<Module> {
                 FX_CONVERTERS.put(key, (fx, jb, slf) -> jb.insert(fx));
             }
 
-            FX_CONVERTERS.put(WasmOps.GLOBAL_REF, (fx, jb, slf) -> slf.conventions.emitGlobalRef(jb, fx));
-            FX_CONVERTERS.put(WasmOps.GLOBAL_SET, (fx, jb, slf) -> slf.conventions.emitGlobalStore(jb, fx));
-            FX_CONVERTERS.put(WasmOps.MEM_STORE, (fx, jb, slf) -> slf.conventions.emitMemStore(jb, fx));
-            FX_CONVERTERS.put(WasmOps.MEM_LOAD, (fx, jb, slf) -> slf.conventions.emitMemLoad(jb, fx));
-            FX_CONVERTERS.put(WasmOps.MEM_SIZE, (fx, jb, slf) -> slf.conventions.emitMemSize(jb, fx));
-            FX_CONVERTERS.put(WasmOps.MEM_GROW, (fx, jb, slf) -> slf.conventions.emitMemGrow(jb, fx));
-            FX_CONVERTERS.put(WasmOps.TABLE_STORE, (fx, jb, slf) -> slf.conventions.emitTableStore(jb, fx));
-            FX_CONVERTERS.put(WasmOps.TABLE_REF, (fx, jb, slf) -> slf.conventions.emitTableRef(jb, fx));
-            FX_CONVERTERS.put(WasmOps.FUNC_REF, (fx, jb, slf) -> slf.conventions.emitFuncRef(jb, fx));
-            FX_CONVERTERS.put(WasmOps.CALL, (fx, jb, slf) -> slf.conventions.emitCall(jb, fx));
-            FX_CONVERTERS.put(WasmOps.CALL_INDIRECT, (fx, jb, slf) -> slf.conventions.emitCallIndirect(jb, fx));
+            FX_CONVERTERS.put(WasmOps.GLOBAL_REF, (fx, jb, slf) ->
+                    slf.conventions.getGlobal(WasmOps.GLOBAL_REF.cast(fx.insn().op).arg).emitGlobalRef(jb, fx));
+            FX_CONVERTERS.put(WasmOps.GLOBAL_SET, (fx, jb, slf) ->
+                    slf.conventions.getGlobal(WasmOps.GLOBAL_SET.cast(fx.insn().op).arg).emitGlobalStore(jb, fx));
+            FX_CONVERTERS.put(WasmOps.MEM_STORE, (fx, jb, slf) ->
+                    slf.conventions.getMemory(0).emitMemStore(jb, fx));
+            FX_CONVERTERS.put(WasmOps.MEM_LOAD, (fx, jb, slf) ->
+                    slf.conventions.getMemory(0).emitMemLoad(jb, fx));
+            FX_CONVERTERS.put(WasmOps.MEM_SIZE, (fx, jb, slf) ->
+                    slf.conventions.getMemory(0).emitMemSize(jb, fx));
+            FX_CONVERTERS.put(WasmOps.MEM_GROW, (fx, jb, slf) ->
+                    slf.conventions.getMemory(0).emitMemGrow(jb, fx));
+            FX_CONVERTERS.put(WasmOps.TABLE_STORE, (fx, jb, slf) ->
+                    slf.conventions.getTable(WasmOps.TABLE_STORE.cast(fx.insn().op).arg).emitTableStore(jb, fx));
+            FX_CONVERTERS.put(WasmOps.TABLE_REF, (fx, jb, slf) ->
+                    slf.conventions.getTable(WasmOps.TABLE_REF.cast(fx.insn().op).arg).emitTableRef(jb, fx));
+            FX_CONVERTERS.put(WasmOps.FUNC_REF, (fx, jb, slf) ->
+                    slf.conventions.getFunction(WasmOps.FUNC_REF.cast(fx.insn().op).arg).emitFuncRef(jb, fx));
+            FX_CONVERTERS.put(WasmOps.CALL, (fx, jb, slf) ->
+                    slf.conventions.getFunction(WasmOps.CALL.cast(fx.insn().op).arg.func).emitCall(jb, fx));
+
+            FX_CONVERTERS.put(WasmOps.CALL_INDIRECT, (fx, jb, slf) ->
+                    slf.conventions.getIndirectCallingConvention().emitCallIndirect(jb, fx));
 
             FX_CONVERTERS.put(WasmOps.ZEROINIT, (fx, jb, slf) -> {
                 Object value;

@@ -5,6 +5,9 @@ import io.github.eutro.jwasm.tree.CodeNode;
 import io.github.eutro.jwasm.tree.InsnNode;
 import io.github.eutro.jwasm.tree.ModuleNode;
 import io.github.eutro.wasm2j.conf.Conventions;
+import io.github.eutro.wasm2j.conf.Getters;
+import io.github.eutro.wasm2j.conf.Imports;
+import io.github.eutro.wasm2j.ext.JavaExts;
 import io.github.eutro.wasm2j.passes.Passes;
 import io.github.eutro.wasm2j.passes.convert.JirToJava;
 import io.github.eutro.wasm2j.passes.convert.WasmToWir;
@@ -22,14 +25,31 @@ import org.junit.jupiter.api.Test;
 import org.objectweb.asm.ClassWriter;
 import org.objectweb.asm.tree.ClassNode;
 
-import java.io.File;
-import java.io.FileOutputStream;
+import java.io.*;
+import java.lang.reflect.Method;
 import java.util.Collections;
 import java.util.ListIterator;
 import java.util.concurrent.atomic.AtomicReference;
 
 public class FullTest {
     public static Integer OMIT_EXCEPT = null;
+    public static boolean SAVE_CODE = true;
+
+    public static IOImpl IO_IMPL = new IOImpl();
+
+    @SuppressWarnings("unused") // reflected
+    public static class IOImpl {
+        static InputStream is = System.in;
+        static OutputStream os = System.out;
+
+        public int stdin_read_byte() throws IOException {
+            return is.read();
+        }
+
+        public void stdout_write_byte(int b) throws IOException {
+            os.write(b);
+        }
+    }
 
     @Test
     void testFull() throws Throwable {
@@ -48,7 +68,18 @@ public class FullTest {
         ClassNode node = WasmToWir.INSTANCE
                 //.then(Utils.debugDisplay("wasm"))
                 .then(ForPass.liftFunctions(SSAify.INSTANCE))
-                .then(new WirToJir(Conventions.DEFAULT_CONVENTIONS))
+                .then(new WirToJir(Conventions.createBuilder()
+                        .setFunctionImports(Imports.interfaceFuncImports(
+                                Getters.staticGetter(
+                                        JavaExts.JavaField.fromJava(
+                                                JavaExts.JavaClass.fromJava(FullTest.class),
+                                                FullTest.class.getField("IO_IMPL")
+                                        )
+                                ),
+                                JavaExts.JavaClass.fromJava(IOImpl.class),
+                                Conventions.DEFAULT_CC
+                        ))
+                        .build()))
                 .then(ForPass.liftFunctions(Passes.SSA_OPTS))
                 //.then(Utils.debugDisplay("preop"))
                 .then(ForPass.liftFunctions(LowerIntrinsics.INSTANCE))
@@ -62,7 +93,7 @@ public class FullTest {
                                 .then(Stackify.INSTANCE))))
 
                 .then(ForPass.liftFunctions(Utils.debugDisplayOnError("infer", InferTypes.Java.INSTANCE)))
-                .then(ForPass.liftFunctions(LinearScan.INSTANCE))
+                //.then(ForPass.liftFunctions(LinearScan.INSTANCE))
 
                 .then(ForPass.liftFunctions(Utils.debugDisplayOnError("verify", VerifyIntegrity.INSTANCE)))
 
@@ -77,17 +108,33 @@ public class FullTest {
 
         byte[] classBytes = cw.toByteArray();
 
-        File file = new File("build/wasmout/" + node.name + ".class");
-        file.getParentFile().mkdirs();
-        try (FileOutputStream os = new FileOutputStream(file)) {
-            os.write(classBytes);
+        if (SAVE_CODE) {
+            File file = new File("build/wasmout/" + node.name + ".class");
+            file.getParentFile().mkdirs();
+            try (FileOutputStream os = new FileOutputStream(file)) {
+                os.write(classBytes);
+            }
         }
 
         AtomicReference<Class<?>> clazzRef = new AtomicReference<>();
         new ClassLoader() {{
             clazzRef.set(defineClass("com.example.FIXME", classBytes, 0, classBytes.length));
         }};
+
         Class<?> clazz = clazzRef.get();
-        clazz.getConstructor().newInstance();
+        Method day_00 = clazz.getMethod("day_00");
+
+        Object instance = clazz.getConstructor().newInstance();
+        day_00.invoke(instance);
+        System.out.flush();
+
+        //Method day_01 = clazz.getMethod("day_01");
+        //try (InputStream is = FullTest.class.getResourceAsStream("/input/1.txt")) {
+        //    IOImpl.is = is;
+        //    day_01.invoke(instance);
+        //    System.out.flush();
+        //} finally {
+        //    IOImpl.is = System.in;
+        //}
     }
 }

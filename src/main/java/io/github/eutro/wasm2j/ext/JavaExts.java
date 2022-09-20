@@ -4,6 +4,9 @@ import io.github.eutro.wasm2j.ssa.Function;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
 
+import java.lang.reflect.Field;
+import java.lang.reflect.Method;
+import java.lang.reflect.Modifier;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
@@ -25,6 +28,19 @@ public class JavaExts {
             this.name = name;
         }
 
+        public static JavaClass fromJava(Class<?> clazz) {
+            JavaExts.JavaClass jClass = new JavaExts.JavaClass(Type.getInternalName(clazz));
+            for (Method method : clazz.getMethods()) {
+                if (method.isSynthetic()) continue;
+                jClass.methods.add(JavaMethod.fromJava(jClass, method));
+            }
+            for (Field field : clazz.getFields()) {
+                if (field.isSynthetic()) continue;
+                jClass.fields.add(JavaField.fromJava(jClass, field));
+            }
+            return jClass;
+        }
+
         @Override
         public String toString() {
             return name.replace('/', '.');
@@ -41,6 +57,17 @@ public class JavaExts {
             this.name = name;
             this.descriptor = descriptor;
             this.type = type;
+        }
+
+        public static JavaMethod fromJava(JavaClass owner, Method method) {
+            return new JavaMethod(
+                    owner,
+                    method.getName(),
+                    org.objectweb.asm.Type.getMethodDescriptor(method),
+                    Modifier.isStatic(method.getModifiers())
+                            ? Type.STATIC
+                            : Type.VIRTUAL
+            );
         }
 
         public enum Type {
@@ -83,6 +110,15 @@ public class JavaExts {
             this.name = name;
             this.descriptor = descriptor;
             this.isStatic = isStatic;
+        }
+
+        public static JavaField fromJava(JavaClass jClass, Field field) {
+            return new JavaField(
+                    jClass,
+                    field.getName(),
+                    Type.getDescriptor(field.getType()),
+                    Modifier.isStatic(field.getModifiers())
+            );
         }
 
         @Override
