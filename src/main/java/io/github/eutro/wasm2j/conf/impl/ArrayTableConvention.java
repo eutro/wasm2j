@@ -27,8 +27,8 @@ public class ArrayTableConvention extends DelegatingExporter implements TableCon
     public void emitTableStore(IRBuilder ib, Effect effect) {
         ib.insert(JavaOps.ARRAY_SET.create()
                 .insn(table.get(ib),
-                        effect.insn().args.get(0),
-                        effect.insn().args.get(1))
+                        effect.insn().args.get(1),
+                        effect.insn().args.get(0))
                 .assignTo());
 
     }

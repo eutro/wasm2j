@@ -4,18 +4,21 @@ import io.github.eutro.jwasm.BlockType;
 import io.github.eutro.jwasm.tree.*;
 import io.github.eutro.wasm2j.ext.CommonExts;
 import io.github.eutro.wasm2j.ext.WasmExts;
+import io.github.eutro.wasm2j.ops.CommonOps;
+import io.github.eutro.wasm2j.ops.WasmOps;
 import io.github.eutro.wasm2j.ops.WasmOps.DerefType.ExtType;
 import io.github.eutro.wasm2j.ops.WasmOps.DerefType.LoadType;
 import io.github.eutro.wasm2j.ops.WasmOps.StoreType;
 import io.github.eutro.wasm2j.passes.IRPass;
-import io.github.eutro.wasm2j.ops.CommonOps;
-import io.github.eutro.wasm2j.ops.WasmOps;
-import io.github.eutro.wasm2j.ssa.*;
 import io.github.eutro.wasm2j.ssa.Module;
+import io.github.eutro.wasm2j.ssa.*;
 import io.github.eutro.wasm2j.util.InsnMap;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Objects;
 
 import static io.github.eutro.jwasm.Opcodes.*;
 
@@ -31,46 +34,63 @@ public class WasmToWir implements IRPass<ModuleNode, Module> {
         module.attachExt(WasmExts.FUNC_MAP, funcMap);
 
         FullConvertState state = new FullConvertState(node);
-        if (node.globals != null) {
-            for (GlobalNode global : node.globals) {
-                state.mapExprNode(
-                        module,
-                        new TypeNode(new byte[0], new byte[]{global.type.type}),
-                        new byte[0],
-                        global.init
-                );
-            }
-        }
 
-        if (node.datas != null) {
-            for (DataNode data : node.datas) {
-                if (data.offset != null) {
+        int errIndex = 0;
+        String errIn = "???";
+
+        try {
+            if (node.globals != null) {
+                errIn = "global";
+                for (GlobalNode global : node.globals) {
+                    errIndex++;
                     state.mapExprNode(
                             module,
-                            new TypeNode(new byte[0], new byte[]{I32}),
+                            new TypeNode(new byte[0], new byte[]{global.type.type}),
                             new byte[0],
-                            data.offset
+                            global.init
                     );
                 }
             }
-        }
 
-        if (node.codes != null) {
-            int i = 0;
-            for (CodeNode code : node.codes) {
-                assert node.funcs != null && node.funcs.funcs != null;
-                TypeNode type = state.funcTypes[node.funcs.funcs.get(i).type];
-                state.mapExprNode(
-                        module,
-                        type,
-                        code.locals,
-                        code.expr
-                );
-                i++;
+            if (node.datas != null) {
+                errIndex = 0;
+                errIn = "data";
+                for (DataNode data : node.datas) {
+                    errIndex++;
+                    if (data.offset != null) {
+                        state.mapExprNode(
+                                module,
+                                new TypeNode(new byte[0], new byte[]{I32}),
+                                new byte[0],
+                                data.offset
+                        );
+                    }
+                }
+            }
+
+            if (node.codes != null) {
+                errIndex = 0;
+                errIn = "code";
+                int i = 0;
+                for (CodeNode code : node.codes) {
+                    errIndex++;
+                    assert node.funcs != null && node.funcs.funcs != null;
+                    TypeNode type = state.funcTypes[node.funcs.funcs.get(i).type];
+                    state.mapExprNode(
+                            module,
+                            type,
+                            code.locals,
+                            code.expr
+                    );
+                    i++;
+                }
             }
 
             if (node.elems != null) {
+                errIndex = 0;
+                errIn = "elem";
                 for (ElementNode elem : node.elems) {
+                    errIndex++;
                     state.mapExprNode(
                             module,
                             new TypeNode(new byte[0], new byte[]{elem.type}),
@@ -79,6 +99,9 @@ public class WasmToWir implements IRPass<ModuleNode, Module> {
                     );
                 }
             }
+        } catch (Throwable t) {
+            t.addSuppressed(new RuntimeException(String.format("In %s #%d", errIn, errIndex)));
+            throw t;
         }
 
         return module;
@@ -100,7 +123,7 @@ public class WasmToWir implements IRPass<ModuleNode, Module> {
             public BasicBlock elseBb; // only present if opcode == IF
         }
 
-        public int vals;
+        public int height;
         public final List<ConvertState.CtrlFrame> ctrls = new ArrayList<>();
 
         public ConvertState.CtrlFrame ctrlsRef(int idx) {
@@ -108,7 +131,7 @@ public class WasmToWir implements IRPass<ModuleNode, Module> {
         }
 
         public int pushV() {
-            return ++vals;
+            return ++height + locals;
         }
 
         public Var pushVar() {
@@ -117,15 +140,20 @@ public class WasmToWir implements IRPass<ModuleNode, Module> {
 
         public int popV() {
             ConvertState.CtrlFrame frame = ctrlsRef(0);
-            if (vals == frame.height
-                    && /* should be true by validation anyway */ frame.unreachable) {
+            if (frame.unreachable &&
+                    /* should be true by validation anyway */
+                    height == frame.height) {
                 return -1;
             }
-            return vals--;
+            return height-- + locals;
         }
 
         public Var popVar() {
             return refVar(popV());
+        }
+
+        public int peekV() {
+            return height + locals;
         }
 
         public void popVs(int n) {
@@ -138,7 +166,7 @@ public class WasmToWir implements IRPass<ModuleNode, Module> {
             ConvertState.CtrlFrame frame = new ConvertState.CtrlFrame();
             frame.opcode = opcode;
             frame.type = type;
-            frame.height = vals;
+            frame.height = height;
             frame.unreachable = false;
             frame.firstBb = frame.bb = bb;
             ctrls.add(frame);
@@ -147,11 +175,13 @@ public class WasmToWir implements IRPass<ModuleNode, Module> {
 
         public ConvertState.CtrlFrame popC() {
             ConvertState.CtrlFrame frame = ctrls.remove(ctrls.size() - 1);
+            int expectedHeight = frame.height + frame.type.returns.length;
             if (frame.unreachable) {
-                vals = frame.height + frame.type.returns.length;
+                height = expectedHeight;
             } else {
-                if (frame.height != vals - frame.type.returns.length) {
-                    throw new RuntimeException("Frame height mismatch, likely a bug or an unverified module");
+                if (expectedHeight != height) {
+                    throw new RuntimeException(String.format("Frame height mismatch, likely a bug or an unverified module (expected: %d, actual: %d)",
+                            expectedHeight, height));
                 }
             }
             return frame;
@@ -168,7 +198,7 @@ public class WasmToWir implements IRPass<ModuleNode, Module> {
 
         public void unreachable() {
             ConvertState.CtrlFrame frame = ctrlsRef(0);
-            vals = frame.height;
+            height = frame.height;
             frame.unreachable = true;
             frame.bb = newBb();
         }
@@ -216,8 +246,8 @@ public class WasmToWir implements IRPass<ModuleNode, Module> {
                 return;
             }
             for (int i = 1; i <= arity; ++i) {
-                bb.addEffect(CommonOps.IDENTITY.insn(refVar(from + i))
-                        .assignTo(refVar(to + i)));
+                bb.addEffect(CommonOps.IDENTITY.insn(refVar(locals + from + i))
+                        .assignTo(refVar(locals + to + i)));
             }
         }
 
@@ -227,7 +257,8 @@ public class WasmToWir implements IRPass<ModuleNode, Module> {
             this.argC = argC;
             this.localTypes = locals;
             this.localC = locals.length;
-            this.vals = this.locals = argC + localC;
+            this.locals = argC + localC;
+            this.height = 0;
             this.returns = returns;
             this.func = new Function();
         }
@@ -278,7 +309,7 @@ public class WasmToWir implements IRPass<ModuleNode, Module> {
         CONVERTERS.put(ELSE, (cs, node, topB) -> {
             ConvertState.CtrlFrame frame = cs.ctrlsRef(0);
             cs.popVs(frame.type.returns.length);
-            cs.vals += frame.type.params.length;
+            cs.height += frame.type.params.length;
             frame.opcode = node.opcode;
             frame.unreachable = false;
             frame.bb.setControl(Control.br(cs.ctrlsRef(1).bb));
@@ -290,7 +321,7 @@ public class WasmToWir implements IRPass<ModuleNode, Module> {
     private static void doReturn(ConvertState cs, BasicBlock bb) {
         Var[] exprs = new Var[cs.returns];
         for (int i = 0; i < exprs.length; i++) {
-            exprs[i] = cs.refVar(cs.vals + i + 1);
+            exprs[i] = cs.refVar(cs.peekV() + i + 1);
         }
         bb.setControl(CommonOps.RETURN.insn(exprs).jumpsTo());
     }
@@ -299,8 +330,7 @@ public class WasmToWir implements IRPass<ModuleNode, Module> {
         CONVERTERS.put(END, (cs, node, topB) -> {
             ConvertState.CtrlFrame frame = cs.popC();
             if (cs.ctrls.isEmpty()) {
-                cs.vals = frame.height;
-                doReturn(cs, frame.bb);
+                throw new RuntimeException("Too many ends");
             } else {
                 frame.bb.setControl(Control.br(cs.ctrlsRef(0).bb));
                 if (frame.elseBb != null) {
@@ -316,7 +346,7 @@ public class WasmToWir implements IRPass<ModuleNode, Module> {
             ConvertState.CtrlFrame targetFrame = cs.ctrlsRef(depth);
             int arity = cs.labelArity(targetFrame);
             cs.popVs(arity);
-            cs.copyStack(topFrame.bb, arity, cs.vals, targetFrame.height);
+            cs.copyStack(topFrame.bb, arity, cs.height, targetFrame.height);
             topFrame.bb.setControl(Control.br(cs.labelTarget(depth)));
             cs.unreachable();
         });
@@ -330,7 +360,7 @@ public class WasmToWir implements IRPass<ModuleNode, Module> {
             int depth = ((BreakInsnNode) node).label;
             ConvertState.CtrlFrame targetFrame = cs.ctrlsRef(depth);
             int arity = cs.labelArity(targetFrame);
-            cs.copyStack(thenBb, arity, cs.vals - arity, targetFrame.height);
+            cs.copyStack(thenBb, arity, cs.height - arity, targetFrame.height);
             thenBb.setControl(Control.br(cs.labelTarget(depth)));
         });
         CONVERTERS.put(BR_TABLE, (cs, node, topB) -> {
@@ -343,12 +373,12 @@ public class WasmToWir implements IRPass<ModuleNode, Module> {
             Var condVal = cs.popVar();
             cs.popVs(arity);
 
-            cs.copyStack(elseBb, arity, cs.vals, defaultFrame.height);
+            cs.copyStack(elseBb, arity, cs.height, defaultFrame.height);
             elseBb.setControl(Control.br(cs.labelTarget(tblBr.defaultLabel)));
             for (int i = 0; i < bbs.length - 1; i++) {
                 BasicBlock bb = cs.newBb();
                 ConvertState.CtrlFrame frame = cs.ctrlsRef(tblBr.labels[i]);
-                cs.copyStack(bb, arity, cs.vals, frame.height);
+                cs.copyStack(bb, arity, cs.height, frame.height);
                 bb.setControl(Control.br(cs.labelTarget(tblBr.labels[i])));
                 bbs[i] = bb;
             }
@@ -385,7 +415,7 @@ public class WasmToWir implements IRPass<ModuleNode, Module> {
             Var[] args = new Var[type.params.length];
             cs.popVs(args.length);
             for (int i = 0; i < args.length; i++) {
-                args[i] = cs.refVar(cs.vals + i + 1);
+                args[i] = cs.refVar(cs.peekV() + i + 1);
             }
             Insn call;
             if (node.opcode == CALL) {
@@ -437,7 +467,7 @@ public class WasmToWir implements IRPass<ModuleNode, Module> {
                 LOCAL_SET,
                 LOCAL_TEE
         }, (cs, node, topB) -> topB.addEffect(CommonOps.IDENTITY
-                .insn(cs.refVar(node.opcode == LOCAL_SET ? cs.popV() : cs.vals))
+                .insn(cs.refVar(node.opcode == LOCAL_SET ? cs.popV() : cs.peekV()))
                 .assignTo(cs.refVar(((VariableInsnNode) node).variable))));
         CONVERTERS.put(GLOBAL_GET, (cs, node, topB) -> topB.addEffect(WasmOps.GLOBAL_REF
                 .create(((VariableInsnNode) node).variable).insn().assignTo(cs.pushVar())));
@@ -451,7 +481,7 @@ public class WasmToWir implements IRPass<ModuleNode, Module> {
         CONVERTERS.put(TABLE_GET, (cs, node, topB) -> topB.addEffect(WasmOps.TABLE_REF
                 .create(((TableInsnNode) node).table)
                 .insn(cs.popVar())
-                .assignTo(cs.popVar())));
+                .assignTo(cs.pushVar())));
         CONVERTERS.put(TABLE_SET, (cs, node, topB) -> topB.addEffect(WasmOps.TABLE_STORE
                 .create(((TableInsnNode) node).table)
                 .insn(
@@ -555,7 +585,7 @@ public class WasmToWir implements IRPass<ModuleNode, Module> {
             cs.popVs(arity);
             Var[] args = new Var[arity];
             for (int i = 0; i < args.length; i++) {
-                args[i] = cs.refVar(cs.vals + i + 1);
+                args[i] = cs.refVar(cs.peekV() + i + 1);
             }
             topB.addEffect(WasmOps.OPERATOR
                     .create(new WasmOps.OperatorType(
@@ -811,6 +841,7 @@ public class WasmToWir implements IRPass<ModuleNode, Module> {
             );
             Function func = convertFunc(cs, expr);
             module.funcions.add(func);
+            func.attachExt(WasmExts.TYPE, funcType);
             module.getExtOrThrow(WasmExts.FUNC_MAP).put(expr, func);
         }
 
@@ -818,8 +849,8 @@ public class WasmToWir implements IRPass<ModuleNode, Module> {
                 ConvertState cs,
                 ExprNode expr
         ) {
-            cs.pushC(END, new TypeNode(new byte[0], new byte[cs.returns]), cs.newBb());
-            BasicBlock firstBb = cs.ctrlsRef(0).bb;
+            ConvertState.CtrlFrame rootFrame = cs.pushC(END, new TypeNode(new byte[0], new byte[0]), cs.newBb());
+            BasicBlock firstBb = rootFrame.bb;
             for (int i = 0; i < cs.argC; i++) {
                 Var argVar = cs.func.newVar("arg" + i);
                 cs.varVals.add(argVar);
@@ -830,6 +861,8 @@ public class WasmToWir implements IRPass<ModuleNode, Module> {
                 cs.varVals.add(localVar);
                 firstBb.addEffect(WasmOps.ZEROINIT.create(cs.localTypes[i]).insn().assignTo(localVar));
             }
+            ConvertState.CtrlFrame startFrame = cs.pushC(END, new TypeNode(new byte[0], new byte[cs.returns]), cs.newBb());
+            firstBb.setControl(Control.br(startFrame.bb));
             for (AbstractInsnNode insn : expr) {
                 Converter converter = CONVERTERS.get(insn);
                 if (converter == null) {
@@ -837,6 +870,14 @@ public class WasmToWir implements IRPass<ModuleNode, Module> {
                 }
                 converter.convert(cs, insn, cs.ctrlsRef(0).bb);
             }
+
+            if (cs.ctrls.size() != 1) {
+                throw new RuntimeException("Not enough ends");
+            }
+            startFrame.bb.setControl(Control.br(rootFrame.bb = cs.newBb()));
+            // last end should verify that we have the correct number of returns
+            cs.height = 0;
+            doReturn(cs, cs.popC().bb);
             return cs.func;
         }
     }

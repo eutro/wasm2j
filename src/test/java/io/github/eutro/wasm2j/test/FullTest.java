@@ -49,6 +49,10 @@ public class FullTest {
         public void stdout_write_byte(int b) throws IOException {
             os.write(b);
         }
+
+        public void throw_exn() {
+            throw new RuntimeException("panicked");
+        }
     }
 
     @Test
@@ -122,9 +126,12 @@ public class FullTest {
         }};
 
         Class<?> clazz = clazzRef.get();
-        Method day_00 = clazz.getMethod("day_00");
-
         Object instance = clazz.getConstructor().newInstance();
+
+        Method setup_panic = clazz.getMethod("setup_panic");
+        setup_panic.invoke(instance);
+
+        Method day_00 = clazz.getMethod("day_00");
         day_00.invoke(instance);
         System.out.flush();
 

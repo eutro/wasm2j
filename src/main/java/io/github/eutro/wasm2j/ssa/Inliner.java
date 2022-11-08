@@ -19,12 +19,18 @@ public class Inliner {
             Function func,
             List<Var> args
     ) {
-        BasicBlock startBlock = ib.getBlock();
+        BasicBlock startBlock;
+        boolean blocksInlined = func.blocks.size() == 1
+                && func.blocks.get(0).getControl().insn.op == CommonOps.RETURN;
         BasicBlock targetBlock = null;
-        blockMap.put(func.blocks.get(0), startBlock);
-        if (func.blocks.size() > 1) {
+        if (blocksInlined) {
+            startBlock = ib.getBlock();
+        } else {
+            startBlock = ib.func.newBb();
+            ib.insertCtrl(Control.br(startBlock));
             targetBlock = ib.func.newBb();
         }
+        blockMap.put(func.blocks.get(0), startBlock);
         for (BasicBlock thisBb : func.blocks) {
             BasicBlock iBb = blockMap.computeIfAbsent(thisBb, $ -> ib.func.newBb());
             ib.setBlock(iBb);
@@ -46,7 +52,7 @@ public class Inliner {
             Control ctrl = thisBb.getControl();
             if (ctrl.insn.op.key == CommonOps.RETURN.key) {
                 returnVars.put(iBb, refreshVars(ctrl.insn.args));
-                if (targetBlock != null) {
+                if (!blocksInlined) {
                     ib.insertCtrl(Control.br(targetBlock));
                 }
             } else {
@@ -55,8 +61,7 @@ public class Inliner {
                         .jumpsTo(refreshBbs(ctrl.targets)));
             }
         }
-        if (targetBlock != null) {
-            ib.insertCtrl(Control.br(blockMap.get(func.blocks.get(0))));
+        if (!blocksInlined) {
             ib.setBlock(targetBlock);
         }
 
@@ -69,7 +74,7 @@ public class Inliner {
         if (returnVars.size() == 1) {
             returns = new ArrayList<>(Arrays.asList(returnVars.values().iterator().next()));
         } else {
-            assert targetBlock != null;
+            assert !blocksInlined;
             List<List<BasicBlock>> phiSources = new ArrayList<>();
             List<List<Var>> phiVars = new ArrayList<>();
             for (Map.Entry<BasicBlock, Var[]> entry : returnVars.entrySet()) {

@@ -1,8 +1,10 @@
 package io.github.eutro.wasm2j.passes.convert;
 
+import io.github.eutro.wasm2j.conf.api.CallingConvention;
 import io.github.eutro.wasm2j.conf.api.WirJavaConvention;
 import io.github.eutro.wasm2j.conf.api.WirJavaConventionFactory;
 import io.github.eutro.wasm2j.ext.CommonExts;
+import io.github.eutro.wasm2j.ext.WasmExts;
 import io.github.eutro.wasm2j.intrinsics.IntrinsicImpl;
 import io.github.eutro.wasm2j.intrinsics.JavaIntrinsics;
 import io.github.eutro.wasm2j.ops.CommonOps;
@@ -14,10 +16,7 @@ import io.github.eutro.wasm2j.passes.misc.ForPass;
 import io.github.eutro.wasm2j.ssa.Module;
 import io.github.eutro.wasm2j.ssa.*;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 import static io.github.eutro.jwasm.Opcodes.*;
 
@@ -37,7 +36,12 @@ public class WirToJir implements InPlaceIRPass<Module> {
         WirJavaConvention conventions = conventionsFactory.create(module);
 
         conventions.preEmit();
-        ForPass.liftFunctions(new WirToJirPerFunc(conventions)).runInPlace(module);
+        ForPass.liftFunctions(
+                new WirToJirPerFunc(
+                        conventions,
+                        conventions.getIndirectCallingConvention()
+                ))
+                .runInPlace(module);
         conventions.buildConstructor();
 
         module.attachExt(CommonExts.CODE_TYPE, CommonExts.CodeType.JAVA);
@@ -45,9 +49,11 @@ public class WirToJir implements InPlaceIRPass<Module> {
 
     public static class WirToJirPerFunc implements InPlaceIRPass<Function> {
         private final WirJavaConvention conventions;
+        private final CallingConvention callConv;
 
-        public WirToJirPerFunc(WirJavaConvention conventions) {
+        public WirToJirPerFunc(WirJavaConvention conventions, CallingConvention callConv) {
             this.conventions = conventions;
+            this.callConv = callConv;
         }
 
         @Override
@@ -143,9 +149,17 @@ public class WirToJir implements InPlaceIRPass<Module> {
         private static final Map<OpKey, Converter<Control>> CTRL_CONVERTERS = new HashMap<>();
 
         static {
+            CTRL_CONVERTERS.put(CommonOps.RETURN.key, (ctrl, jb, slf) -> {
+                jb.func.getExt(WasmExts.TYPE).ifPresent(typeNode -> {
+                    Optional<Var> returns = slf.callConv.emitReturn(jb, null /*FIXME*/, ctrl.insn.args, typeNode);
+                    ctrl.insn.args.clear();
+                    returns.ifPresent(ctrl.insn.args::add);
+                });
+                // else noop
+            });
+
             for (OpKey key : new OpKey[]{
                     CommonOps.BR.key,
-                    CommonOps.RETURN.key,
                     CommonOps.UNREACHABLE.key,
             }) {
                 CTRL_CONVERTERS.put(key, (ctrl, jb, slf) -> {
