@@ -37,10 +37,10 @@ public class WirToJir implements InPlaceIRPass<Module> {
 
         conventions.preEmit();
         ForPass.liftFunctions(
-                new WirToJirPerFunc(
-                        conventions,
-                        conventions.getIndirectCallingConvention()
-                ))
+                        new WirToJirPerFunc(
+                                conventions,
+                                conventions.getIndirectCallingConvention()
+                        ))
                 .runInPlace(module);
         conventions.buildConstructor();
 
@@ -170,7 +170,7 @@ public class WirToJir implements InPlaceIRPass<Module> {
             CTRL_CONVERTERS.put(WasmOps.BR_IF.key, (ctrl, jb, slf) ->
                     ctrl.insn.op = JavaOps.BR_COND.create(JavaOps.JumpType.IFNE));
             CTRL_CONVERTERS.put(WasmOps.BR_TABLE.key, (ctrl, jb, slf) ->
-                    ctrl.insn.op = JavaOps.TABLESWITCH.create());
+                    ctrl.insn.op = ctrl.targets.size() == 1 ? CommonOps.BR : JavaOps.TABLESWITCH.create());
         }
 
         private class Runner {

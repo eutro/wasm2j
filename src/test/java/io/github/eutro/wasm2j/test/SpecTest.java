@@ -65,12 +65,13 @@ public class SpecTest {
     @Test
     void testInline() {
         WastReader.fromSource("(module\n" +
-                        "  (func (export \"eq\") (param $x f64) (param $y f64) (result i32) (f64.eq (local.get $x) (local.get $y)))\n" +
-                        "  (func (export \"ne\") (param $x f64) (param $y f64) (result i32) (f64.ne (local.get $x) (local.get $y)))\n" +
-                        "  (func (export \"lt\") (param $x f64) (param $y f64) (result i32) (f64.lt (local.get $x) (local.get $y)))\n" +
-                        "  (func (export \"le\") (param $x f64) (param $y f64) (result i32) (f64.le (local.get $x) (local.get $y)))\n" +
-                        "  (func (export \"gt\") (param $x f64) (param $y f64) (result i32) (f64.gt (local.get $x) (local.get $y)))\n" +
-                        "  (func (export \"ge\") (param $x f64) (param $y f64) (result i32) (f64.ge (local.get $x) (local.get $y)))\n" +
+                        "  (func (export \"param\") (result i32)\n" +
+                                "    (i32.const 1)\n" +
+                                "    (block (param i32) (result i32)\n" +
+                                "      (i32.const 2)\n" +
+                                "      (i32.add)\n" +
+                                "    )\n" +
+                                "  )" +
                         ")")
                 .accept(new LoadingWastVisitor());
     }

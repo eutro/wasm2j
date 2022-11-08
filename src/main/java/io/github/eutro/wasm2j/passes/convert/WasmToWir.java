@@ -166,7 +166,7 @@ public class WasmToWir implements IRPass<ModuleNode, Module> {
             ConvertState.CtrlFrame frame = new ConvertState.CtrlFrame();
             frame.opcode = opcode;
             frame.type = type;
-            frame.height = height;
+            frame.height = height - type.params.length;
             frame.unreachable = false;
             frame.firstBb = frame.bb = bb;
             ctrls.add(frame);

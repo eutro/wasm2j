@@ -12,10 +12,7 @@ import io.github.eutro.wasm2j.util.F;
 import io.github.eutro.wasm2j.util.GraphWalker;
 import org.jetbrains.annotations.NotNull;
 import org.objectweb.asm.Type;
-import org.objectweb.asm.tree.AbstractInsnNode;
-import org.objectweb.asm.tree.FieldInsnNode;
-import org.objectweb.asm.tree.MethodInsnNode;
-import org.objectweb.asm.tree.TypeInsnNode;
+import org.objectweb.asm.tree.*;
 
 import java.lang.reflect.Array;
 import java.util.*;
@@ -294,6 +291,24 @@ public abstract class InferTypes<Ty> implements InPlaceIRPass<Function> {
                         NEW)
                 .put(insn -> withArity(1, $ -> new Type[]{Type.getType("[L" + ((TypeInsnNode) insn).desc + ";")}),
                         ANEWARRAY)
+                .put(insn -> withArity(1, $ -> {
+                            Type type;
+                            switch (((IntInsnNode) insn).operand) {
+                                // @formatter:off
+                                case T_BOOLEAN: type = Type.BOOLEAN_TYPE; break;
+                                case T_CHAR: type = Type.CHAR_TYPE; break;
+                                case T_FLOAT: type = Type.FLOAT_TYPE; break;
+                                case T_DOUBLE: type = Type.DOUBLE_TYPE; break;
+                                case T_BYTE: type = Type.BYTE_TYPE; break;
+                                case T_SHORT: type = Type.SHORT_TYPE; break;
+                                case T_INT: type = Type.INT_TYPE; break;
+                                case T_LONG: type = Type.LONG_TYPE; break;
+                                default: throw new IllegalStateException();
+                                    // @formatter:on
+                            }
+                            return new Type[]{Type.getType("[" + type.getDescriptor())};
+                        }),
+                        NEWARRAY)
 
                 .put(" -> ", NOP)
                 .put("a -> ", POP)
