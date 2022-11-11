@@ -2,11 +2,10 @@ package io.github.eutro.wasm2j.passes.misc;
 
 import io.github.eutro.wasm2j.passes.IRPass;
 import io.github.eutro.wasm2j.passes.InPlaceIRPass;
-import io.github.eutro.wasm2j.ssa.*;
 import io.github.eutro.wasm2j.ssa.Module;
+import io.github.eutro.wasm2j.ssa.*;
 
-import java.util.AbstractList;
-import java.util.ListIterator;
+import java.util.*;
 
 public class ForPass {
     public static Functions liftFunctions(IRPass<Function, Function> pass) {
@@ -21,6 +20,36 @@ public class ForPass {
         return new Insns(pass);
     }
 
+    private interface SetableIterator<E> extends Iterator<E> {
+        void set(E el);
+
+        default void finish() {
+        }
+    }
+
+    private static class LISetableIterator<E> implements SetableIterator<E> {
+        private final ListIterator<E> it;
+
+        private LISetableIterator(ListIterator<E> it) {
+            this.it = it;
+        }
+
+        @Override
+        public void set(E el) {
+            it.set(el);
+        }
+
+        @Override
+        public boolean hasNext() {
+            return it.hasNext();
+        }
+
+        @Override
+        public E next() {
+            return it.next();
+        }
+    }
+
     public static class Functions extends AbstractForPass<Function, Module> {
 
         private Functions(IRPass<Function, Function> pass) {
@@ -28,8 +57,20 @@ public class ForPass {
         }
 
         @Override
-        protected ListIterator<Function> getListIter(Module module) {
-            return module.funcions.listIterator();
+        protected Iterator<Function> getIter(Module module) {
+            return module.functions.iterator();
+        }
+
+        @Override
+        protected SetableIterator<Function> getSetableIter(Module module) {
+            List<Function> asList = new ArrayList<>(module.functions);
+            return new LISetableIterator<Function>(asList.listIterator()) {
+                @Override
+                public void finish() {
+                    module.functions.clear();
+                    module.functions.addAll(asList);
+                }
+            };
         }
     }
 
@@ -40,8 +81,13 @@ public class ForPass {
         }
 
         @Override
-        protected ListIterator<BasicBlock> getListIter(Function function) {
-            return function.blocks.listIterator();
+        protected Iterator<BasicBlock> getIter(Function function) {
+            return function.blocks.iterator();
+        }
+
+        @Override
+        protected SetableIterator<BasicBlock> getSetableIter(Function function) {
+            return new LISetableIterator<>(function.blocks.listIterator());
         }
 
         public Functions lift() {
@@ -55,9 +101,9 @@ public class ForPass {
         }
 
         @Override
-        protected ListIterator<Insn> getListIter(BasicBlock basicBlock) {
+        protected SetableIterator<Insn> getSetableIter(BasicBlock basicBlock) {
             int effectsSize = basicBlock.getEffects().size();
-            return new AbstractList<Insn>() {
+            return new LISetableIterator<>(new AbstractList<Insn>() {
                 @Override
                 public int size() {
                     return effectsSize + 1;
@@ -82,7 +128,7 @@ public class ForPass {
                     effect.setInsn(element);
                     return old;
                 }
-            }.listIterator();
+            }.listIterator());
         }
 
         public BasicBlocks lift() {
@@ -97,17 +143,33 @@ public class ForPass {
             this.pass = pass;
         }
 
-        protected abstract ListIterator<T> getListIter(Lifted lifted);
+        protected Iterator<T> getIter(Lifted lifted) {
+            return getSetableIter(lifted);
+        }
+
+        protected abstract SetableIterator<T> getSetableIter(Lifted lifted);
 
         @Override
         public void runInPlace(Lifted lifted) {
-            ListIterator<T> iter = getListIter(lifted);
-            while (iter.hasNext()) {
-                try {
-                    iter.set(pass.run(iter.next()));
-                } catch (RuntimeException e) {
-                    throw new RuntimeException("error running pass on element " + iter.previousIndex(), e);
+            int i = 0;
+            try {
+                if (pass.isInPlace()) {
+                    Iterator<T> iter = getIter(lifted);
+                    while (iter.hasNext()) {
+                        pass.run(iter.next());
+                        i++;
+                    }
+                } else {
+                    SetableIterator<T> iter = getSetableIter(lifted);
+                    while (iter.hasNext()) {
+                        iter.set(pass.run(iter.next()));
+                        i++;
+                    }
+                    iter.finish();
                 }
+            } catch (Throwable t) {
+                t.addSuppressed(new RuntimeException("in element " + i));
+                throw t;
             }
         }
     }

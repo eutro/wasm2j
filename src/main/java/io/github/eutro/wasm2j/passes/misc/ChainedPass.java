@@ -38,8 +38,9 @@ public class ChainedPass<A, B, C> implements IRPass<A, C> {
         while (li.hasNext()) {
             try {
                 acc = li.next().run(acc);
-            } catch (RuntimeException e) {
-                throw new RuntimeException("error running pass " + li.previousIndex() + " in chain", e);
+            } catch (Throwable t) {
+                t.addSuppressed(new RuntimeException("running pass " + li.previousIndex() + " in chain"));
+                throw t;
             }
         }
         return (C) acc;

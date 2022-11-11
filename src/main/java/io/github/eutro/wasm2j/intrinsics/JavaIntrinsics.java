@@ -1,5 +1,6 @@
 package io.github.eutro.wasm2j.intrinsics;
 
+import io.github.eutro.jwasm.Opcodes;
 import io.github.eutro.wasm2j.util.InsnMap;
 import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.Type;
@@ -45,12 +46,13 @@ public class JavaIntrinsics {
             boolean inline = (boolean) annotAsMap.getOrDefault("inline", true);
             IntrinsicImpl impl = new IntrinsicImpl(method, inline);
 
-            if (annotAsMap.containsKey("value")) {
-                byte op = (byte) annotAsMap.get("value");
-                INTRINSICS.put(op, impl);
-            } else if (annotAsMap.containsKey("iOp")) {
+            if (annotAsMap.containsKey("iOp")) {
+                byte bOp = (byte) annotAsMap.getOrDefault("value", Opcodes.INSN_PREFIX);
                 int iOp = (int) annotAsMap.get("iOp");
-                INTRINSICS.putInt(iOp, impl);
+                INTRINSICS.put(bOp, iOp, impl);
+            } else if (annotAsMap.containsKey("value")) {
+                byte op = (byte) annotAsMap.get("value");
+                INTRINSICS.putByte(op, impl);
             } else {
                 throw new IllegalStateException("Method %s's intrinsic annotation specifies neither value nor iOp.");
             }

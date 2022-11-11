@@ -51,19 +51,19 @@ public class DefaultFactory implements WirJavaConventionFactory {
     }
 
     public static class Builder {
-        private ImportFactory<FuncImportNode, FunctionConvention> functionImports = Builder.unsupported();
+        private ImportFactory<FuncImportNode, FunctionConvention> functionImports = unsupported("function imports");
 
-        private ImportFactory<GlobalImportNode, GlobalConvention> globalImports = Builder.unsupported();
+        private ImportFactory<GlobalImportNode, GlobalConvention> globalImports = unsupported("global imports");
 
-        private ImportFactory<MemImportNode, MemoryConvention> memoryImports = Builder.unsupported();
-        private ImportFactory<TableImportNode, TableConvention> tableImports = Builder.unsupported();
+        private ImportFactory<MemImportNode, MemoryConvention> memoryImports = unsupported("memory imports");
+        private ImportFactory<TableImportNode, TableConvention> tableImports = unsupported("table imports");
 
         private CallingConvention callingConvention = Conventions.DEFAULT_CC;
 
         private static <Import extends AbstractImportNode, Convention>
-        ImportFactory<Import, Convention> unsupported() {
+        ImportFactory<Import, Convention> unsupported(String whats) {
             return (m, e) -> {
-                throw new UnsupportedOperationException();
+                throw new UnsupportedOperationException(whats + " are not supported");
             };
         }
 
@@ -314,7 +314,7 @@ public class DefaultFactory implements WirJavaConventionFactory {
             jClass.methods.add(ctorMethod);
             {
                 Function ctorImpl = new Function();
-                module.funcions.add(ctorImpl);
+                module.functions.add(ctorImpl);
                 ctorImpl.attachExt(JavaExts.FUNCTION_DESCRIPTOR, ctorMethod.descriptor);
                 ctorImpl.attachExt(JavaExts.FUNCTION_OWNER, ctorMethod.owner);
                 ctorMethod.attachExt(JavaExts.METHOD_IMPL, ctorImpl);
@@ -377,9 +377,11 @@ public class DefaultFactory implements WirJavaConventionFactory {
                     int i = 0;
                     for (GlobalNode global : node.globals) {
                         JavaExts.JavaField globalField = lGlobals.get(i++);
+                        Function globalFunc = funcMap.get(global.init);
                         Var glInit = ib.insert(new Inliner(ib)
-                                        .inline(funcMap.get(global.init), Collections.emptyList()),
+                                        .inline(globalFunc, Collections.emptyList()),
                                 "global_init");
+                        module.functions.remove(globalFunc);
                         ib.insert(JavaOps.PUT_FIELD.create(globalField)
                                 .insn(IRUtils.getThis(ib), glInit)
                                 .assignTo());
@@ -387,17 +389,32 @@ public class DefaultFactory implements WirJavaConventionFactory {
                 }
 
                 if (node.elems != null) {
+                    int fieldElems = 0;
                     for (ElementNode elem : node.elems) {
-                        if (elem.offset == null) continue;
-
-                        Var offset = ib.insert(new Inliner(ib)
-                                        .inline(funcMap.get(elem.offset), Collections.emptyList()),
-                                "elem_offset");
-
-                        Var table = ib.insert(JavaOps.GET_FIELD
-                                        .create(lTables.get(elem.table))
-                                        .insn(IRUtils.getThis(ib)),
-                                "table");
+                        Var offset, table;
+                        if (elem.offset == null) {
+                            offset = ib.insert(CommonOps.CONST.create(0).insn(), "offset");
+                            table = ib.insert(JavaOps.insns(
+                                    new TypeInsnNode(Opcodes.ANEWARRAY, Type.getInternalName(MethodHandle.class))
+                            ).insn(ib.insert(CommonOps.CONST.create(elem.indices != null ? elem.indices.length : elem.init.size()).insn(),
+                                            "elemsz")),
+                                    "elem");
+                            JavaExts.JavaField field = new JavaExts.JavaField(jClass, "elem" + fieldElems++,
+                                    Type.getDescriptor(MethodHandle[].class),
+                                    false);
+                            jClass.fields.add(field);
+                            ib.insert(JavaOps.PUT_FIELD.create(field).insn(IRUtils.getThis(ib), table).assignTo());
+                        } else {
+                            Function offsetFunc = funcMap.get(elem.offset);
+                            offset = ib.insert(new Inliner(ib)
+                                            .inline(offsetFunc, Collections.emptyList()),
+                                    "elem_offset");
+                            module.functions.remove(offsetFunc);
+                            table = ib.insert(JavaOps.GET_FIELD
+                                            .create(lTables.get(elem.table))
+                                            .insn(IRUtils.getThis(ib)),
+                                    "table");
+                        }
 
                         if (elem.indices != null) {
                             for (int i = 0; i < elem.indices.length; i++) {
@@ -424,7 +441,9 @@ public class DefaultFactory implements WirJavaConventionFactory {
                                                         ib.insert(CommonOps.CONST.create(i)
                                                                 .insn(), "i")),
                                         "j");
-                                Var f = ib.insert(new Inliner(ib).inline(funcMap.get(expr), Collections.emptyList()), "f");
+                                Function exprFunc = funcMap.get(expr);
+                                Var f = ib.insert(new Inliner(ib).inline(exprFunc, Collections.emptyList()), "f");
+                                module.functions.remove(exprFunc);
                                 ib.insert(JavaOps.ARRAY_SET.create()
                                         .insn(table, j, f)
                                         .assignTo());
@@ -436,11 +455,15 @@ public class DefaultFactory implements WirJavaConventionFactory {
 
                 if (node.datas != null) {
                     for (DataNode data : node.datas) {
+                        if (data.offset == null) continue;
+
                         JavaExts.JavaField mem = lMemories.get(data.memory);
 
+                        Function offsetFunc = funcMap.get(data.offset);
                         Var dataOffset = ib.insert(new Inliner(ib)
-                                        .inline(funcMap.get(data.offset), Collections.emptyList()),
+                                        .inline(offsetFunc, Collections.emptyList()),
                                 "data_offset");
+                        module.functions.remove(offsetFunc);
 
                         Var memV = ib.insert(JavaOps.GET_FIELD.create(mem)
                                         .insn(IRUtils.getThis(ib)),

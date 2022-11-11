@@ -137,10 +137,8 @@ public class WirToJir implements InPlaceIRPass<Module> {
 
             FX_CONVERTERS.put(WasmOps.OPERATOR, (fx, jb, slf) -> {
                 WasmOps.OperatorType opTy = WasmOps.OPERATOR.cast(fx.insn().op).arg;
-                IntrinsicImpl intr = opTy.op == INSN_PREFIX
-                        ? JavaIntrinsics.INTRINSICS.getInt(opTy.intOp)
-                        : JavaIntrinsics.INTRINSICS.getByte(opTy.op);
-                if (intr == null) throw new RuntimeException("operator " + opTy + " is not implemented");
+                IntrinsicImpl intr = JavaIntrinsics.INTRINSICS.get(opTy.op, opTy.intOp);
+                if (intr == null) throw new UnsupportedOperationException("operator " + opTy + " is not implemented");
                 fx.insn().op = JavaOps.INTRINSIC.create(intr);
                 jb.insert(fx);
             });

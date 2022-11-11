@@ -29,6 +29,7 @@ dependencies {
     implementation("io.github.eutro.jwasm:jwasm:0.5.0")
     implementation("io.github.eutro.jwasm:jwasm-tree:0.5.0")
     implementation("io.github.eutro.jwasm:jwasm-analysis:0.5.0")
+    implementation("io.github.eutro.jwasm:jwasm-attrs:0.5.0")
     testImplementation("io.github.eutro.jwasm:jwasm-sexp:0.5.0")
     testImplementation("io.github.eutro.jwasm:jwasm-test:0.5.0")
 

@@ -2,9 +2,9 @@ package io.github.eutro.wasm2j.ssa;
 
 import io.github.eutro.wasm2j.ext.ExtHolder;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.LinkedHashSet;
+import java.util.Set;
 
 public final class Module extends ExtHolder {
-    public List<Function> funcions = new ArrayList<>();
+    public Set<Function> functions = new LinkedHashSet<>();
 }

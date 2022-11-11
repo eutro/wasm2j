@@ -1,5 +1,7 @@
 package io.github.eutro.wasm2j.util;
 
+import io.github.eutro.jwasm.attrs.InsnAttributes;
+import io.github.eutro.jwasm.attrs.Opcode;
 import org.jetbrains.annotations.Nullable;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.tree.AbstractInsnNode;
@@ -13,8 +15,6 @@ import java.util.Map;
 public class Disassembler {
     private static Map<Integer, String> opcodeMnemonics = null;
 
-    private static InsnMap<String> wasmMnemonics = null;
-
     @Nullable
     public static String getMnemonic(int opcode) {
         if (opcodeMnemonics == null) generateMnemonics();
@@ -23,10 +23,8 @@ public class Disassembler {
 
     @Nullable
     public static String getWasmMnemonic(byte byteOpcode, int intOpcode) {
-        if (wasmMnemonics == null) generateWasmMnemonics();
-        return byteOpcode == io.github.eutro.jwasm.Opcodes.INSN_PREFIX
-                ? wasmMnemonics.getInt(intOpcode)
-                : wasmMnemonics.getByte(byteOpcode);
+        InsnAttributes attrs = InsnAttributes.lookup(new Opcode(byteOpcode, intOpcode));
+        return attrs == null ? null : attrs.getMnemonic();
     }
 
     public static String disassembleList(InsnList insns) {
@@ -71,26 +69,6 @@ public class Disassembler {
             for (Field field : fields) {
                 if (field.getType() == int.class) {
                     opcodeMnemonics.put((Integer) field.get(null), field.getName());
-                }
-            }
-        } catch (ReflectiveOperationException ignored) {
-        }
-    }
-
-    private static void generateWasmMnemonics() {
-        wasmMnemonics = new InsnMap<>();
-        try {
-            Field[] fields = io.github.eutro.jwasm.Opcodes.class.getFields();
-            int i = 0;
-            for (; i < fields.length; i++) {
-                if (fields[i].getName().equals("INSN_PREFIX")) break;
-            }
-            for (; i < fields.length; i++) {
-                Field field = fields[i];
-                if (field.getType() == byte.class) {
-                    wasmMnemonics.put((byte) field.get(null), field.getName());
-                } else if (field.getType() == int.class) {
-                    wasmMnemonics.putInt((int) field.get(null), field.getName());
                 }
             }
         } catch (ReflectiveOperationException ignored) {

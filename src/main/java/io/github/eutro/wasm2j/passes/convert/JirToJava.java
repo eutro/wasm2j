@@ -153,12 +153,15 @@ public class JirToJava implements IRPass<Module, ClassNode> {
         boolean isFirst = true;
         for (BasicBlock block : blockOrder) {
             mn.visitLabel(block.getExtOrThrow(LABEL_EXT));
+            AbstractInsnNode labelNode = mn.instructions.getLast();
+            AbstractInsnNode frameNode;
             if (isFirst) {
                 isFirst = false;
+                frameNode = null;
             } else {
                 mn.visitFrame(Opcodes.F_SAME, locals.length, null, 0, null);
+                frameNode = mn.instructions.getLast();
             }
-            AbstractInsnNode frameNode = mn.instructions.getLast();
             for (Effect effect : block.getEffects()) {
                 if (effect.insn().op.key == CommonOps.PHI) continue;
 
@@ -180,6 +183,10 @@ public class JirToJava implements IRPass<Module, ClassNode> {
 
             if (mn.instructions.getLast() == frameNode) {
                 mn.instructions.remove(frameNode);
+            }
+            if (mn.instructions.getLast() == labelNode) {
+                // should be fairly uncommon, but we can put more than one label here this way
+                mn.visitInsn(Opcodes.NOP);
             }
         }
 

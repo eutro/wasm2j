@@ -26,7 +26,7 @@ public class Utils {
     public static IRPass<Module, Module> debugDisplay(String prefix) {
         return module -> {
             int i = 0;
-            for (Function func : module.funcions) {
+            for (Function func : module.functions) {
                 SSADisplay.debugDisplayToFile(
                         SSADisplay.displaySSA(func, DisplayInteraction.HIGHLIGHT_INTERESTING),
                         "build/ssa/" + prefix + i + ".svg"
@@ -38,16 +38,25 @@ public class Utils {
     }
 
     public static IRPass<Function, Function> debugDisplayOnError(String prefix, IRPass<Function, Function> pass) {
-        return func -> {
-            try {
-                return pass.run(func);
-            } catch (RuntimeException e) {
-                String file = "build/ssa/" + prefix + System.identityHashCode(e) + ".svg";
-                SSADisplay.debugDisplayToFile(
-                        SSADisplay.displaySSA(func, DisplayInteraction.HIGHLIGHT_INTERESTING),
-                        file
-                );
-                throw new RuntimeException("function written to file: " + new File(file).getAbsolutePath(), e);
+        return new IRPass<Function, Function>() {
+            @Override
+            public boolean isInPlace() {
+                return pass.isInPlace();
+            }
+
+            @Override
+            public Function run(Function func) {
+                try {
+                    return pass.run(func);
+                } catch (Throwable t) {
+                    String file = "build/ssa/" + prefix + System.identityHashCode(t) + ".svg";
+                    SSADisplay.debugDisplayToFile(
+                            SSADisplay.displaySSA(func, DisplayInteraction.HIGHLIGHT_INTERESTING),
+                            file
+                    );
+                    t.addSuppressed(new RuntimeException("function written to file: " + new File(file).getAbsolutePath()));
+                    throw t;
+                }
             }
         };
     }

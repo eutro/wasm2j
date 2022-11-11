@@ -30,6 +30,7 @@ import org.junit.jupiter.api.DynamicTest;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestFactory;
 import org.objectweb.asm.ClassWriter;
+import org.objectweb.asm.MethodTooLargeException;
 import org.objectweb.asm.tree.ClassNode;
 
 import java.util.stream.Stream;
@@ -37,14 +38,14 @@ import java.util.stream.Stream;
 public class SpecTest {
 
     public static final IRPass<ModuleNode, ClassNode> PASS = WasmToWir.INSTANCE
-            .then(Utils.debugDisplay("wasm"))
+            //.then(Utils.debugDisplay("wasm"))
             .then(ForPass.liftFunctions(SSAify.INSTANCE))
             .then(new WirToJir(Conventions.createBuilder().build()))
             .then(ForPass.liftFunctions(Passes.SSA_OPTS))
-            .then(Utils.debugDisplay("preop"))
+            //.then(Utils.debugDisplay("preop"))
             .then(ForPass.liftFunctions(LowerIntrinsics.INSTANCE))
             .then(ForPass.liftFunctions(ComputeDomFrontier.INSTANCE))
-            .then(Utils.debugDisplay("postop"))
+            //.then(Utils.debugDisplay("postop"))
             .then(ForPass.liftFunctions(CollapseJumps.INSTANCE))
             .then(ForPass.liftFunctions(Utils.debugDisplayOnError("lower",
                     ForPass.liftBasicBlocks(MergeConds.INSTANCE)
@@ -129,6 +130,10 @@ public class SpecTest {
                             }
                         }.defineTheClass();
                         System.out.println(theClass);
+                    } catch (UnsupportedOperationException ignored) {
+                        // TODO support all the operations
+                    } catch (MethodTooLargeException ignored) {
+                        // this is okay, but we should do something better with it...
                     } catch (Throwable t) {
                         t.addSuppressed(new RuntimeException("in top module #" + tmc));
                         throw t;

@@ -1,7 +1,9 @@
 package io.github.eutro.wasm2j.util;
 
+import io.github.eutro.jwasm.Opcodes;
 import io.github.eutro.jwasm.tree.AbstractInsnNode;
 import io.github.eutro.jwasm.tree.PrefixInsnNode;
+import io.github.eutro.jwasm.tree.VectorInsnNode;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -12,12 +14,26 @@ public class InsnMap<T> {
     @SuppressWarnings("unchecked")
     public final T[] singleOpcode = (T[]) new Object[(int) Byte.MAX_VALUE - (int) Byte.MIN_VALUE];
     public final HashMap<Integer, T> prefixOpcode = new HashMap<>();
+    public final HashMap<Integer, T> vectorOpcode = new HashMap<>();
 
     public T get(AbstractInsnNode insn) {
         if (insn instanceof PrefixInsnNode) {
             return getInt(((PrefixInsnNode) insn).intOpcode);
+        } else if (insn instanceof VectorInsnNode) {
+            return getVector(((VectorInsnNode) insn).intOpcode);
         } else {
             return getByte(insn.opcode);
+        }
+    }
+
+    public T get(byte opcode, int intOpcode) {
+        switch (opcode) {
+            case Opcodes.INSN_PREFIX:
+                return getInt(intOpcode);
+            case Opcodes.VECTOR_PREFIX:
+                return getVector(intOpcode);
+            default:
+                return getByte(opcode);
         }
     }
 
@@ -29,6 +45,7 @@ public class InsnMap<T> {
             }
         }
         values.addAll(prefixOpcode.values());
+        values.addAll(vectorOpcode.values());
         return values;
     }
 
@@ -40,27 +57,51 @@ public class InsnMap<T> {
         return prefixOpcode.get(opcode);
     }
 
-    public <E extends T> InsnMap<T> put(byte opcode, E value) {
-        singleOpcode[Byte.toUnsignedInt(opcode)] = value;
-        return this;
+    private T getVector(int intOpcode) {
+        return vectorOpcode.get(intOpcode);
     }
 
-    public <E extends T> InsnMap<T> put(byte[] opcodes, E value) {
-        for (byte opcode : opcodes) {
-            put(opcode, value);
+    public void put(byte opcode, int intOpcode, T value) {
+        switch (opcode) {
+            case Opcodes.INSN_PREFIX:
+                putInt(intOpcode, value);
+                break;
+            case Opcodes.VECTOR_PREFIX:
+                putVector(intOpcode, value);
+                break;
+            default:
+                putByte(opcode, value);
+                break;
         }
-        return this;
     }
 
-    public InsnMap<T> putInt(int opcode, T value) {
+    public void putByte(byte opcode, T value) {
+        singleOpcode[Byte.toUnsignedInt(opcode)] = value;
+    }
+
+    public void putByte(byte[] opcodes, T value) {
+        for (byte opcode : opcodes) {
+            putByte(opcode, value);
+        }
+    }
+
+    public void putInt(int opcode, T value) {
         prefixOpcode.put(opcode, value);
-        return this;
     }
 
-    public InsnMap<T> putInt(int[] opcodes, T value) {
+    public void putInt(int[] opcodes, T value) {
         for (int opcode : opcodes) {
             putInt(opcode, value);
         }
-        return this;
+    }
+
+    public void putVector(int opcode, T value) {
+        vectorOpcode.put(opcode, value);
+    }
+
+    public void putVector(int[] opcodes, T value) {
+        for (int opcode : opcodes) {
+            putVector(opcode, value);
+        }
     }
 }

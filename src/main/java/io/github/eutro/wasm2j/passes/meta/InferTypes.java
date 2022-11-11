@@ -46,11 +46,12 @@ public abstract class InferTypes<Ty> implements InPlaceIRPass<Function> {
                         var.attachExt(tyExt, retTys[i++]);
                     }
                 } catch (Exception e) {
-                    throw new RuntimeException(String.format(
+                    e.addSuppressed(new RuntimeException(String.format(
                             "error inferring %s; in block: %s",
                             effect,
                             block.toTargetString()
-                    ), e);
+                    )));
+                    throw e;
                 }
             }
         }
@@ -289,6 +290,8 @@ public abstract class InferTypes<Ty> implements InPlaceIRPass<Function> {
                         GETSTATIC, GETFIELD)
                 .put(insn -> withArity(0, $ -> new Type[]{Type.getObjectType(((TypeInsnNode) insn).desc)}),
                         NEW)
+                .put(insn -> withArity(1, $ -> new Type[]{Type.getObjectType(((TypeInsnNode) insn).desc)}),
+                        CHECKCAST)
                 .put(insn -> withArity(1, $ -> new Type[]{Type.getType("[L" + ((TypeInsnNode) insn).desc + ";")}),
                         ANEWARRAY)
                 .put(insn -> withArity(1, $ -> {

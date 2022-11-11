@@ -14,6 +14,7 @@ import org.objectweb.asm.tree.MethodNode;
 import org.objectweb.asm.tree.TypeInsnNode;
 
 import java.lang.invoke.MethodHandle;
+import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -36,6 +37,8 @@ public class BasicCallingConvention implements CallingConvention {
                 return Type.getType(MethodHandle.class);
             case EXTERNREF:
                 return Type.getType(Object.class);
+            case V128:
+                return Type.getType(ByteBuffer.class);
             default:
                 throw new IllegalArgumentException("Not a type");
         }
@@ -55,6 +58,8 @@ public class BasicCallingConvention implements CallingConvention {
                 return Type.getType(MethodHandle.class);
             case EXTERNREF:
                 return Type.getType(Object.class);
+            case V128:
+                return Type.getType(ByteBuffer.class);
             default:
                 throw new IllegalArgumentException("Not a type");
         }
