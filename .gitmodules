@@ -1,5 +1,0 @@
-[submodule "wasm/aoc2019"]
-	path = wasm/aoc2019
-	url = https://github.com/eutro/aoc2019
-[submodule "aoc2019"]
-	branch = wasm
