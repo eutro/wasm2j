@@ -2,7 +2,7 @@
 
 A WebAssembly to Java bytecode compiler.
 
-Should support all of WebAssembly 2.0.
+Should support almost all of WebAssembly 2.0, but it might not work perfectly.
 
 JavaDocs can be found [here](https://eutro.github.io/wasm2j/index.html).
 
