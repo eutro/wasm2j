@@ -1,1 +1,15 @@
-io.github.eutro.wasm2j
+io.github.eutro.wasm2j.conf
+io.github.eutro.wasm2j.conf.api
+io.github.eutro.wasm2j.conf.impl
+io.github.eutro.wasm2j.ext
+io.github.eutro.wasm2j.intrinsics
+io.github.eutro.wasm2j.ops
+io.github.eutro.wasm2j.passes
+io.github.eutro.wasm2j.passes.convert
+io.github.eutro.wasm2j.passes.form
+io.github.eutro.wasm2j.passes.meta
+io.github.eutro.wasm2j.passes.misc
+io.github.eutro.wasm2j.passes.opts
+io.github.eutro.wasm2j.ssa
+io.github.eutro.wasm2j.ssa.display
+io.github.eutro.wasm2j.util
