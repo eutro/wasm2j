@@ -1,6 +1,7 @@
 package io.github.eutro.wasm2j.passes.meta;
 
 import io.github.eutro.wasm2j.ext.CommonExts;
+import io.github.eutro.wasm2j.ext.MetadataState;
 import io.github.eutro.wasm2j.passes.InPlaceIRPass;
 import io.github.eutro.wasm2j.ssa.BasicBlock;
 import io.github.eutro.wasm2j.ssa.Function;
@@ -17,12 +18,8 @@ public class ComputeDomFrontier implements InPlaceIRPass<Function> {
     }
 
     private static void computeDomFrontier(Function func) {
-        for (BasicBlock block : func.blocks) {
-            if (!block.getExt(CommonExts.PREDS).isPresent() || !block.getExt(CommonExts.IDOM).isPresent()) {
-                ComputeDoms.INSTANCE.runInPlace(func);
-                break;
-            }
-        }
+        MetadataState ms = func.getExtOrThrow(CommonExts.METADATA_STATE);
+        ms.ensureValid(func, MetadataState.DOMS, MetadataState.PREDS);
 
         // Cooper, Keith D.; Harvey, Timothy J.; Kennedy, Ken (2001). "A Simple, Fast Dominance Algorithm"
         for (BasicBlock block : func.blocks) {
@@ -40,5 +37,7 @@ public class ComputeDomFrontier implements InPlaceIRPass<Function> {
                 }
             }
         }
+
+        ms.validate(MetadataState.DOM_FRONTIER);
     }
 }

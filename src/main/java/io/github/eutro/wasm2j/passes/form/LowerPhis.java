@@ -1,6 +1,7 @@
 package io.github.eutro.wasm2j.passes.form;
 
 import io.github.eutro.wasm2j.ext.CommonExts;
+import io.github.eutro.wasm2j.ext.MetadataState;
 import io.github.eutro.wasm2j.ops.CommonOps;
 import io.github.eutro.wasm2j.passes.InPlaceIRPass;
 import io.github.eutro.wasm2j.ssa.BasicBlock;
@@ -41,5 +42,9 @@ public class LowerPhis implements InPlaceIRPass<Function> {
                 iter.remove();
             }
         }
+
+        MetadataState ms = func.getExtOrThrow(CommonExts.METADATA_STATE);
+        ms.invalidate(MetadataState.SSA_FORM);
+        ms.graphChanged();
     }
 }

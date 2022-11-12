@@ -13,18 +13,9 @@ import io.github.eutro.wasm2j.passes.Passes;
 import io.github.eutro.wasm2j.passes.convert.JirToJava;
 import io.github.eutro.wasm2j.passes.convert.WasmToWir;
 import io.github.eutro.wasm2j.passes.convert.WirToJir;
-import io.github.eutro.wasm2j.passes.form.LowerIntrinsics;
-import io.github.eutro.wasm2j.passes.form.LowerPhis;
-import io.github.eutro.wasm2j.passes.form.LowerSelects;
-import io.github.eutro.wasm2j.passes.form.SSAify;
 import io.github.eutro.wasm2j.passes.meta.CheckJava;
-import io.github.eutro.wasm2j.passes.meta.ComputeDomFrontier;
-import io.github.eutro.wasm2j.passes.meta.InferTypes;
 import io.github.eutro.wasm2j.passes.meta.VerifyIntegrity;
 import io.github.eutro.wasm2j.passes.misc.ForPass;
-import io.github.eutro.wasm2j.passes.opts.CollapseJumps;
-import io.github.eutro.wasm2j.passes.opts.MergeConds;
-import io.github.eutro.wasm2j.passes.opts.Stackify;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.DynamicTest;
 import org.junit.jupiter.api.Test;
@@ -38,28 +29,12 @@ import java.util.stream.Stream;
 public class SpecTest {
 
     public static final IRPass<ModuleNode, ClassNode> PASS = WasmToWir.INSTANCE
-            //.then(Utils.debugDisplay("wasm"))
-            .then(ForPass.liftFunctions(SSAify.INSTANCE))
-            .then(new WirToJir(Conventions.createBuilder().build()))
+            .then(new WirToJir(Conventions.createBuilder()
+                    .setNameSupplier(() -> "dev/eutro/Example")
+                    .build()))
             .then(ForPass.liftFunctions(Passes.SSA_OPTS))
-            //.then(Utils.debugDisplay("preop"))
-            .then(ForPass.liftFunctions(LowerIntrinsics.INSTANCE))
-            .then(ForPass.liftFunctions(ComputeDomFrontier.INSTANCE))
-            //.then(Utils.debugDisplay("postop"))
-            .then(ForPass.liftFunctions(CollapseJumps.INSTANCE))
-            .then(ForPass.liftFunctions(Utils.debugDisplayOnError("lower",
-                    ForPass.liftBasicBlocks(MergeConds.INSTANCE)
-                            .then(LowerSelects.INSTANCE)
-                            .then(LowerPhis.INSTANCE)
-                            .then(Stackify.INSTANCE))))
-
-            .then(ForPass.liftFunctions(Utils.debugDisplayOnError("infer", InferTypes.Java.INSTANCE)))
-            //.then(ForPass.liftFunctions(LinearScan.INSTANCE))
-
+            .then(ForPass.liftFunctions(Passes.JAVA_PREEMIT))
             .then(ForPass.liftFunctions(Utils.debugDisplayOnError("verify", VerifyIntegrity.INSTANCE)))
-
-            //.then(ForPass.liftFunctions(ComputeDomFrontier.INSTANCE))
-            //.then(Utils.debugDisplay("preemit"))
             .then(JirToJava.INSTANCE)
             .then(CheckJava.INSTANCE);
 
@@ -67,12 +42,12 @@ public class SpecTest {
     void testInline() {
         WastReader.fromSource("(module\n" +
                         "  (func (export \"param\") (result i32)\n" +
-                                "    (i32.const 1)\n" +
-                                "    (block (param i32) (result i32)\n" +
-                                "      (i32.const 2)\n" +
-                                "      (i32.add)\n" +
-                                "    )\n" +
-                                "  )" +
+                        "    (i32.const 1)\n" +
+                        "    (block (param i32) (result i32)\n" +
+                        "      (i32.const 2)\n" +
+                        "      (i32.add)\n" +
+                        "    )\n" +
+                        "  )" +
                         ")")
                 .accept(new LoadingWastVisitor());
     }

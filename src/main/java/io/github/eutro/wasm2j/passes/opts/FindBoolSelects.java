@@ -1,11 +1,11 @@
 package io.github.eutro.wasm2j.passes.opts;
 
 import io.github.eutro.wasm2j.ext.CommonExts;
+import io.github.eutro.wasm2j.ext.MetadataState;
 import io.github.eutro.wasm2j.ops.CommonOps;
 import io.github.eutro.wasm2j.ops.JavaOps;
 import io.github.eutro.wasm2j.ops.Op;
 import io.github.eutro.wasm2j.passes.InPlaceIRPass;
-import io.github.eutro.wasm2j.passes.meta.ComputePreds;
 import io.github.eutro.wasm2j.ssa.BasicBlock;
 import io.github.eutro.wasm2j.ssa.Control;
 import io.github.eutro.wasm2j.ssa.Effect;
@@ -19,15 +19,12 @@ public class FindBoolSelects implements InPlaceIRPass<Function> {
     public static final FindBoolSelects INSTANCE = new FindBoolSelects();
 
     @Override
-    public void runInPlace(Function function) {
-        for (BasicBlock block : function.blocks) {
-            if (!block.getExt(CommonExts.PREDS).isPresent()) {
-                ComputePreds.INSTANCE.runInPlace(function);
-                break;
-            }
-        }
+    public void runInPlace(Function func) {
+        MetadataState ms = func.getExtOrThrow(CommonExts.METADATA_STATE);
+        ms.ensureValid(func, MetadataState.PREDS);
 
-        for (BasicBlock block : function.blocks) {
+        boolean changed = false;
+        for (BasicBlock block : func.blocks) {
             if (block.getEffects().isEmpty()) continue;
             Iterator<Effect> iter = block.getEffects().iterator();
             Effect phi = iter.next();
@@ -67,6 +64,11 @@ public class FindBoolSelects implements InPlaceIRPass<Function> {
 
             phi.setInsn(JavaOps.BOOL_SELECT.create(jTy).copyFrom(jump.insn));
             pred.setControl(Control.br(block));
+            changed = true;
+        }
+
+        if (changed) {
+            ms.graphChanged();
         }
     }
 }

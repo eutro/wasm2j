@@ -1,6 +1,7 @@
 package io.github.eutro.wasm2j.passes.meta;
 
 import io.github.eutro.wasm2j.ext.CommonExts;
+import io.github.eutro.wasm2j.ext.MetadataState;
 import io.github.eutro.wasm2j.passes.InPlaceIRPass;
 import io.github.eutro.wasm2j.ssa.*;
 import org.jetbrains.annotations.NotNull;
@@ -27,6 +28,9 @@ public class ComputeUses implements InPlaceIRPass<Function> {
                 getOrCreateUses(arg).add(ctrl.insn);
             }
         }
+
+        MetadataState ms = func.getExtOrThrow(CommonExts.METADATA_STATE);
+        ms.validate(MetadataState.USES);
     }
 
     @NotNull

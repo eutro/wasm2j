@@ -4,6 +4,7 @@ import io.github.eutro.wasm2j.conf.api.CallingConvention;
 import io.github.eutro.wasm2j.conf.api.WirJavaConvention;
 import io.github.eutro.wasm2j.conf.api.WirJavaConventionFactory;
 import io.github.eutro.wasm2j.ext.CommonExts;
+import io.github.eutro.wasm2j.ext.MetadataState;
 import io.github.eutro.wasm2j.ext.WasmExts;
 import io.github.eutro.wasm2j.intrinsics.IntrinsicImpl;
 import io.github.eutro.wasm2j.intrinsics.JavaIntrinsics;
@@ -58,6 +59,8 @@ public class WirToJir implements InPlaceIRPass<Module> {
 
         @Override
         public void runInPlace(Function function) {
+            MetadataState ms = function.getExtOrThrow(CommonExts.METADATA_STATE);
+            ms.ensureValid(function, MetadataState.SSA_FORM);
             new Runner(function).run();
         }
 

@@ -8,13 +8,14 @@ import java.util.List;
 import java.util.Set;
 
 public class CommonExts {
+    public static final Ext<MetadataState> METADATA_STATE = Ext.create(MetadataState.class);
+
     public static final Ext<BasicBlock> IDOM = Ext.create(BasicBlock.class);
     public static final Ext<List<BasicBlock>> PREDS = Ext.create(List.class);
     public static final Ext<Set<BasicBlock>> DOM_FRONTIER = Ext.create(Set.class);
 
     public static final Ext<Boolean> IS_PURE = Ext.create(Boolean.class);
     public static final Ext<Boolean> IS_TRIVIAL = Ext.create(Boolean.class);
-    public static final Ext<Boolean> PHI_LOWERED = Ext.create(Boolean.class);
     public static final Ext<Boolean> STACKIFIED = Ext.create(Boolean.class);
 
     public static final Ext<Effect> ASSIGNED_AT = Ext.create(Effect.class);

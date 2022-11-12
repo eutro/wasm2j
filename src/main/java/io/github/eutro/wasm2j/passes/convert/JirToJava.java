@@ -245,9 +245,7 @@ public class JirToJava implements IRPass<Module, ClassNode> {
         }
         FX_CONVERTERS.put(CommonOps.PHI, (jb, fx) -> {
             // not our responsibility :P
-            if (!fx.getExt(CommonExts.PHI_LOWERED).orElse(false)) {
-                throw new IllegalStateException("phi node not lowered");
-            }
+            throw new IllegalStateException("phi node not lowered");
         });
         FX_CONVERTERS.put(CommonOps.IDENTITY.key, (jb, fx) -> {
         });

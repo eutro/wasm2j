@@ -8,8 +8,8 @@ import io.github.eutro.wasm2j.ext.WasmExts;
 import io.github.eutro.wasm2j.ops.CommonOps;
 import io.github.eutro.wasm2j.ops.JavaOps;
 import io.github.eutro.wasm2j.ops.WasmOps;
-import io.github.eutro.wasm2j.ssa.*;
 import io.github.eutro.wasm2j.ssa.Module;
+import io.github.eutro.wasm2j.ssa.*;
 import io.github.eutro.wasm2j.util.IRUtils;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
@@ -20,6 +20,7 @@ import java.lang.invoke.MethodHandle;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.util.*;
+import java.util.function.Supplier;
 
 import static io.github.eutro.jwasm.Opcodes.*;
 import static io.github.eutro.wasm2j.conf.Getters.GET_THIS;
@@ -31,19 +32,21 @@ public class DefaultFactory implements WirJavaConventionFactory {
     final ImportFactory<GlobalImportNode, GlobalConvention> globalImports;
     final ImportFactory<MemImportNode, MemoryConvention> memoryImports;
     final ImportFactory<TableImportNode, TableConvention> tableImports;
+    final Supplier<String> nameSupplier;
 
     DefaultFactory(
             CallingConvention callingConvention,
             ImportFactory<FuncImportNode, FunctionConvention> functionImports,
             ImportFactory<GlobalImportNode, GlobalConvention> globalImports,
             ImportFactory<MemImportNode, MemoryConvention> memoryImports,
-            ImportFactory<TableImportNode, TableConvention> tableImports
-    ) {
+            ImportFactory<TableImportNode, TableConvention> tableImports,
+            Supplier<String> nameSupplier) {
         this.callingConvention = callingConvention;
         this.functionImports = functionImports;
         this.globalImports = globalImports;
         this.memoryImports = memoryImports;
         this.tableImports = tableImports;
+        this.nameSupplier = nameSupplier;
     }
 
     public static Builder builder() {
@@ -59,6 +62,7 @@ public class DefaultFactory implements WirJavaConventionFactory {
         private ImportFactory<TableImportNode, TableConvention> tableImports = unsupported("table imports");
 
         private CallingConvention callingConvention = Conventions.DEFAULT_CC;
+        private Supplier<String> nameSupplier = () -> "com/example/FIXME";
 
         private static <Import extends AbstractImportNode, Convention>
         ImportFactory<Import, Convention> unsupported(String whats) {
@@ -92,20 +96,25 @@ public class DefaultFactory implements WirJavaConventionFactory {
             return this;
         }
 
+        public Builder setNameSupplier(Supplier<String> nameSupplier) {
+            this.nameSupplier = nameSupplier;
+            return this;
+        }
+
         public DefaultFactory build() {
             return new DefaultFactory(
                     callingConvention,
                     functionImports,
                     globalImports,
                     memoryImports,
-                    tableImports
-            );
+                    tableImports,
+                    nameSupplier);
         }
     }
 
     @Override
     public WirJavaConvention create(Module module) {
-        JavaExts.JavaClass jClass = new JavaExts.JavaClass("com/example/FIXME");
+        JavaExts.JavaClass jClass = new JavaExts.JavaClass(nameSupplier.get());
         module.attachExt(JavaExts.JAVA_CLASS, jClass);
 
         List<FunctionConvention> funcs = new ArrayList<>();

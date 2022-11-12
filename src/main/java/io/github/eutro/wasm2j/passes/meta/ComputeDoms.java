@@ -2,6 +2,7 @@ package io.github.eutro.wasm2j.passes.meta;
 
 import io.github.eutro.wasm2j.ext.CommonExts;
 import io.github.eutro.wasm2j.ext.Ext;
+import io.github.eutro.wasm2j.ext.MetadataState;
 import io.github.eutro.wasm2j.passes.InPlaceIRPass;
 import io.github.eutro.wasm2j.ssa.BasicBlock;
 import io.github.eutro.wasm2j.ssa.Control;
@@ -174,5 +175,8 @@ public class ComputeDoms implements InPlaceIRPass<Function> {
             }
         }
         new Runner().run();
+
+        MetadataState ms = func.getExtOrThrow(CommonExts.METADATA_STATE);
+        ms.validate(MetadataState.DOMS, MetadataState.PREDS);
     }
 }

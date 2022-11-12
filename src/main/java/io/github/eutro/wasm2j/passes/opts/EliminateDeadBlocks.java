@@ -2,7 +2,6 @@ package io.github.eutro.wasm2j.passes.opts;
 
 import io.github.eutro.wasm2j.ext.CommonExts;
 import io.github.eutro.wasm2j.passes.InPlaceIRPass;
-import io.github.eutro.wasm2j.ssa.BasicBlock;
 import io.github.eutro.wasm2j.ssa.Function;
 import io.github.eutro.wasm2j.util.GraphWalker;
 
@@ -18,8 +17,7 @@ public class EliminateDeadBlocks implements InPlaceIRPass<Function> {
                 GraphWalker.blockWalker(function)
                         .preOrder()
                         .toList()));
-        for (BasicBlock block : function.blocks) {
-            block.removeExt(CommonExts.PREDS);
-        }
+        function.getExtOrThrow(CommonExts.METADATA_STATE)
+                .graphChanged();
     }
 }

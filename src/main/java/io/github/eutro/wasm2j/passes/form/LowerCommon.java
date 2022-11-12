@@ -1,5 +1,7 @@
 package io.github.eutro.wasm2j.passes.form;
 
+import io.github.eutro.wasm2j.ext.CommonExts;
+import io.github.eutro.wasm2j.ext.MetadataState;
 import io.github.eutro.wasm2j.ops.CommonOps;
 import io.github.eutro.wasm2j.passes.InPlaceIRPass;
 import io.github.eutro.wasm2j.ssa.*;
@@ -45,6 +47,9 @@ abstract class LowerCommon implements InPlaceIRPass<Function> {
                 }
             }
         }
+
+        MetadataState ms = func.getExtOrThrow(CommonExts.METADATA_STATE);
+        ms.graphChanged();
     }
 
     protected abstract boolean lowerEffect(IRBuilder ib, Effect effect);

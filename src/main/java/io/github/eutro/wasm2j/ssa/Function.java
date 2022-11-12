@@ -2,6 +2,7 @@ package io.github.eutro.wasm2j.ssa;
 
 import io.github.eutro.wasm2j.ext.CommonExts;
 import io.github.eutro.wasm2j.ext.ExtHolder;
+import io.github.eutro.wasm2j.ext.MetadataState;
 import io.github.eutro.wasm2j.ext.TrackedList;
 
 import java.lang.ref.SoftReference;
@@ -43,6 +44,10 @@ public final class Function extends ExtHolder {
             vars.put(name, 0);
         }
         return var;
+    }
+
+    {
+        attachExt(CommonExts.METADATA_STATE, new MetadataState());
     }
 
     public BasicBlock newBb() {

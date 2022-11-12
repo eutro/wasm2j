@@ -3,6 +3,7 @@ package io.github.eutro.wasm2j.passes.meta;
 import io.github.eutro.wasm2j.ext.CommonExts;
 import io.github.eutro.wasm2j.ext.Ext;
 import io.github.eutro.wasm2j.ext.JavaExts;
+import io.github.eutro.wasm2j.ext.MetadataState;
 import io.github.eutro.wasm2j.ops.CommonOps;
 import io.github.eutro.wasm2j.ops.JavaOps;
 import io.github.eutro.wasm2j.ops.OpKey;
@@ -473,6 +474,15 @@ public abstract class InferTypes<Ty> implements InPlaceIRPass<Function> {
                 throw new IllegalStateException("unsupported op: " + insn.op.key);
             }
             return inf.infer(insn);
+        }
+
+        @Override
+        public void runInPlace(Function func) {
+            MetadataState ms = func.getExtOrThrow(CommonExts.METADATA_STATE);
+
+            super.runInPlace(func);
+
+            ms.validate(MetadataState.JTYPES_INFERRED);
         }
     }
 }

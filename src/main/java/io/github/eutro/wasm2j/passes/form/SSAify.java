@@ -3,12 +3,11 @@ package io.github.eutro.wasm2j.passes.form;
 import io.github.eutro.wasm2j.ext.CommonExts;
 import io.github.eutro.wasm2j.ext.CommonExts.LiveData;
 import io.github.eutro.wasm2j.ext.Ext;
+import io.github.eutro.wasm2j.ext.MetadataState;
+import io.github.eutro.wasm2j.ops.CommonOps;
 import io.github.eutro.wasm2j.ops.UnaryOpKey;
 import io.github.eutro.wasm2j.passes.InPlaceIRPass;
-import io.github.eutro.wasm2j.passes.meta.ComputeDomFrontier;
-import io.github.eutro.wasm2j.passes.meta.ComputeLiveVars;
 import io.github.eutro.wasm2j.ssa.*;
-import io.github.eutro.wasm2j.ops.CommonOps;
 
 import java.util.*;
 
@@ -21,21 +20,10 @@ public class SSAify implements InPlaceIRPass<Function> {
     }
 
     private static void assignVariables(Function func) {
+        MetadataState ms = func.getExtOrThrow(CommonExts.METADATA_STATE);
+        ms.ensureValid(func, MetadataState.DOM_FRONTIER, MetadataState.LIVE_DATA);
+
         func.clearVarNames();
-
-        for (BasicBlock block : func.blocks) {
-            if (!block.getExt(CommonExts.DOM_FRONTIER).isPresent()) {
-                ComputeDomFrontier.INSTANCE.runInPlace(func);
-                break;
-            }
-        }
-
-        for (BasicBlock block : func.blocks) {
-            if (!block.getExt(CommonExts.LIVE_DATA).isPresent()) {
-                ComputeLiveVars.INSTANCE.runInPlace(func);
-                break;
-            }
-        }
 
         class BlockData {
             final Set<BasicBlock> idominates = new LinkedHashSet<>();
@@ -159,5 +147,8 @@ public class SSAify implements InPlaceIRPass<Function> {
             // we've renamed all the variables, none of it is valid anymore
             block.removeExt(CommonExts.LIVE_DATA);
         }
+
+        ms.invalidate(MetadataState.LIVE_DATA);
+        ms.validate(MetadataState.SSA_FORM);
     }
 }

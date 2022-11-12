@@ -3,8 +3,8 @@ package io.github.eutro.wasm2j.passes.form;
 import io.github.eutro.wasm2j.ext.CommonExts;
 import io.github.eutro.wasm2j.ext.Ext;
 import io.github.eutro.wasm2j.ext.JavaExts;
+import io.github.eutro.wasm2j.ext.MetadataState;
 import io.github.eutro.wasm2j.passes.InPlaceIRPass;
-import io.github.eutro.wasm2j.passes.meta.ComputeUses;
 import io.github.eutro.wasm2j.ssa.*;
 import io.github.eutro.wasm2j.util.GraphWalker;
 import org.objectweb.asm.Type;
@@ -18,6 +18,9 @@ public class LinearScan implements InPlaceIRPass<Function> {
 
     @Override
     public void runInPlace(Function func) {
+        MetadataState ms = func.getExtOrThrow(CommonExts.METADATA_STATE);
+        ms.ensureValid(func, MetadataState.USES);
+
         func.clearVarNames();
 
         List<BasicBlock> order = GraphWalker.blockWalker(func, true).postOrder().toList();
@@ -56,7 +59,7 @@ public class LinearScan implements InPlaceIRPass<Function> {
                     }
 
                     for (Var var : effect.getAssignsTo()) {
-                        Interval interval = computeLiveInterval(func, var, ic);
+                        Interval interval = computeLiveInterval(var, ic);
                         if (interval == null) continue;
                         active.add(interval);
                         Type type = interval.type = var.getExtOrThrow(JavaExts.TYPE);
@@ -85,6 +88,10 @@ public class LinearScan implements InPlaceIRPass<Function> {
                 block.getControl().insn.removeExt(IC_EXT);
             }
         }
+
+        ms.invalidate(MetadataState.SSA_FORM,
+                MetadataState.LIVE_DATA,
+                MetadataState.USES);
     }
 
     private static void replaceVars(Insn insn, Map<Var, Var> allocated) {
@@ -101,10 +108,10 @@ public class LinearScan implements InPlaceIRPass<Function> {
         }
     }
 
-    private static Interval computeLiveInterval(Function func, Var var, int ic) {
+    private static Interval computeLiveInterval(Var var, int ic) {
         if (var.getExt(CommonExts.STACKIFIED).orElse(false)) return null;
 
-        Set<Insn> uses = var.getExtOrRun(CommonExts.USED_AT, func, ComputeUses.INSTANCE);
+        Set<Insn> uses = var.getExtOrThrow(CommonExts.USED_AT);
         int end = ic; // TODO drop if empty?
         for (Insn use : uses) {
             int useIc = use.getExtOrThrow(IC_EXT);

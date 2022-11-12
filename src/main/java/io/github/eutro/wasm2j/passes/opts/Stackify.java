@@ -2,9 +2,9 @@ package io.github.eutro.wasm2j.passes.opts;
 
 import io.github.eutro.wasm2j.ext.CommonExts;
 import io.github.eutro.wasm2j.ext.Ext;
+import io.github.eutro.wasm2j.ext.MetadataState;
 import io.github.eutro.wasm2j.ops.CommonOps;
 import io.github.eutro.wasm2j.passes.InPlaceIRPass;
-import io.github.eutro.wasm2j.passes.meta.ComputeUses;
 import io.github.eutro.wasm2j.ssa.*;
 import org.jetbrains.annotations.NotNull;
 
@@ -142,6 +142,9 @@ public class Stackify implements InPlaceIRPass<Function> {
 
     @Override
     public void runInPlace(Function func) {
+        MetadataState ms = func.getExtOrThrow(CommonExts.METADATA_STATE);
+        ms.ensureValid(func, MetadataState.INTRINSICS_LOWERED, MetadataState.USES);
+
         for (BasicBlock block : func.blocks) {
             LinkedList<Effect> list = LinkedList.fromIterator(block.getEffects().iterator());
             block.attachExt(LIST_EXT, list);
@@ -177,7 +180,7 @@ public class Stackify implements InPlaceIRPass<Function> {
                     stackTop = stackTop.prev;
 
                     // definitely compute uses now (if absent)
-                    Set<Insn> uses = reg.getExtOrRun(CommonExts.USED_AT, func, ComputeUses.INSTANCE);
+                    Set<Insn> uses = reg.getExtOrThrow(CommonExts.USED_AT);
 
                     if (reg.getExt(CommonExts.STACKIFIED).orElse(null) == Boolean.FALSE) {
                         // explicitly real variable, force load
@@ -227,6 +230,7 @@ public class Stackify implements InPlaceIRPass<Function> {
         }
 
         if (CHECK_STACK_INTEGRITY) checkStackIntegrity(func);
+        ms.validate(MetadataState.STACKIFIED);
     }
 
     private void checkStackIntegrity(Function func) {
