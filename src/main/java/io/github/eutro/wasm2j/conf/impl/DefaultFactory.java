@@ -21,6 +21,7 @@ import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.util.*;
 import java.util.function.Supplier;
+import java.util.function.UnaryOperator;
 
 import static io.github.eutro.jwasm.Opcodes.*;
 import static io.github.eutro.wasm2j.conf.Getters.GET_THIS;
@@ -32,6 +33,10 @@ public class DefaultFactory implements WirJavaConventionFactory {
     final ImportFactory<GlobalImportNode, GlobalConvention> globalImports;
     final ImportFactory<MemImportNode, MemoryConvention> memoryImports;
     final ImportFactory<TableImportNode, TableConvention> tableImports;
+    final UnaryOperator<FunctionConvention> modifyFuncConvention;
+    final UnaryOperator<TableConvention> modifyTableConvention;
+    final UnaryOperator<GlobalConvention> modifyGlobalConvention;
+    final UnaryOperator<MemoryConvention> modifyMemConvention;
     final Supplier<String> nameSupplier;
 
     DefaultFactory(
@@ -40,12 +45,20 @@ public class DefaultFactory implements WirJavaConventionFactory {
             ImportFactory<GlobalImportNode, GlobalConvention> globalImports,
             ImportFactory<MemImportNode, MemoryConvention> memoryImports,
             ImportFactory<TableImportNode, TableConvention> tableImports,
+            UnaryOperator<FunctionConvention> modifyFuncConvention,
+            UnaryOperator<TableConvention> modifyTableConvention,
+            UnaryOperator<GlobalConvention> modifyGlobalConvention,
+            UnaryOperator<MemoryConvention> modifyMemConvention,
             Supplier<String> nameSupplier) {
         this.callingConvention = callingConvention;
         this.functionImports = functionImports;
         this.globalImports = globalImports;
         this.memoryImports = memoryImports;
         this.tableImports = tableImports;
+        this.modifyFuncConvention = modifyFuncConvention;
+        this.modifyTableConvention = modifyTableConvention;
+        this.modifyGlobalConvention = modifyGlobalConvention;
+        this.modifyMemConvention = modifyMemConvention;
         this.nameSupplier = nameSupplier;
     }
 
@@ -60,13 +73,17 @@ public class DefaultFactory implements WirJavaConventionFactory {
 
         private ImportFactory<MemImportNode, MemoryConvention> memoryImports = unsupported("memory imports");
         private ImportFactory<TableImportNode, TableConvention> tableImports = unsupported("table imports");
+        private UnaryOperator<FunctionConvention> modifyFuncConvention = UnaryOperator.identity();
+        private UnaryOperator<TableConvention> modifyTableConvention = UnaryOperator.identity();
+        private UnaryOperator<GlobalConvention> modifyGlobalConvention = UnaryOperator.identity();
+        private UnaryOperator<MemoryConvention> modifyMemConvention = UnaryOperator.identity();
 
         private CallingConvention callingConvention = Conventions.DEFAULT_CC;
         private Supplier<String> nameSupplier = () -> "com/example/FIXME";
 
         private static <Import extends AbstractImportNode, Convention>
         ImportFactory<Import, Convention> unsupported(String whats) {
-            return (m, e) -> {
+            return (m, e, jClass) -> {
                 throw new UnsupportedOperationException(whats + " are not supported");
             };
         }
@@ -96,18 +113,41 @@ public class DefaultFactory implements WirJavaConventionFactory {
             return this;
         }
 
+        public Builder setModifyFuncConvention(UnaryOperator<FunctionConvention> modifyFuncConvention) {
+            this.modifyFuncConvention = modifyFuncConvention;
+            return this;
+        }
+
+        public Builder setModifyTableConvention(UnaryOperator<TableConvention> modifyTableConvention) {
+            this.modifyTableConvention = modifyTableConvention;
+            return this;
+        }
+
+        public Builder setModifyGlobalConvention(UnaryOperator<GlobalConvention> modifyGlobalConvention) {
+            this.modifyGlobalConvention = modifyGlobalConvention;
+            return this;
+        }
+
+        public Builder setModifyMemConvention(UnaryOperator<MemoryConvention> modifyMemConvention) {
+            this.modifyMemConvention = modifyMemConvention;
+            return this;
+        }
+
         public Builder setNameSupplier(Supplier<String> nameSupplier) {
             this.nameSupplier = nameSupplier;
             return this;
         }
 
         public DefaultFactory build() {
-            return new DefaultFactory(
-                    callingConvention,
+            return new DefaultFactory(callingConvention,
                     functionImports,
                     globalImports,
                     memoryImports,
                     tableImports,
+                    modifyFuncConvention,
+                    modifyTableConvention,
+                    modifyGlobalConvention,
+                    modifyMemConvention,
                     nameSupplier);
         }
     }
@@ -116,58 +156,26 @@ public class DefaultFactory implements WirJavaConventionFactory {
     public WirJavaConvention create(Module module) {
         JavaExts.JavaClass jClass = new JavaExts.JavaClass(nameSupplier.get());
         module.attachExt(JavaExts.JAVA_CLASS, jClass);
-
-        List<FunctionConvention> funcs = new ArrayList<>();
-        List<GlobalConvention> globals = new ArrayList<>();
-        List<MemoryConvention> memories = new ArrayList<>();
-        List<TableConvention> tables = new ArrayList<>();
-
-        List<JavaExts.JavaField> lGlobals = new ArrayList<>();
-        List<JavaExts.JavaField> lMemories = new ArrayList<>();
-        List<JavaExts.JavaField> lTables = new ArrayList<>();
-
-        return new DefaultWirJavaConvention(module,
-                funcs,
-                globals,
-                lGlobals,
-                memories,
-                lMemories,
-                tables,
-                lTables,
-                jClass
-        );
+        return new DefaultWirJavaConvention(module, jClass);
     }
 
     public class DefaultWirJavaConvention implements WirJavaConvention {
         private final Module module;
-        private final List<FunctionConvention> funcs;
-        private final List<GlobalConvention> globals;
-        private final List<JavaExts.JavaField> lGlobals;
-        private final List<MemoryConvention> memories;
-        private final List<JavaExts.JavaField> lMemories;
-        private final List<TableConvention> tables;
-        private final List<JavaExts.JavaField> lTables;
+        private final List<FunctionConvention> funcs = new ArrayList<>();
+        private final List<TypeNode> funcTypes = new ArrayList<>();
+        private final List<GlobalConvention> globals = new ArrayList<>();
+        private final List<JavaExts.JavaField> lGlobals = new ArrayList<>();
+        private final List<MemoryConvention> memories = new ArrayList<>();
+        private final List<JavaExts.JavaField> lMemories = new ArrayList<>();
+        private final List<TableConvention> tables = new ArrayList<>();
+        private final List<JavaExts.JavaField> lTables = new ArrayList<>();
         private final JavaExts.JavaClass jClass;
 
         public DefaultWirJavaConvention(
                 Module module,
-                List<FunctionConvention> funcs,
-                List<GlobalConvention> globals,
-                List<JavaExts.JavaField> lGlobals,
-                List<MemoryConvention> memories,
-                List<JavaExts.JavaField> lMemories,
-                List<TableConvention> tables,
-                List<JavaExts.JavaField> lTables,
                 JavaExts.JavaClass jClass
         ) {
             this.module = module;
-            this.funcs = funcs;
-            this.globals = globals;
-            this.lGlobals = lGlobals;
-            this.memories = memories;
-            this.lMemories = lMemories;
-            this.tables = tables;
-            this.lTables = lTables;
             this.jClass = jClass;
         }
 
@@ -176,19 +184,19 @@ public class DefaultFactory implements WirJavaConventionFactory {
         }
 
         protected FunctionConvention getImport(FuncImportNode funcImport) {
-            return functionImports.createImport(module, funcImport);
+            return functionImports.createImport(module, funcImport, jClass);
         }
 
         protected MemoryConvention getImport(MemImportNode memImport) {
-            return memoryImports.createImport(module, memImport);
+            return memoryImports.createImport(module, memImport, jClass);
         }
 
         protected TableConvention getImport(TableImportNode tableImport) {
-            return tableImports.createImport(module, tableImport);
+            return tableImports.createImport(module, tableImport, jClass);
         }
 
         protected GlobalConvention getImport(GlobalImportNode globalImport) {
-            return globalImports.createImport(module, globalImport);
+            return globalImports.createImport(module, globalImport, jClass);
         }
 
         @Override
@@ -198,9 +206,14 @@ public class DefaultFactory implements WirJavaConventionFactory {
 
             if (node.imports != null && node.imports.imports != null) {
                 for (AbstractImportNode importNode : node.imports) {
-                    // @formatter:off
                     switch (importNode.importType()) {
-                        case IMPORTS_FUNC: funcs.add(getImport((FuncImportNode) importNode)); break;
+                        case IMPORTS_FUNC:
+                            FuncImportNode fin = (FuncImportNode) importNode;
+                            funcs.add(getImport(fin));
+                            funcTypes.add(Objects.requireNonNull(Objects.requireNonNull(node.types).types)
+                                    .get(fin.type));
+                            break;
+                        // @formatter:off
                         case IMPORTS_GLOBAL: globals.add(getImport((GlobalImportNode) importNode)); lGlobals.add(null); break;
                         case IMPORTS_MEM: memories.add(getImport((MemImportNode) importNode)); lMemories.add(null); break;
                         case IMPORTS_TABLE: tables.add(getImport((TableImportNode) importNode)); lTables.add(null); break;
@@ -221,18 +234,20 @@ public class DefaultFactory implements WirJavaConventionFactory {
                             jClass,
                             "func" + i++,
                             getCC().getDescriptor(typeNode).getDescriptor(),
-                            JavaExts.JavaMethod.Type.FINAL
+                            JavaExts.JavaMethod.Kind.FINAL
                     );
                     jClass.methods.add(method);
-                    funcs.add(new InstanceFunctionConvention(
-                            ExportableConvention.methodExporter(method),
-                            GET_THIS,
-                            method,
-                            getCC()
-                    ));
+                    funcs.add(modifyFuncConvention
+                            .apply(new InstanceFunctionConvention(
+                                    ExportableConvention.methodExporter(method),
+                                    GET_THIS,
+                                    method,
+                                    getCC()
+                            )));
+                    funcTypes.add(typeNode);
                     Function implFunc = funcMap.get(it.next().expr);
                     method.attachExt(JavaExts.METHOD_IMPL, implFunc);
-                    implFunc.attachExt(JavaExts.FUNCTION_DESCRIPTOR, method.descriptor);
+                    implFunc.attachExt(JavaExts.FUNCTION_METHOD, method);
                     implFunc.attachExt(JavaExts.FUNCTION_OWNER, jClass);
                 }
             }
@@ -247,11 +262,12 @@ public class DefaultFactory implements WirJavaConventionFactory {
                             false
                     );
                     jClass.fields.add(field);
-                    globals.add(new FieldGlobalConvention(
-                            ExportableConvention.fieldExporter(field),
-                            GET_THIS,
-                            field
-                    ));
+                    globals.add(modifyGlobalConvention
+                            .apply(new FieldGlobalConvention(
+                                    ExportableConvention.fieldExporter(field),
+                                    GET_THIS,
+                                    field
+                            )));
                     lGlobals.add(field);
                 }
             }
@@ -266,10 +282,11 @@ public class DefaultFactory implements WirJavaConventionFactory {
                             false
                     );
                     jClass.fields.add(field);
-                    memories.add(new ByteBufferMemoryConvention(
-                            ExportableConvention.fieldExporter(field),
-                            fieldGetter(GET_THIS, field)
-                    ));
+                    memories.add(modifyMemConvention
+                            .apply(new ByteBufferMemoryConvention(
+                                    ExportableConvention.fieldExporter(field),
+                                    fieldGetter(GET_THIS, field)
+                            )));
                     lMemories.add(field);
                 }
             }
@@ -284,10 +301,11 @@ public class DefaultFactory implements WirJavaConventionFactory {
                             false
                     );
                     jClass.fields.add(field);
-                    tables.add(new ArrayTableConvention(
-                            ExportableConvention.fieldExporter(field),
-                            fieldGetter(GET_THIS, field)
-                    ));
+                    tables.add(modifyTableConvention
+                            .apply(new ArrayTableConvention(
+                                    ExportableConvention.fieldExporter(field),
+                                    fieldGetter(GET_THIS, field)
+                            )));
                     lTables.add(field);
                 }
             }
@@ -304,7 +322,7 @@ public class DefaultFactory implements WirJavaConventionFactory {
                         default: throw new AssertionError();
                     }
                     // @formatter:on
-                    ecl.get(export.index).export(export);
+                    ecl.get(export.index).export(export, module, jClass);
                 }
             }
         }
@@ -318,13 +336,13 @@ public class DefaultFactory implements WirJavaConventionFactory {
                     jClass,
                     "<init>",
                     "()V",
-                    JavaExts.JavaMethod.Type.VIRTUAL
+                    JavaExts.JavaMethod.Kind.VIRTUAL
             );
             jClass.methods.add(ctorMethod);
             {
                 Function ctorImpl = new Function();
                 module.functions.add(ctorImpl);
-                ctorImpl.attachExt(JavaExts.FUNCTION_DESCRIPTOR, ctorMethod.descriptor);
+                ctorImpl.attachExt(JavaExts.FUNCTION_METHOD, ctorMethod);
                 ctorImpl.attachExt(JavaExts.FUNCTION_OWNER, ctorMethod.owner);
                 ctorMethod.attachExt(JavaExts.METHOD_IMPL, ctorImpl);
 
@@ -333,7 +351,7 @@ public class DefaultFactory implements WirJavaConventionFactory {
                         new JavaExts.JavaClass("java/lang/Object"),
                         "<init>",
                         "()V",
-                        JavaExts.JavaMethod.Type.FINAL
+                        JavaExts.JavaMethod.Kind.FINAL
                 )).insn(IRUtils.getThis(ib)).assignTo());
 
                 if (node.mems != null) {
@@ -344,7 +362,7 @@ public class DefaultFactory implements WirJavaConventionFactory {
                                         IRUtils.BYTE_BUFFER_CLASS,
                                         "allocateDirect",
                                         "(I)Ljava/nio/ByteBuffer;",
-                                        JavaExts.JavaMethod.Type.STATIC
+                                        JavaExts.JavaMethod.Kind.STATIC
                                 )).insn(ib.insert(CommonOps.CONST.create(mem.limits.min * PAGE_SIZE).insn(),
                                         "size")),
                                 "mem");
@@ -352,7 +370,7 @@ public class DefaultFactory implements WirJavaConventionFactory {
                                         IRUtils.BYTE_BUFFER_CLASS,
                                         "order",
                                         "(Ljava/nio/ByteOrder;)Ljava/nio/ByteBuffer;",
-                                        JavaExts.JavaMethod.Type.VIRTUAL
+                                        JavaExts.JavaMethod.Kind.VIRTUAL
                                 )).insn(memV,
                                         ib.insert(JavaOps.GET_FIELD.create(new JavaExts.JavaField(
                                                 new JavaExts.JavaClass(Type.getInternalName(ByteOrder.class)),
@@ -372,7 +390,9 @@ public class DefaultFactory implements WirJavaConventionFactory {
                     for (TableNode table : node.tables) {
                         JavaExts.JavaField tableField = lTables.get(i++);
                         InsnList insns = new InsnList();
-                        insns.add(new TypeInsnNode(Opcodes.ANEWARRAY, Type.getInternalName(MethodHandle.class)));
+                        insns.add(new TypeInsnNode(Opcodes.ANEWARRAY,
+                                BasicCallingConvention.javaType(table.type)
+                                        .getInternalName()));
                         Var tableV = ib.insert(JavaOps.INSNS.create(insns)
                                         .insn(ib.insert(CommonOps.CONST.create(table.limits.min).insn(), "size")),
                                 "table");
@@ -404,8 +424,8 @@ public class DefaultFactory implements WirJavaConventionFactory {
                         if (elem.offset == null) {
                             offset = ib.insert(CommonOps.CONST.create(0).insn(), "offset");
                             table = ib.insert(JavaOps.insns(
-                                    new TypeInsnNode(Opcodes.ANEWARRAY, Type.getInternalName(MethodHandle.class))
-                            ).insn(ib.insert(CommonOps.CONST.create(elem.indices != null ? elem.indices.length : elem.init.size()).insn(),
+                                            new TypeInsnNode(Opcodes.ANEWARRAY, Type.getInternalName(MethodHandle.class))
+                                    ).insn(ib.insert(CommonOps.CONST.create(elem.indices != null ? elem.indices.length : elem.init.size()).insn(),
                                             "elemsz")),
                                     "elem");
                             JavaExts.JavaField field = new JavaExts.JavaField(jClass, "elem" + fieldElems++,
@@ -481,13 +501,13 @@ public class DefaultFactory implements WirJavaConventionFactory {
                                 IRUtils.BYTE_BUFFER_CLASS,
                                 "slice",
                                 "()Ljava/nio/ByteBuffer;",
-                                JavaExts.JavaMethod.Type.VIRTUAL
+                                JavaExts.JavaMethod.Kind.VIRTUAL
                         )).insn(memV), "sliced");
                         memV = ib.insert(JavaOps.INVOKE.create(new JavaExts.JavaMethod(
                                 IRUtils.BYTE_BUFFER_CLASS,
                                 "position",
                                 "(I)Ljava/nio/ByteBuffer;",
-                                JavaExts.JavaMethod.Type.VIRTUAL
+                                JavaExts.JavaMethod.Kind.VIRTUAL
                         )).insn(memV, dataOffset), "positioned");
 
                         // NB: Wasm memory is little endian, but when we write
@@ -499,13 +519,13 @@ public class DefaultFactory implements WirJavaConventionFactory {
                                 IRUtils.BYTE_BUFFER_CLASS,
                                 "putLong",
                                 "(J)Ljava/nio/ByteBuffer;",
-                                JavaExts.JavaMethod.Type.VIRTUAL
+                                JavaExts.JavaMethod.Kind.VIRTUAL
                         );
                         JavaExts.JavaMethod putByte = new JavaExts.JavaMethod(
                                 IRUtils.BYTE_BUFFER_CLASS,
                                 "put",
                                 "(B)Ljava/nio/ByteBuffer;",
-                                JavaExts.JavaMethod.Type.VIRTUAL
+                                JavaExts.JavaMethod.Kind.VIRTUAL
                         );
 
                         while (buf.remaining() > Long.SIZE) {
@@ -522,6 +542,15 @@ public class DefaultFactory implements WirJavaConventionFactory {
                     }
                 }
 
+                for (ImportFactory<?, ?> factory : Arrays.asList(
+                        functionImports,
+                        globalImports,
+                        memoryImports,
+                        tableImports
+                )) {
+                    factory.modifyConstructor(ib, ctorMethod, jClass);
+                }
+
                 if (node.start != null) {
                     FunctionConvention startMethod = funcs.get(node.start);
                     assert node.types != null && node.types.types != null
@@ -529,9 +558,8 @@ public class DefaultFactory implements WirJavaConventionFactory {
                     startMethod.emitCall(ib, WasmOps.CALL
                             .create(new WasmOps.CallType(
                                     node.start,
-                                    node.types.types.get(
-                                            node.funcs.funcs.get(node.start).type
-                                    )))
+                                    funcTypes.get(node.start)
+                            ))
                             .insn()
                             .assignTo());
                 }

@@ -59,7 +59,7 @@ public class IntrinsicsTest {
                                     clazz,
                                     mn.name,
                                     mn.desc,
-                                    JavaExts.JavaMethod.Type.STATIC
+                                    JavaExts.JavaMethod.Kind.STATIC
                             ));
                             return clazz;
                         },

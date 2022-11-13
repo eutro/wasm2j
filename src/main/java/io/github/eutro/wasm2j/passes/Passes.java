@@ -18,6 +18,7 @@ public class Passes {
                     .then(CollapseJumps.INSTANCE)
                     .then(ForPass.liftBasicBlocks(MergeConds.INSTANCE))
                     .then(LowerSelects.INSTANCE)
+                    .then(SSA_OPTS)
                     .then(LowerPhis.INSTANCE)
                     .then(Stackify.INSTANCE)
                     .then(InferTypes.Java.INSTANCE);

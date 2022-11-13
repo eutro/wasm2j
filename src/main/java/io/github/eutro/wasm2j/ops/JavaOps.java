@@ -13,6 +13,7 @@ public class JavaOps {
     public static final UnaryOpKey<IntrinsicImpl> INTRINSIC = new UnaryOpKey<>("intr");
 
     public static final SimpleOpKey TABLESWITCH = new SimpleOpKey("tableswitch");
+    public static final UnaryOpKey<int[]> LOOKUPSWITCH = new UnaryOpKey<>("lookupswitch");
 
     public static final Op THIS = new SimpleOpKey("this").create();
 

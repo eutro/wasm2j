@@ -54,9 +54,9 @@ public class JirToJava implements IRPass<Module, ClassNode> {
 
         for (JavaExts.JavaMethod method : jClass.methods) {
             MethodNode mn = new MethodNode(
-                    method.type.access,
+                    method.kind.access,
                     method.name,
-                    method.descriptor,
+                    method.getDescriptor(),
                     null,
                     null
             );
@@ -69,7 +69,7 @@ public class JirToJava implements IRPass<Module, ClassNode> {
                     throw new RuntimeException("error generating code for method " + method.name, e);
                 }
             } else {
-                if (method.type != JavaExts.JavaMethod.Type.ABSTRACT) {
+                if (method.kind != JavaExts.JavaMethod.Kind.ABSTRACT) {
                     throw new RuntimeException("method impl missing for non-abstract function");
                 }
             }
@@ -285,10 +285,10 @@ public class JirToJava implements IRPass<Module, ClassNode> {
         FX_CONVERTERS.put(JavaOps.INVOKE, (jb, fx) -> {
             JavaExts.JavaMethod method = JavaOps.INVOKE.cast(fx.insn().op).arg;
             jb.visitMethodInsn(
-                    method.type.opcode,
+                    method.kind.opcode,
                     method.owner.name,
                     method.name,
-                    method.descriptor,
+                    method.getDescriptor(),
                     false
             );
         });
@@ -298,7 +298,7 @@ public class JirToJava implements IRPass<Module, ClassNode> {
                 jb.arrayStore(fx.insn().args.get(0).getExtOrThrow(JavaExts.TYPE).getElementType()));
         FX_CONVERTERS.put(JavaOps.HANDLE_OF, (jb, fx) -> {
             JavaExts.JavaMethod method = JavaOps.HANDLE_OF.cast(fx.insn().op).arg;
-            jb.push(new Handle(method.type.handleType, method.owner.name, method.name, method.descriptor, false));
+            jb.push(new Handle(method.kind.handleType, method.owner.name, method.name, method.getDescriptor(), false));
         });
     }
 
@@ -335,6 +335,18 @@ public class JirToJava implements IRPass<Module, ClassNode> {
                     0,
                     labels.length - 1,
                     ct.targets.get(ct.targets.size() - 1).getExtOrThrow(LABEL_EXT),
+                    labels
+            );
+        });
+        CTRL_CONVERTERS.put(JavaOps.LOOKUPSWITCH, (jb, ct) -> {
+            Label[] labels = new Label[ct.targets.size() - 1];
+            for (int i = 0; i < labels.length; i++) {
+                BasicBlock bb = ct.targets.get(i);
+                labels[i] = bb.getExtOrThrow(LABEL_EXT);
+            }
+            jb.visitLookupSwitchInsn(
+                    ct.targets.get(ct.targets.size() - 1).getExtOrThrow(LABEL_EXT),
+                    JavaOps.LOOKUPSWITCH.cast(ct.insn.op).arg,
                     labels
             );
         });

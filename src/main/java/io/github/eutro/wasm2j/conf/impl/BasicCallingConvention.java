@@ -78,7 +78,7 @@ public class BasicCallingConvention implements CallingConvention {
                                         new JavaExts.JavaClass(boxedTy.getInternalName()),
                                         "valueOf",
                                         Type.getMethodType(boxedTy, unboxedTy).getDescriptor(),
-                                        JavaExts.JavaMethod.Type.STATIC))
+                                        JavaExts.JavaMethod.Kind.STATIC))
                                 .insn(val),
                         "boxed");
             }
@@ -108,7 +108,7 @@ public class BasicCallingConvention implements CallingConvention {
                                 new JavaExts.JavaClass(Type.getInternalName(Number.class)),
                                 methodName,
                                 Type.getMethodType(unboxedTy).getDescriptor(),
-                                JavaExts.JavaMethod.Type.VIRTUAL
+                                JavaExts.JavaMethod.Kind.VIRTUAL
                         ))
                         .insn(ib.insert(JavaOps.insns(new TypeInsnNode(Opcodes.CHECKCAST, Type.getInternalName(Number.class)))
                                         .insn(val),

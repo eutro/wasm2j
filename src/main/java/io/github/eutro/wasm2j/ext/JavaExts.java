@@ -8,13 +8,14 @@ import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
 
 public class JavaExts {
     public static final Ext<Function> METHOD_IMPL = Ext.create(Function.class);
     public static final Ext<Type> TYPE = Ext.create(Type.class);
-    public static final Ext<String> FUNCTION_DESCRIPTOR = Ext.create(String.class);
+    public static final Ext<JavaMethod> FUNCTION_METHOD = Ext.create(JavaMethod.class);
     public static final Ext<JavaClass> FUNCTION_OWNER = Ext.create(JavaClass.class);
 
     public static Type BOTTOM_TYPE = Type.getType(Void.class);
@@ -49,28 +50,51 @@ public class JavaExts {
 
     public static class JavaMethod extends ExtHolder {
         public JavaClass owner;
-        public String name, descriptor;
-        public Type type;
+        public String name;
+        public Kind kind;
 
-        public JavaMethod(JavaClass owner, String name, String descriptor, Type type) {
+        private List<Type> paramTys;
+        private Type returnTy;
+
+        public JavaMethod(JavaClass owner, String name, String descriptor, Kind kind) {
             this.owner = owner;
             this.name = name;
-            this.descriptor = descriptor;
-            this.type = type;
+            this.setDescriptor(descriptor);
+            this.kind = kind;
         }
 
         public static JavaMethod fromJava(JavaClass owner, Method method) {
             return new JavaMethod(
                     owner,
                     method.getName(),
-                    org.objectweb.asm.Type.getMethodDescriptor(method),
+                    Type.getMethodDescriptor(method),
                     Modifier.isStatic(method.getModifiers())
-                            ? Type.STATIC
-                            : Type.VIRTUAL
+                            ? Kind.STATIC
+                            : Kind.VIRTUAL
             );
         }
 
-        public enum Type {
+        public List<Type> getParamTys() {
+            return paramTys;
+        }
+
+        public void setParamTys(List<Type> tys) {
+            paramTys = new ArrayList<>(tys);
+        }
+
+        public String getDescriptor() {
+            return Type.getMethodDescriptor(
+                    returnTy,
+                    paramTys.toArray(new Type[0])
+            );
+        }
+
+        public void setDescriptor(String descriptor) {
+            returnTy = Type.getReturnType(descriptor);
+            paramTys = new ArrayList<>(Arrays.asList(Type.getArgumentTypes(descriptor)));
+        }
+
+        public enum Kind {
             STATIC(Opcodes.ACC_STATIC | Opcodes.ACC_PUBLIC, Opcodes.INVOKESTATIC, Opcodes.H_INVOKESTATIC),
             STATIC_PRIVATE(Opcodes.ACC_STATIC | Opcodes.ACC_PRIVATE, Opcodes.INVOKESTATIC, Opcodes.H_INVOKESTATIC),
             VIRTUAL(Opcodes.ACC_PUBLIC, Opcodes.INVOKEVIRTUAL, Opcodes.H_INVOKEVIRTUAL),
@@ -82,7 +106,7 @@ public class JavaExts {
             public final int opcode;
             public final int handleType;
 
-            Type(int access, int opcode, int handleType) {
+            Kind(int access, int opcode, int handleType) {
                 this.access = access;
                 this.opcode = opcode;
                 this.handleType = handleType;
@@ -92,10 +116,10 @@ public class JavaExts {
         @Override
         public String toString() {
             return String.format("%s %s.%s%s",
-                    type.toString().toLowerCase(Locale.ROOT),
+                    kind.toString().toLowerCase(Locale.ROOT),
                     owner,
                     name,
-                    descriptor);
+                    getDescriptor());
         }
     }
 

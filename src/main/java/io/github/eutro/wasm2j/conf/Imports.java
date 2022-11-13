@@ -21,9 +21,8 @@ import static io.github.eutro.wasm2j.conf.Getters.GET_THIS;
 public class Imports {
     public static ImportFactory<FuncImportNode, FunctionConvention>
     abstractMethodFuncImports(CallingConvention cc) {
-        return (module, funcImport) -> {
+        return (module, funcImport, jClass) -> {
             ModuleNode node = module.getExtOrThrow(WasmExts.MODULE);
-            JavaExts.JavaClass jClass = module.getExtOrThrow(JavaExts.JAVA_CLASS);
 
             assert node.types != null && node.types.types != null;
             JavaExts.JavaMethod method = new JavaExts.JavaMethod(
@@ -31,7 +30,7 @@ public class Imports {
                     funcImport.name,
                     cc.getDescriptor(node.types.types.get(funcImport.type))
                             .getDescriptor(),
-                    JavaExts.JavaMethod.Type.ABSTRACT
+                    JavaExts.JavaMethod.Kind.ABSTRACT
             );
             return new InstanceFunctionConvention(
                     null,
@@ -50,7 +49,7 @@ public class Imports {
     ) {
         Map<String, Map<String, JavaExts.JavaMethod>> index = new HashMap<>();
         AtomicBoolean indexed = new AtomicBoolean();
-        return (module, funcImport) -> {
+        return (module, funcImport, jClass) -> {
             if (!indexed.get()) {
                 synchronized (indexed) {
                     doIndex:
@@ -58,7 +57,7 @@ public class Imports {
                         if (indexed.get()) break doIndex;
                         for (JavaExts.JavaMethod method : iFace.methods) {
                             index.computeIfAbsent(method.name, $ -> new HashMap<>())
-                                    .put(method.descriptor, method);
+                                    .put(method.getDescriptor(), method);
                         }
                         indexed.set(true);
                     }

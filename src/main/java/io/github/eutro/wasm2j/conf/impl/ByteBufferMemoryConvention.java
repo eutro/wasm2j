@@ -39,7 +39,7 @@ public class ByteBufferMemoryConvention extends DelegatingExporter implements Me
                 IRUtils.BYTE_BUFFER_CLASS,
                 derefType.load.funcName,
                 derefType.load.desc,
-                JavaExts.JavaMethod.Type.VIRTUAL
+                JavaExts.JavaMethod.Kind.VIRTUAL
         );
         Var ptr = effect.insn().args.get(0);
         Insn loadInsn = JavaOps.INVOKE.create(toInvoke).insn(getMem(ib), getAddr(ib, wmArg, ptr));
@@ -76,7 +76,7 @@ public class ByteBufferMemoryConvention extends DelegatingExporter implements Me
                         new JavaExts.JavaClass(Type.getInternalName(Buffer.class)),
                         "capacity",
                         "()I",
-                        JavaExts.JavaMethod.Type.VIRTUAL
+                        JavaExts.JavaMethod.Kind.VIRTUAL
                 ))
                 .insn(getMem(ib))
                 .copyFrom(effect));

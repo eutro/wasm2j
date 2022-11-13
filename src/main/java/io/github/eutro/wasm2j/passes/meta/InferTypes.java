@@ -390,7 +390,7 @@ public abstract class InferTypes<Ty> implements InPlaceIRPass<Function> {
                         JavaOps.GET_FIELD)
 
                 .put(insn -> {
-                            Type retTy = Type.getReturnType(JavaOps.INVOKE.cast(insn.op).arg.descriptor);
+                            Type retTy = Type.getReturnType(JavaOps.INVOKE.cast(insn.op).arg.getDescriptor());
                             return intifyPrimitives(retTy.getSize() == 0 ? new Type[0] : new Type[]{retTy});
                         },
                         JavaOps.INVOKE)
@@ -419,6 +419,7 @@ public abstract class InferTypes<Ty> implements InPlaceIRPass<Function> {
                     else if (cst instanceof Long) ty = Type.LONG_TYPE;
                     else if (cst instanceof Float) ty = Type.FLOAT_TYPE;
                     else if (cst instanceof Double) ty = Type.DOUBLE_TYPE;
+                    else if (cst instanceof Type) ty = Type.getType(Class.class);
                     else ty = Type.getType(cst.getClass());
                     return new Type[]{ty};
                 }, CommonOps.CONST)
@@ -439,12 +440,12 @@ public abstract class InferTypes<Ty> implements InPlaceIRPass<Function> {
                     throw new RuntimeException("could not infer phi type");
                 }, CommonOps.PHI)
                 .put((Insn insn) -> {
-                            String desc = insn.getExtOrThrow(CommonExts.OWNING_EFFECT)
+                            JavaExts.JavaMethod method = insn.getExtOrThrow(CommonExts.OWNING_EFFECT)
                                     .getExtOrThrow(CommonExts.OWNING_BLOCK)
                                     .getExtOrThrow(CommonExts.OWNING_FUNCTION)
-                                    .getExtOrThrow(JavaExts.FUNCTION_DESCRIPTOR);
+                                    .getExtOrThrow(JavaExts.FUNCTION_METHOD);
                             int arg = CommonOps.ARG.cast(insn.op).arg;
-                            return new Type[]{Type.getArgumentTypes(desc)[arg]};
+                            return new Type[]{method.getParamTys().get(arg)};
                         },
                         CommonOps.ARG)
                 .put((Insn insn) -> {

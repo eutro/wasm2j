@@ -37,7 +37,7 @@ public interface CallingConvention {
                         METHOD_HANDLE_CLASS,
                         "invokeExact",
                         ty.getDescriptor(),
-                        JavaExts.JavaMethod.Type.VIRTUAL
+                        JavaExts.JavaMethod.Kind.VIRTUAL
                 ))
                 .insn(rawArgs)
                 .assignTo(rets));

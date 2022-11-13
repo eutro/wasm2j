@@ -61,7 +61,7 @@ public class InstanceFunctionConvention extends DelegatingExporter implements Fu
                         IRUtils.METHOD_HANDLE_CLASS,
                         "bindTo",
                         "(Ljava/lang/Object;)Ljava/lang/invoke/MethodHandle;",
-                        JavaExts.JavaMethod.Type.VIRTUAL
+                        JavaExts.JavaMethod.Kind.VIRTUAL
                 ))
                 .insn(handle, target.get(ib))
                 .copyFrom(effect));

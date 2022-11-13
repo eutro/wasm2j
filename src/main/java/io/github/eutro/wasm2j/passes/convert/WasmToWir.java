@@ -704,8 +704,9 @@ public class WasmToWir implements IRPass<ModuleNode, Module> {
                 ConvertState cs,
                 ExprNode expr
         ) {
-            ConvertState.CtrlFrame rootFrame = cs.pushC(END, new TypeNode(new byte[0], new byte[0]), cs.newBb());
-            BasicBlock firstBb = rootFrame.bb;
+            BasicBlock firstBb = cs.newBb();
+            BasicBlock lastBb = cs.newBb();
+            ConvertState.CtrlFrame rootFrame = cs.pushC(END, new TypeNode(new byte[0], new byte[0]), firstBb);
             for (int i = 0; i < cs.argC; i++) {
                 Var argVar = cs.func.newVar("arg" + i);
                 cs.varVals.add(argVar);
@@ -716,8 +717,8 @@ public class WasmToWir implements IRPass<ModuleNode, Module> {
                 cs.varVals.add(localVar);
                 firstBb.addEffect(WasmOps.ZEROINIT.create(cs.localTypes[i]).insn().assignTo(localVar));
             }
-            ConvertState.CtrlFrame startFrame = cs.pushC(END, new TypeNode(new byte[0], new byte[cs.returns]), cs.newBb());
-            firstBb.setControl(Control.br(startFrame.bb));
+            cs.pushC(END, new TypeNode(new byte[0], new byte[cs.returns]), firstBb);
+            rootFrame.bb = lastBb;
 
             int unreachableDepth = -1;
             for (AbstractInsnNode insn : expr) {
@@ -758,7 +759,6 @@ public class WasmToWir implements IRPass<ModuleNode, Module> {
             if (cs.ctrls.size() != 1) {
                 throw new RuntimeException("Not enough ends");
             }
-            startFrame.bb.setControl(Control.br(rootFrame.bb = cs.newBb()));
             // last end should verify that we have the correct number of returns
             cs.height = 0;
             doReturn(cs, cs.popC().bb);
