@@ -84,7 +84,7 @@ public class DefaultFactory implements WirJavaConventionFactory {
 
         private static <Import extends AbstractImportNode, Convention>
         ImportFactory<Import, Convention> unsupported(String whats) {
-            return (m, e, jClass) -> {
+            return (m, e, jClass, idx) -> {
                 throw new UnsupportedOperationException(whats + " are not supported");
             };
         }
@@ -188,19 +188,19 @@ public class DefaultFactory implements WirJavaConventionFactory {
         }
 
         protected FunctionConvention getImport(FuncImportNode funcImport) {
-            return functionImports.createImport(module, funcImport, jClass);
+            return functionImports.createImport(module, funcImport, jClass, funcs.size());
         }
 
         protected MemoryConvention getImport(MemImportNode memImport) {
-            return memoryImports.createImport(module, memImport, jClass);
+            return memoryImports.createImport(module, memImport, jClass, memories.size());
         }
 
         protected TableConvention getImport(TableImportNode tableImport) {
-            return tableImports.createImport(module, tableImport, jClass);
+            return tableImports.createImport(module, tableImport, jClass, tables.size());
         }
 
         protected GlobalConvention getImport(GlobalImportNode globalImport) {
-            return globalImports.createImport(module, globalImport, jClass);
+            return globalImports.createImport(module, globalImport, jClass, globals.size());
         }
 
         @Override

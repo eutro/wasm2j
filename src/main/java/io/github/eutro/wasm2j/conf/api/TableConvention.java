@@ -1,9 +1,11 @@
 package io.github.eutro.wasm2j.conf.api;
 
 import io.github.eutro.wasm2j.conf.impl.DelegatingExporter;
+import io.github.eutro.wasm2j.ext.JavaExts;
 import io.github.eutro.wasm2j.ops.CommonOps;
 import io.github.eutro.wasm2j.ssa.Effect;
 import io.github.eutro.wasm2j.ssa.IRBuilder;
+import io.github.eutro.wasm2j.ssa.Module;
 
 public interface TableConvention extends ExportableConvention, ConstructorCallback {
     void emitTableRef(IRBuilder ib, Effect effect);
@@ -42,6 +44,11 @@ public interface TableConvention extends ExportableConvention, ConstructorCallba
         @Override
         public void emitTableGrow(IRBuilder ib, Effect effect) {
             delegate.emitTableGrow(ib, effect);
+        }
+
+        @Override
+        public void modifyConstructor(IRBuilder ib, JavaExts.JavaMethod ctorMethod, Module module, JavaExts.JavaClass jClass) {
+            delegate.modifyConstructor(ib, ctorMethod, module, jClass);
         }
     }
 }

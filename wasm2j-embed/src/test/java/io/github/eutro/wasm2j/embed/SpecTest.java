@@ -25,7 +25,10 @@ public class SpecTest {
             "    (table.get $i (i32.const 0))\n" +
             "    (table.grow $i (ref.null func) (i32.const 1))\n" +
             "    (table.size $i))\n" +
-
+            "" +
+            "  (global (export \"const-global\") externref (ref.null extern))\n" +
+            "  (global (export \"mut-global\") (mut i32) (i32.const 10))\n" +
+            "" +
             "  (memory $m 1 2)\n" +
             "  (func (export \"grow\") (param $by i32) (result i32)" +
             "    (memory.grow (local.get $by)))\n" +

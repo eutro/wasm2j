@@ -44,7 +44,7 @@ public class BasicCallingConvention implements CallingConvention {
         }
     }
 
-    private static Type boxedType(byte type) {
+    public static Type boxedType(byte type) {
         switch (type) {
             case I32:
                 return Type.getType(Integer.class);
@@ -65,7 +65,7 @@ public class BasicCallingConvention implements CallingConvention {
         }
     }
 
-    private static Var maybeBoxed(IRBuilder ib, Var val, byte fromTy, Type toTy) {
+    public static Var maybeBoxed(IRBuilder ib, Var val, byte fromTy, Type toTy) {
         Type unboxedTy = javaType(fromTy);
         if (toTy == unboxedTy) return val;
         switch (fromTy) {
@@ -90,7 +90,7 @@ public class BasicCallingConvention implements CallingConvention {
         }
     }
 
-    private static Var unboxed(IRBuilder ib, Var val, Type fromTy, byte toTy) {
+    public static Var unboxed(IRBuilder ib, Var val, Type fromTy, byte toTy) {
         Type unboxedTy = javaType(toTy);
         if (fromTy == unboxedTy) return val;
         String methodName = null;

@@ -21,7 +21,7 @@ import static io.github.eutro.wasm2j.conf.Getters.GET_THIS;
 public class Imports {
     public static ImportFactory<FuncImportNode, FunctionConvention>
     abstractMethodFuncImports(CallingConvention cc) {
-        return (module, funcImport, jClass) -> {
+        return (module, funcImport, jClass, idx) -> {
             ModuleNode node = module.getExtOrThrow(WasmExts.MODULE);
 
             assert node.types != null && node.types.types != null;
@@ -49,7 +49,7 @@ public class Imports {
     ) {
         Map<String, Map<String, JavaExts.JavaMethod>> index = new HashMap<>();
         AtomicBoolean indexed = new AtomicBoolean();
-        return (module, funcImport, jClass) -> {
+        return (module, funcImport, jClass, idx) -> {
             if (!indexed.get()) {
                 synchronized (indexed) {
                     doIndex:

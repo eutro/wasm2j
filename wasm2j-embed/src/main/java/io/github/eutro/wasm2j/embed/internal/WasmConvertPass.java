@@ -4,8 +4,10 @@ import io.github.eutro.jwasm.tree.*;
 import io.github.eutro.wasm2j.conf.Conventions;
 import io.github.eutro.wasm2j.conf.Getters;
 import io.github.eutro.wasm2j.conf.api.*;
+import io.github.eutro.wasm2j.conf.impl.BasicCallingConvention;
 import io.github.eutro.wasm2j.conf.impl.InstanceFunctionConvention;
 import io.github.eutro.wasm2j.embed.ExternVal;
+import io.github.eutro.wasm2j.embed.Global;
 import io.github.eutro.wasm2j.embed.Table;
 import io.github.eutro.wasm2j.embed.WebAssembly;
 import io.github.eutro.wasm2j.ext.Ext;
@@ -40,6 +42,7 @@ import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.BiConsumer;
 
+import static io.github.eutro.jwasm.Opcodes.MUT_CONST;
 import static io.github.eutro.wasm2j.conf.api.ExportableConvention.mangle;
 import static io.github.eutro.wasm2j.embed.WebAssembly.EV_CLASS;
 
@@ -82,9 +85,11 @@ public class WasmConvertPass {
                                     + "/Module" + counter.getAndIncrement();
                         })
                         .setModifyFuncConvention((convention, fn, idx) -> new EmbedFunctionConvention(convention))
-                        .setModifyTableConvention((convention1, table, idx) -> new EmbedTableConvention(convention1, idx))
+                        .setModifyTableConvention((convention, table, idx) -> new EmbedTableConvention(convention, idx))
+                        .setModifyGlobalConvention(EmbedGlobalConvention::new)
                         .setFunctionImports(WasmConvertPass::createFunctionImport)
                         .setTableImports(WasmConvertPass::createTableImport)
+                        .setGlobalImports(WasmConvertPass::createGlobalImport)
                         .build()))
                 .then((InPlaceIRPass<Module>) module -> {
                     JavaExts.JavaClass jClass = module.getExtOrThrow(JavaExts.JAVA_CLASS);
@@ -237,7 +242,7 @@ public class WasmConvertPass {
         });
     }
 
-    private static FunctionConvention createFunctionImport(Module module, FuncImportNode importNode, JavaExts.JavaClass jClass) {
+    private static FunctionConvention createFunctionImport(Module module, FuncImportNode importNode, JavaExts.JavaClass jClass, int idx) {
         ModuleNode node = module.getExtOrThrow(WasmExts.MODULE);
         TypeNode type = Objects.requireNonNull(Objects.requireNonNull(node.types).types).get(importNode.type);
 
@@ -304,10 +309,20 @@ public class WasmConvertPass {
                                 .assignTo()
                 );
             }
+
+            @Override
+            public void export(ExportNode node, Module module, JavaExts.JavaClass jClass) {
+                super.export(node, module, jClass);
+                getOrMakeExports(module).put(node.name, ib ->
+                        ib.insert(JavaOps.INVOKE
+                                        .create(JavaExts.JavaMethod.fromJava(ExternVal.class, "func", MethodHandle.class))
+                                        .insn(getHandle.get(ib)),
+                                "export"));
+            }
         };
     }
 
-    private static TableConvention createTableImport(Module module, TableImportNode importNode, JavaExts.JavaClass jClass) {
+    private static TableConvention createTableImport(Module module, TableImportNode importNode, JavaExts.JavaClass jClass, int idx) {
         int importIdx = getOrMakeImportC(module).getAndIncrement();
         JavaExts.JavaField field = new JavaExts.JavaField(jClass,
                 mangle("t" + importIdx + '_' + importNode.module + '_' + importNode.name),
@@ -315,29 +330,25 @@ public class WasmConvertPass {
                 false
         );
         jClass.fields.add(field);
-        ValueGetterSetter getTable = Getters.fieldGetter(Getters.GET_THIS, field);
+        ValueGetterSetter table = Getters.fieldGetter(Getters.GET_THIS, field);
+        JavaExts.JavaMethod get = JavaExts.JavaMethod.fromJava(Table.class, "get", int.class);
+        JavaExts.JavaMethod set = JavaExts.JavaMethod.fromJava(Table.class, "set", int.class, Object.class);
+        JavaExts.JavaMethod size = JavaExts.JavaMethod.fromJava(Table.class, "size");
+        JavaExts.JavaMethod grow = JavaExts.JavaMethod.fromJava(Table.class, "grow", int.class, Object.class);
         return new TableConvention() {
             @Override
             public void emitTableRef(IRBuilder ib, Effect effect) {
                 ib.insert(JavaOps.INVOKE
-                        .create(JavaExts.JavaMethod
-                                .fromJava(Table.class,
-                                        "get",
-                                        int.class))
-                        .insn(getTable.get(ib),
-                                effect.insn().args.get(0))
+                        .create(get)
+                        .insn(table.get(ib), effect.insn().args.get(0))
                         .copyFrom(effect));
             }
 
             @Override
             public void emitTableStore(IRBuilder ib, Effect effect) {
                 ib.insert(JavaOps.INVOKE
-                        .create(JavaExts.JavaMethod
-                                .fromJava(Table.class,
-                                        "set",
-                                        int.class,
-                                        Object.class))
-                        .insn(getTable.get(ib),
+                        .create(set)
+                        .insn(table.get(ib),
                                 effect.insn().args.get(1),
                                 effect.insn().args.get(0))
                         .copyFrom(effect));
@@ -346,30 +357,19 @@ public class WasmConvertPass {
             @Override
             public void emitTableSize(IRBuilder ib, Effect effect) {
                 ib.insert(JavaOps.INVOKE
-                        .create(JavaExts.JavaMethod
-                                .fromJava(Table.class,
-                                        "size"))
-                        .insn(getTable.get(ib))
+                        .create(size)
+                        .insn(table.get(ib))
                         .copyFrom(effect));
             }
 
             @Override
             public void emitTableGrow(IRBuilder ib, Effect effect) {
                 ib.insert(JavaOps.INVOKE
-                        .create(JavaExts.JavaMethod
-                                .fromJava(Table.class,
-                                        "grow",
-                                        int.class,
-                                        Object.class))
-                        .insn(getTable.get(ib),
+                        .create(grow)
+                        .insn(table.get(ib),
                                 effect.insn().args.get(0),
                                 effect.insn().args.get(1))
                         .copyFrom(effect));
-            }
-
-            @Override
-            public void export(ExportNode node, Module module, JavaExts.JavaClass jClass) {
-                ExportableConvention.fieldExporter(field).export(node, module, jClass);
             }
 
             @Override
@@ -386,6 +386,63 @@ public class WasmConvertPass {
                                                         "extern")),
                                         "table"))
                         .assignTo());
+            }
+
+            @Override
+            public void export(ExportNode node, Module module, JavaExts.JavaClass jClass) {
+                ExportableConvention.fieldExporter(field).export(node, module, jClass);
+                getOrMakeExports(module).put(node.name, ib ->
+                        ib.insert(JavaOps.INVOKE
+                                        .create(JavaExts.JavaMethod.fromJava(ExternVal.class, "table", Table.class))
+                                        .insn(table.get(ib)),
+                                "export"));
+            }
+        };
+    }
+
+    private static GlobalConvention createGlobalImport(Module module, GlobalImportNode importNode, JavaExts.JavaClass jClass, int idx) {
+        int importIdx = getOrMakeImportC(module).getAndIncrement();
+        JavaExts.JavaField field = new JavaExts.JavaField(jClass,
+                mangle("g" + importIdx + '_' + importNode.module + '_' + importNode.name),
+                BasicCallingConvention.javaType(importNode.type.type).getDescriptor(),
+                false);
+        jClass.fields.add(field);
+        ValueGetterSetter global = Getters.fieldGetter(Getters.GET_THIS, field);
+        JavaExts.JavaMethod get = JavaExts.JavaMethod.fromJava(Global.class, "get");
+        JavaExts.JavaMethod set = JavaExts.JavaMethod.fromJava(Global.class, "set", Object.class);
+        Type objTy = Type.getType(Object.class);
+        return new GlobalConvention() {
+            @Override
+            public void emitGlobalRef(IRBuilder ib, Effect effect) {
+                ib.insert(CommonOps.IDENTITY
+                        .insn(BasicCallingConvention.unboxed(ib,
+                                ib.insert(JavaOps.INVOKE.create(get).insn(global.get(ib)), "boxed"),
+                                objTy,
+                                importNode.type.type
+                        ))
+                        .copyFrom(effect));
+            }
+
+            @Override
+            public void emitGlobalStore(IRBuilder ib, Effect effect) {
+                ib.insert(JavaOps.INVOKE
+                        .create(set)
+                        .insn(global.get(ib),
+                                BasicCallingConvention.maybeBoxed(ib,
+                                        effect.insn().args.get(0),
+                                        importNode.type.type,
+                                        objTy))
+                        .assignTo());
+            }
+
+            @Override
+            public void export(ExportNode node, Module module, JavaExts.JavaClass jClass) {
+                ExportableConvention.fieldExporter(field).export(node, module, jClass);
+                getOrMakeExports(module).put(node.name, ib ->
+                        ib.insert(JavaOps.INVOKE
+                                .create(JavaExts.JavaMethod.fromJava(ExternVal.class, "global", Global.class))
+                                .insn(global.get(ib)),
+                                "export"));
             }
         };
     }
@@ -422,6 +479,7 @@ public class WasmConvertPass {
     private static class EmbedTableConvention extends TableConvention.Delegating {
         private final int idx;
         ValueGetter getHandle, setHandle, sizeHandle, growHandle;
+        private boolean exported = false;
 
         public EmbedTableConvention(TableConvention convention, int idx) {
             super(convention);
@@ -431,47 +489,50 @@ public class WasmConvertPass {
         @Override
         public void modifyConstructor(IRBuilder ib, JavaExts.JavaMethod ctorMethod, Module module, JavaExts.JavaClass jClass) {
             super.modifyConstructor(ib, ctorMethod, module, jClass);
-            getHandle = effectHandle(
-                    "table" + idx + "$get",
-                    module,
-                    jClass,
-                    null,
-                    "(I)Ljava/lang/Object;",
-                    WasmOps.TABLE_REF.create(idx),
-                    delegate::emitTableRef
-            );
-            setHandle = effectHandle(
-                    "table" + idx + "$set",
-                    module,
-                    jClass,
-                    new int[]{1, 0},
-                    "(ILjava/lang/Object;)V",
-                    WasmOps.TABLE_STORE.create(idx),
-                    delegate::emitTableStore
-            );
-            sizeHandle = effectHandle(
-                    "table" + idx + "$size",
-                    module,
-                    jClass,
-                    null,
-                    "()I",
-                    WasmOps.TABLE_SIZE.create(idx),
-                    delegate::emitTableSize
-            );
-            growHandle = effectHandle(
-                    "table" + idx + "$grow",
-                    module,
-                    jClass,
-                    null,
-                    "(ILjava/lang/Object;)I",
-                    WasmOps.TABLE_GROW.create(idx),
-                    delegate::emitTableGrow
-            );
+            if (exported) {
+                getHandle = effectHandle(
+                        "table" + idx + "$get",
+                        module,
+                        jClass,
+                        null,
+                        "(I)Ljava/lang/Object;",
+                        WasmOps.TABLE_REF.create(idx),
+                        delegate::emitTableRef
+                );
+                setHandle = effectHandle(
+                        "table" + idx + "$set",
+                        module,
+                        jClass,
+                        new int[]{1, 0},
+                        "(ILjava/lang/Object;)V",
+                        WasmOps.TABLE_STORE.create(idx),
+                        delegate::emitTableStore
+                );
+                sizeHandle = effectHandle(
+                        "table" + idx + "$size",
+                        module,
+                        jClass,
+                        null,
+                        "()I",
+                        WasmOps.TABLE_SIZE.create(idx),
+                        delegate::emitTableSize
+                );
+                growHandle = effectHandle(
+                        "table" + idx + "$grow",
+                        module,
+                        jClass,
+                        null,
+                        "(ILjava/lang/Object;)I",
+                        WasmOps.TABLE_GROW.create(idx),
+                        delegate::emitTableGrow
+                );
+            }
         }
 
         @Override
         public void export(ExportNode node, Module module, JavaExts.JavaClass jClass) {
-            delegate.export(node, module, jClass);
+            super.export(node, module, jClass);
+            exported = true;
             getOrMakeExports(module).put(node.name, ib -> ib.insert(JavaOps.INVOKE
                             .create(JavaExts.JavaMethod.fromJava(
                                     ExternVal.class,
@@ -494,6 +555,76 @@ public class WasmConvertPass {
                                                     growHandle.get(ib)
                                             ),
                                     "table")),
+                    "extern"));
+        }
+    }
+
+    private static class EmbedGlobalConvention extends GlobalConvention.Delegating implements GlobalConvention {
+        private final GlobalTypeNode type;
+        private final int idx;
+        ValueGetter getHandle, setHandle;
+        private boolean exported;
+
+        public EmbedGlobalConvention(GlobalConvention convention, GlobalNode global, int idx) {
+            this(convention, global.type, idx);
+        }
+
+        public EmbedGlobalConvention(GlobalConvention convention, GlobalTypeNode type, int idx) {
+            super(convention);
+            this.type = type;
+            this.idx = idx;
+        }
+
+        @Override
+        public void modifyConstructor(IRBuilder ib, JavaExts.JavaMethod ctorMethod, Module module, JavaExts.JavaClass jClass) {
+            super.modifyConstructor(ib, ctorMethod, module, jClass);
+            if (exported) {
+                Type jTy = BasicCallingConvention.javaType(type.type);
+                getHandle = effectHandle(
+                        "global" + idx + "$get",
+                        module,
+                        jClass,
+                        null,
+                        Type.getMethodDescriptor(jTy),
+                        WasmOps.GLOBAL_REF.create(idx),
+                        delegate::emitGlobalRef
+                );
+                setHandle = type.type != MUT_CONST ?
+                        effectHandle(
+                                "global" + idx + "$set",
+                                module,
+                                jClass,
+                                null,
+                                Type.getMethodDescriptor(Type.VOID_TYPE, jTy),
+                                WasmOps.GLOBAL_SET.create(idx),
+                                delegate::emitGlobalStore
+                        )
+                        : jb -> jb.insert(CommonOps.CONST.create(null).insn(), "null");
+            }
+        }
+
+        @Override
+        public void export(ExportNode node, Module module, JavaExts.JavaClass jClass) {
+            super.export(node, module, jClass);
+            exported = true;
+            getOrMakeExports(module).put(node.name, ib -> ib.insert(JavaOps.INVOKE
+                            .create(JavaExts.JavaMethod.fromJava(
+                                    ExternVal.class,
+                                    "global",
+                                    Global.class
+                            ))
+                            .insn(ib.insert(JavaOps.INVOKE
+                                            .create(JavaExts.JavaMethod.fromJava(
+                                                    Global.HandleGlobal.class,
+                                                    "create",
+                                                    MethodHandle.class,
+                                                    MethodHandle.class
+                                            ))
+                                            .insn(
+                                                    getHandle.get(ib),
+                                                    setHandle.get(ib)
+                                            ),
+                                    "global")),
                     "extern"));
         }
     }

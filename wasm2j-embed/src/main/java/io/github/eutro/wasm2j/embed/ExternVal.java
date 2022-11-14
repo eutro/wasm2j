@@ -34,6 +34,15 @@ public final class ExternVal {
         return (Table) value;
     }
 
+    public static ExternVal global(Global global) {
+        return new ExternVal(ExternType.GLOBAL, global);
+    }
+
+    public Global getAsGlobal() {
+        checkType(ExternType.GLOBAL);
+        return (Global) value;
+    }
+
     public MethodHandle getAsFuncRaw() {
         checkType(ExternType.FUNC);
         return (MethodHandle) value;

@@ -1,8 +1,10 @@
 package io.github.eutro.wasm2j.conf.api;
 
 import io.github.eutro.wasm2j.conf.impl.DelegatingExporter;
+import io.github.eutro.wasm2j.ext.JavaExts;
 import io.github.eutro.wasm2j.ssa.Effect;
 import io.github.eutro.wasm2j.ssa.IRBuilder;
+import io.github.eutro.wasm2j.ssa.Module;
 
 public interface FunctionConvention extends ExportableConvention, ConstructorCallback {
     void emitCall(IRBuilder ib, Effect effect);
@@ -25,6 +27,11 @@ public interface FunctionConvention extends ExportableConvention, ConstructorCal
         @Override
         public void emitFuncRef(IRBuilder ib, Effect effect) {
             delegate.emitFuncRef(ib, effect);
+        }
+
+        @Override
+        public void modifyConstructor(IRBuilder ib, JavaExts.JavaMethod ctorMethod, Module module, JavaExts.JavaClass jClass) {
+            delegate.modifyConstructor(ib, ctorMethod, module, jClass);
         }
     }
 }

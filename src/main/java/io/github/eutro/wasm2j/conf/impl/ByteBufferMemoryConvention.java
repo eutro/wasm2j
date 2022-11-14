@@ -90,7 +90,7 @@ public class ByteBufferMemoryConvention extends DelegatingExporter implements Me
                 .copyFrom(effect));
     }
 
-    @SuppressWarnings("CommentedOutCode")
+    @SuppressWarnings({"CommentedOutCode", "DuplicatedCode"})
     @Override
     public void emitMemGrow(IRBuilder ib, Effect effect) {
         // This is what we are implementing:
