@@ -43,6 +43,15 @@ public final class ExternVal {
         return (Global) value;
     }
 
+    public static ExternVal memory(Memory memory) {
+        return new ExternVal(ExternType.MEM, memory);
+    }
+
+    public Memory getAsMemory() {
+        checkType(ExternType.MEM);
+        return (Memory) value;
+    }
+
     public MethodHandle getAsFuncRaw() {
         checkType(ExternType.FUNC);
         return (MethodHandle) value;

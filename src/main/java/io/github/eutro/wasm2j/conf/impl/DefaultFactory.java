@@ -391,7 +391,7 @@ public class DefaultFactory implements WirJavaConventionFactory {
                                         "allocateDirect",
                                         "(I)Ljava/nio/ByteBuffer;",
                                         JavaExts.JavaMethod.Kind.STATIC
-                                )).insn(ib.insert(CommonOps.CONST.create(mem.limits.min * PAGE_SIZE).insn(),
+                                )).insn(ib.insert(CommonOps.constant(mem.limits.min * PAGE_SIZE),
                                         "size")),
                                 "mem");
                         memV = ib.insert(JavaOps.INVOKE.create(new JavaExts.JavaMethod(
@@ -422,7 +422,7 @@ public class DefaultFactory implements WirJavaConventionFactory {
                                 BasicCallingConvention.javaType(table.type)
                                         .getInternalName()));
                         Var tableV = ib.insert(JavaOps.INSNS.create(insns)
-                                        .insn(ib.insert(CommonOps.CONST.create(table.limits.min).insn(), "size")),
+                                        .insn(ib.insert(CommonOps.constant(table.limits.min), "size")),
                                 "table");
                         ib.insert(JavaOps.PUT_FIELD.create(tableField)
                                 .insn(IRUtils.getThis(ib), tableV)
@@ -450,10 +450,11 @@ public class DefaultFactory implements WirJavaConventionFactory {
                     for (ElementNode elem : node.elems) {
                         Var offset, table;
                         if (elem.offset == null) {
-                            offset = ib.insert(CommonOps.CONST.create(0).insn(), "offset");
+                            offset = ib.insert(CommonOps.constant(0), "offset");
+                            Insn insn = CommonOps.constant(elem.indices != null ? elem.indices.length : elem.init.size());
                             table = ib.insert(JavaOps.insns(
                                             new TypeInsnNode(Opcodes.ANEWARRAY, Type.getInternalName(MethodHandle.class))
-                                    ).insn(ib.insert(CommonOps.CONST.create(elem.indices != null ? elem.indices.length : elem.init.size()).insn(),
+                                    ).insn(ib.insert(insn,
                                             "elemsz")),
                                     "elem");
                             JavaExts.JavaField field = new JavaExts.JavaField(jClass, "elem" + fieldElems++,
@@ -477,8 +478,7 @@ public class DefaultFactory implements WirJavaConventionFactory {
                             for (int i = 0; i < elem.indices.length; i++) {
                                 Var j = ib.insert(JavaOps.insns(new org.objectweb.asm.tree.InsnNode(Opcodes.IADD))
                                                 .insn(offset,
-                                                        ib.insert(CommonOps.CONST.create(i)
-                                                                .insn(), "i")),
+                                                        ib.insert(CommonOps.constant(i), "i")),
                                         "j");
                                 Var f = ib.func.newVar("f");
                                 getFunction(elem.indices[i])
@@ -495,8 +495,7 @@ public class DefaultFactory implements WirJavaConventionFactory {
                             for (ExprNode expr : elem.init) {
                                 Var j = ib.insert(JavaOps.insns(new org.objectweb.asm.tree.InsnNode(Opcodes.IADD))
                                                 .insn(offset,
-                                                        ib.insert(CommonOps.CONST.create(i)
-                                                                .insn(), "i")),
+                                                        ib.insert(CommonOps.constant(i), "i")),
                                         "j");
                                 Function exprFunc = funcMap.get(expr);
                                 Var f = ib.insert(new Inliner(ib).inline(exprFunc, Collections.emptyList()), "f");
@@ -558,13 +557,13 @@ public class DefaultFactory implements WirJavaConventionFactory {
 
                         while (buf.remaining() > Long.SIZE) {
                             memV = ib.insert(JavaOps.INVOKE.create(putLong)
-                                            .insn(memV, ib.insert(CommonOps.CONST.create(buf.getLong()).insn(), "j")),
+                                            .insn(memV, ib.insert(CommonOps.constant(buf.getLong()), "j")),
                                     "put");
                         }
 
                         while (buf.hasRemaining()) {
                             memV = ib.insert(JavaOps.INVOKE.create(putByte)
-                                            .insn(memV, ib.insert(CommonOps.CONST.create((int) buf.get()).insn(), "b")),
+                                            .insn(memV, ib.insert(CommonOps.constant((int) buf.get()), "b")),
                                     "put");
                         }
                     }

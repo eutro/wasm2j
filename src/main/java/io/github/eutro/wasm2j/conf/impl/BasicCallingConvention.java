@@ -6,6 +6,7 @@ import io.github.eutro.wasm2j.ext.JavaExts;
 import io.github.eutro.wasm2j.ops.CommonOps;
 import io.github.eutro.wasm2j.ops.JavaOps;
 import io.github.eutro.wasm2j.ssa.IRBuilder;
+import io.github.eutro.wasm2j.ssa.Insn;
 import io.github.eutro.wasm2j.ssa.Var;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
@@ -184,7 +185,7 @@ public class BasicCallingConvention implements CallingConvention {
                 new InstructionAdapter(mn).newarray(elemTy);
                 Var returnArr = ib.insert(JavaOps.insns(mn.instructions)
                                 .insn(ib.insert(
-                                        CommonOps.CONST.create(funcType.returns.length).insn(),
+                                        CommonOps.constant(funcType.returns.length),
                                         "len"
                                 )),
                         "returns");
@@ -195,7 +196,7 @@ public class BasicCallingConvention implements CallingConvention {
                             .create()
                             .insn(
                                     returnArr,
-                                    ib.insert(CommonOps.CONST.create(i).insn(), "i"),
+                                    ib.insert(CommonOps.constant(i), "i"),
                                     maybeBoxed(ib, returnVal, retTy, elemTy)
                             )
                             .assignTo());
@@ -218,12 +219,13 @@ public class BasicCallingConvention implements CallingConvention {
                 int i = 0;
                 List<Var> returns = new ArrayList<>();
                 for (byte retTy : funcType.returns) {
+                    Insn insn = CommonOps.constant(i++);
                     returns.add(unboxed(
                             ib,
                             ib.insert(JavaOps.ARRAY_GET.create()
                                             .insn(
                                                     rawReturn,
-                                                    ib.insert(CommonOps.CONST.create(i++).insn(), "i")
+                                                    ib.insert(insn, "i")
                                             ),
                                     "retRaw"),
                             elemTy,

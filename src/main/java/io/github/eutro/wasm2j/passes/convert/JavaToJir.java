@@ -11,10 +11,7 @@ import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
 import org.objectweb.asm.tree.*;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 public class JavaToJir implements IRPass<MethodNode, Function> {
     public static final JavaToJir INSTANCE = new JavaToJir();
@@ -160,11 +157,8 @@ public class JavaToJir implements IRPass<MethodNode, Function> {
                 case Opcodes.I2B:
                 case Opcodes.I2C:
                 case Opcodes.I2S:
-                case Opcodes.LALOAD:
                 case Opcodes.D2L:
-                case Opcodes.DALOAD:
                 case Opcodes.L2D:
-                case Opcodes.AALOAD:
                 case Opcodes.I2L:
                 case Opcodes.F2L:
                 case Opcodes.I2F:
@@ -184,28 +178,30 @@ public class JavaToJir implements IRPass<MethodNode, Function> {
                     bb.addEffect(insnOp(insn).insn(popVar()).assignTo(pushVar()));
                     break;
                 case Opcodes.LDC:
-                    bb.addEffect(CommonOps.CONST.create(((LdcInsnNode) insn).cst).insn().assignTo(pushVar()));
+                    bb.addEffect(CommonOps.constant(((LdcInsnNode) insn).cst).assignTo(pushVar()));
                     break;
 
                 // @formatter:off
-                case Opcodes.ACONST_NULL: bb.addEffect(CommonOps.CONST.create(null).insn().assignTo(pushVar())); break;
-                case Opcodes.ICONST_M1: bb.addEffect(CommonOps.CONST.create(-1).insn().assignTo(pushVar())); break;
-                case Opcodes.ICONST_0: bb.addEffect(CommonOps.CONST.create(0).insn().assignTo(pushVar())); break;
-                case Opcodes.ICONST_1: bb.addEffect(CommonOps.CONST.create(1).insn().assignTo(pushVar())); break;
-                case Opcodes.ICONST_2: bb.addEffect(CommonOps.CONST.create(2).insn().assignTo(pushVar())); break;
-                case Opcodes.ICONST_3: bb.addEffect(CommonOps.CONST.create(3).insn().assignTo(pushVar())); break;
-                case Opcodes.ICONST_4: bb.addEffect(CommonOps.CONST.create(4).insn().assignTo(pushVar())); break;
-                case Opcodes.ICONST_5: bb.addEffect(CommonOps.CONST.create(5).insn().assignTo(pushVar())); break;
+                case Opcodes.ACONST_NULL: bb.addEffect(CommonOps.constant(null).assignTo(pushVar())); break;
+                case Opcodes.ICONST_M1: bb.addEffect(CommonOps.constant(-1).assignTo(pushVar())); break;
+                case Opcodes.ICONST_0: bb.addEffect(CommonOps.constant(0).assignTo(pushVar())); break;
+                case Opcodes.ICONST_1: bb.addEffect(CommonOps.constant(1).assignTo(pushVar())); break;
+                case Opcodes.ICONST_2: bb.addEffect(CommonOps.constant(2).assignTo(pushVar())); break;
+                case Opcodes.ICONST_3: bb.addEffect(CommonOps.constant(3).assignTo(pushVar())); break;
+                case Opcodes.ICONST_4: bb.addEffect(CommonOps.constant(4).assignTo(pushVar())); break;
+                case Opcodes.ICONST_5: bb.addEffect(CommonOps.constant(5).assignTo(pushVar())); break;
+                case Opcodes.LCONST_0: bb.addEffect(CommonOps.constant(0L).assignTo(pushVar())); break;
+                case Opcodes.LCONST_1: bb.addEffect(CommonOps.constant(1L).assignTo(pushVar())); break;
+                case Opcodes.FCONST_0: bb.addEffect(CommonOps.constant(0F).assignTo(pushVar())); break;
+                case Opcodes.FCONST_1: bb.addEffect(CommonOps.constant(1F).assignTo(pushVar())); break;
+                case Opcodes.FCONST_2: bb.addEffect(CommonOps.constant(2F).assignTo(pushVar())); break;
+                case Opcodes.DCONST_0: bb.addEffect(CommonOps.constant(0D).assignTo(pushVar())); break;
+                case Opcodes.DCONST_1: bb.addEffect(CommonOps.constant(1D).assignTo(pushVar())); break;
                 // @formatter:on
                 case Opcodes.BIPUSH:
                 case Opcodes.SIPUSH:
-                case Opcodes.LCONST_0:
-                case Opcodes.LCONST_1:
-                case Opcodes.FCONST_0:
-                case Opcodes.FCONST_1:
-                case Opcodes.FCONST_2:
-                case Opcodes.DCONST_0:
-                case Opcodes.DCONST_1:
+                    bb.addEffect(CommonOps.constant(((IntInsnNode) insn).operand).assignTo(pushVar()));
+                    break;
                 case Opcodes.GETSTATIC:
                 case Opcodes.NEW:
                     bb.addEffect(insnOp(insn).insn().assignTo(pushVar()));
@@ -235,6 +231,8 @@ public class JavaToJir implements IRPass<MethodNode, Function> {
                 case Opcodes.AASTORE:
                 case Opcodes.LASTORE:
                 case Opcodes.DASTORE:
+                    bb.addEffect(JavaOps.ARRAY_SET.create().insn(popVars(3)).assignTo());
+                    break;
                 case Opcodes.PUTFIELD:
                     bb.addEffect(insnOp(insn).insn(popVars(2)).assignTo());
                     break;
@@ -250,6 +248,12 @@ public class JavaToJir implements IRPass<MethodNode, Function> {
                 case Opcodes.BALOAD:
                 case Opcodes.CALOAD:
                 case Opcodes.SALOAD:
+                case Opcodes.LALOAD:
+                case Opcodes.DALOAD:
+                case Opcodes.AALOAD:
+                case Opcodes.FALOAD:
+                    bb.addEffect(JavaOps.ARRAY_GET.create().insn(popVars(2)).assignTo(pushVar()));
+                    break;
                 case Opcodes.IADD:
                 case Opcodes.ISUB:
                 case Opcodes.IMUL:
@@ -263,7 +267,6 @@ public class JavaToJir implements IRPass<MethodNode, Function> {
                 case Opcodes.IUSHR:
                 case Opcodes.FCMPL:
                 case Opcodes.FCMPG:
-                case Opcodes.FALOAD:
                 case Opcodes.FADD:
                 case Opcodes.FSUB:
                 case Opcodes.FMUL:

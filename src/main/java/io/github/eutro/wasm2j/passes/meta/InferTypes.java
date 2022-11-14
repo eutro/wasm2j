@@ -315,7 +315,7 @@ public abstract class InferTypes<Ty> implements InPlaceIRPass<Function> {
                         NEWARRAY)
 
                 .put(" -> ", NOP)
-                .put("a -> ", POP)
+                .put("a -> ", POP, PUTSTATIC)
 
                 .put("I -> J", I2L)
                 .put("I -> F", I2F)

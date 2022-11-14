@@ -2,6 +2,7 @@ package io.github.eutro.wasm2j.ops;
 
 import io.github.eutro.wasm2j.ext.CommonExts;
 import io.github.eutro.wasm2j.ssa.BasicBlock;
+import io.github.eutro.wasm2j.ssa.Insn;
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -27,5 +28,9 @@ public class CommonOps {
         }) {
             key.attachExt(CommonExts.IS_PURE, true);
         }
+    }
+
+    public static Insn constant(Object k) {
+        return CONST.create(k).insn();
     }
 }

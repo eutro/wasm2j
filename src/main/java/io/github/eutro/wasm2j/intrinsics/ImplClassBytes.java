@@ -12,7 +12,7 @@ public class ImplClassBytes {
 
     public static ClassReader getClassReaderFor(Class<?> clazz) {
         String path = "/" + clazz.getName().replace('.', '/') + ".class";
-        try (InputStream implStream = Impl.class.getResourceAsStream(path)) {
+        try (InputStream implStream = clazz.getResourceAsStream(path)) {
             if (implStream == null) throw new RuntimeException("Could not get Impl class stream.");
             return new ClassReader(implStream);
         } catch (IOException e) {

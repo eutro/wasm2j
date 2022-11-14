@@ -1,6 +1,7 @@
 package io.github.eutro.wasm2j.ext;
 
 import io.github.eutro.wasm2j.ssa.Function;
+import org.objectweb.asm.Handle;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
 
@@ -48,7 +49,11 @@ public class JavaExts {
         }
     }
 
-    public static class JavaMethod extends ExtHolder {
+    public interface Handlable {
+        Handle getHandle();
+    }
+
+    public static class JavaMethod extends ExtHolder implements Handlable {
         public JavaClass owner;
         public String name;
         public Kind kind;
@@ -101,6 +106,11 @@ public class JavaExts {
         public void setDescriptor(String descriptor) {
             returnTy = Type.getReturnType(descriptor);
             paramTys = new ArrayList<>(Arrays.asList(Type.getArgumentTypes(descriptor)));
+        }
+
+        @Override
+        public Handle getHandle() {
+            return new Handle(kind.handleType, owner.name, name, getDescriptor(), false);
         }
 
         public enum Kind {
@@ -160,6 +170,16 @@ public class JavaExts {
             } catch (NoSuchFieldException e) {
                 throw new RuntimeException(e);
             }
+        }
+
+        public Handlable getter() {
+            return () -> new Handle(isStatic ? Opcodes.H_GETSTATIC : Opcodes.H_GETFIELD,
+                    owner.name, name, descriptor, false);
+        }
+
+        public Handlable setter() {
+            return () -> new Handle(isStatic ? Opcodes.H_PUTSTATIC : Opcodes.H_PUTFIELD,
+                    owner.name, name, descriptor, false);
         }
 
         @Override

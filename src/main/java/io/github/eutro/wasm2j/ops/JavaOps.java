@@ -23,7 +23,7 @@ public class JavaOps {
 
     public static final Op THIS = new SimpleOpKey("this").create();
 
-    public static final UnaryOpKey<JavaMethod> HANDLE_OF = new UnaryOpKey<>("handle_of");
+    public static final UnaryOpKey<Handlable> HANDLE_OF = new UnaryOpKey<>("handle_of");
     public static final UnaryOpKey<JavaMethod> INVOKE = new UnaryOpKey<>("invoke");
 
     public static final UnaryOpKey<JavaField> GET_FIELD = new UnaryOpKey<>("get_field");

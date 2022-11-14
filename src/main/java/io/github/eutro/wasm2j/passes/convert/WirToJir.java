@@ -178,7 +178,7 @@ public class WirToJir implements InPlaceIRPass<Module> {
                     default:
                         throw new IllegalArgumentException();
                 }
-                jb.insert(CommonOps.CONST.create(value).copyFrom(fx));
+                jb.insert(CommonOps.constant(value).copyFrom(fx));
             });
             FX_CONVERTERS.put(WasmOps.IS_NULL, (fx, jb, slf) ->
                     jb.insert(JavaOps.BOOL_SELECT.create(JavaOps.JumpType.IFNONNULL).copyFrom(fx)));

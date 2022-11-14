@@ -10,7 +10,6 @@ import io.github.eutro.wasm2j.passes.IRPass;
 import io.github.eutro.wasm2j.ssa.Module;
 import io.github.eutro.wasm2j.ssa.*;
 import io.github.eutro.wasm2j.util.GraphWalker;
-import org.objectweb.asm.Handle;
 import org.objectweb.asm.Label;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
@@ -303,8 +302,8 @@ public class JirToJava implements IRPass<Module, ClassNode> {
         FX_CONVERTERS.put(JavaOps.ARRAY_SET, (jb, fx) ->
                 jb.arrayStore(fx.insn().args.get(0).getExtOrThrow(JavaExts.TYPE).getElementType()));
         FX_CONVERTERS.put(JavaOps.HANDLE_OF, (jb, fx) -> {
-            JavaExts.JavaMethod method = JavaOps.HANDLE_OF.cast(fx.insn().op).arg;
-            jb.push(new Handle(method.kind.handleType, method.owner.name, method.name, method.getDescriptor(), false));
+            JavaExts.Handlable handlable = JavaOps.HANDLE_OF.cast(fx.insn().op).arg;
+            jb.push(handlable.getHandle());
         });
     }
 

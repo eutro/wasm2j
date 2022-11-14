@@ -38,13 +38,13 @@ public class LowerSelects extends LowerCommon {
 
             ib.setBlock(ifT);
             Var ifTV = ib.insert((isBool
-                            ? CommonOps.CONST.create(1).insn()
+                            ? CommonOps.constant(1)
                             : CommonOps.IDENTITY.insn(insn.args.get(1))),
                     "ift");
 
             ib.setBlock(ifF);
             Var ifFV = ib.insert((isBool
-                            ? CommonOps.CONST.create(0).insn()
+                            ? CommonOps.constant(0)
                             : CommonOps.IDENTITY.insn(insn.args.get(2))),
                     "iff");
 

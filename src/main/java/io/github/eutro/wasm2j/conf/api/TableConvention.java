@@ -15,7 +15,7 @@ public interface TableConvention extends ExportableConvention, ConstructorCallba
     void emitTableSize(IRBuilder ib, Effect effect);
 
     default void emitTableGrow(IRBuilder ib, Effect effect) {
-        ib.insert(CommonOps.CONST.create(-1).insn().copyFrom(effect));
+        ib.insert(CommonOps.constant(-1).copyFrom(effect));
     }
 
     class Delegating extends DelegatingExporter implements TableConvention {

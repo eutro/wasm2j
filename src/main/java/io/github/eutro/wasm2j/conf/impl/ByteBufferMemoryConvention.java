@@ -22,7 +22,6 @@ import java.nio.ByteOrder;
 import java.util.Arrays;
 
 import static io.github.eutro.jwasm.Opcodes.PAGE_SIZE;
-import static io.github.eutro.wasm2j.ext.CommonExts.markPure;
 
 public class ByteBufferMemoryConvention extends DelegatingExporter implements MemoryConvention {
     private final ValueGetterSetter buffer;
@@ -50,7 +49,7 @@ public class ByteBufferMemoryConvention extends DelegatingExporter implements Me
                 JavaExts.JavaMethod.Kind.VIRTUAL
         );
         Var ptr = effect.insn().args.get(0);
-        Insn loadInsn = JavaOps.INVOKE.create(toInvoke).insn(buffer.get(ib), getAddr(ib, wmArg, ptr));
+        Insn loadInsn = JavaOps.INVOKE.create(toInvoke).insn(buffer.get(ib), IRUtils.getAddr(ib, wmArg, ptr));
         if (derefType.ext.insns.size() == 0) {
             ib.insert(loadInsn.copyFrom(effect));
         } else {
@@ -71,7 +70,7 @@ public class ByteBufferMemoryConvention extends DelegatingExporter implements Me
                 .create(insns)
                 .insn(
                         buffer.get(ib),
-                        getAddr(ib, wmArg, effect.insn().args.get(1)),
+                        IRUtils.getAddr(ib, wmArg, effect.insn().args.get(1)),
                         effect.insn().args.get(0)
                 )
                 .assignTo());
@@ -129,7 +128,7 @@ public class ByteBufferMemoryConvention extends DelegatingExporter implements Me
         Var theBuf = buffer.get(ib);
         Var rawSz = ib.insert(JavaOps.INVOKE.create(capacity).insn(theBuf), "rawSz");
         Var sz = ib.insert(JavaOps.insns(new InsnNode(Opcodes.IDIV))
-                        .insn(rawSz, ib.insert(CommonOps.CONST.create(PAGE_SIZE).insn(), "psz")),
+                        .insn(rawSz, ib.insert(CommonOps.constant(PAGE_SIZE), "psz")),
                 "sz");
         Var newSz = ib.insert(JavaOps.insns(new InsnNode(Opcodes.IADD))
                         .insn(sz, growBy),
@@ -137,7 +136,7 @@ public class ByteBufferMemoryConvention extends DelegatingExporter implements Me
         if (max != null) {
             k = ib.func.newBb();
             ib.insertCtrl(JavaOps.BR_COND.create(JavaOps.JumpType.IF_ICMPGE)
-                    .insn(newSz, ib.insert(CommonOps.CONST.create(max).insn(), "max"))
+                    .insn(newSz, ib.insert(CommonOps.constant(max), "max"))
                     .jumpsTo(failBlock, k));
             ib.setBlock(k);
         }
@@ -153,7 +152,7 @@ public class ByteBufferMemoryConvention extends DelegatingExporter implements Me
                                         .insn(ib.insert(JavaOps.insns(new InsnNode(Opcodes.IADD))
                                                         .insn(rawSz,
                                                                 ib.insert(JavaOps.insns(new InsnNode(Opcodes.IMUL))
-                                                                                .insn(ib.insert(CommonOps.CONST.create(PAGE_SIZE).insn(), "psz"),
+                                                                                .insn(ib.insert(CommonOps.constant(PAGE_SIZE), "psz"),
                                                                                         growBy),
                                                                         "byRaw")),
                                                 "newSzRaw")),
@@ -178,22 +177,12 @@ public class ByteBufferMemoryConvention extends DelegatingExporter implements Me
         ib.insertCtrl(Control.br(failBlock));
 
         ib.setBlock(failBlock);
-        Var err = ib.insert(CommonOps.CONST.create(-1).insn(), "err");
+        Var err = ib.insert(CommonOps.constant(-1), "err");
         ib.insertCtrl(Control.br(end));
 
         ib.setBlock(end);
         ib.insert(CommonOps.PHI.create(Arrays.asList(successBlock, failBlock))
                 .insn(sz, err)
                 .copyFrom(effect));
-    }
-
-    private Var getAddr(IRBuilder ib, WasmOps.WithMemArg<?> wmArg, Var ptr) {
-        return wmArg.offset == 0
-                ? ptr
-                : ib.insert(markPure(JavaOps.insns(new InsnNode(Opcodes.IADD)))
-                        .insn(ptr,
-                                ib.insert(CommonOps.CONST.create(wmArg.offset).insn(),
-                                        "offset")),
-                "addr");
     }
 }

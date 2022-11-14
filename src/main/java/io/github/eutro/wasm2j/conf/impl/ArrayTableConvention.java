@@ -97,7 +97,7 @@ public class ArrayTableConvention extends DelegatingExporter implements TableCon
         if (max != null) {
             k = ib.func.newBb();
             ib.insertCtrl(JavaOps.BR_COND.create(JavaOps.JumpType.IF_ICMPGE)
-                    .insn(newSz, ib.insert(CommonOps.CONST.create(max).insn(), "max"))
+                    .insn(newSz, ib.insert(CommonOps.constant(max), "max"))
                     .jumpsTo(failBlock, k));
             ib.setBlock(k);
         }
@@ -135,7 +135,7 @@ public class ArrayTableConvention extends DelegatingExporter implements TableCon
         ib.insertCtrl(Control.br(failBlock));
 
         ib.setBlock(failBlock);
-        Var err = ib.insert(CommonOps.CONST.create(-1).insn(), "err");
+        Var err = ib.insert(CommonOps.constant(-1), "err");
         ib.insertCtrl(Control.br(endBlock));
 
         ib.setBlock(endBlock);
