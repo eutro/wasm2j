@@ -506,13 +506,22 @@ public class WasmToWir implements IRPass<ModuleNode, Module> {
                         cs.popVar() // index
                 )
                 .assignTo()));
+        CONVERTERS.putInt(TABLE_SIZE, (cs, node, topB) -> topB.addEffect(WasmOps.TABLE_SIZE
+                .create(((PrefixTableInsnNode) node).table)
+                .insn()
+                .assignTo(cs.pushVar())));
+        CONVERTERS.putInt(TABLE_GROW, (cs, node, topB) -> topB.addEffect(WasmOps.TABLE_GROW
+                .create(((PrefixTableInsnNode) node).table)
+                .insn(
+                        cs.popVar(), // by (length)
+                        cs.popVar() // with (object)
+                )
+                .assignTo(cs.pushVar())));
         /*
         CONVERTERS.putInt(new int[]{
                 TABLE_INIT,
                 ELEM_DROP,
                 TABLE_COPY,
-                TABLE_GROW,
-                TABLE_SIZE,
                 TABLE_FILL // TODO
         }, (cs, node, topB) -> {
             throw new UnsupportedOperationException();

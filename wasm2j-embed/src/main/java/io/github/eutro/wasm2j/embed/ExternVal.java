@@ -19,6 +19,21 @@ public final class ExternVal {
         return type;
     }
 
+    private void checkType(ExternType expected) {
+        if (type != expected) {
+            throw new IllegalArgumentException("Not a " + expected);
+        }
+    }
+
+    public static ExternVal table(Table table) {
+        return new ExternVal(ExternType.TABLE, table);
+    }
+
+    public Table getAsTable() {
+        checkType(ExternType.TABLE);
+        return (Table) value;
+    }
+
     public MethodHandle getAsFuncRaw() {
         checkType(ExternType.FUNC);
         return (MethodHandle) value;
@@ -26,16 +41,6 @@ public final class ExternVal {
 
     public MethodHandle getAsFunc(MethodType type) {
         return getAsFuncRaw().asType(type);
-    }
-
-    private void checkType(ExternType expected) {
-        if (type != expected) {
-            throw new IllegalArgumentException("Not a " + expected);
-        }
-    }
-
-    public static ExternVal table() {
-        return new ExternVal(ExternType.TABLE, null);
     }
 
     public static ExternVal func(MethodHandle handle) {

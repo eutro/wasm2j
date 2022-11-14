@@ -96,6 +96,10 @@ public class WirToJir implements InPlaceIRPass<Module> {
                     slf.conventions.getTable(WasmOps.TABLE_STORE.cast(fx.insn().op).arg).emitTableStore(jb, fx));
             FX_CONVERTERS.put(WasmOps.TABLE_REF, (fx, jb, slf) ->
                     slf.conventions.getTable(WasmOps.TABLE_REF.cast(fx.insn().op).arg).emitTableRef(jb, fx));
+            FX_CONVERTERS.put(WasmOps.TABLE_SIZE, (fx, jb, slf) ->
+                    slf.conventions.getTable(WasmOps.TABLE_SIZE.cast(fx.insn().op).arg).emitTableSize(jb, fx));
+            FX_CONVERTERS.put(WasmOps.TABLE_GROW, (fx, jb, slf) ->
+                    slf.conventions.getTable(WasmOps.TABLE_GROW.cast(fx.insn().op).arg).emitTableGrow(jb, fx));
             FX_CONVERTERS.put(WasmOps.FUNC_REF, (fx, jb, slf) ->
                     slf.conventions.getFunction(WasmOps.FUNC_REF.cast(fx.insn().op).arg).emitFuncRef(jb, fx));
             FX_CONVERTERS.put(WasmOps.CALL, (fx, jb, slf) ->
@@ -201,7 +205,7 @@ public class WirToJir implements InPlaceIRPass<Module> {
             private void translateEffect(Effect fct, IRBuilder jb) {
                 Converter<Effect> cc = FX_CONVERTERS.get(fct.insn().op.key);
                 if (cc == null) {
-                    throw new IllegalArgumentException(fct.insn().op.key + " is not supported");
+                    throw new IllegalArgumentException("op: " + fct.insn().op.key + " is not supported");
                 }
                 cc.convert(fct, jb, WirToJirPerFunc.this);
             }

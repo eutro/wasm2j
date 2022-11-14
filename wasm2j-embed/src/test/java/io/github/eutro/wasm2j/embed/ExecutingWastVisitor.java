@@ -5,6 +5,7 @@ import io.github.eutro.jwasm.sexp.wast.ActionVisitor;
 import io.github.eutro.jwasm.sexp.wast.WastModuleVisitor;
 import io.github.eutro.jwasm.sexp.wast.WastReader;
 import io.github.eutro.jwasm.sexp.wast.WastVisitor;
+import io.github.eutro.wasm2j.embed.internal.Utils;
 import org.jetbrains.annotations.Nullable;
 
 import java.lang.reflect.Array;
@@ -33,10 +34,11 @@ public class ExecutingWastVisitor extends WastVisitor {
 
     {
         // https://github.com/WebAssembly/spec/tree/main/interpreter#spectest-host-module
+        Table.ArrayTable table = new Table.ArrayTable(1, 2);
         registered.put("spectest", name -> {
             switch (name) {
                 case "table":
-                    return ExternVal.table();
+                    return ExternVal.table(table);
                 case "print":
                     return ExternVal.func(() -> System.out.println());
                 case "print_i32":
@@ -96,10 +98,8 @@ public class ExecutingWastVisitor extends WastVisitor {
                     wasm.instanceExport(lastModuleInst, string)
                             .getAsFuncRaw()
                             .invokeWithArguments(args);
-                } catch (RuntimeException | Error e) {
-                    throw e;
                 } catch (Throwable t) {
-                    throw new RuntimeException(t);
+                    throw Utils.rethrow(t);
                 }
             }
         };
@@ -153,13 +153,7 @@ public class ExecutingWastVisitor extends WastVisitor {
                             string,
                             Arrays.toString(args),
                             Arrays.toString(results))));
-                    try {
-                        throw t;
-                    } catch (RuntimeException | Error e) {
-                        throw e;
-                    } catch (Throwable ignored) {
-                        throw new RuntimeException(t);
-                    }
+                    throw Utils.rethrow(t);
                 }
             }
         };

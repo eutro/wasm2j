@@ -194,8 +194,8 @@ public class SSADisplay {
                 for (BasicBlock target : control.targets) {
                     ImgCell targetCell = blockCells.get(target);
                     Element line = document.createElement("line");
-                    edgeMap.put(new Pair<>(block, target), line);
-                    edgeMap.put(new Pair<>(target, block), line);
+                    edgeMap.put(Pair.of(block, target), line);
+                    edgeMap.put(Pair.of(target, block), line);
                     rootGroup.appendChild(line);
                     line.setAttribute("x1", Float.toString(cell.cx));
                     line.setAttribute("y1", Float.toString(cell.cy + ((cell.img.height - BLOCK_PADDING) / 2.0f)));

@@ -5,12 +5,14 @@ import io.github.eutro.wasm2j.conf.api.TableConvention;
 import io.github.eutro.wasm2j.ops.JavaOps;
 import io.github.eutro.wasm2j.ssa.Effect;
 import io.github.eutro.wasm2j.ssa.IRBuilder;
-import io.github.eutro.wasm2j.util.ValueGetter;
+import io.github.eutro.wasm2j.util.ValueGetterSetter;
+import org.objectweb.asm.Opcodes;
+import org.objectweb.asm.tree.InsnNode;
 
 public class ArrayTableConvention extends DelegatingExporter implements TableConvention {
-    private final ValueGetter table;
+    private final ValueGetterSetter table;
 
-    public ArrayTableConvention(ExportableConvention exporter, ValueGetter table) {
+    public ArrayTableConvention(ExportableConvention exporter, ValueGetterSetter table) {
         super(exporter);
         this.table = table;
     }
@@ -31,5 +33,10 @@ public class ArrayTableConvention extends DelegatingExporter implements TableCon
                         effect.insn().args.get(0))
                 .assignTo());
 
+    }
+
+    @Override
+    public void emitTableSize(IRBuilder ib, Effect effect) {
+        ib.insert(JavaOps.insns(new InsnNode(Opcodes.ARRAYLENGTH)).insn(table.get(ib)).copyFrom(effect));
     }
 }

@@ -74,6 +74,15 @@ public class JavaExts {
             );
         }
 
+        public static JavaMethod fromJava(Class<?> owner, String name, Class<?>... parameterTypes) {
+            try {
+                return fromJava(new JavaClass(Type.getInternalName(owner)),
+                        owner.getMethod(name, parameterTypes));
+            } catch (ReflectiveOperationException e) {
+                throw new RuntimeException(e);
+            }
+        }
+
         public List<Type> getParamTys() {
             return paramTys;
         }

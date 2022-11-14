@@ -11,6 +11,7 @@ import io.github.eutro.wasm2j.ops.WasmOps;
 import io.github.eutro.wasm2j.ssa.Module;
 import io.github.eutro.wasm2j.ssa.*;
 import io.github.eutro.wasm2j.util.IRUtils;
+import io.github.eutro.wasm2j.util.Pair;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
 import org.objectweb.asm.tree.InsnList;
@@ -21,7 +22,7 @@ import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.util.*;
 import java.util.function.Supplier;
-import java.util.function.UnaryOperator;
+import java.util.stream.Stream;
 
 import static io.github.eutro.jwasm.Opcodes.*;
 import static io.github.eutro.wasm2j.conf.Getters.GET_THIS;
@@ -33,10 +34,10 @@ public class DefaultFactory implements WirJavaConventionFactory {
     final ImportFactory<GlobalImportNode, GlobalConvention> globalImports;
     final ImportFactory<MemImportNode, MemoryConvention> memoryImports;
     final ImportFactory<TableImportNode, TableConvention> tableImports;
-    final UnaryOperator<FunctionConvention> modifyFuncConvention;
-    final UnaryOperator<TableConvention> modifyTableConvention;
-    final UnaryOperator<GlobalConvention> modifyGlobalConvention;
-    final UnaryOperator<MemoryConvention> modifyMemConvention;
+    final ConventionModifier<FunctionConvention, Pair<FuncNode, CodeNode>> modifyFuncConvention;
+    final ConventionModifier<TableConvention, TableNode> modifyTableConvention;
+    final ConventionModifier<GlobalConvention, GlobalNode> modifyGlobalConvention;
+    final ConventionModifier<MemoryConvention, MemoryNode> modifyMemConvention;
     final Supplier<String> nameSupplier;
 
     DefaultFactory(
@@ -45,10 +46,10 @@ public class DefaultFactory implements WirJavaConventionFactory {
             ImportFactory<GlobalImportNode, GlobalConvention> globalImports,
             ImportFactory<MemImportNode, MemoryConvention> memoryImports,
             ImportFactory<TableImportNode, TableConvention> tableImports,
-            UnaryOperator<FunctionConvention> modifyFuncConvention,
-            UnaryOperator<TableConvention> modifyTableConvention,
-            UnaryOperator<GlobalConvention> modifyGlobalConvention,
-            UnaryOperator<MemoryConvention> modifyMemConvention,
+            ConventionModifier<FunctionConvention, Pair<FuncNode, CodeNode>> modifyFuncConvention,
+            ConventionModifier<TableConvention, TableNode> modifyTableConvention,
+            ConventionModifier<GlobalConvention, GlobalNode> modifyGlobalConvention,
+            ConventionModifier<MemoryConvention, MemoryNode> modifyMemConvention,
             Supplier<String> nameSupplier) {
         this.callingConvention = callingConvention;
         this.functionImports = functionImports;
@@ -73,10 +74,10 @@ public class DefaultFactory implements WirJavaConventionFactory {
 
         private ImportFactory<MemImportNode, MemoryConvention> memoryImports = unsupported("memory imports");
         private ImportFactory<TableImportNode, TableConvention> tableImports = unsupported("table imports");
-        private UnaryOperator<FunctionConvention> modifyFuncConvention = UnaryOperator.identity();
-        private UnaryOperator<TableConvention> modifyTableConvention = UnaryOperator.identity();
-        private UnaryOperator<GlobalConvention> modifyGlobalConvention = UnaryOperator.identity();
-        private UnaryOperator<MemoryConvention> modifyMemConvention = UnaryOperator.identity();
+        private ConventionModifier<FunctionConvention, Pair<FuncNode, CodeNode>> modifyFuncConvention = ConventionModifier.identity();
+        private ConventionModifier<TableConvention, TableNode> modifyTableConvention = ConventionModifier.identity();
+        private ConventionModifier<GlobalConvention, GlobalNode> modifyGlobalConvention = ConventionModifier.identity();
+        private ConventionModifier<MemoryConvention, MemoryNode> modifyMemConvention = ConventionModifier.identity();
 
         private CallingConvention callingConvention = Conventions.DEFAULT_CC;
         private Supplier<String> nameSupplier = () -> "com/example/FIXME";
@@ -113,22 +114,22 @@ public class DefaultFactory implements WirJavaConventionFactory {
             return this;
         }
 
-        public Builder setModifyFuncConvention(UnaryOperator<FunctionConvention> modifyFuncConvention) {
+        public Builder setModifyFuncConvention(ConventionModifier<FunctionConvention, Pair<FuncNode, CodeNode>> modifyFuncConvention) {
             this.modifyFuncConvention = modifyFuncConvention;
             return this;
         }
 
-        public Builder setModifyTableConvention(UnaryOperator<TableConvention> modifyTableConvention) {
+        public Builder setModifyTableConvention(ConventionModifier<TableConvention, TableNode> modifyTableConvention) {
             this.modifyTableConvention = modifyTableConvention;
             return this;
         }
 
-        public Builder setModifyGlobalConvention(UnaryOperator<GlobalConvention> modifyGlobalConvention) {
+        public Builder setModifyGlobalConvention(ConventionModifier<GlobalConvention, GlobalNode> modifyGlobalConvention) {
             this.modifyGlobalConvention = modifyGlobalConvention;
             return this;
         }
 
-        public Builder setModifyMemConvention(UnaryOperator<MemoryConvention> modifyMemConvention) {
+        public Builder setModifyMemConvention(ConventionModifier<MemoryConvention, MemoryNode> modifyMemConvention) {
             this.modifyMemConvention = modifyMemConvention;
             return this;
         }
@@ -164,10 +165,13 @@ public class DefaultFactory implements WirJavaConventionFactory {
         private final List<FunctionConvention> funcs = new ArrayList<>();
         private final List<TypeNode> funcTypes = new ArrayList<>();
         private final List<GlobalConvention> globals = new ArrayList<>();
+        private int iGlobals = 0;
         private final List<JavaExts.JavaField> lGlobals = new ArrayList<>();
         private final List<MemoryConvention> memories = new ArrayList<>();
+        private int iMemories = 0;
         private final List<JavaExts.JavaField> lMemories = new ArrayList<>();
         private final List<TableConvention> tables = new ArrayList<>();
+        private int iTables = 0;
         private final List<JavaExts.JavaField> lTables = new ArrayList<>();
         private final JavaExts.JavaClass jClass;
 
@@ -213,13 +217,24 @@ public class DefaultFactory implements WirJavaConventionFactory {
                             funcTypes.add(Objects.requireNonNull(Objects.requireNonNull(node.types).types)
                                     .get(fin.type));
                             break;
-                        // @formatter:off
-                        case IMPORTS_GLOBAL: globals.add(getImport((GlobalImportNode) importNode)); lGlobals.add(null); break;
-                        case IMPORTS_MEM: memories.add(getImport((MemImportNode) importNode)); lMemories.add(null); break;
-                        case IMPORTS_TABLE: tables.add(getImport((TableImportNode) importNode)); lTables.add(null); break;
-                        default: throw new AssertionError();
+                        case IMPORTS_GLOBAL:
+                            globals.add(getImport((GlobalImportNode) importNode));
+                            iGlobals++;
+                            lGlobals.add(null);
+                            break;
+                        case IMPORTS_MEM:
+                            memories.add(getImport((MemImportNode) importNode));
+                            iMemories++;
+                            lMemories.add(null);
+                            break;
+                        case IMPORTS_TABLE:
+                            tables.add(getImport((TableImportNode) importNode));
+                            iTables++;
+                            lTables.add(null);
+                            break;
+                        default:
+                            throw new AssertionError();
                     }
-                    // @formatter:on
                 }
             }
 
@@ -229,6 +244,7 @@ public class DefaultFactory implements WirJavaConventionFactory {
                 int i = 0;
                 Iterator<CodeNode> it = node.codes.codes.iterator();
                 for (FuncNode fn : node.funcs) {
+                    CodeNode code = it.next();
                     TypeNode typeNode = node.types.types.get(fn.type);
                     JavaExts.JavaMethod method = new JavaExts.JavaMethod(
                             jClass,
@@ -238,14 +254,16 @@ public class DefaultFactory implements WirJavaConventionFactory {
                     );
                     jClass.methods.add(method);
                     funcs.add(modifyFuncConvention
-                            .apply(new InstanceFunctionConvention(
-                                    ExportableConvention.methodExporter(method),
-                                    GET_THIS,
-                                    method,
-                                    getCC()
-                            )));
+                            .modify(new InstanceFunctionConvention(
+                                            ExportableConvention.methodExporter(method),
+                                            GET_THIS,
+                                            method,
+                                            getCC()
+                                    ),
+                                    Pair.of(fn, code),
+                                    funcs.size()));
                     funcTypes.add(typeNode);
-                    Function implFunc = funcMap.get(it.next().expr);
+                    Function implFunc = funcMap.get(code.expr);
                     method.attachExt(JavaExts.METHOD_IMPL, implFunc);
                     implFunc.attachExt(JavaExts.FUNCTION_METHOD, method);
                     implFunc.attachExt(JavaExts.FUNCTION_OWNER, jClass);
@@ -263,18 +281,20 @@ public class DefaultFactory implements WirJavaConventionFactory {
                     );
                     jClass.fields.add(field);
                     globals.add(modifyGlobalConvention
-                            .apply(new FieldGlobalConvention(
-                                    ExportableConvention.fieldExporter(field),
-                                    GET_THIS,
-                                    field
-                            )));
+                            .modify(new FieldGlobalConvention(
+                                            ExportableConvention.fieldExporter(field),
+                                            GET_THIS,
+                                            field
+                                    ),
+                                    global,
+                                    globals.size()));
                     lGlobals.add(field);
                 }
             }
 
             if (node.mems != null) {
                 int i = 0;
-                for (MemoryNode ignored : node.mems) {
+                for (MemoryNode memory : node.mems) {
                     JavaExts.JavaField field = new JavaExts.JavaField(
                             jClass,
                             "mem" + i++,
@@ -283,10 +303,12 @@ public class DefaultFactory implements WirJavaConventionFactory {
                     );
                     jClass.fields.add(field);
                     memories.add(modifyMemConvention
-                            .apply(new ByteBufferMemoryConvention(
-                                    ExportableConvention.fieldExporter(field),
-                                    fieldGetter(GET_THIS, field)
-                            )));
+                            .modify(new ByteBufferMemoryConvention(
+                                            ExportableConvention.fieldExporter(field),
+                                            fieldGetter(GET_THIS, field)
+                                    ),
+                                    memory,
+                                    memories.size()));
                     lMemories.add(field);
                 }
             }
@@ -302,10 +324,12 @@ public class DefaultFactory implements WirJavaConventionFactory {
                     );
                     jClass.fields.add(field);
                     tables.add(modifyTableConvention
-                            .apply(new ArrayTableConvention(
-                                    ExportableConvention.fieldExporter(field),
-                                    fieldGetter(GET_THIS, field)
-                            )));
+                            .modify(new ArrayTableConvention(
+                                            ExportableConvention.fieldExporter(field),
+                                            fieldGetter(GET_THIS, field)
+                                    ),
+                                    table,
+                                    tables.size()));
                     lTables.add(field);
                 }
             }
@@ -355,7 +379,7 @@ public class DefaultFactory implements WirJavaConventionFactory {
                 )).insn(IRUtils.getThis(ib)).assignTo());
 
                 if (node.mems != null) {
-                    int i = 0;
+                    int i = iMemories;
                     for (MemoryNode mem : node.mems) {
                         JavaExts.JavaField memField = lMemories.get(i++);
                         Var memV = ib.insert(JavaOps.INVOKE.create(new JavaExts.JavaMethod(
@@ -386,7 +410,7 @@ public class DefaultFactory implements WirJavaConventionFactory {
                 }
 
                 if (node.tables != null) {
-                    int i = 0;
+                    int i = iTables;
                     for (TableNode table : node.tables) {
                         JavaExts.JavaField tableField = lTables.get(i++);
                         InsnList insns = new InsnList();
@@ -403,7 +427,7 @@ public class DefaultFactory implements WirJavaConventionFactory {
                 }
 
                 if (node.globals != null) {
-                    int i = 0;
+                    int i = iGlobals;
                     for (GlobalNode global : node.globals) {
                         JavaExts.JavaField globalField = lGlobals.get(i++);
                         Function globalFunc = funcMap.get(global.init);
@@ -542,14 +566,9 @@ public class DefaultFactory implements WirJavaConventionFactory {
                     }
                 }
 
-                for (ImportFactory<?, ?> factory : Arrays.asList(
-                        functionImports,
-                        globalImports,
-                        memoryImports,
-                        tableImports
-                )) {
-                    factory.modifyConstructor(ib, ctorMethod, jClass);
-                }
+                Stream.of(funcs, globals, tables, memories)
+                        .flatMap(Collection::stream)
+                        .forEach(it -> it.modifyConstructor(ib, ctorMethod, module, jClass));
 
                 if (node.start != null) {
                     FunctionConvention startMethod = funcs.get(node.start);

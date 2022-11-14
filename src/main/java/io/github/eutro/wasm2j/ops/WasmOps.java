@@ -31,6 +31,8 @@ public class WasmOps {
 
     public static final UnaryOpKey</* table */ Integer> TABLE_STORE = new UnaryOpKey<>("table.set");
     public static final UnaryOpKey</* table */ Integer> TABLE_REF = new UnaryOpKey<>("table.ref");
+    public static final UnaryOpKey</* table */ Integer> TABLE_SIZE = new UnaryOpKey<>("table.size");
+    public static final UnaryOpKey</* table */ Integer> TABLE_GROW = new UnaryOpKey<>("table.grow");
 
     public static final UnaryOpKey</* func */ Integer> FUNC_REF = new UnaryOpKey<>("func.ref");
     public static final UnaryOpKey<CallType> CALL = new UnaryOpKey<>("call");

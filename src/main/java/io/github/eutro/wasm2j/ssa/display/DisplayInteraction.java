@@ -107,7 +107,7 @@ public class DisplayInteraction implements Interaction {
                 bbs.forEach((bb, bbElt) -> bbExt.apply(bb).ifPresent(targets -> {
                     String triggerClass = String.format("bb%s-%s", System.identityHashCode(bb), id);
                     for (BasicBlock target : targets) {
-                        Pair<BasicBlock, BasicBlock> edge = new Pair<>(bb, target);
+                        Pair<BasicBlock, BasicBlock> edge = Pair.of(bb, target);
                         Element targetElt = edges.get(edge);
                         if (targetElt == null) continue;
                         String tClass = targetElt.getAttribute("class");

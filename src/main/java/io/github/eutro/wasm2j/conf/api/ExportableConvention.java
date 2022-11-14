@@ -15,6 +15,8 @@ public interface ExportableConvention {
             if (".;[/<>".indexOf(ch) != -1
                     // space is technically allowed, but it's illegal in most JVM languages
                     || Character.isWhitespace(ch)
+                    // same here
+                    || ch == '-'
             ) {
                 sb.append('_');
             } else {
