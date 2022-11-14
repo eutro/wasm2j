@@ -6,28 +6,36 @@ import io.github.eutro.wasm2j.ext.JavaExts;
 import io.github.eutro.wasm2j.ops.CommonOps;
 import io.github.eutro.wasm2j.ops.JavaOps;
 import io.github.eutro.wasm2j.ops.WasmOps;
-import io.github.eutro.wasm2j.ssa.Effect;
-import io.github.eutro.wasm2j.ssa.IRBuilder;
-import io.github.eutro.wasm2j.ssa.Insn;
-import io.github.eutro.wasm2j.ssa.Var;
+import io.github.eutro.wasm2j.ssa.*;
 import io.github.eutro.wasm2j.util.IRUtils;
 import io.github.eutro.wasm2j.util.Instructions;
-import io.github.eutro.wasm2j.util.ValueGetter;
+import io.github.eutro.wasm2j.util.ValueGetterSetter;
+import org.jetbrains.annotations.Nullable;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
 import org.objectweb.asm.tree.InsnList;
 import org.objectweb.asm.tree.InsnNode;
 
 import java.nio.Buffer;
+import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
+import java.util.Arrays;
 
+import static io.github.eutro.jwasm.Opcodes.PAGE_SIZE;
 import static io.github.eutro.wasm2j.ext.CommonExts.markPure;
 
 public class ByteBufferMemoryConvention extends DelegatingExporter implements MemoryConvention {
-    private final ValueGetter buffer;
+    private final ValueGetterSetter buffer;
+    private final @Nullable Integer max;
 
-    public ByteBufferMemoryConvention(ExportableConvention exporter, ValueGetter buffer) {
+    public ByteBufferMemoryConvention(
+            ExportableConvention exporter,
+            ValueGetterSetter buffer,
+            @Nullable Integer max
+    ) {
         super(exporter);
         this.buffer = buffer;
+        this.max = max;
     }
 
     @Override
@@ -42,7 +50,7 @@ public class ByteBufferMemoryConvention extends DelegatingExporter implements Me
                 JavaExts.JavaMethod.Kind.VIRTUAL
         );
         Var ptr = effect.insn().args.get(0);
-        Insn loadInsn = JavaOps.INVOKE.create(toInvoke).insn(getMem(ib), getAddr(ib, wmArg, ptr));
+        Insn loadInsn = JavaOps.INVOKE.create(toInvoke).insn(buffer.get(ib), getAddr(ib, wmArg, ptr));
         if (derefType.ext.insns.size() == 0) {
             ib.insert(loadInsn.copyFrom(effect));
         } else {
@@ -62,7 +70,7 @@ public class ByteBufferMemoryConvention extends DelegatingExporter implements Me
         ib.insert(JavaOps.INSNS
                 .create(insns)
                 .insn(
-                        getMem(ib),
+                        buffer.get(ib),
                         getAddr(ib, wmArg, effect.insn().args.get(1)),
                         effect.insn().args.get(0)
                 )
@@ -78,13 +86,105 @@ public class ByteBufferMemoryConvention extends DelegatingExporter implements Me
                         "()I",
                         JavaExts.JavaMethod.Kind.VIRTUAL
                 ))
-                .insn(getMem(ib))
+                .insn(buffer.get(ib))
                 .copyFrom(effect));
     }
 
+    @SuppressWarnings("CommentedOutCode")
     @Override
     public void emitMemGrow(IRBuilder ib, Effect effect) {
-        ib.insert(CommonOps.CONST.create(0).insn().copyFrom(effect));
+        // This is what we are implementing:
+        /*
+        int sz = theBuf.capacity() / PAGE_SIZE;
+        int newSz = sz + growByPages;
+        int res;
+        if (growByPages < 0 || newSz >= max) {
+            res = -1;
+        } else {
+            try {
+                ByteBuffer newBuf = ByteBuffer
+                        .allocateDirect(theBuf.capacity() + growByPages * PAGE_SIZE)
+                        .order(ByteOrder.LITTLE_ENDIAN);
+                newBuf.duplicate().put(theBuf);
+                theBuf = newBuf;
+                res = sz;
+            } catch (OutOfMemoryError e) {
+                res = -1;
+            }
+        }
+        return res;
+         */
+
+        JavaExts.JavaMethod capacity = JavaExts.JavaMethod.fromJava(ByteBuffer.class, "capacity");
+        JavaExts.JavaMethod duplicate = JavaExts.JavaMethod.fromJava(ByteBuffer.class, "duplicate");
+        Type oome = Type.getType(OutOfMemoryError.class);
+
+        Var growBy = effect.insn().args.get(0);
+        BasicBlock failBlock = ib.func.newBb();
+
+        BasicBlock k = ib.func.newBb();
+        ib.insertCtrl(JavaOps.BR_COND.create(JavaOps.JumpType.IFLT).insn(growBy).jumpsTo(failBlock, k));
+        ib.setBlock(k);
+
+        Var theBuf = buffer.get(ib);
+        Var rawSz = ib.insert(JavaOps.INVOKE.create(capacity).insn(theBuf), "rawSz");
+        Var sz = ib.insert(JavaOps.insns(new InsnNode(Opcodes.IDIV))
+                        .insn(rawSz, ib.insert(CommonOps.CONST.create(PAGE_SIZE).insn(), "psz")),
+                "sz");
+        Var newSz = ib.insert(JavaOps.insns(new InsnNode(Opcodes.IADD))
+                        .insn(sz, growBy),
+                "newSz");
+        if (max != null) {
+            k = ib.func.newBb();
+            ib.insertCtrl(JavaOps.BR_COND.create(JavaOps.JumpType.IF_ICMPGE)
+                    .insn(newSz, ib.insert(CommonOps.CONST.create(max).insn(), "max"))
+                    .jumpsTo(failBlock, k));
+            ib.setBlock(k);
+        }
+        k = ib.func.newBb();
+        BasicBlock catchBlock = ib.func.newBb();
+        ib.insertCtrl(JavaOps.TRY.create(oome).insn().jumpsTo(catchBlock, k));
+        ib.setBlock(k);
+
+        Var newBuf = ib.insert(JavaOps.INVOKE
+                        .create(JavaExts.JavaMethod.fromJava(ByteBuffer.class, "order", ByteOrder.class))
+                        .insn(ib.insert(JavaOps.INVOKE
+                                        .create(JavaExts.JavaMethod.fromJava(ByteBuffer.class, "allocateDirect", int.class))
+                                        .insn(ib.insert(JavaOps.insns(new InsnNode(Opcodes.IADD))
+                                                        .insn(rawSz,
+                                                                ib.insert(JavaOps.insns(new InsnNode(Opcodes.IMUL))
+                                                                                .insn(ib.insert(CommonOps.CONST.create(PAGE_SIZE).insn(), "psz"),
+                                                                                        growBy),
+                                                                        "byRaw")),
+                                                "newSzRaw")),
+                                "newBuf"),
+                                ib.insert(JavaOps.GET_FIELD
+                                        .create(JavaExts.JavaField.fromJava(ByteOrder.class, "LITTLE_ENDIAN"))
+                                        .insn(),
+                                        "order")),
+                "newBufLE");
+        ib.insert(JavaOps.INVOKE
+                        .create(JavaExts.JavaMethod.fromJava(ByteBuffer.class, "put", ByteBuffer.class))
+                        .insn(ib.insert(JavaOps.INVOKE.create(duplicate).insn(newBuf), "dupTgt"),
+                                ib.insert(JavaOps.INVOKE.create(duplicate).insn(theBuf), "dupSrc")),
+                "put");
+        buffer.set(ib, newBuf);
+        BasicBlock end = ib.func.newBb();
+        ib.insertCtrl(Control.br(end));
+        BasicBlock successBlock = ib.getBlock();
+
+        ib.setBlock(catchBlock);
+        ib.insert(JavaOps.CATCH.create(oome).insn(), "oome");
+        ib.insertCtrl(Control.br(failBlock));
+
+        ib.setBlock(failBlock);
+        Var err = ib.insert(CommonOps.CONST.create(-1).insn(), "err");
+        ib.insertCtrl(Control.br(end));
+
+        ib.setBlock(end);
+        ib.insert(CommonOps.PHI.create(Arrays.asList(successBlock, failBlock))
+                .insn(sz, err)
+                .copyFrom(effect));
     }
 
     private Var getAddr(IRBuilder ib, WasmOps.WithMemArg<?> wmArg, Var ptr) {
@@ -95,9 +195,5 @@ public class ByteBufferMemoryConvention extends DelegatingExporter implements Me
                                 ib.insert(CommonOps.CONST.create(wmArg.offset).insn(),
                                         "offset")),
                 "addr");
-    }
-
-    private Var getMem(IRBuilder ib) {
-        return buffer.get(ib);
     }
 }

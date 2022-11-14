@@ -305,7 +305,8 @@ public class DefaultFactory implements WirJavaConventionFactory {
                     memories.add(modifyMemConvention
                             .modify(new ByteBufferMemoryConvention(
                                             ExportableConvention.fieldExporter(field),
-                                            fieldGetter(GET_THIS, field)
+                                            fieldGetter(GET_THIS, field),
+                                            memory.limits.max
                                     ),
                                     memory,
                                     memories.size()));
@@ -316,17 +317,20 @@ public class DefaultFactory implements WirJavaConventionFactory {
             if (node.tables != null) {
                 int i = 0;
                 for (TableNode table : node.tables) {
+                    Type componentType = BasicCallingConvention.javaType(table.type);
                     JavaExts.JavaField field = new JavaExts.JavaField(
                             jClass,
                             "table" + i++,
-                            "[" + BasicCallingConvention.javaType(table.type).getDescriptor(),
+                            "[" + componentType.getDescriptor(),
                             false
                     );
                     jClass.fields.add(field);
                     tables.add(modifyTableConvention
                             .modify(new ArrayTableConvention(
                                             ExportableConvention.fieldExporter(field),
-                                            fieldGetter(GET_THIS, field)
+                                            fieldGetter(GET_THIS, field),
+                                            componentType,
+                                            table.limits.max
                                     ),
                                     table,
                                     tables.size()));

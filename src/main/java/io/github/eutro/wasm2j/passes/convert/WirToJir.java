@@ -8,10 +8,7 @@ import io.github.eutro.wasm2j.ext.MetadataState;
 import io.github.eutro.wasm2j.ext.WasmExts;
 import io.github.eutro.wasm2j.intrinsics.IntrinsicImpl;
 import io.github.eutro.wasm2j.intrinsics.JavaIntrinsics;
-import io.github.eutro.wasm2j.ops.CommonOps;
-import io.github.eutro.wasm2j.ops.JavaOps;
-import io.github.eutro.wasm2j.ops.OpKey;
-import io.github.eutro.wasm2j.ops.WasmOps;
+import io.github.eutro.wasm2j.ops.*;
 import io.github.eutro.wasm2j.passes.InPlaceIRPass;
 import io.github.eutro.wasm2j.passes.misc.ForPass;
 import io.github.eutro.wasm2j.ssa.Module;
@@ -51,17 +48,68 @@ public class WirToJir implements InPlaceIRPass<Module> {
     public static class WirToJirPerFunc implements InPlaceIRPass<Function> {
         private final WirJavaConvention conventions;
         private final CallingConvention callConv;
+        private final Map<BasicBlock, BasicBlock> blockMap = new HashMap<>();
 
         public WirToJirPerFunc(WirJavaConvention conventions, CallingConvention callConv) {
             this.conventions = conventions;
             this.callConv = callConv;
         }
 
+        private void translateBbs(List<BasicBlock> oldBlocks) {
+            ListIterator<BasicBlock> li = oldBlocks.listIterator();
+            while (li.hasNext()) {
+                BasicBlock nextBb = li.next();
+                li.set(blockMap.getOrDefault(nextBb, nextBb));
+            }
+        }
+
         @Override
-        public void runInPlace(Function function) {
-            MetadataState ms = function.getExtOrThrow(CommonExts.METADATA_STATE);
-            ms.ensureValid(function, MetadataState.SSA_FORM);
-            new Runner(function).run();
+        public void runInPlace(Function func) {
+            MetadataState ms = func.getExtOrThrow(CommonExts.METADATA_STATE);
+            ms.ensureValid(func, MetadataState.SSA_FORM);
+
+            ArrayList<BasicBlock> oldBlocks = new ArrayList<>(func.blocks);
+            func.blocks.clear();
+
+            IRBuilder ib = new IRBuilder(func, null);
+            for (BasicBlock block : oldBlocks) {
+                ib.setBlock(func.newBb());
+
+                List<Effect> oldEffects = new ArrayList<>(block.getEffects());
+                block.getEffects().clear();
+                for (Effect effect : oldEffects) {
+                    translateEffect(effect, ib);
+                }
+                translateControl(block.getControl(), ib);
+
+                blockMap.put(block, ib.getBlock());
+            }
+
+            for (BasicBlock block : func.blocks) {
+                for (Effect effect : block.getEffects()) {
+                    Insn insn = effect.insn();
+                    if (insn.op.key != CommonOps.PHI) break;
+                    translateBbs(CommonOps.PHI.cast(insn.op).arg);
+                }
+                translateBbs(block.getControl().targets);
+            }
+        }
+
+        private void translateEffect(Effect fct, IRBuilder jb) {
+            Converter<Effect> cc = FX_CONVERTERS.get(fct.insn().op.key);
+            if (cc == null) {
+                throw new IllegalArgumentException("op: " + fct.insn().op.key + " is not supported");
+            }
+            cc.convert(fct, jb, WirToJirPerFunc.this);
+        }
+
+        private void translateControl(Control ctrl, IRBuilder jb) {
+            Converter<Control> cc = CTRL_CONVERTERS.get(ctrl.insn.op.key);
+            if (cc == null) {
+                throw new IllegalArgumentException(ctrl.insn.op.key + " is not supported");
+            }
+            cc.convert(ctrl, jb, WirToJirPerFunc.this);
+            jb.insertCtrl(ctrl);
         }
 
         private interface Converter<T> {
@@ -176,47 +224,6 @@ public class WirToJir implements InPlaceIRPass<Module> {
                     ctrl.insn.op = JavaOps.BR_COND.create(JavaOps.JumpType.IFNE));
             CTRL_CONVERTERS.put(WasmOps.BR_TABLE.key, (ctrl, jb, slf) ->
                     ctrl.insn.op = ctrl.targets.size() == 1 ? CommonOps.BR : JavaOps.TABLESWITCH.create());
-        }
-
-        private class Runner {
-            public final Function func;
-
-            private Runner(Function func) {
-                this.func = func;
-            }
-
-            void run() {
-                for (BasicBlock block : func.blocks) {
-                    processBlock(block);
-                }
-            }
-
-            private void processBlock(BasicBlock bb) {
-                IRBuilder ib = new IRBuilder(func, bb);
-
-                List<Effect> oldEffects = new ArrayList<>(bb.getEffects());
-                bb.getEffects().clear();
-                for (Effect effect : oldEffects) {
-                    translateEffect(effect, ib);
-                }
-                translateControl(bb.getControl(), ib);
-            }
-
-            private void translateEffect(Effect fct, IRBuilder jb) {
-                Converter<Effect> cc = FX_CONVERTERS.get(fct.insn().op.key);
-                if (cc == null) {
-                    throw new IllegalArgumentException("op: " + fct.insn().op.key + " is not supported");
-                }
-                cc.convert(fct, jb, WirToJirPerFunc.this);
-            }
-
-            private void translateControl(Control ctrl, IRBuilder jb) {
-                Converter<Control> cc = CTRL_CONVERTERS.get(ctrl.insn.op.key);
-                if (cc == null) {
-                    throw new IllegalArgumentException(ctrl.insn.op.key + " is not supported");
-                }
-                cc.convert(ctrl, jb, WirToJirPerFunc.this);
-            }
         }
     }
 }

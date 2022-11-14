@@ -14,7 +14,7 @@ public interface Table {
 
     int size();
 
-    default int grow(int by, @Nullable Object with) {
+    default int grow(int growBy, @Nullable Object fillWith) {
         return -1;
     }
 
@@ -45,20 +45,20 @@ public interface Table {
         }
 
         @Override
-        public int grow(int by, @Nullable Object with) {
-            if ((max != null && by > max) || by < 0) {
+        public int grow(int growBy, @Nullable Object fillWith) {
+            if ((max != null && growBy > max) || growBy < 0) {
                 return -1;
             }
             Object[] values = getValues();
             int sz = values.length;
             Object[] newValues;
             try {
-                newValues = Arrays.copyOf(values, sz + by);
+                newValues = Arrays.copyOf(values, sz + growBy);
             } catch (OutOfMemoryError ignored) {
                 return -1;
             }
-            if (with != null) {
-                Arrays.fill(newValues, sz, sz + by, with);
+            if (fillWith != null) {
+                Arrays.fill(newValues, sz, sz + growBy, fillWith);
             }
             setValues(newValues);
             return sz;
@@ -126,9 +126,9 @@ public interface Table {
         }
 
         @Override
-        public int grow(int by, @Nullable Object with) {
+        public int grow(int growBy, @Nullable Object fillWith) {
             try {
-                return (int) grow.invokeExact(by, with);
+                return (int) grow.invokeExact(growBy, fillWith);
             } catch (Throwable t) {
                 throw Utils.rethrow(t);
             }

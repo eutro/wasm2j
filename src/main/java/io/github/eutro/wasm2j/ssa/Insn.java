@@ -44,7 +44,11 @@ public final class Insn extends DelegatingExtHolder {
     }
 
     public Control jumpsTo(BasicBlock... targets) {
-        return new Control(this, Arrays.asList(targets));
+        return jumpsTo(Arrays.asList(targets));
+    }
+
+    public Control jumpsTo(List<BasicBlock> targets) {
+        return new Control(this, targets);
     }
 
     public Effect copyFrom(Effect fx) {

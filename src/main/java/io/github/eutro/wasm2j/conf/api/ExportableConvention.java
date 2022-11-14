@@ -9,6 +9,9 @@ public interface ExportableConvention {
     void export(ExportNode node, Module module, JavaExts.JavaClass jClass);
 
     static String mangle(String name) {
+        if (name.isEmpty()) {
+            return "epsilon";
+        }
         StringBuilder sb = new StringBuilder();
         for (int i = 0; i < name.length(); i = name.offsetByCodePoints(i, 1)) {
             int ch = name.codePointAt(i);

@@ -158,6 +158,11 @@ public class JirToJava implements IRPass<Module, ClassNode> {
             if (isFirst) {
                 isFirst = false;
                 frameNode = null;
+            } else if (block.getEffects().size() >= 1 &&
+                    block.getEffects().get(0).insn().op.key == JavaOps.CATCH) {
+                Type ty = JavaOps.CATCH.cast(block.getEffects().get(0).insn().op).arg;
+                mn.visitFrame(Opcodes.F_SAME1, locals.length, null, 1, new Object[]{ty.getInternalName()});
+                frameNode = mn.instructions.getLast();
             } else {
                 mn.visitFrame(Opcodes.F_SAME, locals.length, null, 0, null);
                 frameNode = mn.instructions.getLast();
@@ -260,6 +265,7 @@ public class JirToJava implements IRPass<Module, ClassNode> {
         });
         FX_CONVERTERS.put(JavaOps.INSNS, (jb, fx) ->
                 JavaOps.INSNS.cast(fx.insn().op).arg.accept(jb));
+        FX_CONVERTERS.put(JavaOps.CATCH, (jb, fx) -> {/* noop, pop from stack */});
         FX_CONVERTERS.put(JavaOps.THIS.key, (jb, fx) ->
                 jb.loadThis());
         FX_CONVERTERS.put(JavaOps.GET_FIELD, (jb, fx) -> {
@@ -348,6 +354,17 @@ public class JirToJava implements IRPass<Module, ClassNode> {
                     ct.targets.get(ct.targets.size() - 1).getExtOrThrow(LABEL_EXT),
                     JavaOps.LOOKUPSWITCH.cast(ct.insn.op).arg,
                     labels
+            );
+        });
+        CTRL_CONVERTERS.put(JavaOps.TRY, (jb, ct) -> {
+            BasicBlock catchingBlock = ct.targets.get(0);
+            BasicBlock tryingBlock = ct.targets.get(1);
+            jb.visitTryCatchBlock(
+                    tryingBlock.getExtOrThrow(LABEL_EXT),
+                    tryingBlock.getExtOrThrow(NEXT_BLOCK_EXT) // must be nonnull
+                            .getExtOrThrow(LABEL_EXT),
+                    catchingBlock.getExtOrThrow(LABEL_EXT),
+                    JavaOps.TRY.cast(ct.insn.op).arg.getInternalName()
             );
         });
         CTRL_CONVERTERS.put(CommonOps.UNREACHABLE.key, (jb, ct) ->

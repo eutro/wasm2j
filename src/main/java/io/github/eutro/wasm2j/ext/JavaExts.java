@@ -78,7 +78,7 @@ public class JavaExts {
             try {
                 return fromJava(new JavaClass(Type.getInternalName(owner)),
                         owner.getMethod(name, parameterTypes));
-            } catch (ReflectiveOperationException e) {
+            } catch (NoSuchMethodException e) {
                 throw new RuntimeException(e);
             }
         }
@@ -152,6 +152,14 @@ public class JavaExts {
                     Type.getDescriptor(field.getType()),
                     Modifier.isStatic(field.getModifiers())
             );
+        }
+
+        public static JavaField fromJava(Class<?> clazz, String name) {
+            try {
+                return fromJava(new JavaClass(Type.getInternalName(clazz)), clazz.getField(name));
+            } catch (NoSuchFieldException e) {
+                throw new RuntimeException(e);
+            }
         }
 
         @Override

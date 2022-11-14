@@ -6,6 +6,7 @@ import io.github.eutro.wasm2j.util.Disassembler;
 import io.github.eutro.wasm2j.ext.JavaExts.*;
 import org.jetbrains.annotations.Nullable;
 import org.objectweb.asm.Opcodes;
+import org.objectweb.asm.Type;
 import org.objectweb.asm.tree.AbstractInsnNode;
 import org.objectweb.asm.tree.InsnList;
 
@@ -14,6 +15,11 @@ public class JavaOps {
 
     public static final SimpleOpKey TABLESWITCH = new SimpleOpKey("tableswitch");
     public static final UnaryOpKey<int[]> LOOKUPSWITCH = new UnaryOpKey<>("lookupswitch");
+
+    // control instruction to introduce a try block, "jumps" to the first target in the case of an exception
+    public static final UnaryOpKey<Type> TRY = new UnaryOpKey<>("try");
+    // must be the first instruction in a catch block (since it pops the exn off the stack)
+    public static final UnaryOpKey<Type> CATCH = new UnaryOpKey<>("catch");
 
     public static final Op THIS = new SimpleOpKey("this").create();
 
