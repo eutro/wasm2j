@@ -2,9 +2,11 @@ package io.github.eutro.wasm2j.intrinsics;
 
 import static io.github.eutro.jwasm.Opcodes.*;
 
-// @formatter:off
 public final class Impl {
     private static final double MAX_ULONG = (double) Long.MAX_VALUE * 2d;
+    public static final long MAX_UINT = 0xFFFFFFFFL;
+
+    // @formatter:off
 
     // region i32
     @Intrinsic(I32_EQZ) public static int i32Eqz(int x) { return x == 0 ? 1 : 0; }
@@ -134,7 +136,7 @@ public final class Impl {
     @Intrinsic(I32_TRUNC_F32_U) public static int i32TruncF32U(float x) {
         if (Float.isNaN(x) || Float.isInfinite(x)) throw new ArithmeticException();
         float trunc = (float) (x < 0 ? Math.ceil(x) : Math.floor(x));
-        if (trunc < 0 || trunc > 0xFFFFFFFFL) throw new ArithmeticException();
+        if (trunc < 0 || trunc > MAX_UINT) throw new ArithmeticException();
         return (int) (long) trunc;
     }
     @Intrinsic(I32_TRUNC_F64_S) public static int i32TruncF64S(double x) {
@@ -146,8 +148,8 @@ public final class Impl {
     @Intrinsic(I32_TRUNC_F64_U) public static int i32TruncF64U(double x) {
         if (Double.isNaN(x) || Double.isInfinite(x)) throw new ArithmeticException();
         double trunc = x < 0 ? Math.ceil(x) : Math.floor(x);
-        if (trunc < 0 || trunc > 0xFFFFFFFFL) throw new ArithmeticException();
-        return (int) trunc;
+        if (trunc < 0 || trunc > MAX_UINT) throw new ArithmeticException();
+        return (int) (long) trunc;
     }
     @Intrinsic(I64_EXTEND_I32_S) public static long i64ExtendI32S(int x) { return x; }
     @Intrinsic(I64_EXTEND_I32_U) public static long i64ExtendI32U(int x) { return Integer.toUnsignedLong(x); }
@@ -161,19 +163,21 @@ public final class Impl {
         if (Float.isNaN(x) || Float.isInfinite(x)) throw new ArithmeticException();
         float trunc = (float) (x < 0 ? Math.ceil(x) : Math.floor(x));
         if (trunc < 0 || trunc > MAX_ULONG) throw new ArithmeticException();
-        return (int) (long) trunc;
+        if (trunc >= Long.MAX_VALUE - 1) return (long) (trunc / 2F) * 2L;
+        return (long) trunc;
     }
     @Intrinsic(I64_TRUNC_F64_S) public static long i64TruncF64S(double x) {
         if (Double.isNaN(x) || Double.isInfinite(x)) throw new ArithmeticException();
         double trunc = x < 0 ? Math.ceil(x) : Math.floor(x);
         if (trunc < Long.MIN_VALUE || trunc > Long.MAX_VALUE) throw new ArithmeticException();
-        return (int) trunc;
+        return (long) trunc;
     }
     @Intrinsic(I64_TRUNC_F64_U) public static long i64TruncF64U(double x) {
         if (Double.isNaN(x) || Double.isInfinite(x)) throw new ArithmeticException();
         double trunc = x < 0 ? Math.ceil(x) : Math.floor(x);
         if (trunc < 0 || trunc > MAX_ULONG) throw new ArithmeticException();
-        return (int) trunc;
+        if (trunc >= Long.MAX_VALUE - 1) return (long) (trunc / 2D) * 2L;
+        return (long) trunc;
     }
     @Intrinsic(F32_CONVERT_I32_S) public static float f32ConvertI32S(int x) { return (float) x; }
     @Intrinsic(F32_CONVERT_I32_U) public static float f32ConvertI32U(int x) { return (float) Integer.toUnsignedLong(x); }
@@ -200,21 +204,31 @@ public final class Impl {
     // endregion
     // region Saturating Truncation
     @Intrinsic(iOp = I32_TRUNC_SAT_F32_S) public static int i32TruncSatF32S(float x) { return (int) x; }
-    @Intrinsic(iOp = I32_TRUNC_SAT_F32_U) public static int i32TruncSatF32U(float x) { return x < 0 ? 0 : (int) (long) x; }
+    @Intrinsic(iOp = I32_TRUNC_SAT_F32_U) public static int i32TruncSatF32U(float x) {
+        if (!(x >= 0)) return 0;
+        if (x >= MAX_UINT) return -1;
+        return (int) (long) x;
+    }
     @Intrinsic(iOp = I32_TRUNC_SAT_F64_S) public static int i32TruncSatF64S(double x) { return (int) x; }
-    @Intrinsic(iOp = I32_TRUNC_SAT_F64_U) public static int i32TruncSatF64U(double x) { return x < 0 ? 0 : (int) (long) x; }
+    @Intrinsic(iOp = I32_TRUNC_SAT_F64_U) public static int i32TruncSatF64U(double x) {
+        if (!(x >= 0)) return 0;
+        if (x >= MAX_UINT) return -1;
+        return (int) (long) x;
+    }
     @Intrinsic(iOp = I64_TRUNC_SAT_F32_S) public static long i64TruncSatF32S(float x) { return (long) x; }
     // see Kotlin https://github.com/JetBrains/kotlin/blob/master/libraries/stdlib/unsigned/src/kotlin/UnsignedUtils.kt
     @Intrinsic(iOp = I64_TRUNC_SAT_F32_U) public static long i64TruncSatF32U(float x) {
         if (!(x >= 0)) return 0;
         if (x >= MAX_ULONG) return -1;
-        return (long) (x + Long.MIN_VALUE) - Long.MIN_VALUE;
+        if (x >= Long.MAX_VALUE - 1) return (long) (x / 2F) * 2L;
+        return (long) x;
     }
     @Intrinsic(iOp = I64_TRUNC_SAT_F64_S) public static long i64TruncSatF64S(double x) { return (long) x; }
     @Intrinsic(iOp = I64_TRUNC_SAT_F64_U) public static long i64TruncSatF64U(double x) {
         if (!(x >= 0)) return 0;
         if (x >= MAX_ULONG) return -1;
-        return (long) (x + Long.MIN_VALUE) - Long.MIN_VALUE;
+        if (x >= Long.MAX_VALUE - 1) return (long) (x / 2D) * 2L;
+        return (long) x;
     }
     // endregion
 }

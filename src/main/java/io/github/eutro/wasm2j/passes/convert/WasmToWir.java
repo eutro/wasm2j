@@ -589,7 +589,7 @@ public class WasmToWir implements IRPass<ModuleNode, Module> {
                 .insn().assignTo(cs.pushVar())));
     }
 
-    private static Converter makeOpInsn(int arity, byte returnType) {
+    private static Converter makeOpInsn(int arity) {
         return (cs, node, topB) -> {
             cs.popVs(arity);
             Var[] args = new Var[arity];
@@ -603,8 +603,7 @@ public class WasmToWir implements IRPass<ModuleNode, Module> {
                                     ? ((PrefixInsnNode) node).intOpcode
                                     : node instanceof VectorInsnNode
                                     ? ((VectorInsnNode) node).intOpcode
-                                    : 0,
-                            returnType
+                                    : 0
                     )).insn(args)
                     .assignTo(cs.pushVar()));
         };
@@ -617,15 +616,16 @@ public class WasmToWir implements IRPass<ModuleNode, Module> {
             assert attrs != null;
             switch (attrs.getVisitTarget()) {
                 case Insn:
+                case PrefixInsn:
                 case VectorInsn: {
                     StackType type = attrs.getType();
-                    if (type == null || type.pushes.length != 1) {
+                    if (type == null) {
                         throw new IllegalStateException("Insn: " + attrs.getMnemonic());
                     }
                     CONVERTERS.put(
                             opc.opcode,
                             opc.intOpcode,
-                            makeOpInsn(type.pops.length, type.pushes[0])
+                            makeOpInsn(type.pops.length)
                     );
                     break;
                 }

@@ -382,6 +382,10 @@ public class DefaultFactory implements WirJavaConventionFactory {
                         JavaExts.JavaMethod.Kind.FINAL
                 )).insn(IRUtils.getThis(ib)).assignTo());
 
+                Stream.of(funcs, globals, tables, memories)
+                        .flatMap(Collection::stream)
+                        .forEach(it -> it.modifyConstructor(ib, ctorMethod, module, jClass));
+
                 if (node.mems != null) {
                     int i = iMemories;
                     for (MemoryNode mem : node.mems) {
@@ -568,10 +572,6 @@ public class DefaultFactory implements WirJavaConventionFactory {
                         }
                     }
                 }
-
-                Stream.of(funcs, globals, tables, memories)
-                        .flatMap(Collection::stream)
-                        .forEach(it -> it.modifyConstructor(ib, ctorMethod, module, jClass));
 
                 if (node.start != null) {
                     FunctionConvention startMethod = funcs.get(node.start);

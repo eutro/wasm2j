@@ -15,24 +15,8 @@ public class SpecTest {
 
     public static final File DEBUG_OUTPUT_DIRECTORY = new File("build/wasmout");
     public static final String SOURCE = "" +
-            "(module\n" +
-            "  (table $i (import \"spectest\" \"table\") 1 2 funcref)\n" +
-            "  (memory $m (import \"spectest\" \"memory\") 1 2)\n" +
-            "  (table (export \"table\") 1 funcref)\n" +
-            "  (func $f)\n" +
-            "  (global funcref (ref.func $f))\n" +
-            "  (func (export \"testops\") (result funcref i32 i32)\n" +
-            "    (table.set $i (i32.const 0) (ref.func $f))\n" +
-            "    (table.get $i (i32.const 0))\n" +
-            "    (table.grow $i (ref.null func) (i32.const 1))\n" +
-            "    (table.size $i))\n" +
-            "" +
-            "  (global (export \"const-global\") externref (ref.null extern))\n" +
-            "  (global (export \"mut-global\") (mut i32) (i32.const 10))\n" +
-            "" +
-            "  (func (export \"grow\") (param $by i32) (result i32)" +
-            "    (memory.grow (local.get $by)))\n" +
-            ")\n" +
+            "(module (memory (data \"x\")) (func (export \"memsize\") (result i32) (memory.size)))\n" +
+            "(assert_return (invoke \"memsize\") (i32.const 1))\n" +
             "\n";
 
     @Test

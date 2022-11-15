@@ -289,12 +289,10 @@ public class WasmOps {
     public static class OperatorType {
         public byte op;
         public int intOp;
-        public byte returnType;
 
-        public OperatorType(byte op, int intOp, byte returnType) {
+        public OperatorType(byte op, int intOp) {
             this.op = op;
             this.intOp = intOp;
-            this.returnType = returnType;
         }
 
         @Override

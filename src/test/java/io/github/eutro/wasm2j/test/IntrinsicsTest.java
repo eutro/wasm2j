@@ -14,6 +14,7 @@ import io.github.eutro.wasm2j.ssa.Function;
 import io.github.eutro.wasm2j.ssa.Module;
 import io.github.eutro.wasm2j.ssa.display.DisplayInteraction;
 import io.github.eutro.wasm2j.ssa.display.SSADisplay;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.objectweb.asm.ClassWriter;
 import org.objectweb.asm.tree.ClassNode;
@@ -77,7 +78,7 @@ public class IntrinsicsTest {
             node.accept(cw);
             byte[] classBytes = cw.toByteArray();
             File fileName = new File("build/jbytes/" + intr.method.name + ".class");
-            fileName.getParentFile().mkdirs();
+            boolean ignored = fileName.getParentFile().mkdirs();
             try (FileOutputStream os = new FileOutputStream(fileName)) {
                 os.write(classBytes);
             }
@@ -120,19 +121,21 @@ public class IntrinsicsTest {
             invokers.add(handle);
         }
 
-        List<List<Object>> allResults = new ArrayList<>();
         for (MethodHandle invoker : invokers) {
-            Object[] results = new Object[LOOP_COUNT];
             for (int i = 0; i < LOOP_COUNT; i++) {
                 try {
-                    results[i] = invoker.invoke();
+                    invoker.invoke();
                 } catch (Throwable t) {
                     t.printStackTrace();
                 }
             }
-            allResults.add(Arrays.asList(results));
         }
-        // System.out.println(allResults);
+    }
+
+    @Test
+    void testIntrinsicsValues() {
+        Assertions.assertEquals(1L, Impl.i64TruncF32U(1F));
+        Assertions.assertEquals(0x8000000000000000L, Impl.i64TruncF64U(9.223372036854776E18));
     }
 
     public static void main(String[] args) throws Throwable {
