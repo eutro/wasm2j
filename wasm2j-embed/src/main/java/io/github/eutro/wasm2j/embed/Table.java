@@ -46,11 +46,14 @@ public interface Table {
 
         @Override
         public int grow(int growBy, @Nullable Object fillWith) {
-            if ((max != null && growBy > max) || growBy < 0) {
+            if (growBy < 0) {
                 return -1;
             }
             Object[] values = getValues();
             int sz = values.length;
+            if (max != null && sz + growBy > max) {
+                return -1;
+            }
             Object[] newValues;
             try {
                 newValues = Arrays.copyOf(values, sz + growBy);

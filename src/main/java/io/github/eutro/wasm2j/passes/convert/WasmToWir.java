@@ -9,8 +9,6 @@ import io.github.eutro.wasm2j.ext.CommonExts;
 import io.github.eutro.wasm2j.ext.WasmExts;
 import io.github.eutro.wasm2j.ops.CommonOps;
 import io.github.eutro.wasm2j.ops.WasmOps;
-import io.github.eutro.wasm2j.ops.WasmOps.DerefType.ExtType;
-import io.github.eutro.wasm2j.ops.WasmOps.DerefType.LoadType;
 import io.github.eutro.wasm2j.ops.WasmOps.StoreType;
 import io.github.eutro.wasm2j.passes.IRPass;
 import io.github.eutro.wasm2j.ssa.Module;
@@ -529,57 +527,38 @@ public class WasmToWir implements IRPass<ModuleNode, Module> {
         */
     }
 
-    private static Converter makeLoadInsn(byte outType, LoadType load, ExtType ext) {
-        return (cs, node, topB) -> topB.addEffect(WasmOps.MEM_LOAD
-                .create(new WasmOps.WithMemArg<>(
-                        new WasmOps.DerefType(outType, load, ext),
-                        ((MemInsnNode) node).offset))
-                .insn(cs.popVar())
-                .assignTo(cs.pushVar()));
+    static {
+        CONVERTERS.putByte(
+                new byte[]{
+                        I32_LOAD, I64_LOAD, F32_LOAD, F64_LOAD,
+                        I32_LOAD8_S, I32_LOAD8_U, I32_LOAD16_S, I32_LOAD16_U,
+                        I64_LOAD8_S, I64_LOAD8_U,
+                        I64_LOAD16_S, I64_LOAD16_U,
+                        I64_LOAD32_S, I64_LOAD32_U
+                },
+                (cs, node, topB) -> topB.addEffect(WasmOps.MEM_LOAD
+                        .create(new WasmOps.WithMemArg<>(
+                                WasmOps.DerefType.fromOpcode(node.opcode),
+                                ((MemInsnNode) node).offset))
+                        .insn(cs.popVar())
+                        .assignTo(cs.pushVar())));
     }
 
     static {
-        CONVERTERS.putByte(I32_LOAD, makeLoadInsn(I32, LoadType.I32, ExtType.NOEXT));
-        CONVERTERS.putByte(I64_LOAD, makeLoadInsn(I64, LoadType.I64, ExtType.NOEXT));
-        CONVERTERS.putByte(F32_LOAD, makeLoadInsn(F32, LoadType.F32, ExtType.NOEXT));
-        CONVERTERS.putByte(F64_LOAD, makeLoadInsn(F64, LoadType.F64, ExtType.NOEXT));
-
-        CONVERTERS.putByte(I32_LOAD8_S, makeLoadInsn(I32, LoadType.I8, ExtType.S8_32));
-        CONVERTERS.putByte(I32_LOAD8_U, makeLoadInsn(I32, LoadType.I8, ExtType.U8_32));
-        CONVERTERS.putByte(I32_LOAD16_S, makeLoadInsn(I32, LoadType.I16, ExtType.S16_32));
-        CONVERTERS.putByte(I32_LOAD16_U, makeLoadInsn(I32, LoadType.I16, ExtType.U16_32));
-
-        CONVERTERS.putByte(I64_LOAD8_S, makeLoadInsn(I64, LoadType.I8, ExtType.S8_64));
-        CONVERTERS.putByte(I64_LOAD8_U, makeLoadInsn(I64, LoadType.I8, ExtType.U8_64));
-        CONVERTERS.putByte(I64_LOAD16_S, makeLoadInsn(I64, LoadType.I16, ExtType.S16_64));
-        CONVERTERS.putByte(I64_LOAD16_U, makeLoadInsn(I64, LoadType.I16, ExtType.U16_64));
-        CONVERTERS.putByte(I64_LOAD32_S, makeLoadInsn(I64, LoadType.I32, ExtType.S32_64));
-        CONVERTERS.putByte(I64_LOAD32_U, makeLoadInsn(I64, LoadType.I32, ExtType.U32_64));
-    }
-
-    private static Converter makeStoreInsn(StoreType storeType) {
-        return (cs, node, topB) -> topB.addEffect(WasmOps.MEM_STORE
-                .create(new WasmOps.WithMemArg<>(storeType, ((MemInsnNode) node).offset))
-                .insn(
-                        cs.popVar(), // value
-                        cs.popVar() // addr
-                )
-                .assignTo()
-        );
-    }
-
-    static {
-        CONVERTERS.putByte(I32_STORE, makeStoreInsn(StoreType.I32));
-        CONVERTERS.putByte(I64_STORE, makeStoreInsn(StoreType.I64));
-        CONVERTERS.putByte(F32_STORE, makeStoreInsn(StoreType.F32));
-        CONVERTERS.putByte(F64_STORE, makeStoreInsn(StoreType.F64));
-
-        CONVERTERS.putByte(I32_STORE8, makeStoreInsn(StoreType.I32_8));
-        CONVERTERS.putByte(I32_STORE16, makeStoreInsn(StoreType.I32_16));
-
-        CONVERTERS.putByte(I64_STORE8, makeStoreInsn(StoreType.I64_8));
-        CONVERTERS.putByte(I64_STORE16, makeStoreInsn(StoreType.I64_16));
-        CONVERTERS.putByte(I64_STORE32, makeStoreInsn(StoreType.I64_32));
+        CONVERTERS.putByte(new byte[]{
+                I32_STORE, I64_STORE, F32_STORE, F64_STORE,
+                I32_STORE8, I32_STORE16,
+                I64_STORE8, I64_STORE16, I64_STORE32
+        }, (cs, node, topB) -> {
+            Var value = cs.popVar();
+            Var addr = cs.popVar();
+            topB.addEffect(WasmOps.MEM_STORE
+                    .create(new WasmOps.WithMemArg<>(StoreType.fromOpcode(node.opcode),
+                            ((MemInsnNode) node).offset))
+                    .insn(addr, value)
+                    .assignTo()
+            );
+        });
     }
 
     static {

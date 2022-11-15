@@ -36,6 +36,10 @@ public class Handlify implements IRPass<Function, @Nullable Function> {
             "constant",
             "(Ljava/lang/Class;Ljava/lang/Object;)Ljava/lang/invoke/MethodHandle;",
             JavaExts.JavaMethod.Kind.STATIC);
+    private static final JavaExts.JavaMethod MH_IDENTITY = new JavaExts.JavaMethod(METHOD_HANDLES_CLASS,
+            "identity",
+            "(Ljava/lang/Class;)Ljava/lang/invoke/MethodHandle;",
+            JavaExts.JavaMethod.Kind.STATIC);
     private static final JavaExts.JavaMethod MH_PERMUTE_ARGUMENTS = JavaExts.JavaMethod.fromJava(MethodHandles.class,
             "permuteArguments",
             MethodHandle.class,
@@ -274,11 +278,7 @@ public class Handlify implements IRPass<Function, @Nullable Function> {
                     return ib -> {
                         Var arg = insn.args.get(0);
                         Type type = arg.getExtOrThrow(JavaExts.TYPE);
-                        return ib.insert(JavaOps.INVOKE
-                                        .create(new JavaExts.JavaMethod(METHOD_HANDLES_CLASS,
-                                                "identity",
-                                                "(Ljava/lang/Class;)Ljava/lang/invoke/MethodHandle;",
-                                                JavaExts.JavaMethod.Kind.STATIC))
+                        return ib.insert(JavaOps.INVOKE.create(MH_IDENTITY)
                                         .insn(ib.insert(IRUtils.loadClass(type), "ty")),
                                 "id");
                     };
@@ -351,6 +351,10 @@ public class Handlify implements IRPass<Function, @Nullable Function> {
                             "(Ljava/lang/Object;)I",
                             false)),
                             "arraylength");
+                case Opcodes.POP:
+                    return ib -> dropResult(ib, ib.insert(JavaOps.INVOKE.create(MH_IDENTITY)
+                                    .insn(ib.insert(IRUtils.loadClass(Type.getType(Object.class)), "ty")),
+                            "id"));
             }
             return null;
         });

@@ -16,6 +16,14 @@ public interface Global {
     class BoxGlobal implements Global {
         private Object value;
 
+        public BoxGlobal() {
+            this(null);
+        }
+
+        public BoxGlobal(Object value) {
+            this.value = value;
+        }
+
         @Override
         public Object get() {
             return value;

@@ -34,11 +34,25 @@ public class ExecutingWastVisitor extends WastVisitor {
 
     {
         // https://github.com/WebAssembly/spec/tree/main/interpreter#spectest-host-module
-        Table.ArrayTable table = new Table.ArrayTable(1, 2);
+        ExternVal globalI32 = ExternVal.global(new Global.BoxGlobal(0));
+        ExternVal globalI64 = ExternVal.global(new Global.BoxGlobal(0L));
+        ExternVal globalF32 = ExternVal.global(new Global.BoxGlobal(0F));
+        ExternVal globalF64 = ExternVal.global(new Global.BoxGlobal(0D));
+        Table.ArrayTable table = new Table.ArrayTable(10, 20);
         registered.put("spectest", name -> {
             switch (name) {
+                case "global_i32":
+                    return globalI32;
+                case "global_i64":
+                    return globalI64;
+                case "global_f32":
+                    return globalF32;
+                case "global_f64":
+                    return globalF64;
                 case "table":
                     return ExternVal.table(table);
+                case "memory":
+                    return ExternVal.memory(new Memory.ByteBufferMemory(1, 2));
                 case "print":
                     return ExternVal.func(() -> System.out.println());
                 case "print_i32":

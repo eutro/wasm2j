@@ -15,6 +15,9 @@ import org.objectweb.asm.tree.MethodInsnNode;
 
 import java.nio.ByteBuffer;
 
+import static io.github.eutro.jwasm.Opcodes.*;
+import static io.github.eutro.jwasm.Opcodes.I64;
+
 public class WasmOps {
     // break convention is that the last target is the fallback, while the first targets are taken conditionally
     public static final Op BR_IF = new SimpleOpKey("br_if").create();
@@ -97,8 +100,10 @@ public class WasmOps {
         public byte outType;
         public LoadType load;
         public ExtType ext;
+        private final byte opcode;
 
-        public DerefType(byte outType, LoadType load, ExtType ext) {
+        public DerefType(byte opcode, byte outType, LoadType load, ExtType ext) {
+            this.opcode = opcode;
             this.outType = outType;
             this.load = load;
             this.ext = ext;
@@ -107,6 +112,33 @@ public class WasmOps {
         @Override
         public String toString() {
             return String.format("(%s) load %s", ext, load);
+        }
+
+        public static DerefType fromOpcode(byte opcode) {
+            switch (opcode) {
+                // @formatter:off
+                case I32_LOAD: return new DerefType(I32_LOAD, I32, LoadType.I32, ExtType.NOEXT);
+                case I64_LOAD: return new DerefType(I64_LOAD, I64, LoadType.I64, ExtType.NOEXT);
+                case F32_LOAD: return new DerefType(F32_LOAD, F32, LoadType.F32, ExtType.NOEXT);
+                case F64_LOAD: return new DerefType(F64_LOAD, F64, LoadType.F64, ExtType.NOEXT);
+                case I32_LOAD8_S: return new DerefType(I32_LOAD8_S, I32, LoadType.I8, ExtType.S8_32);
+                case I32_LOAD8_U: return new DerefType(I32_LOAD8_U, I32, LoadType.I8, ExtType.U8_32);
+                case I32_LOAD16_S: return new DerefType(I32_LOAD16_S, I32, LoadType.I16, ExtType.S16_32);
+                case I32_LOAD16_U: return new DerefType(I32_LOAD16_U, I32, LoadType.I16, ExtType.U16_32);
+                case I64_LOAD8_S: return new DerefType(I64_LOAD8_S, I64, LoadType.I8, ExtType.S8_64);
+                case I64_LOAD8_U: return new DerefType(I64_LOAD8_U, I64, LoadType.I8, ExtType.U8_64);
+                case I64_LOAD16_S: return new DerefType(I64_LOAD16_S, I64, LoadType.I16, ExtType.S16_64);
+                case I64_LOAD16_U: return new DerefType(I64_LOAD16_U, I64, LoadType.I16, ExtType.U16_64);
+                case I64_LOAD32_S: return new DerefType(I64_LOAD32_S, I64, LoadType.I32, ExtType.S32_64);
+                case I64_LOAD32_U: return new DerefType(I64_LOAD32_U, I64, LoadType.I32, ExtType.U32_64);
+                // @formatter:on
+                default:
+                    throw new IllegalArgumentException();
+            }
+        }
+
+        public byte getOpcode() {
+            return opcode;
         }
 
         public enum LoadType {
@@ -184,9 +216,63 @@ public class WasmOps {
 
         public final InsnList insns = new InsnList();
 
+        public byte getType() {
+            switch (this) {
+                case F32:
+                    return io.github.eutro.jwasm.Opcodes.F32;
+                case F64:
+                    return io.github.eutro.jwasm.Opcodes.F64;
+                case I32_8:
+                case I32_16:
+                case I32:
+                    return io.github.eutro.jwasm.Opcodes.I32;
+                case I64_8:
+                case I64_16:
+                case I64_32:
+                case I64:
+                    return io.github.eutro.jwasm.Opcodes.I64;
+                default:
+                    throw new IllegalArgumentException();
+            }
+        }
+
         StoreType(int ext, String name, String desc) {
             this(name, desc);
             insns.insert(new InsnNode(ext));
+        }
+
+        public static StoreType fromOpcode(byte opcode) {
+            switch (opcode) {
+                // @formatter:off
+                case I32_STORE: return I32;
+                case I64_STORE: return I64;
+                case F32_STORE: return F32;
+                case F64_STORE: return F64;
+                case I32_STORE8: return I32_8;
+                case I32_STORE16: return I32_16;
+                case I64_STORE8: return I64_8;
+                case I64_STORE16: return I64_16;
+                case I64_STORE32: return I64_32;
+                // @formatter:on
+                default:
+                    throw new IllegalArgumentException();
+            }
+        }
+
+        public byte getOpcode() {
+            switch (this) {
+                case I32: return I32_STORE;
+                case I64: return I64_STORE;
+                case F32: return F32_STORE;
+                case F64: return F64_STORE;
+                case I32_8: return I32_STORE8;
+                case I32_16: return I32_STORE16;
+                case I64_8: return I64_STORE8;
+                case I64_16: return I64_STORE16;
+                case I64_32: return I64_STORE32;
+                default:
+                    throw new IllegalStateException();
+            }
         }
 
         StoreType(String name, String desc) {

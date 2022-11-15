@@ -28,10 +28,13 @@ import io.github.eutro.wasm2j.ssa.*;
 import io.github.eutro.wasm2j.util.IRUtils;
 import io.github.eutro.wasm2j.util.ValueGetter;
 import io.github.eutro.wasm2j.util.ValueGetterSetter;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
 import org.objectweb.asm.tree.ClassNode;
+import org.objectweb.asm.tree.InsnNode;
+import org.objectweb.asm.tree.InvokeDynamicInsnNode;
 import org.objectweb.asm.tree.TypeInsnNode;
 
 import java.lang.invoke.MethodHandle;
@@ -59,6 +62,7 @@ public class WasmConvertPass {
                     Type.getType(MethodType.class)
             ),
             JavaExts.JavaMethod.Kind.VIRTUAL);
+    private static final JavaExts.JavaMethod ENUM_ORDINAL = JavaExts.JavaMethod.fromJava(Enum.class, "ordinal");
 
     public static IRPass<ModuleNode, ClassNode> getPass() {
         AtomicInteger counter = new AtomicInteger(0);
@@ -74,7 +78,7 @@ public class WasmConvertPass {
                         .setModifyFuncConvention((convention, fn, idx) -> new EmbedFunctionConvention(convention))
                         .setModifyTableConvention((convention, table, idx) -> new EmbedTableConvention(convention, idx))
                         .setModifyGlobalConvention(EmbedGlobalConvention::new)
-                        .setModifyMemConvention((convention, table, idx) -> new EmbedMemConvention(convention))
+                        .setModifyMemConvention((convention, table, idx) -> new EmbedMemConvention(convention, idx))
                         .setFunctionImports(WasmConvertPass::createFunctionImport)
                         .setTableImports(WasmConvertPass::createTableImport)
                         .setGlobalImports(WasmConvertPass::createGlobalImport)
@@ -171,7 +175,7 @@ public class WasmConvertPass {
                 .then(CheckJava.INSTANCE);
     }
 
-    private static ValueGetter effectHandle(
+    static ValueGetter effectHandle(
             String name,
             Module module,
             JavaExts.JavaClass jClass,
@@ -452,8 +456,8 @@ public class WasmConvertPass {
                 ExportableConvention.fieldExporter(field).export(node, module, jClass);
                 getOrMakeExports(module).put(node.name, ib ->
                         ib.insert(JavaOps.INVOKE
-                                .create(JavaExts.JavaMethod.fromJava(ExternVal.class, "global", Global.class))
-                                .insn(global.get(ib)),
+                                        .create(JavaExts.JavaMethod.fromJava(ExternVal.class, "global", Global.class))
+                                        .insn(global.get(ib)),
                                 "export"));
             }
         };
@@ -466,26 +470,58 @@ public class WasmConvertPass {
                 Type.getDescriptor(Memory.class),
                 false
         );
+        jClass.fields.add(field);
         ValueGetterSetter memory = Getters.fieldGetter(Getters.GET_THIS, field);
+        JavaExts.JavaMethod size = JavaExts.JavaMethod.fromJava(Memory.class, "size");
+        JavaExts.JavaMethod grow = JavaExts.JavaMethod.fromJava(Memory.class, "grow", int.class);
         return new MemoryConvention() {
             @Override
             public void emitMemLoad(IRBuilder ib, Effect effect) {
                 WasmOps.WithMemArg<WasmOps.DerefType> arg = WasmOps.MEM_LOAD.cast(effect.insn().op).arg;
+                ib.insert(JavaOps.insns(new InvokeDynamicInsnNode("load",
+                                Type.getMethodDescriptor(BasicCallingConvention.javaType(arg.value.outType),
+                                        Type.getType(Memory.class),
+                                        Type.INT_TYPE),
+                                Memory.Bootstrap.BOOTSTRAP_HANDLE,
+                                Memory.LoadMode.fromOpcode(arg.value.getOpcode())))
+                        .insn(memory.get(ib), getAddr(ib, arg, effect.insn().args.get(0)))
+                        .copyFrom(effect));
             }
 
             @Override
             public void emitMemStore(IRBuilder ib, Effect effect) {
+                WasmOps.WithMemArg<WasmOps.StoreType> arg = WasmOps.MEM_STORE.cast(effect.insn().op).arg;
+                ib.insert(JavaOps.insns(new InvokeDynamicInsnNode("store",
+                                Type.getMethodDescriptor(Type.VOID_TYPE,
+                                        Type.getType(Memory.class),
+                                        Type.INT_TYPE,
+                                        BasicCallingConvention.javaType(arg.value.getType())),
+                                Memory.Bootstrap.BOOTSTRAP_HANDLE,
+                                Memory.StoreMode.fromOpcode(arg.value.getOpcode())))
+                        .insn(memory.get(ib),
+                                getAddr(ib, arg, effect.insn().args.get(0)),
+                                effect.insn().args.get(1))
+                        .copyFrom(effect));
+            }
 
+            private Var getAddr(IRBuilder ib, WasmOps.WithMemArg<?> arg, Var addr) {
+                if (arg.offset != 0) {
+                    return ib.insert(JavaOps.insns(new InsnNode(Opcodes.IADD))
+                                    .insn(addr, ib.insert(CommonOps.constant(arg.offset), "offset")),
+                            "addr");
+                }
+                return addr;
             }
 
             @Override
             public void emitMemSize(IRBuilder ib, Effect effect) {
-
+                ib.insert(JavaOps.INVOKE.create(size).insn(memory.get(ib)).copyFrom(effect));
             }
 
             @Override
             public void emitMemGrow(IRBuilder ib, Effect effect) {
-
+                ib.insert(JavaOps.INVOKE.create(grow)
+                        .insn(memory.get(ib), effect.insn().args.get(0)).copyFrom(effect));
             }
 
             @Override
@@ -699,8 +735,157 @@ public class WasmConvertPass {
     }
 
     private static class EmbedMemConvention extends MemoryConvention.Delegating {
-        public EmbedMemConvention(MemoryConvention convention) {
+        private final int idx;
+        ValueGetter getHandle, storeHandle, sizeHandle, growHandle;
+        private boolean exported;
+
+        public EmbedMemConvention(MemoryConvention convention, int idx) {
             super(convention);
+            this.idx = idx;
+        }
+
+        @Override
+        public void modifyConstructor(IRBuilder ctorIb, JavaExts.JavaMethod ctorMethod, Module module, JavaExts.JavaClass jClass) {
+            super.modifyConstructor(ctorIb, ctorMethod, module, jClass);
+            if (exported) {
+                getHandle = effectHandle(
+                        "mem" + idx + "$get",
+                        module,
+                        jClass,
+                        null,
+                        Type.getMethodDescriptor(
+                                Type.getType(MethodHandle.class),
+                                Type.getType(Memory.LoadMode.class)),
+                        CommonOps.IDENTITY,
+                        (ib, fx) -> {
+                            Memory.LoadMode[] values = Memory.LoadMode.values();
+                            List<BasicBlock> targets = setupTargets(ib, values);
+                            BasicBlock failBb = ib.getBlock();
+
+                            for (int i = 0; i < values.length; i++) {
+                                Memory.LoadMode loadMode = values[i];
+                                WasmOps.DerefType derefTy = WasmOps.DerefType.fromOpcode(loadMode.opcode);
+                                ValueGetter handle = effectHandle(
+                                        "mem" + idx + "$get$" + loadMode.toString().toLowerCase(Locale.ROOT),
+                                        module,
+                                        jClass,
+                                        null,
+                                        Type.getMethodDescriptor(
+                                                BasicCallingConvention.javaType(derefTy.outType),
+                                                Type.INT_TYPE
+                                        ),
+                                        WasmOps.MEM_LOAD.create(new WasmOps.WithMemArg<>(derefTy, 0)),
+                                        delegate::emitMemLoad
+                                );
+                                ib.setBlock(targets.get(i));
+                                ib.insertCtrl(CommonOps.RETURN.insn(handle.get(ib)).jumpsTo());
+                            }
+                            ib.setBlock(failBb);
+                            ib.insert(CommonOps.constant(null).copyFrom(fx));
+                        }
+                );
+                storeHandle = effectHandle(
+                        "mem" + idx + "$store",
+                        module,
+                        jClass,
+                        null,
+                        Type.getMethodDescriptor(
+                                Type.getType(MethodHandle.class),
+                                Type.getType(Memory.LoadMode.class)),
+                        CommonOps.IDENTITY,
+                        (ib, fx) -> {
+                            Memory.StoreMode[] values = Memory.StoreMode.values();
+                            List<BasicBlock> targets = setupTargets(ib, values);
+                            BasicBlock failBb = ib.getBlock();
+
+                            for (int i = 0; i < values.length; i++) {
+                                Memory.StoreMode storeMode = values[i];
+                                WasmOps.StoreType storeTy = WasmOps.StoreType.fromOpcode(storeMode.opcode());
+                                ValueGetter handle = effectHandle(
+                                        "mem" + idx + "$store$" + storeMode.toString().toLowerCase(Locale.ROOT),
+                                        module,
+                                        jClass,
+                                        null,
+                                        Type.getMethodDescriptor(
+                                                Type.VOID_TYPE,
+                                                Type.INT_TYPE,
+                                                BasicCallingConvention.javaType(storeTy.getType())
+                                        ),
+                                        WasmOps.MEM_STORE.create(new WasmOps.WithMemArg<>(storeTy, 0)),
+                                        delegate::emitMemStore
+                                );
+                                ib.setBlock(targets.get(i));
+                                ib.insertCtrl(CommonOps.RETURN.insn(handle.get(ib)).jumpsTo());
+                            }
+                            ib.setBlock(failBb);
+                            ib.insert(CommonOps.constant(null).copyFrom(fx));
+                        }
+                );
+                sizeHandle = effectHandle(
+                        "mem" + idx + "$size",
+                        module,
+                        jClass,
+                        null,
+                        "()I",
+                        WasmOps.MEM_SIZE.create(),
+                        delegate::emitMemSize
+                );
+                growHandle = effectHandle(
+                        "mem" + idx + "$grow",
+                        module,
+                        jClass,
+                        null,
+                        "(I)I",
+                        WasmOps.MEM_GROW.create(),
+                        delegate::emitMemGrow
+                );
+            }
+        }
+
+        @NotNull
+        private static List<BasicBlock> setupTargets(IRBuilder ib, Memory.HasOpcode[] values) {
+            List<BasicBlock> targets = new ArrayList<>();
+            for (int i = 0; i < values.length; i++) {
+                targets.add(ib.func.newBb());
+            }
+            BasicBlock failBb = ib.func.newBb();
+            targets.add(failBb);
+            ib.insertCtrl(JavaOps.TABLESWITCH.create()
+                    .insn(ib.insert(JavaOps.INVOKE.create(ENUM_ORDINAL)
+                                    .insn(ib.insert(CommonOps.ARG.create(0).insn(), "mode")),
+                            "ordinal"))
+                    .jumpsTo(targets));
+            ib.setBlock(failBb);
+            return targets;
+        }
+
+        @Override
+        public void export(ExportNode node, Module module, JavaExts.JavaClass jClass) {
+            super.export(node, module, jClass);
+            exported = true;
+            getOrMakeExports(module).put(node.name, ib -> ib.insert(JavaOps.INVOKE
+                            .create(JavaExts.JavaMethod.fromJava(
+                                    ExternVal.class,
+                                    "memory",
+                                    Memory.class
+                            ))
+                            .insn(ib.insert(JavaOps.INVOKE
+                                            .create(JavaExts.JavaMethod.fromJava(
+                                                    Memory.HandleMemory.class,
+                                                    "create",
+                                                    MethodHandle.class,
+                                                    MethodHandle.class,
+                                                    MethodHandle.class,
+                                                    MethodHandle.class
+                                            ))
+                                            .insn(
+                                                    getHandle.get(ib),
+                                                    storeHandle.get(ib),
+                                                    sizeHandle.get(ib),
+                                                    growHandle.get(ib)
+                                            ),
+                                    "global")),
+                    "extern"));
         }
     }
 }

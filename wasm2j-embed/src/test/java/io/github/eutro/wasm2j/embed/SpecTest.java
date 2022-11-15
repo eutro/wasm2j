@@ -17,6 +17,7 @@ public class SpecTest {
     public static final String SOURCE = "" +
             "(module\n" +
             "  (table $i (import \"spectest\" \"table\") 1 2 funcref)\n" +
+            "  (memory $m (import \"spectest\" \"memory\") 1 2)\n" +
             "  (table (export \"table\") 1 funcref)\n" +
             "  (func $f)\n" +
             "  (global funcref (ref.func $f))\n" +
@@ -29,7 +30,6 @@ public class SpecTest {
             "  (global (export \"const-global\") externref (ref.null extern))\n" +
             "  (global (export \"mut-global\") (mut i32) (i32.const 10))\n" +
             "" +
-            "  (memory $m 1 2)\n" +
             "  (func (export \"grow\") (param $by i32) (result i32)" +
             "    (memory.grow (local.get $by)))\n" +
             ")\n" +

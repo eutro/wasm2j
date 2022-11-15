@@ -13,7 +13,6 @@ import io.github.eutro.wasm2j.util.ValueGetterSetter;
 import org.jetbrains.annotations.Nullable;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
-import org.objectweb.asm.tree.InsnList;
 import org.objectweb.asm.tree.InsnNode;
 
 import java.nio.Buffer;
@@ -64,16 +63,14 @@ public class ByteBufferMemoryConvention extends DelegatingExporter implements Me
     @Override
     public void emitMemStore(IRBuilder ib, Effect effect) {
         WasmOps.WithMemArg<WasmOps.StoreType> wmArg = WasmOps.MEM_STORE.cast(effect.insn().op).arg;
-        InsnList insns = Instructions.copyList(wmArg.value.insns);
-        insns.add(new InsnNode(Opcodes.POP));
         ib.insert(JavaOps.INSNS
-                .create(insns)
+                .create(Instructions.copyList(wmArg.value.insns))
                 .insn(
                         buffer.get(ib),
-                        IRUtils.getAddr(ib, wmArg, effect.insn().args.get(1)),
-                        effect.insn().args.get(0)
-                )
-                .assignTo());
+                        IRUtils.getAddr(ib, wmArg, effect.insn().args.get(0)),
+                        effect.insn().args.get(1)
+                ),
+                "drop");
     }
 
     @Override
