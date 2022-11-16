@@ -28,7 +28,6 @@ public class WasmOps {
 
     public static final UnaryOpKey<WithMemArg<StoreType>> MEM_STORE = new UnaryOpKey<>("mem.set");
     public static final UnaryOpKey<WithMemArg<DerefType>> MEM_LOAD = new UnaryOpKey<>("mem.load");
-
     public static final SimpleOpKey MEM_SIZE = new SimpleOpKey("mem.length");
     public static final SimpleOpKey MEM_GROW = new SimpleOpKey("mem.grow");
 

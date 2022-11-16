@@ -1,23 +1,25 @@
 package io.github.eutro.wasm2j.ext;
 
+import io.github.eutro.wasm2j.intrinsics.IntrinsicImpl;
 import io.github.eutro.wasm2j.ssa.Function;
 import org.objectweb.asm.Handle;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
+import org.objectweb.asm.tree.MethodNode;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Locale;
+import java.util.*;
 
 public class JavaExts {
     public static final Ext<Function> METHOD_IMPL = Ext.create(Function.class);
+    public static final Ext<MethodNode> METHOD_NATIVE_IMPL = Ext.create(MethodNode.class);
     public static final Ext<Type> TYPE = Ext.create(Type.class);
     public static final Ext<JavaMethod> FUNCTION_METHOD = Ext.create(JavaMethod.class);
     public static final Ext<JavaClass> FUNCTION_OWNER = Ext.create(JavaClass.class);
+
+    public static final Ext<Map<IntrinsicImpl, JavaMethod>> ATTACHED_INTRINSICS = Ext.create(Map.class);
 
     public static Type BOTTOM_TYPE = Type.getType(Void.class);
 

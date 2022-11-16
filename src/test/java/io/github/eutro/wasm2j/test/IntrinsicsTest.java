@@ -1,7 +1,7 @@
 package io.github.eutro.wasm2j.test;
 
 import io.github.eutro.wasm2j.ext.JavaExts;
-import io.github.eutro.wasm2j.intrinsics.Impl;
+import io.github.eutro.wasm2j.intrinsics.impls.Operators;
 import io.github.eutro.wasm2j.intrinsics.Intrinsic;
 import io.github.eutro.wasm2j.intrinsics.IntrinsicImpl;
 import io.github.eutro.wasm2j.intrinsics.JavaIntrinsics;
@@ -105,7 +105,7 @@ public class IntrinsicsTest {
                 .bindTo(rand));
 
         List<MethodHandle> invokers = new ArrayList<>();
-        for (Method method : Impl.class.getMethods()) {
+        for (Method method : Operators.class.getMethods()) {
             if (method.getAnnotation(Intrinsic.class) == null) continue;
 
             MethodHandle handle = lookup.unreflect(method);
@@ -134,8 +134,8 @@ public class IntrinsicsTest {
 
     @Test
     void testIntrinsicsValues() {
-        Assertions.assertEquals(1L, Impl.i64TruncF32U(1F));
-        Assertions.assertEquals(0x8000000000000000L, Impl.i64TruncF64U(9.223372036854776E18));
+        Assertions.assertEquals(1L, Operators.i64TruncF32U(1F));
+        Assertions.assertEquals(0x8000000000000000L, Operators.i64TruncF64U(9.223372036854776E18));
     }
 
     public static void main(String[] args) throws Throwable {

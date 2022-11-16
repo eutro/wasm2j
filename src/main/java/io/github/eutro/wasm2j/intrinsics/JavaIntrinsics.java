@@ -1,6 +1,7 @@
 package io.github.eutro.wasm2j.intrinsics;
 
 import io.github.eutro.jwasm.Opcodes;
+import io.github.eutro.wasm2j.intrinsics.impls.Operators;
 import io.github.eutro.wasm2j.util.InsnMap;
 import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.Type;
@@ -18,7 +19,8 @@ public class JavaIntrinsics {
     private static final ClassNode IMPL_NODE = new ClassNode();
 
     static {
-        ImplClassBytes.getClassReader().accept(IMPL_NODE, ClassReader.SKIP_DEBUG);
+        ImplClassBytes.getClassReaderFor(Operators.class)
+                .accept(IMPL_NODE, ClassReader.SKIP_DEBUG);
 
         for (MethodNode method : IMPL_NODE.methods) {
             if (method.visibleAnnotations == null) continue;

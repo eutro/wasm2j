@@ -1,6 +1,7 @@
 package io.github.eutro.wasm2j.ext;
 
 import io.github.eutro.wasm2j.ssa.*;
+import io.github.eutro.wasm2j.ssa.Module;
 
 import java.util.HashSet;
 import java.util.LinkedHashSet;
@@ -21,6 +22,7 @@ public class CommonExts {
     public static final Ext<Effect> ASSIGNED_AT = Ext.create(Effect.class);
     public static final Ext<Set<Insn>> USED_AT = Ext.create(Set.class);
 
+    public static final Ext<Module> OWNING_MODULE = Ext.create(Module.class);
     public static final Ext<Function> OWNING_FUNCTION = Ext.create(Function.class);
     public static final Ext<BasicBlock> OWNING_BLOCK = Ext.create(BasicBlock.class);
     public static final Ext<Effect> OWNING_EFFECT = Ext.create(Effect.class);
