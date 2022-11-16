@@ -1,14 +1,14 @@
 package io.github.eutro.wasm2j.ext;
 
-import java.util.Optional;
+import org.jetbrains.annotations.Nullable;
 
 public abstract class DelegatingExtHolder extends ExtHolder {
     protected abstract ExtContainer getDelegate();
 
     @Override
-    public <T> Optional<T> getExt(Ext<T> ext) {
-        Optional<T> localExt = super.getExt(ext);
-        if (localExt.isPresent()) return localExt;
-        return getDelegate().getExt(ext);
+    public <T> @Nullable T getNullable(Ext<T> ext) {
+        T localExt = super.getNullable(ext);
+        if (localExt != null) return localExt;
+        return getDelegate().getNullable(ext);
     }
 }

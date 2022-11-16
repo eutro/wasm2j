@@ -3,109 +3,57 @@ package io.github.eutro.wasm2j.ext;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.Map;
+import java.util.TreeMap;
 
+@SuppressWarnings("CommentedOutCode")
 public class ExtHolder implements ExtContainer {
     @Nullable
-    private Node root = null;
+    private Map<Ext<?>, Object> map = null; // many ExtHolders don't need it, so don't allocate it!
 
     @NotNull
-    private Node getRoot() {
-        if (root == null) {
-            root = new Node();
+    private Map<Ext<?>, Object> getMap() {
+        if (map == null) {
+            map = new TreeMap<>();
         }
-        return root;
+        return map;
     }
 
     public <T> void attachExt(Ext<T> ext, T value) {
-        getRoot().setIndex(ext.id, value);
+        getMap().put(ext, value);
     }
 
     public <T> void removeExt(Ext<T> ext) {
-        getRoot().setIndex(ext.id, null);
+        getMap().remove(ext);
     }
 
-    public <T> Optional<T> getExt(Ext<T> ext) {
-        return getRoot().getIndex(ext.id).map(ext.getType()::cast);
+    @SuppressWarnings("unchecked")
+    public <T> @Nullable T getNullable(Ext<T> ext) {
+        return (T) getMap().get(ext);
     }
 
-    private static class Node {
-        long mask = 0;
-        Object[] children = null;
+    // Code for finding the average size of an ExtHolder
+    // Running on SpecTest we got:
+    // Average ExtHolder size: 1.394200512923116
+    // All loads: {0=106447, 1=187380, 2=67210, 3=27637, 4=47303, 5=3839, 6=16}
+    /*
+    private static List<ExtHolder> ehs = new ArrayList<>();
 
-        Optional<Object> getIndex(int index) {
-            int i = index % Long.SIZE;
-            if ((mask & (1L << i)) == 0) {
-                return Optional.empty();
-            }
-            int nextIndex = index / Long.SIZE;
-
-            int u = getU(i);
-            Object child = children[u];
-            if (child instanceof Node) {
-                return ((Node) child).getIndex(nextIndex);
-            } else if (nextIndex == 0) {
-                return Optional.ofNullable(child);
-            } else {
-                return Optional.empty();
-            }
-        }
-
-        void setIndex(int index, Object value) {
-            int i = index % Long.SIZE;
-            int nextIndex = index / Long.SIZE;
-
-            int u = getU(i);
-            if ((mask & (1L << i)) == 0) {
-                mask |= (1L << i);
-                Object[] newChildren = new Object[Long.bitCount(mask)];
-                if (children != null) {
-                    System.arraycopy(
-                            children, 0,
-                            newChildren, 0,
-                            u
-                    );
-                    System.arraycopy(
-                            children, u,
-                            newChildren, u + 1,
-                            children.length - u
-                    );
-                }
-                children = newChildren;
-            }
-
-            Object child = children[u];
-            if (child instanceof Node) {
-                ((Node) child).setIndex(nextIndex, value);
-            } else if (nextIndex == 0) {
-                children[u] = value;
-            } else {
-                Node newNode = new Node();
-                if (child != null) {
-                    newNode.setIndex(0, child);
-                }
-                newNode.setIndex(nextIndex, value);
-                children[u] = newNode;
-            }
-        }
-
-        private int getU(int i) {
-            return Long.bitCount((mask >>> i) & ~1);
-        }
-
-        @Override
-        public String toString() {
-            return String.format(
-                    "0b%8s_%8s_%8s_%8s_%8s_%8s_%8s_%8s",
-                    Long.toBinaryString(0xFF & (mask >>> 56)),
-                    Long.toBinaryString(0xFF & (mask >>> 48)),
-                    Long.toBinaryString(0xFF & (mask >>> 40)),
-                    Long.toBinaryString(0xFF & (mask >>> 32)),
-                    Long.toBinaryString(0xFF & (mask >>> 24)),
-                    Long.toBinaryString(0xFF & (mask >>> 16)),
-                    Long.toBinaryString(0xFF & (mask >>> 8)),
-                    Long.toBinaryString(0xFF & (mask))
-            ).replace(' ', '0');
-        }
+    {
+        ehs.add(this);
     }
+
+    static {
+        Runtime.getRuntime().addShutdownHook(new Thread(() -> {
+            double totalSize = 0;
+            Map<Integer, Integer> totals = ehs.stream().collect(Collectors.toMap(it -> it.map == null ? 0 : it.map.size(), $ -> 1, Integer::sum));
+            for (ExtHolder eh : ehs) {
+                if (eh.map != null) totalSize += eh.map.size();
+            }
+            double average = totalSize / ehs.size();
+            System.out.println("Average ExtHolder size: " + average);
+            System.out.println("All loads: " + totals);
+        }));
+    }
+    */
 }
