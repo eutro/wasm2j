@@ -17,6 +17,8 @@ import static org.junit.jupiter.api.Assertions.*;
 
 public class ExecutingWastVisitor extends WastVisitor {
     private Module lastModule;
+    private boolean wasRefused;
+    private ModuleRefusedException refusalReason;
     private ModuleInst lastModuleInst;
     private final WebAssembly wasm;
     private final Store store;
@@ -68,8 +70,11 @@ public class ExecutingWastVisitor extends WastVisitor {
         });
     }
 
+    int tmc;
+
     @Override
     public @Nullable WastModuleVisitor visitModule() {
+        tmc++;
         return new WastModuleVisitor() {
             @Override
             public void visitWatModule(Object module) {
@@ -88,23 +93,35 @@ public class ExecutingWastVisitor extends WastVisitor {
 
             @Override
             public void visitEnd() {
-                List<ModuleImport> imports = wasm.moduleImports(lastModule);
-                List<ExternVal> importVals = new ArrayList<>(imports.size());
-                for (ModuleImport theImport : imports) {
-                    ModuleInst importModule = registered.get(theImport.module);
-                    assertNotNull(importModule, theImport.module);
-                    ExternVal theExport = wasm.instanceExport(importModule, theImport.name);
-                    assertNotNull(theExport, theImport.name);
-                    assertEquals(theExport.getType(), theImport.type, () -> theImport.module + ":" + theImport.name);
-                    importVals.add(theExport);
+                try {
+                    List<ModuleImport> imports = wasm.moduleImports(lastModule);
+                    List<ExternVal> importVals = new ArrayList<>(imports.size());
+                    for (ModuleImport theImport : imports) {
+                        ModuleInst importModule = registered.get(theImport.module);
+                        assertNotNull(importModule, theImport.module);
+                        ExternVal theExport = wasm.instanceExport(importModule, theImport.name);
+                        assertNotNull(theExport, theImport.name);
+                        assertEquals(theExport.getType(), theImport.type, () -> theImport.module + ":" + theImport.name);
+                        importVals.add(theExport);
+                    }
+                    lastModuleInst = wasm.moduleInstantiate(store, lastModule, importVals.toArray(new ExternVal[0]));
+                    wasRefused = false;
+                    refusalReason = null;
+                } catch (ModuleRefusedException e) {
+                    lastModuleInst = null;
+                    wasRefused = true;
+                    refusalReason = e;
+                } catch (Throwable t) {
+                    t.addSuppressed(new RuntimeException("in top module #" + tmc));
+                    throw t;
                 }
-                lastModuleInst = wasm.moduleInstantiate(store, lastModule, importVals.toArray(new ExternVal[0]));
             }
         };
     }
 
     @Override
     public @Nullable ActionVisitor visitTopAction() {
+        if (wasRefused) return null;
         return new ActionVisitor() {
             @Override
             public void visitInvoke(@Nullable String name, String string, Object... args) {
@@ -121,6 +138,7 @@ public class ExecutingWastVisitor extends WastVisitor {
 
     @Override
     public void visitRegister(String string, @Nullable String name) {
+        if (wasRefused) throw new RuntimeException("Previous module was refused", refusalReason);
         registered.put(string, lastModuleInst);
     }
 
@@ -129,6 +147,7 @@ public class ExecutingWastVisitor extends WastVisitor {
     @Override
     public @Nullable ActionVisitor visitAssertReturn(Object... results) {
         arc++;
+        if (wasRefused) return null;
         return new ActionVisitor() {
             @Override
             public void visitInvoke(@Nullable String name, String string, Object... args) {

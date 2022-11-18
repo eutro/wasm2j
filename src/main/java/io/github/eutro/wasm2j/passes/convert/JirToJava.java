@@ -10,6 +10,7 @@ import io.github.eutro.wasm2j.passes.IRPass;
 import io.github.eutro.wasm2j.ssa.Module;
 import io.github.eutro.wasm2j.ssa.*;
 import io.github.eutro.wasm2j.util.GraphWalker;
+import io.github.eutro.wasm2j.util.Pair;
 import org.objectweb.asm.Label;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
@@ -40,19 +41,33 @@ public class JirToJava implements IRPass<Module, ClassNode> {
                 null
         );
 
-        for (JavaExts.JavaField field : jClass.fields) {
-            cn.fields.add(new FieldNode(
-                    (field.isStatic ? Opcodes.ACC_STATIC : 0)
-                            | field.otherAccess,
-                    field.name,
-                    field.descriptor,
-                    null,
-                    null
-            ));
+        {
+            Set<Pair<String, String>> existingFields = new HashSet<>();
+            for (JavaExts.JavaField field : jClass.fields) {
+                while (!existingFields.add(Pair.of(field.name, field.descriptor))) {
+                    field.name += "_";
+                }
+                cn.fields.add(new FieldNode(
+                        (field.isStatic ? Opcodes.ACC_STATIC : 0)
+                                | field.otherAccess,
+                        field.name,
+                        field.descriptor,
+                        null,
+                        null
+                ));
+            }
         }
 
+        {
+            Set<Pair<String, String>> existingMethods = new HashSet<>();
+            for (JavaExts.JavaMethod method : jClass.methods) {
+                String desc = method.getDescriptor();
+                while (!existingMethods.add(Pair.of(method.name, desc))) {
+                    method.name += "_";
+                }
+            }
+        }
         for (JavaExts.JavaMethod method : jClass.methods) {
-            Optional<Function> maybeImpl = method.getExt(JavaExts.METHOD_IMPL);
             Optional<MethodNode> maybeNative = method.getExt(JavaExts.METHOD_NATIVE_IMPL);
             MethodNode mn = new MethodNode(
                     method.kind.access,
@@ -67,6 +82,7 @@ public class JirToJava implements IRPass<Module, ClassNode> {
                 mn.access &= ~Opcodes.ACC_PUBLIC;
                 mn.access |= Opcodes.ACC_PRIVATE;
             } else {
+                Optional<Function> maybeImpl = method.getExt(JavaExts.METHOD_IMPL);
                 if (maybeImpl.isPresent()) {
                     try {
                         compileFuncInto(jClass, mn, maybeImpl.get());
@@ -85,7 +101,7 @@ public class JirToJava implements IRPass<Module, ClassNode> {
 
     private void compileFuncInto(JavaExts.JavaClass jClass, MethodNode mn, Function impl) {
         // steps:
-        // 1. sort blocks into a nice order (no need to overthink it, just do a pre-order)
+        // 1. sort blocks into a nice order (no need to overthink it)
         // 2. tag each block with a label for a jump target
         // 3. compute local variable types
         // 4. run through blocks and emit their bytecode
@@ -300,7 +316,7 @@ public class JirToJava implements IRPass<Module, ClassNode> {
                     method.owner.name,
                     method.name,
                     method.getDescriptor(),
-                    false
+                    method.kind.isInterface()
             );
         });
         FX_CONVERTERS.put(JavaOps.ARRAY_GET, (jb, fx) ->

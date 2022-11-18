@@ -125,32 +125,38 @@ public interface Memory {
 
     int grow(int growByPages);
 
+    void init(int dstIdx, int srcIdx, int len, ByteBuffer buf);
+
     class HandleMemory implements Memory {
         private final MethodHandle
                 loadHandle,
                 storeHandle,
                 size,
-                grow;
+                grow,
+                init;
 
         private HandleMemory(
                 MethodHandle loadHandle,
                 MethodHandle storeHandle,
                 MethodHandle size,
-                MethodHandle grow
+                MethodHandle grow,
+                MethodHandle init
         ) {
             this.loadHandle = loadHandle;
             this.storeHandle = storeHandle;
             this.size = size;
             this.grow = grow;
+            this.init = init;
         }
 
         public static HandleMemory create(
                 MethodHandle loadHandle,
                 MethodHandle storeHandle,
                 MethodHandle size,
-                MethodHandle grow
+                MethodHandle grow,
+                MethodHandle init
         ) {
-            return new HandleMemory(loadHandle, storeHandle, size, grow);
+            return new HandleMemory(loadHandle, storeHandle, size, grow, init);
         }
 
         @Override
@@ -184,6 +190,15 @@ public interface Memory {
         public int grow(int growByPages) {
             try {
                 return (int) grow.invokeExact(growByPages);
+            } catch (Throwable t) {
+                throw Utils.rethrow(t);
+            }
+        }
+
+        @Override
+        public void init(int dstIdx, int srcIdx, int len, ByteBuffer buf) {
+            try {
+                init.invokeExact(dstIdx, srcIdx, len, buf);
             } catch (Throwable t) {
                 throw Utils.rethrow(t);
             }
@@ -394,6 +409,14 @@ public interface Memory {
             newBuf.duplicate().put(buf.duplicate());
             buf = newBuf;
             return sz;
+        }
+
+        @Override
+        public void init(int dstIdx, int srcIdx, int len, ByteBuffer buf) {
+            this.buf.slice().position(dstIdx)
+                    .put(buf.slice()
+                            .position(srcIdx)
+                            .limit(srcIdx + len));
         }
     }
 }

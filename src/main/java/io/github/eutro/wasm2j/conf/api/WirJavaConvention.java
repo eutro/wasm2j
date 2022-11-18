@@ -1,27 +1,21 @@
 package io.github.eutro.wasm2j.conf.api;
 
 public interface WirJavaConvention {
-    default FunctionConvention getFunction(int index) {
-        throw new UnsupportedOperationException();
-    }
+    FunctionConvention getFunction(int index);
 
-    default GlobalConvention getGlobal(int index) {
-        throw new UnsupportedOperationException();
-    }
+    GlobalConvention getGlobal(int index);
 
-    default MemoryConvention getMemory(int index) {
-        throw new UnsupportedOperationException();
-    }
+    MemoryConvention getMemory(int index);
 
-    default TableConvention getTable(int index) {
-        throw new UnsupportedOperationException();
-    }
+    TableConvention getTable(int index);
+
+    DataConvention getData(int data);
 
     default CallingConvention getIndirectCallingConvention() {
         throw new UnsupportedOperationException();
     }
 
-    default void preEmit() {}
+    default void preConvert() {}
 
-    default void buildConstructor() {}
+    default void postConvert() {}
 }

@@ -9,6 +9,8 @@ public abstract class DelegatingExtHolder extends ExtHolder {
     public <T> @Nullable T getNullable(Ext<T> ext) {
         T localExt = super.getNullable(ext);
         if (localExt != null) return localExt;
-        return getDelegate().getNullable(ext);
+        ExtContainer delegate = getDelegate();
+        if (delegate != null) return delegate.getNullable(ext);
+        return null;
     }
 }

@@ -15,8 +15,15 @@ public class SpecTest {
 
     public static final File DEBUG_OUTPUT_DIRECTORY = new File("build/wasmout");
     public static final String SOURCE = "" +
-            "(module (memory (data \"x\")) (func (export \"memsize\") (result i32) (memory.size)))\n" +
-            "(assert_return (invoke \"memsize\") (i32.const 1))\n" +
+            "(module\n" +
+            "  (import \"spectest\" \"memory\" (memory 1))\n" +
+            "  (data (i32.const 0) \"a\")\n" +
+            "  (data (i32.const 1) \"b\")\n" +
+            "  (data (i32.const 2) \"cde\")\n" +
+            "  (data (i32.const 3) \"f\")\n" +
+            "  (data (i32.const 2) \"g\")\n" +
+            "  (data (i32.const 1) \"h\")\n" +
+            ")" +
             "\n";
 
     @Test

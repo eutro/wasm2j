@@ -6,6 +6,7 @@ import java.util.function.Function;
 
 public class UnaryOpKey<T> extends OpKey {
     private final Function<T, String> printer;
+    private boolean allowNull = false;
 
     public UnaryOpKey(String mnemonic, Function<T, String> printer) {
         super(mnemonic);
@@ -14,6 +15,11 @@ public class UnaryOpKey<T> extends OpKey {
 
     public UnaryOpKey(String mnemonic) {
         this(mnemonic, Objects::toString);
+    }
+
+    public UnaryOpKey<T> allowNull() {
+        allowNull = true;
+        return this;
     }
 
     public class UnaryOp extends Op {
@@ -45,6 +51,9 @@ public class UnaryOpKey<T> extends OpKey {
     }
 
     public UnaryOp create(T arg) {
+        if (!allowNull && arg == null) {
+            throw new IllegalArgumentException("Argument is null");
+        }
         return new UnaryOp(arg);
     }
 }

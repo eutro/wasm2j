@@ -1,6 +1,7 @@
 package io.github.eutro.wasm2j.embed;
 
 import org.objectweb.asm.ClassWriter;
+import org.objectweb.asm.MethodTooLargeException;
 import org.objectweb.asm.tree.ClassNode;
 
 import java.io.File;
@@ -17,7 +18,12 @@ public class Store {
         public Class<?> defineClass(ClassNode node, File debugOutput) {
             ClassWriter cw = new ClassWriter(ClassWriter.COMPUTE_FRAMES);
             node.accept(cw);
-            byte[] bytes = cw.toByteArray();
+            byte[] bytes;
+            try {
+                bytes = cw.toByteArray();
+            } catch (MethodTooLargeException e) {
+                throw new ModuleRefusedException(e);
+            }
             if (debugOutput != null) {
                 boolean ignored = debugOutput.mkdirs();
                 try {

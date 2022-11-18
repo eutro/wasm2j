@@ -17,7 +17,7 @@ public class CommonOps {
             bbs.stream().map(BasicBlock::toTargetString).collect(Collectors.joining(" ")));
 
     public static final UnaryOpKey<Integer> ARG = new UnaryOpKey<>("arg");
-    public static final UnaryOpKey<Object> CONST = new UnaryOpKey<>("const");
+    public static final UnaryOpKey<Object> CONST = new UnaryOpKey<>("const").allowNull();
 
     static {
         for (OpKey key : new OpKey[] {

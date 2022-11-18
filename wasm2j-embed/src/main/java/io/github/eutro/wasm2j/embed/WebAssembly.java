@@ -23,6 +23,7 @@ public class WebAssembly {
     public static final JavaExts.JavaClass EV_CLASS = new JavaExts.JavaClass(Type.getInternalName(ExternVal.class));
 
     private File debugOutput;
+
     public void setDebugOutputDirectory(File file) {
         this.debugOutput = file;
     }
@@ -80,9 +81,15 @@ public class WebAssembly {
             }
         }
 
-        ClassNode classNode = PASS.run(module.getNode());
-        classNode.interfaces.add(Type.getInternalName(ModuleInst.class));
-        Class<?> moduleClass = store.defineClass(classNode, debugOutput);
+        Class<?> moduleClass;
+        try {
+            ClassNode classNode = PASS.run(module.getNode());
+            classNode.interfaces.add(Type.getInternalName(ModuleInst.class));
+            moduleClass = store.defineClass(classNode, debugOutput);
+        } catch (OutOfMemoryError e) {
+            // chances are it was us here doing horrible things, so yield an exception instead of the error
+            throw new ModuleRefusedException(e);
+        }
         Constructor<?> ctor = moduleClass.getConstructors()[0];
 
         Object inst;

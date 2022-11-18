@@ -5,6 +5,7 @@ import io.github.eutro.wasm2j.ext.JavaExts;
 import io.github.eutro.wasm2j.ssa.Effect;
 import io.github.eutro.wasm2j.ssa.IRBuilder;
 import io.github.eutro.wasm2j.ssa.Module;
+import io.github.eutro.wasm2j.ssa.Var;
 
 public interface MemoryConvention extends ExportableConvention, ConstructorCallback {
     void emitMemLoad(IRBuilder ib, Effect effect);
@@ -14,6 +15,8 @@ public interface MemoryConvention extends ExportableConvention, ConstructorCallb
     void emitMemSize(IRBuilder ib, Effect effect);
 
     void emitMemGrow(IRBuilder ib, Effect effect);
+
+    void emitMemInit(IRBuilder ib, Effect effect, Var data);
 
     class Delegating extends DelegatingExporter implements MemoryConvention {
         protected final MemoryConvention delegate;
@@ -41,6 +44,11 @@ public interface MemoryConvention extends ExportableConvention, ConstructorCallb
         @Override
         public void emitMemGrow(IRBuilder ib, Effect effect) {
             delegate.emitMemGrow(ib, effect);
+        }
+
+        @Override
+        public void emitMemInit(IRBuilder ib, Effect effect, Var data) {
+            delegate.emitMemInit(ib, effect, data);
         }
 
         @Override

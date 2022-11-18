@@ -179,7 +179,6 @@ public class Stackify implements InPlaceIRPass<Function> {
 
                     stackTop = stackTop.prev;
 
-                    // definitely compute uses now (if absent)
                     Set<Insn> uses = reg.getExtOrThrow(CommonExts.USED_AT);
 
                     if (reg.getExt(CommonExts.STACKIFIED).orElse(null) == Boolean.FALSE) {

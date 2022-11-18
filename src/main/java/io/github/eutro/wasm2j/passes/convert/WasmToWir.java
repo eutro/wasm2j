@@ -14,6 +14,7 @@ import io.github.eutro.wasm2j.passes.IRPass;
 import io.github.eutro.wasm2j.ssa.Module;
 import io.github.eutro.wasm2j.ssa.*;
 import io.github.eutro.wasm2j.util.InsnMap;
+import io.github.eutro.wasm2j.util.Pair;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
@@ -515,16 +516,43 @@ public class WasmToWir implements IRPass<ModuleNode, Module> {
                         cs.popVar() // with (object)
                 )
                 .assignTo(cs.pushVar())));
-        /*
-        CONVERTERS.putInt(new int[]{
-                TABLE_INIT,
-                ELEM_DROP,
-                TABLE_COPY,
-                TABLE_FILL // TODO
-        }, (cs, node, topB) -> {
-            throw new UnsupportedOperationException();
+        CONVERTERS.putInt(TABLE_INIT, (cs, node, topB) -> {
+            PrefixBinaryTableInsnNode pbtin = (PrefixBinaryTableInsnNode) node;
+            Var len = cs.popVar();
+            Var srcIdx = cs.popVar();
+            Var dstIdx = cs.popVar();
+            int elem = pbtin.firstIndex;
+            int table = pbtin.secondIndex;
+            topB.addEffect(WasmOps.TABLE_INIT
+                    .create(Pair.of(table, elem))
+                    .insn(dstIdx, srcIdx, len)
+                    .assignTo());
         });
-        */
+        CONVERTERS.putInt(ELEM_DROP, (cs, node, topB) -> topB.addEffect(WasmOps.ELEM_DROP
+                .create(((PrefixTableInsnNode) node).table)
+                .insn()
+                .assignTo()));
+        CONVERTERS.putInt(TABLE_COPY, (cs, node, topB) -> {
+            PrefixBinaryTableInsnNode pbtin = (PrefixBinaryTableInsnNode) node;
+            Var len = cs.popVar();
+            Var srcIdx = cs.popVar();
+            Var dstIdx = cs.popVar();
+            int dst = pbtin.firstIndex;
+            int src = pbtin.secondIndex;
+            topB.addEffect(WasmOps.TABLE_COPY
+                    .create(Pair.of(src, dst))
+                    .insn(dstIdx, srcIdx, len)
+                    .assignTo());
+        });
+        CONVERTERS.putInt(TABLE_FILL, (cs, node, topB) -> {
+            Var len = cs.popVar();
+            Var value = cs.popVar();
+            Var idx = cs.popVar();
+            topB.addEffect(WasmOps.TABLE_FILL
+                    .create(((PrefixTableInsnNode) node).table)
+                    .insn(idx, value, len)
+                    .assignTo());
+        });
     }
 
     static {
@@ -563,19 +591,38 @@ public class WasmToWir implements IRPass<ModuleNode, Module> {
 
     static {
         CONVERTERS.putByte(MEMORY_SIZE, (cs, node, topB) -> topB.addEffect(WasmOps.MEM_SIZE
-                .create().insn().assignTo(cs.pushVar())));
+                .create(0).insn().assignTo(cs.pushVar())));
         CONVERTERS.putByte(MEMORY_GROW, (cs, node, topB) -> topB.addEffect(WasmOps.MEM_GROW
-                .create().insn(cs.popVar()).assignTo(cs.pushVar())));
-        /*
-        CONVERTERS.putInt(new int[]{
-                MEMORY_INIT,
-                DATA_DROP,
-                MEMORY_COPY,
-                MEMORY_FILL,
-        }, (cs, node, topB) -> {
-            throw new UnsupportedOperationException();
+                .create(0).insn(cs.popVar()).assignTo(cs.pushVar())));
+        CONVERTERS.putInt(MEMORY_INIT, (cs, node, topB) -> {
+            Var len = cs.popVar();
+            Var srcAddr = cs.popVar();
+            Var dstAddr = cs.popVar();
+            topB.addEffect(WasmOps.MEM_INIT
+                    .create(Pair.of(0, ((IndexedMemInsnNode) node).index))
+                    .insn(dstAddr, srcAddr, len)
+                    .assignTo());
         });
-         */
+        CONVERTERS.putInt(DATA_DROP, (cs, node, topB) -> topB.addEffect(WasmOps.DATA_DROP
+                .create(((IndexedMemInsnNode) node).index).insn().assignTo()));
+        CONVERTERS.putInt(MEMORY_COPY, (cs, node, topB) -> {
+            Var len = cs.popVar();
+            Var srcAddr = cs.popVar();
+            Var dstAddr = cs.popVar();
+            topB.addEffect(WasmOps.MEM_COPY
+                    .create(Pair.of(0, 0))
+                    .insn(dstAddr, srcAddr, len)
+                    .assignTo());
+        });
+        CONVERTERS.putInt(MEMORY_FILL, (cs, node, topB) -> {
+            Var len = cs.popVar();
+            Var value = cs.popVar();
+            Var idx = cs.popVar();
+            topB.addEffect(WasmOps.MEM_FILL
+                    .create(0)
+                    .insn(idx, value, len)
+                    .assignTo());
+        });
     }
 
     static {
@@ -589,12 +636,16 @@ public class WasmToWir implements IRPass<ModuleNode, Module> {
                 .insn().assignTo(cs.pushVar())));
     }
 
-    private static Converter makeOpInsn(int arity) {
+    private static Converter makeOpInsn(int arity, int retArity) {
         return (cs, node, topB) -> {
             cs.popVs(arity);
             Var[] args = new Var[arity];
             for (int i = 0; i < args.length; i++) {
                 args[i] = cs.refVar(cs.peekV() + i + 1);
+            }
+            Var[] rets = new Var[retArity];
+            for (int i = 0; i < rets.length; i++) {
+                rets[i] = cs.pushVar();
             }
             topB.addEffect(WasmOps.OPERATOR
                     .create(new WasmOps.OperatorType(
@@ -605,7 +656,7 @@ public class WasmToWir implements IRPass<ModuleNode, Module> {
                                     ? ((VectorInsnNode) node).intOpcode
                                     : 0
                     )).insn(args)
-                    .assignTo(cs.pushVar()));
+                    .assignTo(rets));
         };
     }
 
@@ -625,7 +676,7 @@ public class WasmToWir implements IRPass<ModuleNode, Module> {
                     CONVERTERS.put(
                             opc.opcode,
                             opc.intOpcode,
-                            makeOpInsn(type.pops.length)
+                            makeOpInsn(type.pops.length, type.pushes.length)
                     );
                     break;
                 }

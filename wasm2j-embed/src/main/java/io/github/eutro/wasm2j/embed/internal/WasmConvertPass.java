@@ -21,11 +21,11 @@ import io.github.eutro.wasm2j.passes.convert.Handlify;
 import io.github.eutro.wasm2j.passes.convert.JirToJava;
 import io.github.eutro.wasm2j.passes.convert.WasmToWir;
 import io.github.eutro.wasm2j.passes.convert.WirToJir;
-import io.github.eutro.wasm2j.passes.meta.CheckJava;
 import io.github.eutro.wasm2j.passes.misc.ForPass;
 import io.github.eutro.wasm2j.ssa.Module;
 import io.github.eutro.wasm2j.ssa.*;
 import io.github.eutro.wasm2j.util.IRUtils;
+import io.github.eutro.wasm2j.util.Pair;
 import io.github.eutro.wasm2j.util.ValueGetter;
 import io.github.eutro.wasm2j.util.ValueGetterSetter;
 import org.jetbrains.annotations.NotNull;
@@ -39,6 +39,7 @@ import org.objectweb.asm.tree.TypeInsnNode;
 
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodType;
+import java.nio.ByteBuffer;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.BiConsumer;
@@ -172,7 +173,8 @@ public class WasmConvertPass {
                 .then(ForPass.liftFunctions(Passes.SSA_OPTS))
                 .then(ForPass.liftFunctions(Passes.JAVA_PREEMIT))
                 .then(JirToJava.INSTANCE)
-                .then(CheckJava.INSTANCE);
+                //.then(CheckJava.INSTANCE)
+                ;
     }
 
     static ValueGetter effectHandle(
@@ -404,7 +406,7 @@ public class WasmConvertPass {
         int importIdx = getOrMakeImportC(module).getAndIncrement();
         JavaExts.JavaField field = new JavaExts.JavaField(jClass,
                 mangle("g" + importIdx + '_' + importNode.module + '_' + importNode.name),
-                BasicCallingConvention.javaType(importNode.type.type).getDescriptor(),
+                Type.getDescriptor(Global.class),
                 false);
         jClass.fields.add(field);
         ValueGetterSetter global = Getters.fieldGetter(Getters.GET_THIS, field);
@@ -474,6 +476,8 @@ public class WasmConvertPass {
         ValueGetterSetter memory = Getters.fieldGetter(Getters.GET_THIS, field);
         JavaExts.JavaMethod size = JavaExts.JavaMethod.fromJava(Memory.class, "size");
         JavaExts.JavaMethod grow = JavaExts.JavaMethod.fromJava(Memory.class, "grow", int.class);
+        JavaExts.JavaMethod init = JavaExts.JavaMethod.fromJava(Memory.class, "init",
+                int.class, int.class, int.class, ByteBuffer.class);
         return new MemoryConvention() {
             @Override
             public void emitMemLoad(IRBuilder ib, Effect effect) {
@@ -522,6 +526,15 @@ public class WasmConvertPass {
             public void emitMemGrow(IRBuilder ib, Effect effect) {
                 ib.insert(JavaOps.INVOKE.create(grow)
                         .insn(memory.get(ib), effect.insn().args.get(0)).copyFrom(effect));
+            }
+
+            @Override
+            public void emitMemInit(IRBuilder ib, Effect effect, Var data) {
+                List<Var> args = new ArrayList<>();
+                args.add(memory.get(ib));
+                args.addAll(effect.insn().args);
+                args.add(data);
+                ib.insert(JavaOps.INVOKE.create(init).insn(args).copyFrom(effect));
             }
 
             @Override
@@ -736,7 +749,7 @@ public class WasmConvertPass {
 
     private static class EmbedMemConvention extends MemoryConvention.Delegating {
         private final int idx;
-        ValueGetter getHandle, storeHandle, sizeHandle, growHandle;
+        ValueGetter getHandle, storeHandle, sizeHandle, growHandle, initHandle;
         private boolean exported;
 
         public EmbedMemConvention(MemoryConvention convention, int idx) {
@@ -827,7 +840,7 @@ public class WasmConvertPass {
                         jClass,
                         null,
                         "()I",
-                        WasmOps.MEM_SIZE.create(),
+                        WasmOps.MEM_SIZE.create(0),
                         delegate::emitMemSize
                 );
                 growHandle = effectHandle(
@@ -836,8 +849,20 @@ public class WasmConvertPass {
                         jClass,
                         null,
                         "(I)I",
-                        WasmOps.MEM_GROW.create(),
+                        WasmOps.MEM_GROW.create(0),
                         delegate::emitMemGrow
+                );
+                initHandle = effectHandle(
+                        "mem" + idx + "$init",
+                        module,
+                        jClass,
+                        null,
+                        "(IIILjava/nio/ByteBuffer;)V",
+                        WasmOps.MEM_INIT.create(Pair.of(0, 0)),
+                        (ib, fx) -> {
+                            Var data = ib.insert(CommonOps.ARG.create(3).insn(), "data");
+                            delegate.emitMemInit(ib, fx, data);
+                        }
                 );
             }
         }
@@ -876,13 +901,15 @@ public class WasmConvertPass {
                                                     MethodHandle.class,
                                                     MethodHandle.class,
                                                     MethodHandle.class,
+                                                    MethodHandle.class,
                                                     MethodHandle.class
                                             ))
                                             .insn(
                                                     getHandle.get(ib),
                                                     storeHandle.get(ib),
                                                     sizeHandle.get(ib),
-                                                    growHandle.get(ib)
+                                                    growHandle.get(ib),
+                                                    initHandle.get(ib)
                                             ),
                                     "global")),
                     "extern"));

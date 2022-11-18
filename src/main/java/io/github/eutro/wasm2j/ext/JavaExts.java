@@ -25,11 +25,17 @@ public class JavaExts {
 
     public static class JavaClass extends ExtHolder {
         public String name; // internal name
+        public int access;
         public List<JavaMethod> methods = new ArrayList<>();
         public List<JavaField> fields = new ArrayList<>();
 
-        public JavaClass(String name) {
+        public JavaClass(String name, int access) {
             this.name = name;
+            this.access = access;
+        }
+
+        public JavaClass(String name) {
+            this(name, Opcodes.ACC_PUBLIC | Opcodes.ACC_SUPER);
         }
 
         public static JavaClass fromJava(Class<?> clazz) {
@@ -75,15 +81,14 @@ public class JavaExts {
                     owner,
                     method.getName(),
                     Type.getMethodDescriptor(method),
-                    Modifier.isStatic(method.getModifiers())
-                            ? Kind.STATIC
-                            : Kind.VIRTUAL
+                    Modifier.isStatic(method.getModifiers()) ? Kind.STATIC :
+                            Modifier.isInterface(owner.access) ? Kind.INTERFACE : Kind.VIRTUAL
             );
         }
 
         public static JavaMethod fromJava(Class<?> owner, String name, Class<?>... parameterTypes) {
             try {
-                return fromJava(new JavaClass(Type.getInternalName(owner)),
+                return fromJava(new JavaClass(Type.getInternalName(owner), owner.getModifiers()),
                         owner.getMethod(name, parameterTypes));
             } catch (NoSuchMethodException e) {
                 throw new RuntimeException(e);
@@ -112,7 +117,7 @@ public class JavaExts {
 
         @Override
         public Handle getHandle() {
-            return new Handle(kind.handleType, owner.name, name, getDescriptor(), false);
+            return new Handle(kind.handleType, owner.name, name, getDescriptor(), kind.isInterface());
         }
 
         public enum Kind {
@@ -121,6 +126,7 @@ public class JavaExts {
             VIRTUAL(Opcodes.ACC_PUBLIC, Opcodes.INVOKEVIRTUAL, Opcodes.H_INVOKEVIRTUAL),
             FINAL(Opcodes.ACC_PRIVATE, Opcodes.INVOKESPECIAL, Opcodes.H_INVOKESPECIAL),
             ABSTRACT(Opcodes.ACC_ABSTRACT | Opcodes.ACC_PROTECTED, Opcodes.INVOKEVIRTUAL, Opcodes.H_INVOKEVIRTUAL),
+            INTERFACE(Opcodes.ACC_PUBLIC, Opcodes.INVOKEINTERFACE, Opcodes.H_INVOKEINTERFACE)
             ;
 
             public final int access;
@@ -131,6 +137,10 @@ public class JavaExts {
                 this.access = access;
                 this.opcode = opcode;
                 this.handleType = handleType;
+            }
+
+            public boolean isInterface() {
+                return this == INTERFACE;
             }
         }
 

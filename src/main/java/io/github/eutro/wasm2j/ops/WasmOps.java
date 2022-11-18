@@ -6,6 +6,7 @@ import io.github.eutro.wasm2j.ssa.BasicBlock;
 import io.github.eutro.wasm2j.ssa.Control;
 import io.github.eutro.wasm2j.ssa.Var;
 import io.github.eutro.wasm2j.util.Disassembler;
+import io.github.eutro.wasm2j.util.Pair;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
 import org.objectweb.asm.tree.AbstractInsnNode;
@@ -13,34 +14,51 @@ import org.objectweb.asm.tree.InsnList;
 import org.objectweb.asm.tree.InsnNode;
 import org.objectweb.asm.tree.MethodInsnNode;
 
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
 import java.nio.ByteBuffer;
 
 import static io.github.eutro.jwasm.Opcodes.*;
-import static io.github.eutro.jwasm.Opcodes.I64;
 
 public class WasmOps {
     // break convention is that the last target is the fallback, while the first targets are taken conditionally
     public static final Op BR_IF = new SimpleOpKey("br_if").create();
     public static final Op BR_TABLE = new SimpleOpKey("br_table").create();
 
-    public static final UnaryOpKey</* var */ Integer> GLOBAL_REF = new UnaryOpKey<>("global.ref");
-    public static final UnaryOpKey</* var */ Integer> GLOBAL_SET = new UnaryOpKey<>("global.set");
+    @Retention(RetentionPolicy.CLASS)
+    @Target(ElementType.TYPE_USE)
+    public @interface For {
+        String value();
+    }
+
+    public static final UnaryOpKey<@For("var") Integer> GLOBAL_REF = new UnaryOpKey<>("global.ref");
+    public static final UnaryOpKey<@For("var") Integer> GLOBAL_SET = new UnaryOpKey<>("global.set");
 
     public static final UnaryOpKey<WithMemArg<StoreType>> MEM_STORE = new UnaryOpKey<>("mem.set");
     public static final UnaryOpKey<WithMemArg<DerefType>> MEM_LOAD = new UnaryOpKey<>("mem.load");
-    public static final SimpleOpKey MEM_SIZE = new SimpleOpKey("mem.length");
-    public static final SimpleOpKey MEM_GROW = new SimpleOpKey("mem.grow");
+    public static final UnaryOpKey<@For("memory") Integer> MEM_SIZE = new UnaryOpKey<>("mem.length");
+    public static final UnaryOpKey<@For("memory") Integer> MEM_GROW = new UnaryOpKey<>("mem.grow");
+    public static final UnaryOpKey<Pair<@For("memory") Integer, @For("data") Integer>> MEM_INIT = new UnaryOpKey<>("mem.init");
+    public static final UnaryOpKey<@For("data") Integer> DATA_DROP = new UnaryOpKey<>("data.drop");
+    public static final UnaryOpKey<Pair<@For("src") Integer, @For("dst") Integer>> MEM_COPY = new UnaryOpKey<>("mem.copy");
+    public static final UnaryOpKey<@For("memory") Integer> MEM_FILL = new UnaryOpKey<>("mem.fill");
 
-    public static final UnaryOpKey</* table */ Integer> TABLE_STORE = new UnaryOpKey<>("table.set");
-    public static final UnaryOpKey</* table */ Integer> TABLE_REF = new UnaryOpKey<>("table.ref");
-    public static final UnaryOpKey</* table */ Integer> TABLE_SIZE = new UnaryOpKey<>("table.size");
-    public static final UnaryOpKey</* table */ Integer> TABLE_GROW = new UnaryOpKey<>("table.grow");
+    public static final UnaryOpKey<@For("table") Integer> TABLE_STORE = new UnaryOpKey<>("table.set");
+    public static final UnaryOpKey<@For("table") Integer> TABLE_REF = new UnaryOpKey<>("table.ref");
+    public static final UnaryOpKey<@For("table") Integer> TABLE_SIZE = new UnaryOpKey<>("table.size");
+    public static final UnaryOpKey<@For("table") Integer> TABLE_GROW = new UnaryOpKey<>("table.grow");
+    public static final UnaryOpKey<Pair<@For("table") Integer, @For("elem") Integer>> TABLE_INIT = new UnaryOpKey<>("table.init");
+    public static final UnaryOpKey<@For("elem") Integer> ELEM_DROP = new UnaryOpKey<>("elem.drop");
+    public static final UnaryOpKey<Pair<@For("src") Integer, @For("dst") Integer>> TABLE_COPY = new UnaryOpKey<>("table.copy");
+    public static final UnaryOpKey<@For("table") Integer> TABLE_FILL = new UnaryOpKey<>("table.fill");
 
-    public static final UnaryOpKey</* func */ Integer> FUNC_REF = new UnaryOpKey<>("func.ref");
+    public static final UnaryOpKey<@For("func") Integer> FUNC_REF = new UnaryOpKey<>("func.ref");
     public static final UnaryOpKey<CallType> CALL = new UnaryOpKey<>("call");
     public static final UnaryOpKey<TypeNode> CALL_INDIRECT = new UnaryOpKey<>("call_indirect");
 
-    public static final UnaryOpKey</* type */ Byte> ZEROINIT = new UnaryOpKey<>("zeroinit");
+    public static final UnaryOpKey<@For("type") Byte> ZEROINIT = new UnaryOpKey<>("zeroinit");
 
     public static final SimpleOpKey IS_NULL = new SimpleOpKey("is_null");
 
@@ -82,6 +100,7 @@ public class WasmOps {
 
     public static class WithMemArg<T> {
         public T value;
+        public int memory = 0;
         public int offset;
 
         public WithMemArg(T value, int offset) {

@@ -19,6 +19,7 @@ import java.nio.Buffer;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.util.Arrays;
+import java.util.Iterator;
 
 import static io.github.eutro.jwasm.Opcodes.PAGE_SIZE;
 
@@ -191,5 +192,49 @@ public class ByteBufferMemoryConvention extends DelegatingExporter implements Me
         ib.insert(CommonOps.PHI.create(Arrays.asList(successBlock, failBlock))
                 .insn(sz, err)
                 .copyFrom(effect));
+    }
+
+    @Override
+    public void emitMemInit(IRBuilder ib, Effect effect, Var data) {
+        Iterator<Var> iter = effect.insn().args.iterator();
+        Var dstIdx = iter.next();
+        Var srcIdx = iter.next();
+        Var length = iter.next();
+
+        Var mem = buffer.get(ib);
+        JavaExts.JavaMethod sliceMethod = new JavaExts.JavaMethod(
+                IRUtils.BYTE_BUFFER_CLASS,
+                "slice",
+                "()Ljava/nio/ByteBuffer;",
+                JavaExts.JavaMethod.Kind.VIRTUAL
+        );
+        JavaExts.JavaMethod positionMethod = new JavaExts.JavaMethod(
+                IRUtils.BYTE_BUFFER_CLASS,
+                "position",
+                "(I)Ljava/nio/ByteBuffer;",
+                JavaExts.JavaMethod.Kind.VIRTUAL
+        );
+        JavaExts.JavaMethod limitMethod = new JavaExts.JavaMethod(
+                IRUtils.BYTE_BUFFER_CLASS,
+                "limit",
+                "(I)Ljava/nio/ByteBuffer;",
+                JavaExts.JavaMethod.Kind.VIRTUAL
+        );
+        JavaExts.JavaMethod putMethod = new JavaExts.JavaMethod(
+                IRUtils.BYTE_BUFFER_CLASS,
+                "put",
+                "(Ljava/nio/ByteBuffer;)Ljava/nio/ByteBuffer;",
+                JavaExts.JavaMethod.Kind.VIRTUAL
+        );
+
+        mem = ib.insert(JavaOps.INVOKE.create(sliceMethod).insn(mem), "sliced");
+        mem = ib.insert(JavaOps.INVOKE.create(positionMethod).insn(mem, dstIdx), "positioned");
+
+        data = ib.insert(JavaOps.INVOKE.create(sliceMethod).insn(data), "sliced");
+        data = ib.insert(JavaOps.INVOKE.create(positionMethod).insn(data, srcIdx), "positioned");
+        Var limit = ib.insert(JavaOps.insns(new InsnNode(Opcodes.IADD)).insn(srcIdx, length), "limit");
+        data = ib.insert(JavaOps.INVOKE.create(limitMethod).insn(data, limit), "limited");
+
+        ib.insert(JavaOps.INVOKE.create(putMethod).insn(mem, data), "mem");
     }
 }

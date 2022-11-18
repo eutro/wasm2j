@@ -1,15 +1,40 @@
 package io.github.eutro.wasm2j.ssa;
 
-import io.github.eutro.wasm2j.ext.CommonExts;
-import io.github.eutro.wasm2j.ext.ExtHolder;
+import io.github.eutro.wasm2j.ext.*;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.AbstractSet;
 import java.util.Iterator;
 import java.util.LinkedHashSet;
 import java.util.Set;
 
-public final class Module extends ExtHolder {
+public final class Module implements ExtContainer {
+    private final ExtContainer holder;
+
+    public Module() {
+        this.holder = new ExtHolder();
+    }
+
+    public Module(ExtContainer holder) {
+        this.holder = holder;
+    }
+
+    @Override
+    public <T> void attachExt(Ext<T> ext, T value) {
+        holder.attachExt(ext, value);
+    }
+
+    @Override
+    public <T> void removeExt(Ext<T> ext) {
+        holder.removeExt(ext);
+    }
+
+    @Override
+    public <T> @Nullable T getNullable(Ext<T> ext) {
+        return holder.getNullable(ext);
+    }
+
     public Set<Function> functions = new AbstractSet<Function>() {
         private final Set<Function> delegate = new LinkedHashSet<>();
 

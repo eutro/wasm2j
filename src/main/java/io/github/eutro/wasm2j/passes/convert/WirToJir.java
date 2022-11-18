@@ -13,8 +13,10 @@ import io.github.eutro.wasm2j.passes.InPlaceIRPass;
 import io.github.eutro.wasm2j.passes.misc.ForPass;
 import io.github.eutro.wasm2j.ssa.Module;
 import io.github.eutro.wasm2j.ssa.*;
+import io.github.eutro.wasm2j.util.Pair;
 
 import java.util.*;
+import java.util.concurrent.atomic.AtomicReference;
 
 import static io.github.eutro.jwasm.Opcodes.*;
 
@@ -31,35 +33,42 @@ public class WirToJir implements InPlaceIRPass<Module> {
             throw new IllegalArgumentException("module must be in WASM code type");
         }
 
-        WirJavaConvention conventions = conventionsFactory.create(module);
+        Module extrasModule = new Module(module);
+        AtomicReference<WirToJirPerFunc> pass = new AtomicReference<>();
+        WirJavaConvention conventions = conventionsFactory.create(module, extrasModule,
+                (InPlaceIRPass<Function>) function -> pass.get().runInPlace(function));
+        WirToJirPerFunc convertPass = new WirToJirPerFunc(
+                conventions,
+                conventions.getIndirectCallingConvention()
+        );
+        pass.set(convertPass);
 
-        conventions.preEmit();
+        conventions.preConvert();
         ForPass.liftFunctions(
-                        new WirToJirPerFunc(
-                                conventions,
-                                conventions.getIndirectCallingConvention()
-                        ))
+                        convertPass)
                 .runInPlace(module);
-        conventions.buildConstructor();
+        conventions.postConvert();
 
+        module.functions.addAll(extrasModule.functions);
         module.attachExt(CommonExts.CODE_TYPE, CommonExts.CodeType.JAVA);
     }
 
     public static class WirToJirPerFunc implements InPlaceIRPass<Function> {
         private final WirJavaConvention conventions;
         private final CallingConvention callConv;
-        private final Map<BasicBlock, BasicBlock> blockMap = new HashMap<>();
+        private final Map<BasicBlock, BasicBlock> startBlockMap = new HashMap<>();
+        private final Map<BasicBlock, BasicBlock> endBlockMap = new HashMap<>();
 
         public WirToJirPerFunc(WirJavaConvention conventions, CallingConvention callConv) {
             this.conventions = conventions;
             this.callConv = callConv;
         }
 
-        private void translateBbs(List<BasicBlock> oldBlocks) {
+        private void translateBbs(List<BasicBlock> oldBlocks, Map<BasicBlock, BasicBlock> map) {
             ListIterator<BasicBlock> li = oldBlocks.listIterator();
             while (li.hasNext()) {
                 BasicBlock nextBb = li.next();
-                li.set(blockMap.getOrDefault(nextBb, nextBb));
+                li.set(map.getOrDefault(nextBb, nextBb));
             }
         }
 
@@ -74,6 +83,7 @@ public class WirToJir implements InPlaceIRPass<Module> {
             IRBuilder ib = new IRBuilder(func, null);
             for (BasicBlock block : oldBlocks) {
                 ib.setBlock(func.newBb());
+                startBlockMap.put(block, ib.getBlock());
 
                 List<Effect> oldEffects = new ArrayList<>(block.getEffects());
                 block.getEffects().clear();
@@ -82,16 +92,16 @@ public class WirToJir implements InPlaceIRPass<Module> {
                 }
                 translateControl(block.getControl(), ib);
 
-                blockMap.put(block, ib.getBlock());
+                endBlockMap.put(block, ib.getBlock());
             }
 
             for (BasicBlock block : func.blocks) {
                 for (Effect effect : block.getEffects()) {
                     Insn insn = effect.insn();
                     if (insn.op.key != CommonOps.PHI) break;
-                    translateBbs(CommonOps.PHI.cast(insn.op).arg);
+                    translateBbs(CommonOps.PHI.cast(insn.op).arg, endBlockMap);
                 }
-                translateBbs(block.getControl().targets);
+                translateBbs(block.getControl().targets, startBlockMap);
             }
         }
 
@@ -133,13 +143,23 @@ public class WirToJir implements InPlaceIRPass<Module> {
             FX_CONVERTERS.put(WasmOps.GLOBAL_SET, (fx, jb, slf) ->
                     slf.conventions.getGlobal(WasmOps.GLOBAL_SET.cast(fx.insn().op).arg).emitGlobalStore(jb, fx));
             FX_CONVERTERS.put(WasmOps.MEM_STORE, (fx, jb, slf) ->
-                    slf.conventions.getMemory(0).emitMemStore(jb, fx));
+                    slf.conventions.getMemory(WasmOps.MEM_STORE.cast(fx.insn().op).arg.memory).emitMemStore(jb, fx));
             FX_CONVERTERS.put(WasmOps.MEM_LOAD, (fx, jb, slf) ->
-                    slf.conventions.getMemory(0).emitMemLoad(jb, fx));
+                    slf.conventions.getMemory(WasmOps.MEM_LOAD.cast(fx.insn().op).arg.memory).emitMemLoad(jb, fx));
             FX_CONVERTERS.put(WasmOps.MEM_SIZE, (fx, jb, slf) ->
-                    slf.conventions.getMemory(0).emitMemSize(jb, fx));
+                    slf.conventions.getMemory(WasmOps.MEM_SIZE.cast(fx.insn().op).arg).emitMemSize(jb, fx));
             FX_CONVERTERS.put(WasmOps.MEM_GROW, (fx, jb, slf) ->
-                    slf.conventions.getMemory(0).emitMemGrow(jb, fx));
+                    slf.conventions.getMemory(WasmOps.MEM_GROW.cast(fx.insn().op).arg).emitMemGrow(jb, fx));
+            FX_CONVERTERS.put(WasmOps.MEM_INIT, (fx, jb, slf) -> {
+                Pair<Integer, Integer> pair = WasmOps.MEM_INIT.cast(fx.insn().op).arg;
+                slf.conventions.getMemory(pair.left)
+                        .emitMemInit(jb, fx, slf.conventions
+                                .getData(pair.right)
+                                .byteBuffer()
+                                .get(jb));
+            });
+            FX_CONVERTERS.put(WasmOps.DATA_DROP, (fx, jb, slf) ->
+                    slf.conventions.getData(WasmOps.DATA_DROP.cast(fx.insn().op).arg).emitDrop(jb, fx));
             FX_CONVERTERS.put(WasmOps.TABLE_STORE, (fx, jb, slf) ->
                     slf.conventions.getTable(WasmOps.TABLE_STORE.cast(fx.insn().op).arg).emitTableStore(jb, fx));
             FX_CONVERTERS.put(WasmOps.TABLE_REF, (fx, jb, slf) ->
