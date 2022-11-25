@@ -5,15 +5,27 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.lang.invoke.MethodHandle;
+import java.lang.invoke.MethodType;
 import java.util.Arrays;
 
 public interface Table {
+    @GeneratedAccess
     @Nullable Object get(int index);
 
+    @GeneratedAccess
     void set(int index, @Nullable Object value);
 
+    @GeneratedAccess
     int size();
 
+    @GeneratedAccess
+    default void init(int dstIdx, int srcIdx, int len, Object[] data) {
+        for (int i = 0; i < len; i++) {
+            set(dstIdx++, data[srcIdx++]);
+        }
+    }
+
+    @GeneratedAccess
     default int grow(int growBy, @Nullable Object fillWith) {
         return -1;
     }
@@ -21,7 +33,7 @@ public interface Table {
     abstract class AbstractArrayTable implements Table {
         private final Integer max;
 
-        public AbstractArrayTable(int min, @Nullable Integer max) {
+        public AbstractArrayTable(@Nullable Integer max) {
             this.max = max;
         }
 
@@ -42,6 +54,11 @@ public interface Table {
         @Override
         public int size() {
             return getValues().length;
+        }
+
+        @Override
+        public void init(int dstIdx, int srcIdx, int len, Object[] data) {
+            System.arraycopy(data, srcIdx, getValues(), dstIdx, len);
         }
 
         @Override
@@ -72,7 +89,7 @@ public interface Table {
         private Object[] values;
 
         public ArrayTable(int min, @Nullable Integer max) {
-            super(min, max);
+            super(max);
             this.values = new Object[min];
         }
 
@@ -91,13 +108,17 @@ public interface Table {
         private final MethodHandle get, set, size, grow;
 
         public HandleTable(MethodHandle get, MethodHandle set, MethodHandle size, MethodHandle grow) {
-            this.get = get;
-            this.set = set;
-            this.size = size;
-            this.grow = grow;
+            this.get = get.asType(MethodType.methodType(Object.class, int.class));
+            this.set = set.asType(MethodType.methodType(void.class, int.class, Object.class));
+            this.size = size.asType(MethodType.methodType(int.class));
+            this.grow = grow.asType(MethodType.methodType(int.class, int.class, Object.class));
         }
 
-        public static HandleTable create(MethodHandle get, MethodHandle set, MethodHandle size, MethodHandle grow) {
+        @GeneratedAccess
+        public static HandleTable create(MethodHandle get,
+                                         MethodHandle set,
+                                         MethodHandle size,
+                                         MethodHandle grow) {
             return new HandleTable(get, set, size, grow);
         }
 

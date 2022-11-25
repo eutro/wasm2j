@@ -9,7 +9,9 @@ public interface WirJavaConvention {
 
     TableConvention getTable(int index);
 
-    DataConvention getData(int data);
+    DataConvention getData(int index);
+
+    ElemConvention getElem(int index);
 
     default CallingConvention getIndirectCallingConvention() {
         throw new UnsupportedOperationException();

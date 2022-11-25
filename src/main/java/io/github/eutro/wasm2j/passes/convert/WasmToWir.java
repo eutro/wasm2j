@@ -498,13 +498,14 @@ public class WasmToWir implements IRPass<ModuleNode, Module> {
                 .create(((TableInsnNode) node).table)
                 .insn(cs.popVar())
                 .assignTo(cs.pushVar())));
-        CONVERTERS.putByte(TABLE_SET, (cs, node, topB) -> topB.addEffect(WasmOps.TABLE_STORE
-                .create(((TableInsnNode) node).table)
-                .insn(
-                        cs.popVar(), // value
-                        cs.popVar() // index
-                )
-                .assignTo()));
+        CONVERTERS.putByte(TABLE_SET, (cs, node, topB) -> {
+            Var value = cs.popVar();
+            Var index = cs.popVar();
+            topB.addEffect(WasmOps.TABLE_STORE
+                    .create(((TableInsnNode) node).table)
+                    .insn(index, value)
+                    .assignTo());
+        });
         CONVERTERS.putInt(TABLE_SIZE, (cs, node, topB) -> topB.addEffect(WasmOps.TABLE_SIZE
                 .create(((PrefixTableInsnNode) node).table)
                 .insn()
@@ -565,7 +566,7 @@ public class WasmToWir implements IRPass<ModuleNode, Module> {
                         I64_LOAD32_S, I64_LOAD32_U
                 },
                 (cs, node, topB) -> topB.addEffect(WasmOps.MEM_LOAD
-                        .create(new WasmOps.WithMemArg<>(
+                        .create(WasmOps.WithMemArg.create(
                                 WasmOps.DerefType.fromOpcode(node.opcode),
                                 ((MemInsnNode) node).offset))
                         .insn(cs.popVar())
@@ -581,7 +582,7 @@ public class WasmToWir implements IRPass<ModuleNode, Module> {
             Var value = cs.popVar();
             Var addr = cs.popVar();
             topB.addEffect(WasmOps.MEM_STORE
-                    .create(new WasmOps.WithMemArg<>(StoreType.fromOpcode(node.opcode),
+                    .create(WasmOps.WithMemArg.create(StoreType.fromOpcode(node.opcode),
                             ((MemInsnNode) node).offset))
                     .insn(addr, value)
                     .assignTo()

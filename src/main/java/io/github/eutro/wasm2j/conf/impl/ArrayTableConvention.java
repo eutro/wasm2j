@@ -16,6 +16,8 @@ import org.objectweb.asm.tree.TypeInsnNode;
 import java.util.Arrays;
 
 public class ArrayTableConvention extends DelegatingExporter implements TableConvention {
+    private static final JavaExts.JavaMethod SYSTEM_ARRAYCOPY = JavaExts.JavaMethod
+            .fromJava(System.class, "arraycopy", Object.class, int.class, Object.class, int.class, int.class);
     private final ValueGetterSetter table;
     private final Type componentType;
     private final Integer max;
@@ -44,8 +46,8 @@ public class ArrayTableConvention extends DelegatingExporter implements TableCon
     public void emitTableStore(IRBuilder ib, Effect effect) {
         ib.insert(JavaOps.ARRAY_SET.create()
                 .insn(table.get(ib),
-                        effect.insn().args.get(1),
-                        effect.insn().args.get(0))
+                        effect.insn().args.get(0),
+                        effect.insn().args.get(1))
                 .assignTo());
 
     }
@@ -141,6 +143,18 @@ public class ArrayTableConvention extends DelegatingExporter implements TableCon
         ib.setBlock(endBlock);
         ib.insert(CommonOps.PHI.create(Arrays.asList(successBlock, failBlock))
                 .insn(sz, err)
+                .copyFrom(effect));
+    }
+
+    @Override
+    public void emitTableInit(IRBuilder ib, Effect effect, Var data) {
+        ib.insert(JavaOps.INVOKE
+                .create(SYSTEM_ARRAYCOPY)
+                .insn(data,
+                        effect.insn().args.get(1),
+                        table.get(ib),
+                        effect.insn().args.get(0),
+                        effect.insn().args.get(2))
                 .copyFrom(effect));
     }
 }

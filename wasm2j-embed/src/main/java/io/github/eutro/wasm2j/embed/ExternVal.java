@@ -29,6 +29,7 @@ public final class ExternVal {
         return new ExternVal(ExternType.TABLE, table);
     }
 
+    @GeneratedAccess
     public Table getAsTable() {
         checkType(ExternType.TABLE);
         return (Table) value;
@@ -38,6 +39,7 @@ public final class ExternVal {
         return new ExternVal(ExternType.GLOBAL, global);
     }
 
+    @GeneratedAccess
     public Global getAsGlobal() {
         checkType(ExternType.GLOBAL);
         return (Global) value;
@@ -47,6 +49,7 @@ public final class ExternVal {
         return new ExternVal(ExternType.MEM, memory);
     }
 
+    @GeneratedAccess
     public Memory getAsMemory() {
         checkType(ExternType.MEM);
         return (Memory) value;
@@ -57,6 +60,7 @@ public final class ExternVal {
         return (MethodHandle) value;
     }
 
+    @GeneratedAccess
     public MethodHandle getAsFunc(MethodType type) {
         return getAsFuncRaw().asType(type);
     }

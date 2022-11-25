@@ -117,14 +117,19 @@ public interface Memory {
         }
     }
 
+    @GeneratedAccess
     MethodHandle loadHandle(LoadMode mode);
 
+    @GeneratedAccess
     MethodHandle storeHandle(StoreMode mode);
 
+    @GeneratedAccess
     int size();
 
+    @GeneratedAccess
     int grow(int growByPages);
 
+    @GeneratedAccess
     void init(int dstIdx, int srcIdx, int len, ByteBuffer buf);
 
     class HandleMemory implements Memory {
@@ -149,6 +154,7 @@ public interface Memory {
             this.init = init;
         }
 
+        @GeneratedAccess
         public static HandleMemory create(
                 MethodHandle loadHandle,
                 MethodHandle storeHandle,

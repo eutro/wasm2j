@@ -103,9 +103,13 @@ public class WasmOps {
         public int memory = 0;
         public int offset;
 
-        public WithMemArg(T value, int offset) {
+        private WithMemArg(T value, int offset) {
             this.value = value;
             this.offset = offset;
+        }
+
+        public static <T> WithMemArg<T> create(T value, int offset) {
+            return new WithMemArg<>(value, offset);
         }
 
         @Override

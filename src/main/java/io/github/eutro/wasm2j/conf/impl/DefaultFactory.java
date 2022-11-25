@@ -13,12 +13,12 @@ import io.github.eutro.wasm2j.ssa.Module;
 import io.github.eutro.wasm2j.ssa.*;
 import io.github.eutro.wasm2j.util.IRUtils;
 import io.github.eutro.wasm2j.util.Pair;
+import io.github.eutro.wasm2j.util.ValueGetterSetter;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
 import org.objectweb.asm.tree.InsnList;
 import org.objectweb.asm.tree.TypeInsnNode;
 
-import java.lang.invoke.MethodHandle;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.util.*;
@@ -131,6 +131,7 @@ public abstract class DefaultFactory implements WirJavaConventionFactory {
                 private final List<JavaExts.JavaField> lTables = new ArrayList<>();
                 private final JavaExts.JavaClass jClass;
                 private final List<JavaExts.JavaField> datas = new ArrayList<>();
+                private final List<JavaExts.JavaField> elems = new ArrayList<>();
 
                 public DefaultWirJavaConvention(
                         Module module,
@@ -403,40 +404,25 @@ public abstract class DefaultFactory implements WirJavaConventionFactory {
                     }
 
                     if (node.elems != null) {
-                        int fieldElems = 0;
+                        int elemIdx = 0;
                         for (ElementNode elem : node.elems) {
-                            Var offset, table;
-                            if (elem.offset == null) {
-                                offset = ib.insert(CommonOps.constant(0), "offset");
-                                Insn insn = CommonOps.constant(elem.indices != null ? elem.indices.length : elem.init.size());
-                                table = ib.insert(JavaOps.insns(
-                                                new TypeInsnNode(Opcodes.ANEWARRAY, Type.getInternalName(MethodHandle.class))
-                                        ).insn(ib.insert(insn,
-                                                "elemsz")),
-                                        "elem");
-                                JavaExts.JavaField field = new JavaExts.JavaField(jClass, "elem" + fieldElems++,
-                                        Type.getDescriptor(MethodHandle[].class),
-                                        false);
-                                jClass.fields.add(field);
-                                ib.insert(JavaOps.PUT_FIELD.create(field).insn(IRUtils.getThis(ib), table).assignTo());
-                            } else {
-                                Function offsetFunc = funcMap.get(elem.offset);
-                                offset = ib.insert(new Inliner(ib)
-                                                .inline(convert.run(offsetFunc), Collections.emptyList()),
-                                        "elem_offset");
-                                module.functions.remove(offsetFunc);
-                                table = ib.insert(JavaOps.GET_FIELD
-                                                .create(lTables.get(elem.table))
-                                                .insn(IRUtils.getThis(ib)),
-                                        "table");
-                            }
+                            Insn elemLen = CommonOps.constant(elem.indices != null ? elem.indices.length : elem.init.size());
+                            Type elemType = BasicCallingConvention.javaType(elem.type);
+                            Var elemV = ib.insert(JavaOps.insns(
+                                            new TypeInsnNode(Opcodes.ANEWARRAY,
+                                                    elemType.getInternalName())
+                                    ).insn(ib.insert(elemLen, "elemsz")),
+                                    "elem");
+                            JavaExts.JavaField field = new JavaExts.JavaField(jClass, "elem" + elemIdx,
+                                    "[" + elemType.getDescriptor(),
+                                    false);
+                            jClass.fields.add(field);
+                            ib.insert(JavaOps.PUT_FIELD.create(field).insn(IRUtils.getThis(ib), elemV).assignTo());
+                            elems.add(field);
 
                             if (elem.indices != null) {
                                 for (int i = 0; i < elem.indices.length; i++) {
-                                    Var j = ib.insert(JavaOps.insns(new org.objectweb.asm.tree.InsnNode(Opcodes.IADD))
-                                                    .insn(offset,
-                                                            ib.insert(CommonOps.constant(i), "i")),
-                                            "j");
+                                    Var j = ib.insert(CommonOps.constant(i), "j");
                                     Var f = ib.func.newVar("f");
                                     getFunction(elem.indices[i])
                                             .emitFuncRef(ib, WasmOps.FUNC_REF
@@ -444,27 +430,43 @@ public abstract class DefaultFactory implements WirJavaConventionFactory {
                                                     .insn()
                                                     .assignTo(f));
                                     ib.insert(JavaOps.ARRAY_SET.create()
-                                            .insn(table, j, f)
+                                            .insn(elemV, j, f)
                                             .assignTo());
                                 }
                             } else {
                                 int i = 0;
                                 for (ExprNode expr : elem.init) {
-                                    Var j = ib.insert(JavaOps.insns(new org.objectweb.asm.tree.InsnNode(Opcodes.IADD))
-                                                    .insn(offset,
-                                                            ib.insert(CommonOps.constant(i), "i")),
-                                            "j");
+                                    Var j = ib.insert(CommonOps.constant(i), "j");
                                     Function exprFunc = funcMap.get(expr);
                                     Var f = ib.insert(new Inliner(ib)
                                             .inline(convert.run(exprFunc), Collections.emptyList()),
                                             "f");
                                     module.functions.remove(exprFunc);
                                     ib.insert(JavaOps.ARRAY_SET.create()
-                                            .insn(table, j, f)
+                                            .insn(elemV, j, f)
                                             .assignTo());
                                     i++;
                                 }
                             }
+
+                            if (elem.offset != null) {
+                                Function offsetFunc = funcMap.get(elem.offset);
+                                Var offset = ib.insert(new Inliner(ib)
+                                                .inline(convert.run(offsetFunc), Collections.emptyList()),
+                                        "elem_offset");
+                                module.functions.remove(offsetFunc);
+                                getTable(elem.table)
+                                        .emitTableInit(ib,
+                                                WasmOps.TABLE_INIT
+                                                        .create(Pair.of(elem.table, elemIdx))
+                                                        .insn(offset,
+                                                                ib.insert(CommonOps.constant(0), "src"),
+                                                                ib.insert(elemLen, "len"))
+                                                        .assignTo(),
+                                                elemV);
+                            }
+
+                            elemIdx++;
                         }
                     }
 
@@ -578,8 +580,24 @@ public abstract class DefaultFactory implements WirJavaConventionFactory {
                 }
 
                 @Override
-                public DataConvention getData(int data) {
-                    return () -> fieldGetter(GET_THIS, datas.get(data));
+                public DataConvention getData(int index) {
+                    return () -> fieldGetter(GET_THIS, datas.get(index));
+                }
+
+                @Override
+                public ElemConvention getElem(int index) {
+                    JavaExts.JavaField elem = elems.get(index);
+                    return new ElemConvention() {
+                        @Override
+                        public Type elementType() {
+                            return Type.getType(elem.descriptor).getElementType();
+                        }
+
+                        @Override
+                        public ValueGetterSetter array() {
+                            return fieldGetter(GET_THIS, elem);
+                        }
+                    };
                 }
 
                 @Override

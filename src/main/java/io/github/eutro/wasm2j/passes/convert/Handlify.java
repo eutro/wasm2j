@@ -347,7 +347,7 @@ public class Handlify implements IRPass<Function, @Nullable Function> {
                 case Opcodes.ARRAYLENGTH:
                     return ib -> ib.insert(CommonOps.constant(new Handle(Opcodes.H_INVOKESTATIC,
                             Type.getInternalName(Array.class),
-                            "length",
+                            "getLength",
                             "(Ljava/lang/Object;)I",
                             false)),
                             "arraylength");

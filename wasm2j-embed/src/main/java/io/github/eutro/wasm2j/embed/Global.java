@@ -7,10 +7,12 @@ import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodType;
 
 public interface Global {
+    @GeneratedAccess
     Object get();
 
     boolean isMut();
 
+    @GeneratedAccess
     void set(Object value);
 
     class BoxGlobal implements Global {
@@ -49,6 +51,7 @@ public interface Global {
             this.set = set == null ? null : set.asType(MethodType.methodType(void.class, Object.class));
         }
 
+        @GeneratedAccess
         public static HandleGlobal create(MethodHandle get, @Nullable MethodHandle set) {
             return new HandleGlobal(get, set);
         }

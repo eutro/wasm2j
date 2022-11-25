@@ -1,5 +1,6 @@
 package io.github.eutro.wasm2j.passes.convert;
 
+import io.github.eutro.jwasm.tree.TypeNode;
 import io.github.eutro.wasm2j.conf.api.CallingConvention;
 import io.github.eutro.wasm2j.conf.api.WirJavaConvention;
 import io.github.eutro.wasm2j.conf.api.WirJavaConventionFactory;
@@ -58,6 +59,7 @@ public class WirToJir implements InPlaceIRPass<Module> {
         private final CallingConvention callConv;
         private final Map<BasicBlock, BasicBlock> startBlockMap = new HashMap<>();
         private final Map<BasicBlock, BasicBlock> endBlockMap = new HashMap<>();
+        private List<Var> args;
 
         public WirToJirPerFunc(WirJavaConvention conventions, CallingConvention callConv) {
             this.conventions = conventions;
@@ -80,7 +82,14 @@ public class WirToJir implements InPlaceIRPass<Module> {
             ArrayList<BasicBlock> oldBlocks = new ArrayList<>(func.blocks);
             func.blocks.clear();
 
-            IRBuilder ib = new IRBuilder(func, null);
+            IRBuilder ib = new IRBuilder(func, func.newBb());
+            TypeNode type = func.getExtOrThrow(WasmExts.TYPE);
+            List<Var> argVars = new ArrayList<>(type.params.length);
+            for (int i = 0; i < type.params.length; i++) {
+                argVars.add(ib.insert(CommonOps.ARG.create(i).insn(), "arg" + i));
+            }
+            args = callConv.receiveArguments(ib, argVars, type);
+            ib.insertCtrl(Control.br(oldBlocks.get(0)));
             for (BasicBlock block : oldBlocks) {
                 ib.setBlock(func.newBb());
                 startBlockMap.put(block, ib.getBlock());
@@ -132,16 +141,20 @@ public class WirToJir implements InPlaceIRPass<Module> {
             for (OpKey key : new OpKey[]{
                     CommonOps.IDENTITY.key,
                     CommonOps.PHI,
-                    CommonOps.ARG,
                     CommonOps.CONST,
             }) {
                 FX_CONVERTERS.put(key, (fx, jb, slf) -> jb.insert(fx));
             }
+            FX_CONVERTERS.put(CommonOps.ARG, (fx, jb, slf) ->
+                    jb.insert(CommonOps.IDENTITY
+                            .insn(slf.args.get(CommonOps.ARG.cast(fx.insn().op).arg))
+                            .copyFrom(fx)));
 
             FX_CONVERTERS.put(WasmOps.GLOBAL_REF, (fx, jb, slf) ->
                     slf.conventions.getGlobal(WasmOps.GLOBAL_REF.cast(fx.insn().op).arg).emitGlobalRef(jb, fx));
             FX_CONVERTERS.put(WasmOps.GLOBAL_SET, (fx, jb, slf) ->
                     slf.conventions.getGlobal(WasmOps.GLOBAL_SET.cast(fx.insn().op).arg).emitGlobalStore(jb, fx));
+
             FX_CONVERTERS.put(WasmOps.MEM_STORE, (fx, jb, slf) ->
                     slf.conventions.getMemory(WasmOps.MEM_STORE.cast(fx.insn().op).arg.memory).emitMemStore(jb, fx));
             FX_CONVERTERS.put(WasmOps.MEM_LOAD, (fx, jb, slf) ->
@@ -160,6 +173,13 @@ public class WirToJir implements InPlaceIRPass<Module> {
             });
             FX_CONVERTERS.put(WasmOps.DATA_DROP, (fx, jb, slf) ->
                     slf.conventions.getData(WasmOps.DATA_DROP.cast(fx.insn().op).arg).emitDrop(jb, fx));
+            FX_CONVERTERS.put(WasmOps.MEM_COPY, (fx, jb, slf) -> {
+                Pair<Integer, Integer> arg = WasmOps.MEM_COPY.cast(fx.insn().op).arg;
+                slf.conventions.getMemory(arg.left).emitMemCopy(jb, fx, slf.conventions.getMemory(arg.right));
+            });
+            FX_CONVERTERS.put(WasmOps.MEM_FILL, (fx, jb, slf) ->
+                    slf.conventions.getMemory(WasmOps.MEM_FILL.cast(fx.insn().op).arg).emitMemFill(jb, fx));
+
             FX_CONVERTERS.put(WasmOps.TABLE_STORE, (fx, jb, slf) ->
                     slf.conventions.getTable(WasmOps.TABLE_STORE.cast(fx.insn().op).arg).emitTableStore(jb, fx));
             FX_CONVERTERS.put(WasmOps.TABLE_REF, (fx, jb, slf) ->
@@ -168,11 +188,24 @@ public class WirToJir implements InPlaceIRPass<Module> {
                     slf.conventions.getTable(WasmOps.TABLE_SIZE.cast(fx.insn().op).arg).emitTableSize(jb, fx));
             FX_CONVERTERS.put(WasmOps.TABLE_GROW, (fx, jb, slf) ->
                     slf.conventions.getTable(WasmOps.TABLE_GROW.cast(fx.insn().op).arg).emitTableGrow(jb, fx));
+            FX_CONVERTERS.put(WasmOps.TABLE_INIT, (fx, jb, slf) -> {
+                Pair<Integer, Integer> arg = WasmOps.TABLE_INIT.cast(fx.insn().op).arg;
+                slf.conventions.getTable(arg.left).emitTableInit(jb, fx, slf.conventions.getElem(arg.right).array().get(jb));
+            });
+            FX_CONVERTERS.put(WasmOps.ELEM_DROP, (fx, jb, slf) ->
+                    slf.conventions.getElem(WasmOps.ELEM_DROP.cast(fx.insn().op).arg).emitDrop(jb, fx));
+            FX_CONVERTERS.put(WasmOps.TABLE_COPY, (fx, jb, slf) -> {
+                Pair<Integer, Integer> arg = WasmOps.TABLE_COPY.cast(fx.insn().op).arg;
+                slf.conventions.getTable(arg.left).emitTableCopy(jb, fx, slf.conventions.getTable(arg.right));
+            });
+            FX_CONVERTERS.put(WasmOps.TABLE_FILL, (fx, jb, slf) ->
+                    slf.conventions.getTable(WasmOps.TABLE_FILL.cast(fx.insn().op).arg).emitTableFill(jb, fx));
+
             FX_CONVERTERS.put(WasmOps.FUNC_REF, (fx, jb, slf) ->
                     slf.conventions.getFunction(WasmOps.FUNC_REF.cast(fx.insn().op).arg).emitFuncRef(jb, fx));
+
             FX_CONVERTERS.put(WasmOps.CALL, (fx, jb, slf) ->
                     slf.conventions.getFunction(WasmOps.CALL.cast(fx.insn().op).arg.func).emitCall(jb, fx));
-
             FX_CONVERTERS.put(WasmOps.CALL_INDIRECT, (fx, jb, slf) ->
                     slf.conventions.getIndirectCallingConvention().emitCallIndirect(jb, fx));
 

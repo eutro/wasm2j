@@ -29,7 +29,6 @@ import io.github.eutro.wasm2j.util.Pair;
 import io.github.eutro.wasm2j.util.ValueGetter;
 import io.github.eutro.wasm2j.util.ValueGetterSetter;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
 import org.objectweb.asm.tree.ClassNode;
@@ -181,7 +180,6 @@ public class WasmConvertPass {
             String name,
             Module module,
             JavaExts.JavaClass jClass,
-            int @Nullable [] permute,
             String desc,
             Op op,
             BiConsumer<IRBuilder, Effect> f
@@ -204,7 +202,7 @@ public class WasmConvertPass {
             Type[] argTys = mTy.getArgumentTypes();
             for (int i = 0; i < argTys.length; i++) {
                 args.add(ib.insert(
-                        CommonOps.ARG.create(permute == null ? i : permute[i]).insn(),
+                        CommonOps.ARG.create(i).insn(),
                         "arg" + i));
             }
             Var[] rets = mTy.getReturnType().getSize() == 0
@@ -337,12 +335,16 @@ public class WasmConvertPass {
         JavaExts.JavaMethod set = JavaExts.JavaMethod.fromJava(Table.class, "set", int.class, Object.class);
         JavaExts.JavaMethod size = JavaExts.JavaMethod.fromJava(Table.class, "size");
         JavaExts.JavaMethod grow = JavaExts.JavaMethod.fromJava(Table.class, "grow", int.class, Object.class);
+        JavaExts.JavaMethod init = JavaExts.JavaMethod.fromJava(Table.class, "init", int.class, int.class, int.class, Object[].class);
+        Type componentType = BasicCallingConvention.javaType(importNode.type);
         return new TableConvention() {
             @Override
             public void emitTableRef(IRBuilder ib, Effect effect) {
-                ib.insert(JavaOps.INVOKE
-                        .create(get)
-                        .insn(table.get(ib), effect.insn().args.get(0))
+                ib.insert(JavaOps.insns(new TypeInsnNode(Opcodes.CHECKCAST, componentType.getInternalName()))
+                        .insn(ib.insert(JavaOps.INVOKE
+                                        .create(get)
+                                        .insn(table.get(ib), effect.insn().args.get(0)),
+                                "raw"))
                         .copyFrom(effect));
             }
 
@@ -351,8 +353,8 @@ public class WasmConvertPass {
                 ib.insert(JavaOps.INVOKE
                         .create(set)
                         .insn(table.get(ib),
-                                effect.insn().args.get(1),
-                                effect.insn().args.get(0))
+                                effect.insn().args.get(0),
+                                effect.insn().args.get(1))
                         .copyFrom(effect));
             }
 
@@ -371,6 +373,18 @@ public class WasmConvertPass {
                         .insn(table.get(ib),
                                 effect.insn().args.get(0),
                                 effect.insn().args.get(1))
+                        .copyFrom(effect));
+            }
+
+            @Override
+            public void emitTableInit(IRBuilder ib, Effect effect, Var data) {
+                ib.insert(JavaOps.INVOKE
+                        .create(init)
+                        .insn(table.get(ib),
+                                effect.insn().args.get(0),
+                                effect.insn().args.get(1),
+                                effect.insn().args.get(2),
+                                data)
                         .copyFrom(effect));
             }
 
@@ -612,7 +626,6 @@ public class WasmConvertPass {
                         "table" + idx + "$get",
                         module,
                         jClass,
-                        null,
                         "(I)Ljava/lang/Object;",
                         WasmOps.TABLE_REF.create(idx),
                         delegate::emitTableRef
@@ -621,7 +634,6 @@ public class WasmConvertPass {
                         "table" + idx + "$set",
                         module,
                         jClass,
-                        new int[]{1, 0},
                         "(ILjava/lang/Object;)V",
                         WasmOps.TABLE_STORE.create(idx),
                         delegate::emitTableStore
@@ -630,7 +642,6 @@ public class WasmConvertPass {
                         "table" + idx + "$size",
                         module,
                         jClass,
-                        null,
                         "()I",
                         WasmOps.TABLE_SIZE.create(idx),
                         delegate::emitTableSize
@@ -639,7 +650,6 @@ public class WasmConvertPass {
                         "table" + idx + "$grow",
                         module,
                         jClass,
-                        null,
                         "(ILjava/lang/Object;)I",
                         WasmOps.TABLE_GROW.create(idx),
                         delegate::emitTableGrow
@@ -702,7 +712,6 @@ public class WasmConvertPass {
                         "global" + idx + "$get",
                         module,
                         jClass,
-                        null,
                         Type.getMethodDescriptor(jTy),
                         WasmOps.GLOBAL_REF.create(idx),
                         delegate::emitGlobalRef
@@ -712,7 +721,6 @@ public class WasmConvertPass {
                                 "global" + idx + "$set",
                                 module,
                                 jClass,
-                                null,
                                 Type.getMethodDescriptor(Type.VOID_TYPE, jTy),
                                 WasmOps.GLOBAL_SET.create(idx),
                                 delegate::emitGlobalStore
@@ -765,7 +773,6 @@ public class WasmConvertPass {
                         "mem" + idx + "$get",
                         module,
                         jClass,
-                        null,
                         Type.getMethodDescriptor(
                                 Type.getType(MethodHandle.class),
                                 Type.getType(Memory.LoadMode.class)),
@@ -782,12 +789,11 @@ public class WasmConvertPass {
                                         "mem" + idx + "$get$" + loadMode.toString().toLowerCase(Locale.ROOT),
                                         module,
                                         jClass,
-                                        null,
                                         Type.getMethodDescriptor(
                                                 BasicCallingConvention.javaType(derefTy.outType),
                                                 Type.INT_TYPE
                                         ),
-                                        WasmOps.MEM_LOAD.create(new WasmOps.WithMemArg<>(derefTy, 0)),
+                                        WasmOps.MEM_LOAD.create(WasmOps.WithMemArg.create(derefTy, 0)),
                                         delegate::emitMemLoad
                                 );
                                 ib.setBlock(targets.get(i));
@@ -801,7 +807,6 @@ public class WasmConvertPass {
                         "mem" + idx + "$store",
                         module,
                         jClass,
-                        null,
                         Type.getMethodDescriptor(
                                 Type.getType(MethodHandle.class),
                                 Type.getType(Memory.LoadMode.class)),
@@ -818,13 +823,12 @@ public class WasmConvertPass {
                                         "mem" + idx + "$store$" + storeMode.toString().toLowerCase(Locale.ROOT),
                                         module,
                                         jClass,
-                                        null,
                                         Type.getMethodDescriptor(
                                                 Type.VOID_TYPE,
                                                 Type.INT_TYPE,
                                                 BasicCallingConvention.javaType(storeTy.getType())
                                         ),
-                                        WasmOps.MEM_STORE.create(new WasmOps.WithMemArg<>(storeTy, 0)),
+                                        WasmOps.MEM_STORE.create(WasmOps.WithMemArg.create(storeTy, 0)),
                                         delegate::emitMemStore
                                 );
                                 ib.setBlock(targets.get(i));
@@ -838,7 +842,6 @@ public class WasmConvertPass {
                         "mem" + idx + "$size",
                         module,
                         jClass,
-                        null,
                         "()I",
                         WasmOps.MEM_SIZE.create(0),
                         delegate::emitMemSize
@@ -847,7 +850,6 @@ public class WasmConvertPass {
                         "mem" + idx + "$grow",
                         module,
                         jClass,
-                        null,
                         "(I)I",
                         WasmOps.MEM_GROW.create(0),
                         delegate::emitMemGrow
@@ -856,7 +858,6 @@ public class WasmConvertPass {
                         "mem" + idx + "$init",
                         module,
                         jClass,
-                        null,
                         "(IIILjava/nio/ByteBuffer;)V",
                         WasmOps.MEM_INIT.create(Pair.of(0, 0)),
                         (ib, fx) -> {
