@@ -19,6 +19,7 @@ public class ExecutingWastVisitor extends WastVisitor {
     private Module lastModule;
     private boolean wasRefused;
     private ModuleRefusedException refusalReason;
+    Map<String, ModuleInst> namedModuleInsts = new HashMap<>();
     private ModuleInst lastModuleInst;
     private final WebAssembly wasm;
     private final Store store;
@@ -30,6 +31,17 @@ public class ExecutingWastVisitor extends WastVisitor {
 
     public ExecutingWastVisitor() {
         this(new WebAssembly());
+    }
+
+    ModuleInst getInst(@Nullable String name) {
+        if (name == null) {
+            if (wasRefused) throw new IllegalStateException();
+            return lastModuleInst;
+        } else {
+            ModuleInst got = namedModuleInsts.get(name);
+            if (got == null) throw new NoSuchElementException(name);
+            return got;
+        }
     }
 
     private final Map<String, ModuleInst> registered = new HashMap<>();
@@ -73,7 +85,7 @@ public class ExecutingWastVisitor extends WastVisitor {
     int tmc;
 
     @Override
-    public @Nullable WastModuleVisitor visitModule() {
+    public @Nullable WastModuleVisitor visitModule(@Nullable String name) {
         tmc++;
         return new WastModuleVisitor() {
             @Override
@@ -105,6 +117,7 @@ public class ExecutingWastVisitor extends WastVisitor {
                         importVals.add(theExport);
                     }
                     lastModuleInst = wasm.moduleInstantiate(store, lastModule, importVals.toArray(new ExternVal[0]));
+                    if (name != null) namedModuleInsts.put(name, lastModuleInst);
                     wasRefused = false;
                     refusalReason = null;
                 } catch (ModuleRefusedException e) {
@@ -126,7 +139,7 @@ public class ExecutingWastVisitor extends WastVisitor {
             @Override
             public void visitInvoke(@Nullable String name, String string, Object... args) {
                 try {
-                    wasm.instanceExport(lastModuleInst, string)
+                    wasm.instanceExport(getInst(name), string)
                             .getAsFuncRaw()
                             .invokeWithArguments(args);
                 } catch (Throwable t) {
@@ -153,7 +166,7 @@ public class ExecutingWastVisitor extends WastVisitor {
             public void visitInvoke(@Nullable String name, String string, Object... args) {
                 Object actualResults;
                 try {
-                    actualResults = wasm.instanceExport(lastModuleInst, string)
+                    actualResults = wasm.instanceExport(getInst(name), string)
                             .getAsFuncRaw()
                             .invokeWithArguments(args);
                     switch (results.length) {
@@ -180,13 +193,17 @@ public class ExecutingWastVisitor extends WastVisitor {
                         }
                     }
                 } catch (Throwable t) {
-                    t.addSuppressed(new RuntimeException(String.format("in assert_return #%d (%s.\"%s\"%s -> %s)",
+                    Throwable th = t;
+                    if (th.getSuppressed() == new NullPointerException().getSuppressed()) {
+                        th = new RuntimeException(th);
+                    }
+                    th.addSuppressed(new RuntimeException(String.format("in assert_return #%d (%s.\"%s\"%s -> %s)",
                             arc,
                             lastModuleInst.getClass().getSimpleName(),
                             string,
                             Arrays.toString(args),
                             Arrays.toString(results))));
-                    throw Utils.rethrow(t);
+                    throw Utils.rethrow(th);
                 }
             }
         };
