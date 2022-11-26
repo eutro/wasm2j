@@ -120,4 +120,13 @@ public class IRUtils {
 
         ib.setBlock(endBlock);
     }
+
+    public static void trapWhen(IRBuilder ib, Insn insn, String msg) {
+        BasicBlock errBb = ib.func.newBb();
+        BasicBlock contBb = ib.func.newBb();
+        ib.insertCtrl(insn.jumpsTo(errBb, contBb));
+        ib.setBlock(errBb);
+        ib.insertCtrl(CommonOps.TRAP.create(msg).insn().jumpsTo());
+        ib.setBlock(contBb);
+    }
 }

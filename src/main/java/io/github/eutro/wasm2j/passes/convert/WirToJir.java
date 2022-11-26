@@ -266,7 +266,7 @@ public class WirToJir implements InPlaceIRPass<Module> {
 
             for (OpKey key : new OpKey[]{
                     CommonOps.BR.key,
-                    CommonOps.UNREACHABLE.key,
+                    CommonOps.TRAP,
             }) {
                 CTRL_CONVERTERS.put(key, (ctrl, jb, slf) -> {
                     // noop

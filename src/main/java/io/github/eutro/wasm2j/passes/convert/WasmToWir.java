@@ -284,7 +284,7 @@ public class WasmToWir implements IRPass<ModuleNode, Module> {
 
     static {
         CONVERTERS.putByte(UNREACHABLE, (cs, node, topB) -> {
-            topB.setControl(CommonOps.UNREACHABLE.insn().jumpsTo());
+            topB.setControl(CommonOps.TRAP.create("unreachable reached").insn().jumpsTo());
             cs.unreachable();
         });
         CONVERTERS.putByte(NOP, (cs, node, topB) -> {

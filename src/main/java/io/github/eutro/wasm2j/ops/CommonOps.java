@@ -10,8 +10,8 @@ import java.util.stream.Collectors;
 public class CommonOps {
     public static final Op BR = new SimpleOpKey("br").create();
     public static final Op RETURN = new SimpleOpKey("return").create();
-    public static final Op UNREACHABLE = new SimpleOpKey("unreachable").create();
     public static final Op IDENTITY = new SimpleOpKey("id").create();
+    public static final UnaryOpKey<String> TRAP = new UnaryOpKey<>("trap");
 
     public static final UnaryOpKey<List<BasicBlock>> PHI = new UnaryOpKey<>("phi", bbs ->
             bbs.stream().map(BasicBlock::toTargetString).collect(Collectors.joining(" ")));

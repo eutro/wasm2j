@@ -388,8 +388,9 @@ public class JirToJava implements IRPass<Module, ClassNode> {
                     JavaOps.TRY.cast(ct.insn.op).arg.getInternalName()
             );
         });
-        CTRL_CONVERTERS.put(CommonOps.UNREACHABLE.key, (jb, ct) ->
-                jb.throwException(Type.getType(RuntimeException.class), "unreachable reached"));
+        CTRL_CONVERTERS.put(CommonOps.TRAP, (jb, ct) ->
+                jb.throwException(Type.getType(RuntimeException.class),
+                        CommonOps.TRAP.cast(ct.insn.op).arg));
     }
 
     private static void emitLoads(JavaBuilder jb, Insn insn) {

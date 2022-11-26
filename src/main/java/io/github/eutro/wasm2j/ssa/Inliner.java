@@ -66,7 +66,7 @@ public class Inliner {
         }
 
         if (returnVars.isEmpty()) {
-            return CommonOps.UNREACHABLE.insn();
+            return CommonOps.TRAP.create("unreachable reached").insn();
         }
 
         int expectedLength = -1;

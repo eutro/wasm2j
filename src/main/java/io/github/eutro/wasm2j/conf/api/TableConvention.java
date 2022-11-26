@@ -3,6 +3,8 @@ package io.github.eutro.wasm2j.conf.api;
 import io.github.eutro.wasm2j.conf.impl.DelegatingExporter;
 import io.github.eutro.wasm2j.ext.JavaExts;
 import io.github.eutro.wasm2j.ops.CommonOps;
+import io.github.eutro.wasm2j.ops.JavaOps;
+import io.github.eutro.wasm2j.ops.Op;
 import io.github.eutro.wasm2j.ops.WasmOps;
 import io.github.eutro.wasm2j.ssa.Effect;
 import io.github.eutro.wasm2j.ssa.IRBuilder;
@@ -10,8 +12,11 @@ import io.github.eutro.wasm2j.ssa.Module;
 import io.github.eutro.wasm2j.ssa.Var;
 import io.github.eutro.wasm2j.util.IRUtils;
 import io.github.eutro.wasm2j.util.Pair;
+import org.objectweb.asm.tree.InsnNode;
 
 import java.util.Iterator;
+
+import static org.objectweb.asm.Opcodes.IADD;
 
 public interface TableConvention extends ExportableConvention, ConstructorCallback {
     void emitTableRef(IRBuilder ib, Effect effect);
@@ -26,24 +31,37 @@ public interface TableConvention extends ExportableConvention, ConstructorCallba
 
     void emitTableInit(IRBuilder ib, Effect effect, Var data);
 
+    default void emitBoundsCheck(IRBuilder ib, int table, Var bound) {
+        Var sz = ib.func.newVar("sz");
+        emitTableSize(ib, WasmOps.TABLE_SIZE
+                .create(table)
+                .insn()
+                .assignTo(sz));
+        IRUtils.trapWhen(ib, JavaOps.BR_COND.create(JavaOps.JumpType.IF_ICMPGT).insn(bound, sz),
+                "out of bounds table access");
+    }
+
     default void emitTableCopy(IRBuilder ib, Effect effect, TableConvention dst) {
         Pair<Integer, Integer> arg = WasmOps.TABLE_COPY.cast(effect.insn().op).arg;
-        int srcIdx = arg.left;
-        int dstIdx = arg.right;
+        int srcTable = arg.left;
+        int dstTable = arg.right;
         Iterator<Var> iter = effect.insn().args.iterator();
-        Var dstAddr = iter.next();
-        Var srcAddr = iter.next();
+        Var dstIdx = iter.next();
+        Var srcIdx = iter.next();
         Var len = iter.next();
 
-        IRUtils.lenLoop(ib, new Var[]{dstAddr, srcAddr}, len, vars -> {
+        Op add = JavaOps.insns(new InsnNode(IADD));
+        emitBoundsCheck(ib, srcTable, ib.insert(add.insn(dstIdx, len), "dstEnd"));
+        emitBoundsCheck(ib, srcTable, ib.insert(add.insn(srcIdx, len), "srcEnd"));
+        IRUtils.lenLoop(ib, new Var[]{dstIdx, srcIdx}, len, vars -> {
             Var x = ib.func.newVar("x");
             emitTableRef(ib, WasmOps.TABLE_REF
-                    .create(srcIdx)
-                    .insn(vars[0])
+                    .create(srcTable)
+                    .insn(vars[1])
                     .assignTo(x));
             dst.emitTableStore(ib, WasmOps.TABLE_STORE
-                    .create(dstIdx)
-                    .insn(vars[1], x)
+                    .create(dstTable)
+                    .insn(vars[0], x)
                     .assignTo());
         });
     }
@@ -55,6 +73,8 @@ public interface TableConvention extends ExportableConvention, ConstructorCallba
         Var value = iter.next();
         Var len = iter.next();
 
+        Op add = JavaOps.insns(new InsnNode(IADD));
+        emitBoundsCheck(ib, table, ib.insert(add.insn(idx, len), "idxEnd"));
         IRUtils.lenLoop(ib, new Var[]{idx}, len, vars ->
                 emitTableStore(ib, WasmOps.TABLE_STORE
                         .create(table)

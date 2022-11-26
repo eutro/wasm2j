@@ -16,15 +16,23 @@ public class SpecTest {
     public static final File DEBUG_OUTPUT_DIRECTORY = new File("build/wasmout");
     public static final String SOURCE = "" +
             "(module\n" +
-            "  (import \"spectest\" \"memory\" (memory 1))\n" +
-            "  (data (i32.const 0) \"a\")\n" +
-            "  (data (i32.const 1) \"b\")\n" +
-            "  (data (i32.const 2) \"cde\")\n" +
-            "  (data (i32.const 3) \"f\")\n" +
-            "  (data (i32.const 2) \"g\")\n" +
-            "  (data (i32.const 1) \"h\")\n" +
-            ")" +
-            "\n";
+            "  (memory (data \"\\aa\\bb\\cc\\dd\"))\n" +
+            "\n" +
+            "  (func (export \"copy\") (param i32 i32 i32)\n" +
+            "    (memory.copy\n" +
+            "      (local.get 0)\n" +
+            "      (local.get 1)\n" +
+            "      (local.get 2)))\n" +
+            "\n" +
+            "  (func (export \"load8_u\") (param i32) (result i32)\n" +
+            "    (i32.load8_u (local.get 0)))\n" +
+            ")\n" +
+            "\n" +
+            ";; Non-overlapping copy.\n" +
+            "(invoke \"copy\" (i32.const 10) (i32.const 0) (i32.const 4))\n" +
+            "\n" +
+            "(assert_return (invoke \"load8_u\" (i32.const 9)) (i32.const 0))\n" +
+            "(assert_return (invoke \"load8_u\" (i32.const 10)) (i32.const 0xaa))";
 
     @Test
     void inlineTest() {
