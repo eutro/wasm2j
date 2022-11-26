@@ -4,19 +4,12 @@ import io.github.eutro.wasm2j.conf.impl.DelegatingExporter;
 import io.github.eutro.wasm2j.ext.JavaExts;
 import io.github.eutro.wasm2j.ops.CommonOps;
 import io.github.eutro.wasm2j.ops.JavaOps;
-import io.github.eutro.wasm2j.ops.Op;
 import io.github.eutro.wasm2j.ops.WasmOps;
 import io.github.eutro.wasm2j.ssa.Effect;
 import io.github.eutro.wasm2j.ssa.IRBuilder;
 import io.github.eutro.wasm2j.ssa.Module;
 import io.github.eutro.wasm2j.ssa.Var;
 import io.github.eutro.wasm2j.util.IRUtils;
-import io.github.eutro.wasm2j.util.Pair;
-import org.objectweb.asm.tree.InsnNode;
-
-import java.util.Iterator;
-
-import static org.objectweb.asm.Opcodes.IADD;
 
 public interface TableConvention extends ExportableConvention, ConstructorCallback {
     void emitTableRef(IRBuilder ib, Effect effect);
@@ -42,44 +35,29 @@ public interface TableConvention extends ExportableConvention, ConstructorCallba
     }
 
     default void emitTableCopy(IRBuilder ib, Effect effect, TableConvention dst) {
-        Pair<Integer, Integer> arg = WasmOps.TABLE_COPY.cast(effect.insn().op).arg;
-        int srcTable = arg.left;
-        int dstTable = arg.right;
-        Iterator<Var> iter = effect.insn().args.iterator();
-        Var dstIdx = iter.next();
-        Var srcIdx = iter.next();
-        Var len = iter.next();
-
-        Op add = JavaOps.insns(new InsnNode(IADD));
-        emitBoundsCheck(ib, srcTable, ib.insert(add.insn(dstIdx, len), "dstEnd"));
-        emitBoundsCheck(ib, srcTable, ib.insert(add.insn(srcIdx, len), "srcEnd"));
-        IRUtils.lenLoop(ib, new Var[]{dstIdx, srcIdx}, len, vars -> {
-            Var x = ib.func.newVar("x");
-            emitTableRef(ib, WasmOps.TABLE_REF
-                    .create(srcTable)
-                    .insn(vars[1])
-                    .assignTo(x));
-            dst.emitTableStore(ib, WasmOps.TABLE_STORE
-                    .create(dstTable)
-                    .insn(vars[0], x)
-                    .assignTo());
-        });
+        IRUtils.emitCopy(ib, effect, WasmOps.TABLE_COPY,
+                (table, idx, val) -> emitTableRef(ib, WasmOps.TABLE_REF
+                        .create(table)
+                        .insn(idx)
+                        .assignTo(val)),
+                (table, idx, val) -> dst.emitTableStore(ib, WasmOps.TABLE_STORE
+                        .create(table)
+                        .insn(idx, val)
+                        .assignTo()),
+                this, dst,
+                TableConvention::emitBoundsCheck
+        );
     }
 
     default void emitTableFill(IRBuilder ib, Effect effect) {
-        int table = WasmOps.TABLE_FILL.cast(effect.insn().op).arg;
-        Iterator<Var> iter = effect.insn().args.iterator();
-        Var idx = iter.next();
-        Var value = iter.next();
-        Var len = iter.next();
-
-        Op add = JavaOps.insns(new InsnNode(IADD));
-        emitBoundsCheck(ib, table, ib.insert(add.insn(idx, len), "idxEnd"));
-        IRUtils.lenLoop(ib, new Var[]{idx}, len, vars ->
-                emitTableStore(ib, WasmOps.TABLE_STORE
-                        .create(table)
-                        .insn(vars[0], value)
-                        .assignTo()));
+        IRUtils.emitFill(ib, effect, WasmOps.TABLE_FILL, (table, idx, val) ->
+                        emitTableStore(ib, WasmOps.TABLE_STORE
+                                .create(table)
+                                .insn(idx, val)
+                                .assignTo()),
+                this,
+                TableConvention::emitBoundsCheck
+        );
     }
 
     class Delegating extends DelegatingExporter implements TableConvention {

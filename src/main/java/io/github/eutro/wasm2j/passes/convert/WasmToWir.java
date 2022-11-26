@@ -522,8 +522,8 @@ public class WasmToWir implements IRPass<ModuleNode, Module> {
             Var len = cs.popVar();
             Var srcIdx = cs.popVar();
             Var dstIdx = cs.popVar();
-            int elem = pbtin.firstIndex;
-            int table = pbtin.secondIndex;
+            int table = pbtin.firstIndex;
+            int elem = pbtin.secondIndex;
             topB.addEffect(WasmOps.TABLE_INIT
                     .create(Pair.of(table, elem))
                     .insn(dstIdx, srcIdx, len)

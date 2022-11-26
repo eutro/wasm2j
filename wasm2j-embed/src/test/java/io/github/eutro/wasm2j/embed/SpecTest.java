@@ -16,23 +16,21 @@ public class SpecTest {
     public static final File DEBUG_OUTPUT_DIRECTORY = new File("build/wasmout");
     public static final String SOURCE = "" +
             "(module\n" +
-            "  (memory (data \"\\aa\\bb\\cc\\dd\"))\n" +
+            "  (table 1 funcref)\n" +
+            "  (func $f)\n" +
+            "  (elem $p funcref (ref.func $f))\n" +
+            "  (elem $a (table 0) (i32.const 0) func $f)\n" +
             "\n" +
-            "  (func (export \"copy\") (param i32 i32 i32)\n" +
-            "    (memory.copy\n" +
-            "      (local.get 0)\n" +
-            "      (local.get 1)\n" +
-            "      (local.get 2)))\n" +
+            "  (func (export \"drop_passive\") (elem.drop $p))\n" +
+            "  (func (export \"init_passive\") (param $len i32)\n" +
+            "    (table.init $p (i32.const 0) (i32.const 0) (local.get $len))\n" +
+            "  )\n" +
             "\n" +
-            "  (func (export \"load8_u\") (param i32) (result i32)\n" +
-            "    (i32.load8_u (local.get 0)))\n" +
-            ")\n" +
-            "\n" +
-            ";; Non-overlapping copy.\n" +
-            "(invoke \"copy\" (i32.const 10) (i32.const 0) (i32.const 4))\n" +
-            "\n" +
-            "(assert_return (invoke \"load8_u\" (i32.const 9)) (i32.const 0))\n" +
-            "(assert_return (invoke \"load8_u\" (i32.const 10)) (i32.const 0xaa))";
+            "  (func (export \"drop_active\") (elem.drop $a))\n" +
+            "  (func (export \"init_active\") (param $len i32)\n" +
+            "    (table.init $a (i32.const 0) (i32.const 0) (local.get $len))\n" +
+            "  )\n" +
+            ")";
 
     @Test
     void inlineTest() {

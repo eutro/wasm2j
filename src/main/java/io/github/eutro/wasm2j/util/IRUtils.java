@@ -1,10 +1,7 @@
 package io.github.eutro.wasm2j.util;
 
 import io.github.eutro.wasm2j.ext.JavaExts;
-import io.github.eutro.wasm2j.ops.CommonOps;
-import io.github.eutro.wasm2j.ops.JavaOps;
-import io.github.eutro.wasm2j.ops.Op;
-import io.github.eutro.wasm2j.ops.WasmOps;
+import io.github.eutro.wasm2j.ops.*;
 import io.github.eutro.wasm2j.ssa.*;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
@@ -14,12 +11,15 @@ import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodType;
 import java.nio.ByteBuffer;
 import java.util.Arrays;
+import java.util.Iterator;
 import java.util.List;
 import java.util.function.Consumer;
 
 import static io.github.eutro.wasm2j.ext.CommonExts.markPure;
 import static io.github.eutro.wasm2j.ops.JavaOps.JumpType.IFEQ;
+import static io.github.eutro.wasm2j.ops.JavaOps.JumpType.IF_ICMPLE;
 import static org.objectweb.asm.Opcodes.IADD;
+import static org.objectweb.asm.Opcodes.ISUB;
 
 public class IRUtils {
     public static final JavaExts.JavaClass BYTE_BUFFER_CLASS = new JavaExts.JavaClass(Type.getInternalName(ByteBuffer.class));
@@ -82,19 +82,28 @@ public class IRUtils {
                 "addr");
     }
 
-    public static void lenLoop(IRBuilder ib, Var[] toInc, Var len, Consumer<Var[]> f) {
+    public static void lenLoop(IRBuilder ib, Var[] toInc, boolean invert, Var len, Consumer<Var[]> f) {
         BasicBlock srcBlock = ib.getBlock();
         BasicBlock condBlock = ib.func.newBb();
         BasicBlock mvBlock = ib.func.newBb();
         BasicBlock endBlock = ib.func.newBb();
-        ib.insertCtrl(Control.br(condBlock));
-        ib.setBlock(condBlock);
 
         List<BasicBlock> preds = Arrays.asList(srcBlock, mvBlock);
         Var[] allLoopVars = Arrays.copyOf(toInc, toInc.length + 1);
         allLoopVars[toInc.length] = len;
         Var[] loopSuccs = new Var[allLoopVars.length];
         Var[] loopVs = new Var[allLoopVars.length];
+
+        Op add = JavaOps.insns(new InsnNode(IADD));
+        Op sub = JavaOps.insns(new InsnNode(ISUB));
+        if (invert) {
+            for (int i = 0; i < toInc.length; i++) {
+                allLoopVars[i] = ib.insert(sub.insn(ib.insert(add.insn(allLoopVars[i], len), "n-i"),
+                        ib.insert(CommonOps.constant(1), "1")), "n-i-1");
+            }
+        }
+        ib.insertCtrl(Control.br(condBlock));
+        ib.setBlock(condBlock);
         for (int i = 0; i < allLoopVars.length; i++) {
             Var succ = ib.func.newVar("i");
             loopSuccs[i] = succ;
@@ -107,18 +116,72 @@ public class IRUtils {
 
         f.accept(loopVs);
 
-        Op add = JavaOps.insns(new InsnNode(IADD));
         for (int i = 0; i < allLoopVars.length; i++) {
-            ib.insert(add.insn(loopVs[i],
-                    ib.insert(CommonOps.constant(i == toInc.length ? -1 : 1),
-                            "i")),
-                    loopSuccs[i]);
+            Op op = invert || i == toInc.length ? sub : add;
+            ib.insert(op.insn(loopVs[i], ib.insert(CommonOps.constant(1), "i")), loopSuccs[i]);
         }
 
         ib.insertCtrl(Control.br(condBlock));
         preds.set(1, ib.getBlock());
 
         ib.setBlock(endBlock);
+    }
+
+    //@formatter:off
+    public interface StoreOrLoadFn { void call(int index, Var idx, Var val); }
+    public interface BoundsCheckFn<T> { void call(T t, IRBuilder ib, int index, Var value); }
+    //@formatter:on
+    public static <T> void emitFill(IRBuilder ib,
+                                    Effect effect,
+                                    UnaryOpKey<Integer> key,
+                                    StoreOrLoadFn store,
+                                    T t,
+                                    BoundsCheckFn<T> emitBoundsCheck) {
+        int thisIdx = key.cast(effect.insn().op).arg;
+        Iterator<Var> iter = effect.insn().args.iterator();
+        Var idx = iter.next();
+        Var value = iter.next();
+        Var len = iter.next();
+
+        Op add = JavaOps.insns(new InsnNode(IADD));
+        emitBoundsCheck.call(t, ib, thisIdx, ib.insert(add.insn(idx, len), "idxEnd"));
+        IRUtils.lenLoop(ib, new Var[]{idx}, false, len, vars -> store.call(thisIdx, vars[0], value));
+    }
+
+    public static <T> void emitCopy(IRBuilder ib,
+                                    Effect effect,
+                                    UnaryOpKey<Pair<Integer, Integer>> key,
+                                    StoreOrLoadFn load,
+                                    StoreOrLoadFn store,
+                                    T srcT, T dstT,
+                                    BoundsCheckFn<T> emitBoundsCheck) {
+        Pair<Integer, Integer> arg = key.cast(effect.insn().op).arg;
+        int thisIdx = arg.left;
+        int otherIdx = arg.right;
+        Iterator<Var> iter = effect.insn().args.iterator();
+        Var dstAddr = iter.next();
+        Var srcAddr = iter.next();
+        Var len = iter.next();
+
+        Op add = JavaOps.insns(new InsnNode(IADD));
+        emitBoundsCheck.call(srcT, ib, thisIdx, ib.insert(add.insn(srcAddr, len), "srcEnd"));
+        emitBoundsCheck.call(dstT, ib, otherIdx, ib.insert(add.insn(dstAddr, len), "dstEnd"));
+
+        BasicBlock endBb = ib.func.newBb();
+        BasicBlock leBlock = ib.func.newBb(); // d <= s
+        BasicBlock gtBlock = ib.func.newBb(); // else
+
+        ib.insertCtrl(JavaOps.BR_COND.create(IF_ICMPLE).insn(dstAddr, srcAddr).jumpsTo(leBlock, gtBlock));
+        for (BasicBlock block : new BasicBlock[]{leBlock, gtBlock}) {
+            ib.setBlock(block);
+            IRUtils.lenLoop(ib, new Var[]{dstAddr, srcAddr}, block == gtBlock, len, vars -> {
+                Var x = ib.func.newVar("x");
+                load.call(thisIdx, vars[1], x);
+                store.call(otherIdx, vars[0], x);
+            });
+            ib.insertCtrl(Control.br(endBb));
+        }
+        ib.setBlock(endBb);
     }
 
     public static void trapWhen(IRBuilder ib, Insn insn, String msg) {

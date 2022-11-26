@@ -5,9 +5,7 @@ import io.github.eutro.wasm2j.conf.impl.DelegatingExporter;
 import io.github.eutro.wasm2j.ext.JavaExts;
 import io.github.eutro.wasm2j.ops.CommonOps;
 import io.github.eutro.wasm2j.ops.JavaOps;
-import io.github.eutro.wasm2j.ops.Op;
 import io.github.eutro.wasm2j.ops.WasmOps;
-import io.github.eutro.wasm2j.ops.WasmOps.WithMemArg;
 import io.github.eutro.wasm2j.ssa.Effect;
 import io.github.eutro.wasm2j.ssa.IRBuilder;
 import io.github.eutro.wasm2j.ssa.Module;
@@ -15,9 +13,6 @@ import io.github.eutro.wasm2j.ssa.Var;
 import io.github.eutro.wasm2j.util.IRUtils;
 import org.objectweb.asm.tree.InsnNode;
 
-import java.util.Iterator;
-
-import static org.objectweb.asm.Opcodes.IADD;
 import static org.objectweb.asm.Opcodes.IMUL;
 
 public interface MemoryConvention extends ExportableConvention, ConstructorCallback {
@@ -45,42 +40,29 @@ public interface MemoryConvention extends ExportableConvention, ConstructorCallb
     }
 
     default void emitMemCopy(IRBuilder ib, Effect effect, MemoryConvention dst) {
-        int thisIdx = WasmOps.MEM_COPY.cast(effect.insn().op).arg.left;
-        Iterator<Var> iter = effect.insn().args.iterator();
-        Var dstAddr = iter.next();
-        Var srcAddr = iter.next();
-        Var len = iter.next();
-
-        Op add = JavaOps.insns(new InsnNode(IADD));
-        emitBoundsCheck(ib, thisIdx, ib.insert(add.insn(dstAddr, len), "dstEnd"));
-        emitBoundsCheck(ib, thisIdx, ib.insert(add.insn(srcAddr, len), "srcEnd"));
-        IRUtils.lenLoop(ib, new Var[]{dstAddr, srcAddr}, len, vars -> {
-            Var b = ib.func.newVar("b");
-            emitMemLoad(ib, WasmOps.MEM_LOAD
-                    .create(WithMemArg.create(WasmOps.DerefType.fromOpcode(Opcodes.I32_LOAD8_U), 0))
-                    .insn(vars[1])
-                    .assignTo(b));
-            dst.emitMemStore(ib, WasmOps.MEM_STORE
-                    .create(WithMemArg.create(WasmOps.StoreType.I32_8, 0))
-                    .insn(vars[0], b)
-                    .assignTo());
-        });
+        IRUtils.emitCopy(ib, effect, WasmOps.MEM_COPY,
+                (memory, idx, val) -> emitMemLoad(ib, WasmOps.MEM_LOAD
+                        .create(WasmOps.WithMemArg.create(WasmOps.DerefType.fromOpcode(io.github.eutro.jwasm.Opcodes.I32_LOAD8_U), 0))
+                        .insn(idx)
+                        .assignTo(val)),
+                (memory, idx, val) -> dst.emitMemStore(ib, WasmOps.MEM_STORE
+                        .create(WasmOps.WithMemArg.create(WasmOps.StoreType.I32_8, 0))
+                        .insn(idx, val)
+                        .assignTo()),
+                this, dst,
+                MemoryConvention::emitBoundsCheck
+        );
     }
 
     default void emitMemFill(IRBuilder ib, Effect effect) {
-        int thisIdx = WasmOps.MEM_FILL.cast(effect.insn().op).arg;
-        Iterator<Var> iter = effect.insn().args.iterator();
-        Var idx = iter.next();
-        Var value = iter.next();
-        Var len = iter.next();
-
-        Op add = JavaOps.insns(new InsnNode(IADD));
-        emitBoundsCheck(ib, thisIdx, ib.insert(add.insn(idx, len), "idxEnd"));
-        IRUtils.lenLoop(ib, new Var[]{idx}, len, vars ->
-                emitMemStore(ib, WasmOps.MEM_STORE
-                        .create(WithMemArg.create(WasmOps.StoreType.I32_8, 0))
-                        .insn(vars[0], value)
-                        .assignTo()));
+        IRUtils.emitFill(ib, effect, WasmOps.MEM_FILL, (memory, idx, val) ->
+                        emitMemStore(ib, WasmOps.MEM_STORE
+                                .create(WasmOps.WithMemArg.create(WasmOps.StoreType.I32_8, 0))
+                                .insn(idx, val)
+                                .assignTo()),
+                this,
+                MemoryConvention::emitBoundsCheck
+        );
     }
 
     class Delegating extends DelegatingExporter implements MemoryConvention {
