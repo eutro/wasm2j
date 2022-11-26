@@ -4,6 +4,7 @@ import io.github.eutro.wasm2j.intrinsics.Intrinsic;
 
 import static io.github.eutro.jwasm.Opcodes.*;
 
+@SuppressWarnings("DuplicatedCode")
 public final class Operators {
     private static final double MAX_ULONG = (double) Long.MAX_VALUE * 2d;
     public static final long MAX_UINT = 0xFFFFFFFFL;
@@ -61,7 +62,12 @@ public final class Operators {
     @Intrinsic(I32_ADD) public static int i32Add(int x, int y) { return x + y; }
     @Intrinsic(I32_SUB) public static int i32Sub(int x, int y) { return x - y; }
     @Intrinsic(I32_MUL) public static int i32Mul(int x, int y) { return x * y; }
-    @Intrinsic(I32_DIV_S) public static int i32DivS(int x, int y) { return x / y; }
+    @Intrinsic(value = I32_DIV_S, inline = false) public static int i32DivS(int x, int y) {
+        if (x == Integer.MIN_VALUE && y == -1) {
+            throw new ArithmeticException("integer overflow");
+        }
+        return x / y;
+    }
     @Intrinsic(I32_DIV_U) public static int i32DivU(int x, int y) { return Integer.divideUnsigned(x, y); }
     @Intrinsic(I32_REM_S) public static int i32RemS(int x, int y) { return x % y; }
     @Intrinsic(I32_REM_U) public static int i32RemU(int x, int y) { return Integer.remainderUnsigned(x, y); }
@@ -81,7 +87,12 @@ public final class Operators {
     @Intrinsic(I64_ADD) public static long i64Add(long x, long y) { return x + y; }
     @Intrinsic(I64_SUB) public static long i64Sub(long x, long y) { return x - y; }
     @Intrinsic(I64_MUL) public static long i64Mul(long x, long y) { return x * y; }
-    @Intrinsic(I64_DIV_S) public static long i64DivS(long x, long y) { return x / y; }
+    @Intrinsic(value = I64_DIV_S, inline = false) public static long i64DivS(long x, long y) {
+        if (x == Long.MIN_VALUE && y == -1) {
+            throw new ArithmeticException("integer overflow");
+        }
+        return x / y;
+    }
     @Intrinsic(I64_DIV_U) public static long i64DivU(long x, long y) { return Long.divideUnsigned(x, y); }
     @Intrinsic(I64_REM_S) public static long i64RemS(long x, long y) { return x % y; }
     @Intrinsic(I64_REM_U) public static long i64RemU(long x, long y) { return Long.remainderUnsigned(x, y); }
@@ -130,54 +141,96 @@ public final class Operators {
     // region Conversions
     @Intrinsic(I32_WRAP_I64) public static int i32WrapI64(long x) { return (int) x; }
     @Intrinsic(value = I32_TRUNC_F32_S, inline = false) public static int i32TruncF32S(float x) {
-        if (Float.isNaN(x) || Float.isInfinite(x)) throw new ArithmeticException();
+        if (Float.isNaN(x)) throw new ArithmeticException("invalid conversion to integer");
+        if (Float.isInfinite(x)
+                // NB: some rounded ints are the first out-of-bounds, some are the last in-bounds
+                || x < Integer.MIN_VALUE
+                || x >= Integer.MAX_VALUE
+        ) {
+            throw new ArithmeticException("integer overflow");
+        }
         float trunc = (float) (x < 0 ? Math.ceil(x) : Math.floor(x));
-        if (trunc < Integer.MIN_VALUE || trunc > Integer.MAX_VALUE) throw new ArithmeticException();
         return (int) trunc;
     }
     @Intrinsic(value = I32_TRUNC_F32_U, inline = false) public static int i32TruncF32U(float x) {
-        if (Float.isNaN(x) || Float.isInfinite(x)) throw new ArithmeticException();
+        if (Float.isNaN(x)) throw new ArithmeticException("invalid conversion to integer");
+        if (Float.isInfinite(x)
+                || x <= -1f
+                || x >= MAX_UINT
+        ) {
+            throw new ArithmeticException("integer overflow");
+        }
         float trunc = (float) (x < 0 ? Math.ceil(x) : Math.floor(x));
-        if (trunc < 0 || trunc > MAX_UINT) throw new ArithmeticException();
         return (int) (long) trunc;
     }
     @Intrinsic(value = I32_TRUNC_F64_S, inline = false) public static int i32TruncF64S(double x) {
-        if (Double.isNaN(x) || Double.isInfinite(x)) throw new ArithmeticException();
+        if (Double.isNaN(x)) throw new ArithmeticException("invalid conversion to integer");
+        if (Double.isInfinite(x)
+                || x <= Integer.MIN_VALUE - 1d
+                || x >= Integer.MAX_VALUE + 1d
+        ) {
+            throw new ArithmeticException("integer overflow");
+        }
         double trunc = x < 0 ? Math.ceil(x) : Math.floor(x);
-        if (trunc < Integer.MIN_VALUE || trunc > Integer.MAX_VALUE) throw new ArithmeticException();
         return (int) trunc;
     }
     @Intrinsic(value = I32_TRUNC_F64_U, inline = false) public static int i32TruncF64U(double x) {
-        if (Double.isNaN(x) || Double.isInfinite(x)) throw new ArithmeticException();
+        if (Double.isNaN(x)) throw new ArithmeticException("invalid conversion to integer");
+        if (Double.isInfinite(x)
+                || x <= -1
+                || x >= MAX_UINT + 1d
+        ) {
+            throw new ArithmeticException("integer overflow");
+        }
         double trunc = x < 0 ? Math.ceil(x) : Math.floor(x);
-        if (trunc < 0 || trunc > MAX_UINT) throw new ArithmeticException();
         return (int) (long) trunc;
     }
     @Intrinsic(I64_EXTEND_I32_S) public static long i64ExtendI32S(int x) { return x; }
     @Intrinsic(I64_EXTEND_I32_U) public static long i64ExtendI32U(int x) { return Integer.toUnsignedLong(x); }
     @Intrinsic(value = I64_TRUNC_F32_S, inline = false) public static long i64TruncF32S(float x) {
-        if (Float.isNaN(x) || Float.isInfinite(x)) throw new ArithmeticException();
+        if (Float.isNaN(x)) throw new ArithmeticException("invalid conversion to integer");
+        if (Float.isInfinite(x)
+                || x < Long.MIN_VALUE
+                || x >= Long.MAX_VALUE
+        ) {
+            throw new ArithmeticException("integer overflow");
+        }
         float trunc = (float) (x < 0 ? Math.ceil(x) : Math.floor(x));
-        if (trunc < Long.MIN_VALUE || trunc > Long.MAX_VALUE) throw new ArithmeticException();
         return (long) trunc;
     }
     @Intrinsic(value = I64_TRUNC_F32_U, inline = false) public static long i64TruncF32U(float x) {
-        if (Float.isNaN(x) || Float.isInfinite(x)) throw new ArithmeticException();
+        if (Float.isNaN(x)) throw new ArithmeticException("invalid conversion to integer");
+        if (Float.isInfinite(x)
+                || x <= -1f
+                || x >= (float) MAX_ULONG
+        ) {
+            throw new ArithmeticException("integer overflow");
+        }
         float trunc = (float) (x < 0 ? Math.ceil(x) : Math.floor(x));
         if (trunc < 0 || trunc > MAX_ULONG) throw new ArithmeticException();
         if (trunc >= Long.MAX_VALUE - 1) return (long) (trunc / 2F) * 2L;
         return (long) trunc;
     }
     @Intrinsic(value = I64_TRUNC_F64_S, inline = false) public static long i64TruncF64S(double x) {
-        if (Double.isNaN(x) || Double.isInfinite(x)) throw new ArithmeticException();
+        if (Double.isNaN(x)) throw new ArithmeticException("invalid conversion to integer");
+        if (Double.isInfinite(x)
+                || x < Long.MIN_VALUE
+                || x >= Long.MAX_VALUE
+        ) {
+            throw new ArithmeticException("integer overflow");
+        }
         double trunc = x < 0 ? Math.ceil(x) : Math.floor(x);
-        if (trunc < Long.MIN_VALUE || trunc > Long.MAX_VALUE) throw new ArithmeticException();
         return (long) trunc;
     }
     @Intrinsic(value = I64_TRUNC_F64_U, inline = false) public static long i64TruncF64U(double x) {
-        if (Double.isNaN(x) || Double.isInfinite(x)) throw new ArithmeticException();
+        if (Double.isNaN(x)) throw new ArithmeticException("invalid conversion to integer");
+        if (Double.isInfinite(x)
+                || x <= -1
+                || x >= MAX_ULONG
+        ) {
+            throw new ArithmeticException("integer overflow");
+        }
         double trunc = x < 0 ? Math.ceil(x) : Math.floor(x);
-        if (trunc < 0 || trunc > MAX_ULONG) throw new ArithmeticException();
         if (trunc >= Long.MAX_VALUE - 1) return (long) (trunc / 2D) * 2L;
         return (long) trunc;
     }

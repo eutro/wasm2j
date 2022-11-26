@@ -138,6 +138,11 @@ public class IntrinsicsTest {
         Assertions.assertEquals(0x8000000000000000L, Operators.i64TruncF64U(9.223372036854776E18));
     }
 
+    @Test
+    void testIntrinsicsTraps() {
+        Assertions.assertThrows(RuntimeException.class, () -> Operators.i32TruncF32S(2.14748365E9F));
+    }
+
     public static void main(String[] args) throws Throwable {
         new IntrinsicsTest().testIntrinsicsAssembly();
     }

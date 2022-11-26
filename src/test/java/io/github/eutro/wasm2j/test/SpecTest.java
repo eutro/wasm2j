@@ -16,6 +16,7 @@ import io.github.eutro.wasm2j.passes.convert.WirToJir;
 import io.github.eutro.wasm2j.passes.meta.CheckJava;
 import io.github.eutro.wasm2j.passes.meta.VerifyIntegrity;
 import io.github.eutro.wasm2j.passes.misc.ForPass;
+import org.jetbrains.annotations.Nullable;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.DynamicTest;
 import org.junit.jupiter.api.Test;
@@ -68,7 +69,7 @@ public class SpecTest {
         int tmc = 0;
 
         @Override
-        public WastModuleVisitor visitModule() {
+        public WastModuleVisitor visitModule(@Nullable String name) {
             tmc++;
             return new WastModuleVisitor() {
                 @Override

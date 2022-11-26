@@ -87,36 +87,11 @@ public class ExecutingWastVisitor extends WastVisitor {
     @Override
     public @Nullable WastModuleVisitor visitModule(@Nullable String name) {
         tmc++;
-        return new WastModuleVisitor() {
-            @Override
-            public void visitWatModule(Object module) {
-                lastModule = wasm.moduleFromNode(Parser.parseModule(module));
-            }
-
-            @Override
-            public void visitBinaryModule(Object module) {
-                lastModule = wasm.moduleFromNode(Parser.parseBinaryModule(module));
-            }
-
-            @Override
-            public void visitQuoteModule(Object module) {
-                lastModule = wasm.moduleFromNode(Parser.parseQuoteModule(module));
-            }
-
+        return new LinkingModuleVisitor() {
             @Override
             public void visitEnd() {
                 try {
-                    List<ModuleImport> imports = wasm.moduleImports(lastModule);
-                    List<ExternVal> importVals = new ArrayList<>(imports.size());
-                    for (ModuleImport theImport : imports) {
-                        ModuleInst importModule = registered.get(theImport.module);
-                        assertNotNull(importModule, theImport.module);
-                        ExternVal theExport = wasm.instanceExport(importModule, theImport.name);
-                        assertNotNull(theExport, theImport.name);
-                        assertEquals(theExport.getType(), theImport.type, () -> theImport.module + ":" + theImport.name);
-                        importVals.add(theExport);
-                    }
-                    lastModuleInst = wasm.moduleInstantiate(store, lastModule, importVals.toArray(new ExternVal[0]));
+                    lastModuleInst = linkAndInst();
                     if (name != null) namedModuleInsts.put(name, lastModuleInst);
                     wasRefused = false;
                     refusalReason = null;
@@ -155,57 +130,222 @@ public class ExecutingWastVisitor extends WastVisitor {
         registered.put(string, lastModuleInst);
     }
 
+    @Override
+    public @Nullable WastModuleVisitor visitAssertMalformed(String failure) {
+        return null; // tested in jwasm
+    }
+
+    @Override
+    public @Nullable WastModuleVisitor visitAssertInvalid(String failure) {
+        return null; // tested in jwasm
+    }
+
+    @Override
+    public @Nullable WastModuleVisitor visitAssertUnlinkable(String failure) {
+        return visitAssertModuleTrap(failure);
+    }
+
+    @Override
+    public @Nullable WastModuleVisitor visitAssertModuleTrap(String failure) {
+        return new LinkingModuleVisitor() {
+            @Override
+            public void visitEnd() {
+                assertThrows(RuntimeException.class, this::linkAndInst, failure);
+            }
+        };
+    }
+
+    @Override
+    public @Nullable WastVisitor visitMetaScript(@Nullable String name) {
+        throw new UnsupportedOperationException("visitMetaScript");
+    }
+
+    @Override
+    public void visitMetaInput(@Nullable String name, String string) {
+        throw new UnsupportedOperationException("visitMetaInput");
+    }
+
+    @Override
+    public void visitMetaOutput(@Nullable String name, String string) {
+        throw new UnsupportedOperationException("visitMetaOutput");
+    }
+
     int arc = 0;
 
     @Override
     public @Nullable ActionVisitor visitAssertReturn(Object... results) {
         arc++;
         if (wasRefused) return null;
-        return new ActionVisitor() {
+        return new ExecutingActionVisitor(arc, "assert_return", Arrays.toString(results)) {
+            Object[] args;
+
             @Override
             public void visitInvoke(@Nullable String name, String string, Object... args) {
-                Object actualResults;
-                try {
-                    actualResults = wasm.instanceExport(getInst(name), string)
-                            .getAsFuncRaw()
-                            .invokeWithArguments(args);
-                    switch (results.length) {
-                        case 0:
-                            assertNull(actualResults, name);
-                            break;
-                        case 1:
-                            if (!WastReader.Checkable.check(results[0], actualResults)) {
-                                assertionFailure()
-                                        .expected(results[0])
-                                        .actual(actualResults)
-                                        .message(name)
-                                        .buildAndThrow();
+                super.visitInvoke(name, string, args);
+                this.args = args;
+            }
+
+            @Override
+            public void doChecks() throws Throwable {
+                if (thrown != null) throw thrown;
+                assertTrue(hasReturned);
+                switch (results.length) {
+                    case 0:
+                        assertNull(returned, msg);
+                        break;
+                    case 1:
+                        if (!WastReader.Checkable.check(results[0], returned)) {
+                            assertionFailure()
+                                    .expected(results[0])
+                                    .actual(returned)
+                                    .message(msg)
+                                    .buildAndThrow();
+                        }
+                        break;
+                    default: {
+                        if (!WastReader.Checkable.check(results, returned)) {
+                            Object[] boxedResuls = new Object[Array.getLength(returned)];
+                            for (int i = 0; i < boxedResuls.length; i++) {
+                                boxedResuls[i] = Array.get(returned, i);
                             }
-                            break;
-                        default: {
-                            if (!WastReader.Checkable.check(results, actualResults)) {
-                                Object[] boxedResuls = new Object[Array.getLength(actualResults)];
-                                for (int i = 0; i < boxedResuls.length; i++) {
-                                    boxedResuls[i] = Array.get(actualResults, i);
-                                }
-                                assertArrayEquals(results, boxedResuls, name);
-                            }
+                            assertArrayEquals(results, boxedResuls, msg);
                         }
                     }
-                } catch (Throwable t) {
-                    Throwable th = t;
-                    if (th.getSuppressed() == new NullPointerException().getSuppressed()) {
-                        th = new RuntimeException(th);
-                    }
-                    th.addSuppressed(new RuntimeException(String.format("in assert_return #%d (%s.\"%s\"%s -> %s)",
-                            arc,
-                            lastModuleInst.getClass().getSimpleName(),
-                            string,
-                            Arrays.toString(args),
-                            Arrays.toString(results))));
-                    throw Utils.rethrow(th);
                 }
             }
         };
+    }
+
+    int atec = 0;
+
+    @Override
+    public @Nullable ActionVisitor visitAssertTrap(String failure) {
+        atec++;
+        return new ExecutingActionVisitor(atec, "assert_{trap,exhaustion}", "throws \"" + failure + '"') {
+            @Override
+            public void doChecks() {
+                assertFalse(hasReturned, String.format("fail with \"%s\"", failure));
+                System.err.printf("expected \"%s\", got \"%s\"\n", failure, thrown.getMessage());
+            }
+        };
+    }
+
+    @Override
+    public @Nullable ActionVisitor visitAssertExhaustion(String failure) {
+        return visitAssertTrap(failure);
+    }
+
+    private class LinkingModuleVisitor extends WastModuleVisitor {
+        @Override
+        public void visitWatModule(Object module) {
+            lastModule = wasm.moduleFromNode(Parser.parseModule(module));
+        }
+
+        @Override
+        public void visitBinaryModule(Object module) {
+            lastModule = wasm.moduleFromNode(Parser.parseBinaryModule(module));
+        }
+
+        @Override
+        public void visitQuoteModule(Object module) {
+            lastModule = wasm.moduleFromNode(Parser.parseQuoteModule(module));
+        }
+
+        protected ModuleInst linkAndInst() {
+            List<ModuleImport> imports = wasm.moduleImports(lastModule);
+            List<ExternVal> importVals = new ArrayList<>(imports.size());
+            for (ModuleImport theImport : imports) {
+                try {
+                    ModuleInst importModule = registered.get(theImport.module);
+                    assertNotNull(importModule, theImport.module);
+                    ExternVal theExport = wasm.instanceExport(importModule, theImport.name);
+                    assertNotNull(theExport, theImport.name);
+                    assertEquals(theExport.getType(), theImport.type, () -> theImport.module + ":" + theImport.name);
+                    importVals.add(theExport);
+                } catch (RuntimeException e) {
+                    throw new LinkingException(e);
+                }
+            }
+            return wasm.moduleInstantiate(store, lastModule, importVals.toArray(new ExternVal[0]));
+        }
+    }
+
+    private abstract class ExecutingActionVisitor extends ActionVisitor {
+        Throwable thrown;
+        Object returned;
+        String msg;
+        String msgExtra;
+        boolean hasReturned;
+
+        int index;
+        String inWhat;
+        String toWhat;
+
+        public ExecutingActionVisitor(int index, String inWhat, String toWhat) {
+            this.index = index;
+            this.inWhat = inWhat;
+            this.toWhat = toWhat;
+        }
+
+        ExternVal getExport(@Nullable String name, String string, ExternType type) {
+            ExternVal export = wasm.instanceExport(getInst(name), string);
+            msg = String.format("%s.\"%s\"", name, string);
+            if (export == null) {
+                throw new NoSuchElementException(msg);
+            } else if (export.getType() != type) {
+                throw new IllegalStateException(msg + " is not a " + type);
+            }
+            return export;
+        }
+
+        @Override
+        public void visitInvoke(@Nullable String name, String string, Object... args) {
+            msgExtra = Arrays.toString(args);
+            try {
+                returned = getExport(name, string, ExternType.FUNC).getAsFuncRaw().invokeWithArguments(args);
+                hasReturned = true;
+            } catch (Throwable t) {
+                thrown = t;
+            }
+        }
+
+        @Override
+        public void visitGet(@Nullable String name, String string) {
+            msgExtra = ".get";
+            try {
+                returned = getExport(name, string, ExternType.GLOBAL).getAsGlobal().get();
+                hasReturned = true;
+            } catch (Throwable t) {
+                thrown = t;
+            }
+        }
+
+        abstract void doChecks() throws Throwable;
+
+        @Override
+        public void visitEnd() {
+            try {
+                doChecks();
+            } catch (Throwable t) {
+                Throwable th = t;
+                if (th.getSuppressed() == new NullPointerException().getSuppressed()) {
+                    th = new RuntimeException(th);
+                }
+                th.addSuppressed(new RuntimeException(String.format("in %s #%d (%s/%s%s -> %s)",
+                        inWhat,
+                        arc,
+                        lastModuleInst.getClass().getSimpleName(),
+                        msg,
+                        msgExtra,
+                        toWhat)));
+                throw Utils.rethrow(th);
+            }
+        }
+    }
+
+    private static class LinkingException extends RuntimeException {
+        public LinkingException(Throwable t) {
+            super(t);
+        }
     }
 }
