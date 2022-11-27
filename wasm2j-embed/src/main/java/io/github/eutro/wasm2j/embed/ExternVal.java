@@ -6,6 +6,7 @@ import java.lang.invoke.MethodType;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 
+// TODO be stricter with linkage, Wasm requires us to check types more strictly on everything
 public final class ExternVal {
     private final ExternType type;
     private final Object value;

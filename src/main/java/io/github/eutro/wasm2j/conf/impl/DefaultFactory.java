@@ -7,6 +7,7 @@ import io.github.eutro.wasm2j.ext.JavaExts;
 import io.github.eutro.wasm2j.ext.WasmExts;
 import io.github.eutro.wasm2j.ops.CommonOps;
 import io.github.eutro.wasm2j.ops.JavaOps;
+import io.github.eutro.wasm2j.ops.Op;
 import io.github.eutro.wasm2j.ops.WasmOps;
 import io.github.eutro.wasm2j.passes.IRPass;
 import io.github.eutro.wasm2j.ssa.Module;
@@ -408,16 +409,20 @@ public abstract class DefaultFactory implements WirJavaConventionFactory {
                         for (ElementNode elem : node.elems) {
                             Insn elemLen = CommonOps.constant(elem.indices != null ? elem.indices.length : elem.init.size());
                             Type elemType = BasicCallingConvention.javaType(elem.type);
-                            Var elemV = ib.insert(JavaOps.insns(
-                                            new TypeInsnNode(Opcodes.ANEWARRAY,
-                                                    elemType.getInternalName())
-                                    ).insn(ib.insert(elemLen, "elemsz")),
+                            Op aNewArray = JavaOps.insns(new TypeInsnNode(Opcodes.ANEWARRAY, elemType.getInternalName()));
+                            Var elemV = ib.insert(aNewArray.insn(ib.insert(elemLen, "elemsz")),
                                     "elem");
                             JavaExts.JavaField field = new JavaExts.JavaField(jClass, "elem" + elemIdx,
                                     "[" + elemType.getDescriptor(),
                                     false);
                             jClass.fields.add(field);
-                            ib.insert(JavaOps.PUT_FIELD.create(field).insn(IRUtils.getThis(ib), elemV).assignTo());
+                            Var toAssign;
+                            if (elem.offset == null && elem.passive) {
+                                toAssign = elemV;
+                            } else {
+                                toAssign = ib.insert(aNewArray.insn(ib.insert(CommonOps.constant(0), "0")), "empty");
+                            }
+                            ib.insert(JavaOps.PUT_FIELD.create(field).insn(IRUtils.getThis(ib), toAssign).assignTo());
                             elems.add(field);
 
                             if (elem.indices != null) {
@@ -545,8 +550,6 @@ public abstract class DefaultFactory implements WirJavaConventionFactory {
 
                     if (node.start != null) {
                         FunctionConvention startMethod = funcs.get(node.start);
-                        assert node.types != null && node.types.types != null
-                                && node.funcs != null && node.funcs.funcs != null;
                         startMethod.emitCall(ib, WasmOps.CALL
                                 .create(new WasmOps.CallType(
                                         node.start,

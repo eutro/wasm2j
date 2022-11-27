@@ -48,10 +48,10 @@ public class ExecutingWastVisitor extends WastVisitor {
 
     {
         // https://github.com/WebAssembly/spec/tree/main/interpreter#spectest-host-module
-        ExternVal globalI32 = ExternVal.global(new Global.BoxGlobal(0));
-        ExternVal globalI64 = ExternVal.global(new Global.BoxGlobal(0L));
-        ExternVal globalF32 = ExternVal.global(new Global.BoxGlobal(0F));
-        ExternVal globalF64 = ExternVal.global(new Global.BoxGlobal(0D));
+        ExternVal globalI32 = ExternVal.global(new Global.BoxGlobal(666));
+        ExternVal globalI64 = ExternVal.global(new Global.BoxGlobal(666L));
+        ExternVal globalF32 = ExternVal.global(new Global.BoxGlobal(666F));
+        ExternVal globalF64 = ExternVal.global(new Global.BoxGlobal(666D));
         Table.ArrayTable table = new Table.ArrayTable(10, 20);
         registered.put("spectest", name -> {
             switch (name) {
@@ -145,12 +145,20 @@ public class ExecutingWastVisitor extends WastVisitor {
         return visitAssertModuleTrap(failure);
     }
 
+    int mtc;
+
     @Override
     public @Nullable WastModuleVisitor visitAssertModuleTrap(String failure) {
+        mtc++;
         return new LinkingModuleVisitor() {
             @Override
             public void visitEnd() {
-                assertThrows(RuntimeException.class, this::linkAndInst, failure);
+                try {
+                    assertThrows(RuntimeException.class, this::linkAndInst, failure);
+                } catch (Throwable t) {
+                    t.addSuppressed(new RuntimeException("in assert_{trap,unlinkable} module #" + mtc));
+                    throw t;
+                }
             }
         };
     }
@@ -255,16 +263,21 @@ public class ExecutingWastVisitor extends WastVisitor {
             List<ModuleImport> imports = wasm.moduleImports(lastModule);
             List<ExternVal> importVals = new ArrayList<>(imports.size());
             for (ModuleImport theImport : imports) {
-                try {
-                    ModuleInst importModule = registered.get(theImport.module);
-                    assertNotNull(importModule, theImport.module);
-                    ExternVal theExport = wasm.instanceExport(importModule, theImport.name);
-                    assertNotNull(theExport, theImport.name);
-                    assertEquals(theExport.getType(), theImport.type, () -> theImport.module + ":" + theImport.name);
-                    importVals.add(theExport);
-                } catch (RuntimeException e) {
-                    throw new LinkingException(e);
+                ExternVal theExport;
+                outer:
+                {
+                    inner:
+                    {
+                        ModuleInst importModule = registered.get(theImport.module);
+                        if (importModule == null) break inner;
+                        theExport = wasm.instanceExport(importModule, theImport.name);
+                        if (theExport == null) break inner;
+                        if (theExport.getType() != theImport.type) break inner;
+                        break outer;
+                    }
+                    throw new LinkingException("unknown import");
                 }
+                importVals.add(theExport);
             }
             return wasm.moduleInstantiate(store, lastModule, importVals.toArray(new ExternVal[0]));
         }
@@ -346,6 +359,10 @@ public class ExecutingWastVisitor extends WastVisitor {
     private static class LinkingException extends RuntimeException {
         public LinkingException(Throwable t) {
             super(t);
+        }
+
+        public LinkingException(String msg) {
+            super(msg);
         }
     }
 }

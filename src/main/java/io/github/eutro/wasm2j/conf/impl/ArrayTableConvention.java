@@ -65,7 +65,7 @@ public class ArrayTableConvention extends DelegatingExporter implements TableCon
         int res;
         int sz = tbl.length;
         int newSz = sz + growBy;
-        if (growBy < 0 || newSz >= max) {
+        if (growBy < 0 || newSz > max) {
             res = -1;
         } else {
             try {
@@ -98,7 +98,7 @@ public class ArrayTableConvention extends DelegatingExporter implements TableCon
         Var newSz = ib.insert(JavaOps.insns(new InsnNode(Opcodes.IADD)).insn(growBy, sz), "newSz");
         if (max != null) {
             k = ib.func.newBb();
-            ib.insertCtrl(JavaOps.BR_COND.create(JavaOps.JumpType.IF_ICMPGE)
+            ib.insertCtrl(JavaOps.BR_COND.create(JavaOps.JumpType.IF_ICMPGT)
                     .insn(newSz, ib.insert(CommonOps.constant(max), "max"))
                     .jumpsTo(failBlock, k));
             ib.setBlock(k);
