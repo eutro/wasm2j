@@ -15,7 +15,7 @@
 <script type="text/javascript" src="../../../../../../script-dir/jquery-ui.min.js"></script>
 </head>
 <body class="class-declaration-page">
-<script type="text/javascript">var data = {"i0":10,"i1":10,"i2":9,"i3":10,"i4":10,"i5":10};
+<script type="text/javascript">var data = {"i0":9,"i1":10,"i2":10,"i3":9,"i4":9,"i5":10,"i6":10,"i7":10,"i8":9};
 var tabs = {65535:["t0","All Methods"],1:["t1","Static Methods"],2:["t2","Instance Methods"],8:["t4","Concrete Methods"]};
 var altColor = "alt-color";
 var rowColor = "row-color";
@@ -130,6 +130,11 @@ implements <a href="../api/CallingConvention.html" title="interface in io.github
 </thead>
 <tbody>
 <tr class="alt-color" id="i0">
+<td class="col-first"><code>static <a href="https://asm.ow2.io/javadoc/org/objectweb/asm/Type.html" title="class or interface in org.objectweb.asm" class="external-link">Type</a></code></td>
+<th class="col-second" scope="row"><code><span class="member-name-link"><a href="#boxedType(byte)">boxedType</a></span>&#8203;(byte&nbsp;type)</code></th>
+<td class="col-last">&nbsp;</td>
+</tr>
+<tr class="row-color" id="i1">
 <td class="col-first"><code>java.util.Optional&lt;<a href="../../ssa/Var.html" title="class in io.github.eutro.wasm2j.ssa">Var</a>&gt;</code></td>
 <th class="col-second" scope="row"><code><span class="member-name-link"><a href="#emitReturn(io.github.eutro.wasm2j.ssa.IRBuilder,java.util.List,java.util.List,io.github.eutro.jwasm.tree.TypeNode)">emitReturn</a></span>&#8203;(<a href="../../ssa/IRBuilder.html" title="class in io.github.eutro.wasm2j.ssa">IRBuilder</a>&nbsp;ib,
 java.util.List&lt;<a href="../../ssa/Var.html" title="class in io.github.eutro.wasm2j.ssa">Var</a>&gt;&nbsp;rawArgs,
@@ -137,36 +142,52 @@ java.util.List&lt;<a href="../../ssa/Var.html" title="class in io.github.eutro.w
 <a href="https://eutro.github.io/jwasm/io/github/eutro/jwasm/tree/TypeNode.html" title="class or interface in io.github.eutro.jwasm.tree" class="external-link">TypeNode</a>&nbsp;funcType)</code></th>
 <td class="col-last">&nbsp;</td>
 </tr>
-<tr class="row-color" id="i1">
+<tr class="alt-color" id="i2">
 <td class="col-first"><code><a href="https://asm.ow2.io/javadoc/org/objectweb/asm/Type.html" title="class or interface in org.objectweb.asm" class="external-link">Type</a></code></td>
 <th class="col-second" scope="row"><code><span class="member-name-link"><a href="#getDescriptor(io.github.eutro.jwasm.tree.TypeNode)">getDescriptor</a></span>&#8203;(<a href="https://eutro.github.io/jwasm/io/github/eutro/jwasm/tree/TypeNode.html" title="class or interface in io.github.eutro.jwasm.tree" class="external-link">TypeNode</a>&nbsp;funcType)</code></th>
 <td class="col-last">&nbsp;</td>
 </tr>
-<tr class="alt-color" id="i2">
+<tr class="row-color" id="i3">
 <td class="col-first"><code>static <a href="https://asm.ow2.io/javadoc/org/objectweb/asm/Type.html" title="class or interface in org.objectweb.asm" class="external-link">Type</a></code></td>
 <th class="col-second" scope="row"><code><span class="member-name-link"><a href="#javaType(byte)">javaType</a></span>&#8203;(byte&nbsp;type)</code></th>
 <td class="col-last">&nbsp;</td>
 </tr>
-<tr class="row-color" id="i3">
+<tr class="alt-color" id="i4">
+<td class="col-first"><code>static <a href="../../ssa/Var.html" title="class in io.github.eutro.wasm2j.ssa">Var</a></code></td>
+<th class="col-second" scope="row"><code><span class="member-name-link"><a href="#maybeBoxed(io.github.eutro.wasm2j.ssa.IRBuilder,io.github.eutro.wasm2j.ssa.Var,byte,org.objectweb.asm.Type)">maybeBoxed</a></span>&#8203;(<a href="../../ssa/IRBuilder.html" title="class in io.github.eutro.wasm2j.ssa">IRBuilder</a>&nbsp;ib,
+<a href="../../ssa/Var.html" title="class in io.github.eutro.wasm2j.ssa">Var</a>&nbsp;val,
+byte&nbsp;fromTy,
+<a href="https://asm.ow2.io/javadoc/org/objectweb/asm/Type.html" title="class or interface in org.objectweb.asm" class="external-link">Type</a>&nbsp;toTy)</code></th>
+<td class="col-last">&nbsp;</td>
+</tr>
+<tr class="row-color" id="i5">
 <td class="col-first"><code>java.util.List&lt;<a href="../../ssa/Var.html" title="class in io.github.eutro.wasm2j.ssa">Var</a>&gt;</code></td>
 <th class="col-second" scope="row"><code><span class="member-name-link"><a href="#passArguments(io.github.eutro.wasm2j.ssa.IRBuilder,java.util.List,io.github.eutro.jwasm.tree.TypeNode)">passArguments</a></span>&#8203;(<a href="../../ssa/IRBuilder.html" title="class in io.github.eutro.wasm2j.ssa">IRBuilder</a>&nbsp;ib,
 java.util.List&lt;<a href="../../ssa/Var.html" title="class in io.github.eutro.wasm2j.ssa">Var</a>&gt;&nbsp;args,
 <a href="https://eutro.github.io/jwasm/io/github/eutro/jwasm/tree/TypeNode.html" title="class or interface in io.github.eutro.jwasm.tree" class="external-link">TypeNode</a>&nbsp;funcType)</code></th>
 <td class="col-last">&nbsp;</td>
 </tr>
-<tr class="alt-color" id="i4">
+<tr class="alt-color" id="i6">
 <td class="col-first"><code>java.util.List&lt;<a href="../../ssa/Var.html" title="class in io.github.eutro.wasm2j.ssa">Var</a>&gt;</code></td>
 <th class="col-second" scope="row"><code><span class="member-name-link"><a href="#receiveArguments(io.github.eutro.wasm2j.ssa.IRBuilder,java.util.List,io.github.eutro.jwasm.tree.TypeNode)">receiveArguments</a></span>&#8203;(<a href="../../ssa/IRBuilder.html" title="class in io.github.eutro.wasm2j.ssa">IRBuilder</a>&nbsp;ib,
 java.util.List&lt;<a href="../../ssa/Var.html" title="class in io.github.eutro.wasm2j.ssa">Var</a>&gt;&nbsp;rawArgs,
 <a href="https://eutro.github.io/jwasm/io/github/eutro/jwasm/tree/TypeNode.html" title="class or interface in io.github.eutro.jwasm.tree" class="external-link">TypeNode</a>&nbsp;funcType)</code></th>
 <td class="col-last">&nbsp;</td>
 </tr>
-<tr class="row-color" id="i5">
+<tr class="row-color" id="i7">
 <td class="col-first"><code>java.util.List&lt;<a href="../../ssa/Var.html" title="class in io.github.eutro.wasm2j.ssa">Var</a>&gt;</code></td>
 <th class="col-second" scope="row"><code><span class="member-name-link"><a href="#receiveReturn(io.github.eutro.wasm2j.ssa.IRBuilder,java.util.List,io.github.eutro.wasm2j.ssa.Var,io.github.eutro.jwasm.tree.TypeNode)">receiveReturn</a></span>&#8203;(<a href="../../ssa/IRBuilder.html" title="class in io.github.eutro.wasm2j.ssa">IRBuilder</a>&nbsp;ib,
 java.util.List&lt;<a href="../../ssa/Var.html" title="class in io.github.eutro.wasm2j.ssa">Var</a>&gt;&nbsp;rawArgs,
 <a href="../../ssa/Var.html" title="class in io.github.eutro.wasm2j.ssa">Var</a>&nbsp;rawReturn,
 <a href="https://eutro.github.io/jwasm/io/github/eutro/jwasm/tree/TypeNode.html" title="class or interface in io.github.eutro.jwasm.tree" class="external-link">TypeNode</a>&nbsp;funcType)</code></th>
+<td class="col-last">&nbsp;</td>
+</tr>
+<tr class="alt-color" id="i8">
+<td class="col-first"><code>static <a href="../../ssa/Var.html" title="class in io.github.eutro.wasm2j.ssa">Var</a></code></td>
+<th class="col-second" scope="row"><code><span class="member-name-link"><a href="#unboxed(io.github.eutro.wasm2j.ssa.IRBuilder,io.github.eutro.wasm2j.ssa.Var,org.objectweb.asm.Type,byte)">unboxed</a></span>&#8203;(<a href="../../ssa/IRBuilder.html" title="class in io.github.eutro.wasm2j.ssa">IRBuilder</a>&nbsp;ib,
+<a href="../../ssa/Var.html" title="class in io.github.eutro.wasm2j.ssa">Var</a>&nbsp;val,
+<a href="https://asm.ow2.io/javadoc/org/objectweb/asm/Type.html" title="class or interface in org.objectweb.asm" class="external-link">Type</a>&nbsp;fromTy,
+byte&nbsp;toTy)</code></th>
 <td class="col-last">&nbsp;</td>
 </tr>
 </tbody>
@@ -208,6 +229,30 @@ java.util.List&lt;<a href="../../ssa/Var.html" title="class in io.github.eutro.w
 <section class="detail" id="javaType(byte)">
 <h3>javaType</h3>
 <div class="member-signature"><span class="modifiers">public static</span>&nbsp;<span class="return-type"><a href="https://asm.ow2.io/javadoc/org/objectweb/asm/Type.html" title="class or interface in org.objectweb.asm" class="external-link">Type</a></span>&nbsp;<span class="member-name">javaType</span>&#8203;(<span class="parameters">byte&nbsp;type)</span></div>
+</section>
+</li>
+<li>
+<section class="detail" id="boxedType(byte)">
+<h3>boxedType</h3>
+<div class="member-signature"><span class="modifiers">public static</span>&nbsp;<span class="return-type"><a href="https://asm.ow2.io/javadoc/org/objectweb/asm/Type.html" title="class or interface in org.objectweb.asm" class="external-link">Type</a></span>&nbsp;<span class="member-name">boxedType</span>&#8203;(<span class="parameters">byte&nbsp;type)</span></div>
+</section>
+</li>
+<li>
+<section class="detail" id="maybeBoxed(io.github.eutro.wasm2j.ssa.IRBuilder,io.github.eutro.wasm2j.ssa.Var,byte,org.objectweb.asm.Type)">
+<h3>maybeBoxed</h3>
+<div class="member-signature"><span class="modifiers">public static</span>&nbsp;<span class="return-type"><a href="../../ssa/Var.html" title="class in io.github.eutro.wasm2j.ssa">Var</a></span>&nbsp;<span class="member-name">maybeBoxed</span>&#8203;(<span class="parameters"><a href="../../ssa/IRBuilder.html" title="class in io.github.eutro.wasm2j.ssa">IRBuilder</a>&nbsp;ib,
+<a href="../../ssa/Var.html" title="class in io.github.eutro.wasm2j.ssa">Var</a>&nbsp;val,
+byte&nbsp;fromTy,
+<a href="https://asm.ow2.io/javadoc/org/objectweb/asm/Type.html" title="class or interface in org.objectweb.asm" class="external-link">Type</a>&nbsp;toTy)</span></div>
+</section>
+</li>
+<li>
+<section class="detail" id="unboxed(io.github.eutro.wasm2j.ssa.IRBuilder,io.github.eutro.wasm2j.ssa.Var,org.objectweb.asm.Type,byte)">
+<h3>unboxed</h3>
+<div class="member-signature"><span class="modifiers">public static</span>&nbsp;<span class="return-type"><a href="../../ssa/Var.html" title="class in io.github.eutro.wasm2j.ssa">Var</a></span>&nbsp;<span class="member-name">unboxed</span>&#8203;(<span class="parameters"><a href="../../ssa/IRBuilder.html" title="class in io.github.eutro.wasm2j.ssa">IRBuilder</a>&nbsp;ib,
+<a href="../../ssa/Var.html" title="class in io.github.eutro.wasm2j.ssa">Var</a>&nbsp;val,
+<a href="https://asm.ow2.io/javadoc/org/objectweb/asm/Type.html" title="class or interface in org.objectweb.asm" class="external-link">Type</a>&nbsp;fromTy,
+byte&nbsp;toTy)</span></div>
 </section>
 </li>
 <li>

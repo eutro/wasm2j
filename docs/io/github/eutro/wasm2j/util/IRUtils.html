@@ -15,7 +15,7 @@
 <script type="text/javascript" src="../../../../../script-dir/jquery-ui.min.js"></script>
 </head>
 <body class="class-declaration-page">
-<script type="text/javascript">var data = {"i0":9};
+<script type="text/javascript">var data = {"i0":9,"i1":9,"i2":9,"i3":9,"i4":9,"i5":9,"i6":9};
 var tabs = {65535:["t0","All Methods"],1:["t1","Static Methods"],8:["t4","Concrete Methods"]};
 var altColor = "alt-color";
 var rowColor = "row-color";
@@ -46,7 +46,7 @@ loadScripts(document, 'script');</script>
 <div>
 <ul class="sub-nav-list">
 <li>Summary:&nbsp;</li>
-<li>Nested&nbsp;|&nbsp;</li>
+<li><a href="#nested.class.summary">Nested</a>&nbsp;|&nbsp;</li>
 <li><a href="#field.summary">Field</a>&nbsp;|&nbsp;</li>
 <li><a href="#constructor.summary">Constr</a>&nbsp;|&nbsp;</li>
 <li><a href="#method.summary">Method</a></li>
@@ -85,6 +85,36 @@ extends java.lang.Object</pre>
 </section>
 <section class="summary">
 <ul class="summary-list">
+<!-- ======== NESTED CLASS SUMMARY ======== -->
+<li>
+<section class="nested-class-summary" id="nested.class.summary">
+<h2>Nested Class Summary</h2>
+<div class="member-summary">
+<table class="summary-table">
+<caption><span>Nested Classes</span></caption>
+<thead>
+<tr>
+<th class="col-first" scope="col">Modifier and Type</th>
+<th class="col-second" scope="col">Class</th>
+<th class="col-last" scope="col">Description</th>
+</tr>
+</thead>
+<tbody>
+<tr class="alt-color">
+<td class="col-first"><code>static interface&nbsp;</code></td>
+<th class="col-second" scope="row"><code><span class="member-name-link"><a href="IRUtils.BoundsCheckFn.html" title="interface in io.github.eutro.wasm2j.util">IRUtils.BoundsCheckFn</a>&lt;<a href="IRUtils.BoundsCheckFn.html" title="type parameter in IRUtils.BoundsCheckFn">T</a>&gt;</span></code></th>
+<td class="col-last">&nbsp;</td>
+</tr>
+<tr class="row-color">
+<td class="col-first"><code>static interface&nbsp;</code></td>
+<th class="col-second" scope="row"><code><span class="member-name-link"><a href="IRUtils.StoreOrLoadFn.html" title="interface in io.github.eutro.wasm2j.util">IRUtils.StoreOrLoadFn</a></span></code></th>
+<td class="col-last">&nbsp;</td>
+</tr>
+</tbody>
+</table>
+</div>
+</section>
+</li>
 <!-- =========== FIELD SUMMARY =========== -->
 <li>
 <section class="field-summary" id="field.summary">
@@ -108,6 +138,16 @@ extends java.lang.Object</pre>
 <tr class="row-color">
 <td class="col-first"><code>static <a href="../ext/JavaExts.JavaClass.html" title="class in io.github.eutro.wasm2j.ext">JavaExts.JavaClass</a></code></td>
 <th class="col-second" scope="row"><code><span class="member-name-link"><a href="#METHOD_HANDLE_CLASS">METHOD_HANDLE_CLASS</a></span></code></th>
+<td class="col-last">&nbsp;</td>
+</tr>
+<tr class="alt-color">
+<td class="col-first"><code>static <a href="../ext/JavaExts.JavaClass.html" title="class in io.github.eutro.wasm2j.ext">JavaExts.JavaClass</a></code></td>
+<th class="col-second" scope="row"><code><span class="member-name-link"><a href="#MTY_CLASS">MTY_CLASS</a></span></code></th>
+<td class="col-last">&nbsp;</td>
+</tr>
+<tr class="row-color">
+<td class="col-first"><code>static <a href="../ext/JavaExts.JavaMethod.html" title="class in io.github.eutro.wasm2j.ext">JavaExts.JavaMethod</a></code></td>
+<th class="col-second" scope="row"><code><span class="member-name-link"><a href="#MTY_METHOD_TYPE">MTY_METHOD_TYPE</a></span></code></th>
 <td class="col-last">&nbsp;</td>
 </tr>
 </tbody>
@@ -155,8 +195,58 @@ extends java.lang.Object</pre>
 </thead>
 <tbody>
 <tr class="alt-color" id="i0">
+<td class="col-first"><code>static &lt;T&gt;&nbsp;void</code></td>
+<th class="col-second" scope="row"><code><span class="member-name-link"><a href="#emitCopy(io.github.eutro.wasm2j.ssa.IRBuilder,io.github.eutro.wasm2j.ssa.Effect,io.github.eutro.wasm2j.ops.UnaryOpKey,io.github.eutro.wasm2j.util.IRUtils.StoreOrLoadFn,io.github.eutro.wasm2j.util.IRUtils.StoreOrLoadFn,T,T,io.github.eutro.wasm2j.util.IRUtils.BoundsCheckFn)">emitCopy</a></span>&#8203;(<a href="../ssa/IRBuilder.html" title="class in io.github.eutro.wasm2j.ssa">IRBuilder</a>&nbsp;ib,
+<a href="../ssa/Effect.html" title="class in io.github.eutro.wasm2j.ssa">Effect</a>&nbsp;effect,
+<a href="../ops/UnaryOpKey.html" title="class in io.github.eutro.wasm2j.ops">UnaryOpKey</a>&lt;<a href="Pair.html" title="class in io.github.eutro.wasm2j.util">Pair</a>&lt;java.lang.Integer,&#8203;java.lang.Integer&gt;&gt;&nbsp;key,
+<a href="IRUtils.StoreOrLoadFn.html" title="interface in io.github.eutro.wasm2j.util">IRUtils.StoreOrLoadFn</a>&nbsp;load,
+<a href="IRUtils.StoreOrLoadFn.html" title="interface in io.github.eutro.wasm2j.util">IRUtils.StoreOrLoadFn</a>&nbsp;store,
+T&nbsp;srcT,
+T&nbsp;dstT,
+<a href="IRUtils.BoundsCheckFn.html" title="interface in io.github.eutro.wasm2j.util">IRUtils.BoundsCheckFn</a>&lt;T&gt;&nbsp;emitBoundsCheck)</code></th>
+<td class="col-last">&nbsp;</td>
+</tr>
+<tr class="row-color" id="i1">
+<td class="col-first"><code>static &lt;T&gt;&nbsp;void</code></td>
+<th class="col-second" scope="row"><code><span class="member-name-link"><a href="#emitFill(io.github.eutro.wasm2j.ssa.IRBuilder,io.github.eutro.wasm2j.ssa.Effect,io.github.eutro.wasm2j.ops.UnaryOpKey,io.github.eutro.wasm2j.util.IRUtils.StoreOrLoadFn,T,io.github.eutro.wasm2j.util.IRUtils.BoundsCheckFn)">emitFill</a></span>&#8203;(<a href="../ssa/IRBuilder.html" title="class in io.github.eutro.wasm2j.ssa">IRBuilder</a>&nbsp;ib,
+<a href="../ssa/Effect.html" title="class in io.github.eutro.wasm2j.ssa">Effect</a>&nbsp;effect,
+<a href="../ops/UnaryOpKey.html" title="class in io.github.eutro.wasm2j.ops">UnaryOpKey</a>&lt;java.lang.Integer&gt;&nbsp;key,
+<a href="IRUtils.StoreOrLoadFn.html" title="interface in io.github.eutro.wasm2j.util">IRUtils.StoreOrLoadFn</a>&nbsp;store,
+T&nbsp;t,
+<a href="IRUtils.BoundsCheckFn.html" title="interface in io.github.eutro.wasm2j.util">IRUtils.BoundsCheckFn</a>&lt;T&gt;&nbsp;emitBoundsCheck)</code></th>
+<td class="col-last">&nbsp;</td>
+</tr>
+<tr class="alt-color" id="i2">
+<td class="col-first"><code>static <a href="../ssa/Var.html" title="class in io.github.eutro.wasm2j.ssa">Var</a></code></td>
+<th class="col-second" scope="row"><code><span class="member-name-link"><a href="#getAddr(io.github.eutro.wasm2j.ssa.IRBuilder,io.github.eutro.wasm2j.ops.WasmOps.WithMemArg,io.github.eutro.wasm2j.ssa.Var)">getAddr</a></span>&#8203;(<a href="../ssa/IRBuilder.html" title="class in io.github.eutro.wasm2j.ssa">IRBuilder</a>&nbsp;ib,
+<a href="../ops/WasmOps.WithMemArg.html" title="class in io.github.eutro.wasm2j.ops">WasmOps.WithMemArg</a>&lt;?&gt;&nbsp;wmArg,
+<a href="../ssa/Var.html" title="class in io.github.eutro.wasm2j.ssa">Var</a>&nbsp;ptr)</code></th>
+<td class="col-last">&nbsp;</td>
+</tr>
+<tr class="row-color" id="i3">
 <td class="col-first"><code>static <a href="../ssa/Var.html" title="class in io.github.eutro.wasm2j.ssa">Var</a></code></td>
 <th class="col-second" scope="row"><code><span class="member-name-link"><a href="#getThis(io.github.eutro.wasm2j.ssa.IRBuilder)">getThis</a></span>&#8203;(<a href="../ssa/IRBuilder.html" title="class in io.github.eutro.wasm2j.ssa">IRBuilder</a>&nbsp;ib)</code></th>
+<td class="col-last">&nbsp;</td>
+</tr>
+<tr class="alt-color" id="i4">
+<td class="col-first"><code>static void</code></td>
+<th class="col-second" scope="row"><code><span class="member-name-link"><a href="#lenLoop(io.github.eutro.wasm2j.ssa.IRBuilder,io.github.eutro.wasm2j.ssa.Var%5B%5D,boolean,io.github.eutro.wasm2j.ssa.Var,java.util.function.Consumer)">lenLoop</a></span>&#8203;(<a href="../ssa/IRBuilder.html" title="class in io.github.eutro.wasm2j.ssa">IRBuilder</a>&nbsp;ib,
+<a href="../ssa/Var.html" title="class in io.github.eutro.wasm2j.ssa">Var</a>[]&nbsp;toInc,
+boolean&nbsp;invert,
+<a href="../ssa/Var.html" title="class in io.github.eutro.wasm2j.ssa">Var</a>&nbsp;len,
+java.util.function.Consumer&lt;<a href="../ssa/Var.html" title="class in io.github.eutro.wasm2j.ssa">Var</a>[]&gt;&nbsp;f)</code></th>
+<td class="col-last">&nbsp;</td>
+</tr>
+<tr class="row-color" id="i5">
+<td class="col-first"><code>static <a href="../ssa/Insn.html" title="class in io.github.eutro.wasm2j.ssa">Insn</a></code></td>
+<th class="col-second" scope="row"><code><span class="member-name-link"><a href="#loadClass(org.objectweb.asm.Type)">loadClass</a></span>&#8203;(<a href="https://asm.ow2.io/javadoc/org/objectweb/asm/Type.html" title="class or interface in org.objectweb.asm" class="external-link">Type</a>&nbsp;ty)</code></th>
+<td class="col-last">&nbsp;</td>
+</tr>
+<tr class="alt-color" id="i6">
+<td class="col-first"><code>static void</code></td>
+<th class="col-second" scope="row"><code><span class="member-name-link"><a href="#trapWhen(io.github.eutro.wasm2j.ssa.IRBuilder,io.github.eutro.wasm2j.ssa.Insn,java.lang.String)">trapWhen</a></span>&#8203;(<a href="../ssa/IRBuilder.html" title="class in io.github.eutro.wasm2j.ssa">IRBuilder</a>&nbsp;ib,
+<a href="../ssa/Insn.html" title="class in io.github.eutro.wasm2j.ssa">Insn</a>&nbsp;insn,
+java.lang.String&nbsp;msg)</code></th>
 <td class="col-last">&nbsp;</td>
 </tr>
 </tbody>
@@ -189,6 +279,18 @@ extends java.lang.Object</pre>
 <div class="member-signature"><span class="modifiers">public static final</span>&nbsp;<span class="return-type"><a href="../ext/JavaExts.JavaClass.html" title="class in io.github.eutro.wasm2j.ext">JavaExts.JavaClass</a></span>&nbsp;<span class="member-name">METHOD_HANDLE_CLASS</span></div>
 </section>
 </li>
+<li>
+<section class="detail" id="MTY_CLASS">
+<h3>MTY_CLASS</h3>
+<div class="member-signature"><span class="modifiers">public static final</span>&nbsp;<span class="return-type"><a href="../ext/JavaExts.JavaClass.html" title="class in io.github.eutro.wasm2j.ext">JavaExts.JavaClass</a></span>&nbsp;<span class="member-name">MTY_CLASS</span></div>
+</section>
+</li>
+<li>
+<section class="detail" id="MTY_METHOD_TYPE">
+<h3>MTY_METHOD_TYPE</h3>
+<div class="member-signature"><span class="modifiers">public static final</span>&nbsp;<span class="return-type"><a href="../ext/JavaExts.JavaMethod.html" title="class in io.github.eutro.wasm2j.ext">JavaExts.JavaMethod</a></span>&nbsp;<span class="member-name">MTY_METHOD_TYPE</span></div>
+</section>
+</li>
 </ul>
 </section>
 </li>
@@ -217,6 +319,62 @@ extends java.lang.Object</pre>
 <div class="member-signature"><span class="modifiers">public static</span>&nbsp;<span class="return-type"><a href="../ssa/Var.html" title="class in io.github.eutro.wasm2j.ssa">Var</a></span>&nbsp;<span class="member-name">getThis</span>&#8203;(<span class="parameters"><a href="../ssa/IRBuilder.html" title="class in io.github.eutro.wasm2j.ssa">IRBuilder</a>&nbsp;ib)</span></div>
 </section>
 </li>
+<li>
+<section class="detail" id="loadClass(org.objectweb.asm.Type)">
+<h3>loadClass</h3>
+<div class="member-signature"><span class="modifiers">public static</span>&nbsp;<span class="return-type"><a href="../ssa/Insn.html" title="class in io.github.eutro.wasm2j.ssa">Insn</a></span>&nbsp;<span class="member-name">loadClass</span>&#8203;(<span class="parameters"><a href="https://asm.ow2.io/javadoc/org/objectweb/asm/Type.html" title="class or interface in org.objectweb.asm" class="external-link">Type</a>&nbsp;ty)</span></div>
+</section>
+</li>
+<li>
+<section class="detail" id="getAddr(io.github.eutro.wasm2j.ssa.IRBuilder,io.github.eutro.wasm2j.ops.WasmOps.WithMemArg,io.github.eutro.wasm2j.ssa.Var)">
+<h3>getAddr</h3>
+<div class="member-signature"><span class="modifiers">public static</span>&nbsp;<span class="return-type"><a href="../ssa/Var.html" title="class in io.github.eutro.wasm2j.ssa">Var</a></span>&nbsp;<span class="member-name">getAddr</span>&#8203;(<span class="parameters"><a href="../ssa/IRBuilder.html" title="class in io.github.eutro.wasm2j.ssa">IRBuilder</a>&nbsp;ib,
+<a href="../ops/WasmOps.WithMemArg.html" title="class in io.github.eutro.wasm2j.ops">WasmOps.WithMemArg</a>&lt;?&gt;&nbsp;wmArg,
+<a href="../ssa/Var.html" title="class in io.github.eutro.wasm2j.ssa">Var</a>&nbsp;ptr)</span></div>
+</section>
+</li>
+<li>
+<section class="detail" id="lenLoop(io.github.eutro.wasm2j.ssa.IRBuilder,io.github.eutro.wasm2j.ssa.Var[],boolean,io.github.eutro.wasm2j.ssa.Var,java.util.function.Consumer)">
+<h3>lenLoop</h3>
+<div class="member-signature"><span class="modifiers">public static</span>&nbsp;<span class="return-type">void</span>&nbsp;<span class="member-name">lenLoop</span>&#8203;(<span class="parameters"><a href="../ssa/IRBuilder.html" title="class in io.github.eutro.wasm2j.ssa">IRBuilder</a>&nbsp;ib,
+<a href="../ssa/Var.html" title="class in io.github.eutro.wasm2j.ssa">Var</a>[]&nbsp;toInc,
+boolean&nbsp;invert,
+<a href="../ssa/Var.html" title="class in io.github.eutro.wasm2j.ssa">Var</a>&nbsp;len,
+java.util.function.Consumer&lt;<a href="../ssa/Var.html" title="class in io.github.eutro.wasm2j.ssa">Var</a>[]&gt;&nbsp;f)</span></div>
+</section>
+</li>
+<li>
+<section class="detail" id="emitFill(io.github.eutro.wasm2j.ssa.IRBuilder,io.github.eutro.wasm2j.ssa.Effect,io.github.eutro.wasm2j.ops.UnaryOpKey,io.github.eutro.wasm2j.util.IRUtils.StoreOrLoadFn,T,io.github.eutro.wasm2j.util.IRUtils.BoundsCheckFn)">
+<h3 id="emitFill(io.github.eutro.wasm2j.ssa.IRBuilder,io.github.eutro.wasm2j.ssa.Effect,io.github.eutro.wasm2j.ops.UnaryOpKey,io.github.eutro.wasm2j.util.IRUtils.StoreOrLoadFn,java.lang.Object,io.github.eutro.wasm2j.util.IRUtils.BoundsCheckFn)">emitFill</h3>
+<div class="member-signature"><span class="modifiers">public static</span>&nbsp;<span class="type-parameters">&lt;T&gt;</span>&nbsp;<span class="return-type">void</span>&nbsp;<span class="member-name">emitFill</span>&#8203;(<span class="parameters"><a href="../ssa/IRBuilder.html" title="class in io.github.eutro.wasm2j.ssa">IRBuilder</a>&nbsp;ib,
+<a href="../ssa/Effect.html" title="class in io.github.eutro.wasm2j.ssa">Effect</a>&nbsp;effect,
+<a href="../ops/UnaryOpKey.html" title="class in io.github.eutro.wasm2j.ops">UnaryOpKey</a>&lt;java.lang.Integer&gt;&nbsp;key,
+<a href="IRUtils.StoreOrLoadFn.html" title="interface in io.github.eutro.wasm2j.util">IRUtils.StoreOrLoadFn</a>&nbsp;store,
+T&nbsp;t,
+<a href="IRUtils.BoundsCheckFn.html" title="interface in io.github.eutro.wasm2j.util">IRUtils.BoundsCheckFn</a>&lt;T&gt;&nbsp;emitBoundsCheck)</span></div>
+</section>
+</li>
+<li>
+<section class="detail" id="emitCopy(io.github.eutro.wasm2j.ssa.IRBuilder,io.github.eutro.wasm2j.ssa.Effect,io.github.eutro.wasm2j.ops.UnaryOpKey,io.github.eutro.wasm2j.util.IRUtils.StoreOrLoadFn,io.github.eutro.wasm2j.util.IRUtils.StoreOrLoadFn,T,T,io.github.eutro.wasm2j.util.IRUtils.BoundsCheckFn)">
+<h3 id="emitCopy(io.github.eutro.wasm2j.ssa.IRBuilder,io.github.eutro.wasm2j.ssa.Effect,io.github.eutro.wasm2j.ops.UnaryOpKey,io.github.eutro.wasm2j.util.IRUtils.StoreOrLoadFn,io.github.eutro.wasm2j.util.IRUtils.StoreOrLoadFn,java.lang.Object,java.lang.Object,io.github.eutro.wasm2j.util.IRUtils.BoundsCheckFn)">emitCopy</h3>
+<div class="member-signature"><span class="modifiers">public static</span>&nbsp;<span class="type-parameters">&lt;T&gt;</span>&nbsp;<span class="return-type">void</span>&nbsp;<span class="member-name">emitCopy</span>&#8203;(<span class="parameters"><a href="../ssa/IRBuilder.html" title="class in io.github.eutro.wasm2j.ssa">IRBuilder</a>&nbsp;ib,
+<a href="../ssa/Effect.html" title="class in io.github.eutro.wasm2j.ssa">Effect</a>&nbsp;effect,
+<a href="../ops/UnaryOpKey.html" title="class in io.github.eutro.wasm2j.ops">UnaryOpKey</a>&lt;<a href="Pair.html" title="class in io.github.eutro.wasm2j.util">Pair</a>&lt;java.lang.Integer,&#8203;java.lang.Integer&gt;&gt;&nbsp;key,
+<a href="IRUtils.StoreOrLoadFn.html" title="interface in io.github.eutro.wasm2j.util">IRUtils.StoreOrLoadFn</a>&nbsp;load,
+<a href="IRUtils.StoreOrLoadFn.html" title="interface in io.github.eutro.wasm2j.util">IRUtils.StoreOrLoadFn</a>&nbsp;store,
+T&nbsp;srcT,
+T&nbsp;dstT,
+<a href="IRUtils.BoundsCheckFn.html" title="interface in io.github.eutro.wasm2j.util">IRUtils.BoundsCheckFn</a>&lt;T&gt;&nbsp;emitBoundsCheck)</span></div>
+</section>
+</li>
+<li>
+<section class="detail" id="trapWhen(io.github.eutro.wasm2j.ssa.IRBuilder,io.github.eutro.wasm2j.ssa.Insn,java.lang.String)">
+<h3>trapWhen</h3>
+<div class="member-signature"><span class="modifiers">public static</span>&nbsp;<span class="return-type">void</span>&nbsp;<span class="member-name">trapWhen</span>&#8203;(<span class="parameters"><a href="../ssa/IRBuilder.html" title="class in io.github.eutro.wasm2j.ssa">IRBuilder</a>&nbsp;ib,
+<a href="../ssa/Insn.html" title="class in io.github.eutro.wasm2j.ssa">Insn</a>&nbsp;insn,
+java.lang.String&nbsp;msg)</span></div>
+</section>
+</li>
 </ul>
 </section>
 </li>
@@ -243,7 +401,7 @@ extends java.lang.Object</pre>
 <div>
 <ul class="sub-nav-list">
 <li>Summary:&nbsp;</li>
-<li>Nested&nbsp;|&nbsp;</li>
+<li><a href="#nested.class.summary">Nested</a>&nbsp;|&nbsp;</li>
 <li><a href="#field.summary">Field</a>&nbsp;|&nbsp;</li>
 <li><a href="#constructor.summary">Constr</a>&nbsp;|&nbsp;</li>
 <li><a href="#method.summary">Method</a></li>

@@ -1,8 +1,11 @@
 io.github.eutro.wasm2j.conf
 io.github.eutro.wasm2j.conf.api
 io.github.eutro.wasm2j.conf.impl
+io.github.eutro.wasm2j.embed
+io.github.eutro.wasm2j.embed.internal
 io.github.eutro.wasm2j.ext
 io.github.eutro.wasm2j.intrinsics
+io.github.eutro.wasm2j.intrinsics.impls
 io.github.eutro.wasm2j.ops
 io.github.eutro.wasm2j.passes
 io.github.eutro.wasm2j.passes.convert

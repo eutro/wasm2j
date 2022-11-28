@@ -15,7 +15,13 @@
 <script type="text/javascript" src="../../../../../script-dir/jquery-ui.min.js"></script>
 </head>
 <body class="class-declaration-page">
-<script type="text/javascript">var pathtoroot = "../../../../../";
+<script type="text/javascript">var data = {"i0":10,"i1":10,"i2":10};
+var tabs = {65535:["t0","All Methods"],2:["t2","Instance Methods"],8:["t4","Concrete Methods"]};
+var altColor = "alt-color";
+var rowColor = "row-color";
+var tableTab = "table-tab";
+var activeTableTab = "active-table-tab";
+var pathtoroot = "../../../../../";
 loadScripts(document, 'script');</script>
 <noscript>
 <div>JavaScript is disabled on your browser.</div>
@@ -49,7 +55,7 @@ loadScripts(document, 'script');</script>
 <li>Detail:&nbsp;</li>
 <li><a href="#field.detail">Field</a>&nbsp;|&nbsp;</li>
 <li><a href="#constructor.detail">Constr</a>&nbsp;|&nbsp;</li>
-<li>Method</li>
+<li><a href="#method.detail">Method</a></li>
 </ul>
 </div>
 <div class="nav-list-search"><label for="search">SEARCH:</label>
@@ -70,9 +76,7 @@ loadScripts(document, 'script');</script>
 <h1 title="Class Module" class="title">Class Module</h1>
 </div>
 <div class="inheritance" title="Inheritance Tree">java.lang.Object
-<div class="inheritance"><a href="../ext/ExtHolder.html" title="class in io.github.eutro.wasm2j.ext">io.github.eutro.wasm2j.ext.ExtHolder</a>
 <div class="inheritance">io.github.eutro.wasm2j.ssa.Module</div>
-</div>
 </div>
 <section class="description">
 <dl class="notes">
@@ -81,7 +85,8 @@ loadScripts(document, 'script');</script>
 </dl>
 <hr>
 <pre>public final class <span class="type-name-label">Module</span>
-extends <a href="../ext/ExtHolder.html" title="class in io.github.eutro.wasm2j.ext">ExtHolder</a></pre>
+extends java.lang.Object
+implements <a href="../ext/ExtContainer.html" title="interface in io.github.eutro.wasm2j.ext">ExtContainer</a></pre>
 </section>
 <section class="summary">
 <ul class="summary-list">
@@ -128,6 +133,10 @@ extends <a href="../ext/ExtHolder.html" title="class in io.github.eutro.wasm2j.e
 <th class="col-constructor-name" scope="row"><code><span class="member-name-link"><a href="#%3Cinit%3E()">Module</a></span>()</code></th>
 <td class="col-last">&nbsp;</td>
 </tr>
+<tr class="row-color">
+<th class="col-constructor-name" scope="row"><code><span class="member-name-link"><a href="#%3Cinit%3E(io.github.eutro.wasm2j.ext.ExtContainer)">Module</a></span>&#8203;(<a href="../ext/ExtContainer.html" title="interface in io.github.eutro.wasm2j.ext">ExtContainer</a>&nbsp;holder)</code></th>
+<td class="col-last">&nbsp;</td>
+</tr>
 </tbody>
 </table>
 </div>
@@ -137,15 +146,44 @@ extends <a href="../ext/ExtHolder.html" title="class in io.github.eutro.wasm2j.e
 <li>
 <section class="method-summary" id="method.summary">
 <h2>Method Summary</h2>
-<div class="inherited-list">
-<h3 id="methods.inherited.from.class.io.github.eutro.wasm2j.ext.ExtHolder">Methods inherited from class&nbsp;io.github.eutro.wasm2j.ext.<a href="../ext/ExtHolder.html" title="class in io.github.eutro.wasm2j.ext">ExtHolder</a></h3>
-<code><a href="../ext/ExtHolder.html#attachExt(io.github.eutro.wasm2j.ext.Ext,T)">attachExt</a>, <a href="../ext/ExtHolder.html#getExt(io.github.eutro.wasm2j.ext.Ext)">getExt</a>, <a href="../ext/ExtHolder.html#removeExt(io.github.eutro.wasm2j.ext.Ext)">removeExt</a></code></div>
+<div class="member-summary" id="method-summary-table">
+<div class="table-tabs" role="tablist" aria-orientation="horizontal"><button role="tab" aria-selected="true" aria-controls="method-summary-table.tabpanel" tabindex="0" onkeydown="switchTab(event)" id="t0" class="active-table-tab">All Methods</button><button role="tab" aria-selected="false" aria-controls="method-summary-table.tabpanel" tabindex="-1" onkeydown="switchTab(event)" id="t2" class="table-tab" onclick="show(2);">Instance Methods</button><button role="tab" aria-selected="false" aria-controls="method-summary-table.tabpanel" tabindex="-1" onkeydown="switchTab(event)" id="t4" class="table-tab" onclick="show(8);">Concrete Methods</button></div>
+<div id="method-summary-table.tabpanel" role="tabpanel">
+<table class="summary-table" aria-labelledby="t0">
+<thead>
+<tr>
+<th class="col-first" scope="col">Modifier and Type</th>
+<th class="col-second" scope="col">Method</th>
+<th class="col-last" scope="col">Description</th>
+</tr>
+</thead>
+<tbody>
+<tr class="alt-color" id="i0">
+<td class="col-first"><code>&lt;T&gt;&nbsp;void</code></td>
+<th class="col-second" scope="row"><code><span class="member-name-link"><a href="#attachExt(io.github.eutro.wasm2j.ext.Ext,T)">attachExt</a></span>&#8203;(<a href="../ext/Ext.html" title="class in io.github.eutro.wasm2j.ext">Ext</a>&lt;T&gt;&nbsp;ext,
+T&nbsp;value)</code></th>
+<td class="col-last">&nbsp;</td>
+</tr>
+<tr class="row-color" id="i1">
+<td class="col-first"><code>&lt;T&gt;&nbsp;T</code></td>
+<th class="col-second" scope="row"><code><span class="member-name-link"><a href="#getNullable(io.github.eutro.wasm2j.ext.Ext)">getNullable</a></span>&#8203;(<a href="../ext/Ext.html" title="class in io.github.eutro.wasm2j.ext">Ext</a>&lt;T&gt;&nbsp;ext)</code></th>
+<td class="col-last">&nbsp;</td>
+</tr>
+<tr class="alt-color" id="i2">
+<td class="col-first"><code>&lt;T&gt;&nbsp;void</code></td>
+<th class="col-second" scope="row"><code><span class="member-name-link"><a href="#removeExt(io.github.eutro.wasm2j.ext.Ext)">removeExt</a></span>&#8203;(<a href="../ext/Ext.html" title="class in io.github.eutro.wasm2j.ext">Ext</a>&lt;T&gt;&nbsp;ext)</code></th>
+<td class="col-last">&nbsp;</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
 <div class="inherited-list">
 <h3 id="methods.inherited.from.class.java.lang.Object">Methods inherited from class&nbsp;java.lang.Object</h3>
 <code>clone, equals, finalize, getClass, hashCode, notify, notifyAll, toString, wait, wait, wait</code></div>
 <div class="inherited-list">
 <h3 id="methods.inherited.from.class.io.github.eutro.wasm2j.ext.ExtContainer">Methods inherited from interface&nbsp;io.github.eutro.wasm2j.ext.<a href="../ext/ExtContainer.html" title="interface in io.github.eutro.wasm2j.ext">ExtContainer</a></h3>
-<code><a href="../ext/ExtContainer.html#getExtOrRun(io.github.eutro.wasm2j.ext.Ext,O,io.github.eutro.wasm2j.passes.IRPass)">getExtOrRun</a>, <a href="../ext/ExtContainer.html#getExtOrThrow(io.github.eutro.wasm2j.ext.Ext)">getExtOrThrow</a></code></div>
+<code><a href="../ext/ExtContainer.html#getExt(io.github.eutro.wasm2j.ext.Ext)">getExt</a>, <a href="../ext/ExtContainer.html#getExtOrRun(io.github.eutro.wasm2j.ext.Ext,O,io.github.eutro.wasm2j.passes.IRPass)">getExtOrRun</a>, <a href="../ext/ExtContainer.html#getExtOrThrow(io.github.eutro.wasm2j.ext.Ext)">getExtOrThrow</a></code></div>
 </section>
 </li>
 </ul>
@@ -175,6 +213,52 @@ extends <a href="../ext/ExtHolder.html" title="class in io.github.eutro.wasm2j.e
 <section class="detail" id="&lt;init&gt;()">
 <h3>Module</h3>
 <div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="member-name">Module</span>()</div>
+</section>
+</li>
+<li>
+<section class="detail" id="&lt;init&gt;(io.github.eutro.wasm2j.ext.ExtContainer)">
+<h3>Module</h3>
+<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="member-name">Module</span>&#8203;(<span class="parameters"><a href="../ext/ExtContainer.html" title="interface in io.github.eutro.wasm2j.ext">ExtContainer</a>&nbsp;holder)</span></div>
+</section>
+</li>
+</ul>
+</section>
+</li>
+<!-- ============ METHOD DETAIL ========== -->
+<li>
+<section class="method-details" id="method.detail">
+<h2>Method Details</h2>
+<ul class="member-list">
+<li>
+<section class="detail" id="attachExt(io.github.eutro.wasm2j.ext.Ext,T)">
+<h3 id="attachExt(io.github.eutro.wasm2j.ext.Ext,java.lang.Object)">attachExt</h3>
+<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="type-parameters">&lt;T&gt;</span>&nbsp;<span class="return-type">void</span>&nbsp;<span class="member-name">attachExt</span>&#8203;(<span class="parameters"><a href="../ext/Ext.html" title="class in io.github.eutro.wasm2j.ext">Ext</a>&lt;T&gt;&nbsp;ext,
+T&nbsp;value)</span></div>
+<dl class="notes">
+<dt>Specified by:</dt>
+<dd><code><a href="../ext/ExtContainer.html#attachExt(io.github.eutro.wasm2j.ext.Ext,T)">attachExt</a></code>&nbsp;in interface&nbsp;<code><a href="../ext/ExtContainer.html" title="interface in io.github.eutro.wasm2j.ext">ExtContainer</a></code></dd>
+</dl>
+</section>
+</li>
+<li>
+<section class="detail" id="removeExt(io.github.eutro.wasm2j.ext.Ext)">
+<h3>removeExt</h3>
+<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="type-parameters">&lt;T&gt;</span>&nbsp;<span class="return-type">void</span>&nbsp;<span class="member-name">removeExt</span>&#8203;(<span class="parameters"><a href="../ext/Ext.html" title="class in io.github.eutro.wasm2j.ext">Ext</a>&lt;T&gt;&nbsp;ext)</span></div>
+<dl class="notes">
+<dt>Specified by:</dt>
+<dd><code><a href="../ext/ExtContainer.html#removeExt(io.github.eutro.wasm2j.ext.Ext)">removeExt</a></code>&nbsp;in interface&nbsp;<code><a href="../ext/ExtContainer.html" title="interface in io.github.eutro.wasm2j.ext">ExtContainer</a></code></dd>
+</dl>
+</section>
+</li>
+<li>
+<section class="detail" id="getNullable(io.github.eutro.wasm2j.ext.Ext)">
+<h3>getNullable</h3>
+<div class="member-signature"><span class="annotations">@Nullable
+</span><span class="modifiers">public</span>&nbsp;<span class="type-parameters">&lt;T&gt;</span>&nbsp;<span class="return-type">T</span>&nbsp;<span class="member-name">getNullable</span>&#8203;(<span class="parameters"><a href="../ext/Ext.html" title="class in io.github.eutro.wasm2j.ext">Ext</a>&lt;T&gt;&nbsp;ext)</span></div>
+<dl class="notes">
+<dt>Specified by:</dt>
+<dd><code><a href="../ext/ExtContainer.html#getNullable(io.github.eutro.wasm2j.ext.Ext)">getNullable</a></code>&nbsp;in interface&nbsp;<code><a href="../ext/ExtContainer.html" title="interface in io.github.eutro.wasm2j.ext">ExtContainer</a></code></dd>
+</dl>
 </section>
 </li>
 </ul>
@@ -212,7 +296,7 @@ extends <a href="../ext/ExtHolder.html" title="class in io.github.eutro.wasm2j.e
 <li>Detail:&nbsp;</li>
 <li><a href="#field.detail">Field</a>&nbsp;|&nbsp;</li>
 <li><a href="#constructor.detail">Constr</a>&nbsp;|&nbsp;</li>
-<li>Method</li>
+<li><a href="#method.detail">Method</a></li>
 </ul>
 </div>
 </div>

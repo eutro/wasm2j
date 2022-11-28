@@ -15,8 +15,8 @@
 <script type="text/javascript" src="../../../../../../script-dir/jquery-ui.min.js"></script>
 </head>
 <body class="class-declaration-page">
-<script type="text/javascript">var data = {"i0":10,"i1":10};
-var tabs = {65535:["t0","All Methods"],2:["t2","Instance Methods"],8:["t4","Concrete Methods"]};
+<script type="text/javascript">var data = {"i0":9,"i1":10,"i2":10};
+var tabs = {65535:["t0","All Methods"],1:["t1","Static Methods"],2:["t2","Instance Methods"],8:["t4","Concrete Methods"]};
 var altColor = "alt-color";
 var rowColor = "row-color";
 var tableTab = "table-tab";
@@ -142,7 +142,7 @@ extends java.lang.Object</pre>
 <section class="method-summary" id="method.summary">
 <h2>Method Summary</h2>
 <div class="member-summary" id="method-summary-table">
-<div class="table-tabs" role="tablist" aria-orientation="horizontal"><button role="tab" aria-selected="true" aria-controls="method-summary-table.tabpanel" tabindex="0" onkeydown="switchTab(event)" id="t0" class="active-table-tab">All Methods</button><button role="tab" aria-selected="false" aria-controls="method-summary-table.tabpanel" tabindex="-1" onkeydown="switchTab(event)" id="t2" class="table-tab" onclick="show(2);">Instance Methods</button><button role="tab" aria-selected="false" aria-controls="method-summary-table.tabpanel" tabindex="-1" onkeydown="switchTab(event)" id="t4" class="table-tab" onclick="show(8);">Concrete Methods</button></div>
+<div class="table-tabs" role="tablist" aria-orientation="horizontal"><button role="tab" aria-selected="true" aria-controls="method-summary-table.tabpanel" tabindex="0" onkeydown="switchTab(event)" id="t0" class="active-table-tab">All Methods</button><button role="tab" aria-selected="false" aria-controls="method-summary-table.tabpanel" tabindex="-1" onkeydown="switchTab(event)" id="t1" class="table-tab" onclick="show(1);">Static Methods</button><button role="tab" aria-selected="false" aria-controls="method-summary-table.tabpanel" tabindex="-1" onkeydown="switchTab(event)" id="t2" class="table-tab" onclick="show(2);">Instance Methods</button><button role="tab" aria-selected="false" aria-controls="method-summary-table.tabpanel" tabindex="-1" onkeydown="switchTab(event)" id="t4" class="table-tab" onclick="show(8);">Concrete Methods</button></div>
 <div id="method-summary-table.tabpanel" role="tabpanel">
 <table class="summary-table" aria-labelledby="t0">
 <thead>
@@ -154,12 +154,19 @@ extends java.lang.Object</pre>
 </thead>
 <tbody>
 <tr class="alt-color" id="i0">
+<td class="col-first"><code>static <a href="../../ssa/Insn.html" title="class in io.github.eutro.wasm2j.ssa">Insn</a></code></td>
+<th class="col-second" scope="row"><code><span class="member-name-link"><a href="#emitIntrinsic(io.github.eutro.wasm2j.ssa.IRBuilder,io.github.eutro.wasm2j.intrinsics.IntrinsicImpl,java.util.List)">emitIntrinsic</a></span>&#8203;(<a href="../../ssa/IRBuilder.html" title="class in io.github.eutro.wasm2j.ssa">IRBuilder</a>&nbsp;ib,
+<a href="../../intrinsics/IntrinsicImpl.html" title="class in io.github.eutro.wasm2j.intrinsics">IntrinsicImpl</a>&nbsp;intr,
+java.util.List&lt;<a href="../../ssa/Var.html" title="class in io.github.eutro.wasm2j.ssa">Var</a>&gt;&nbsp;args)</code></th>
+<td class="col-last">&nbsp;</td>
+</tr>
+<tr class="row-color" id="i1">
 <td class="col-first"><code>protected boolean</code></td>
 <th class="col-second" scope="row"><code><span class="member-name-link"><a href="#lowerEffect(io.github.eutro.wasm2j.ssa.IRBuilder,io.github.eutro.wasm2j.ssa.Effect)">lowerEffect</a></span>&#8203;(<a href="../../ssa/IRBuilder.html" title="class in io.github.eutro.wasm2j.ssa">IRBuilder</a>&nbsp;ib,
 <a href="../../ssa/Effect.html" title="class in io.github.eutro.wasm2j.ssa">Effect</a>&nbsp;effect)</code></th>
 <td class="col-last">&nbsp;</td>
 </tr>
-<tr class="row-color" id="i1">
+<tr class="alt-color" id="i2">
 <td class="col-first"><code>void</code></td>
 <th class="col-second" scope="row"><code><span class="member-name-link"><a href="#runInPlace(io.github.eutro.wasm2j.ssa.Function)">runInPlace</a></span>&#8203;(<a href="../../ssa/Function.html" title="class in io.github.eutro.wasm2j.ssa">Function</a>&nbsp;func)</code></th>
 <td class="col-last">&nbsp;</td>
@@ -221,6 +228,14 @@ extends java.lang.Object</pre>
 <h3>lowerEffect</h3>
 <div class="member-signature"><span class="modifiers">protected</span>&nbsp;<span class="return-type">boolean</span>&nbsp;<span class="member-name">lowerEffect</span>&#8203;(<span class="parameters"><a href="../../ssa/IRBuilder.html" title="class in io.github.eutro.wasm2j.ssa">IRBuilder</a>&nbsp;ib,
 <a href="../../ssa/Effect.html" title="class in io.github.eutro.wasm2j.ssa">Effect</a>&nbsp;effect)</span></div>
+</section>
+</li>
+<li>
+<section class="detail" id="emitIntrinsic(io.github.eutro.wasm2j.ssa.IRBuilder,io.github.eutro.wasm2j.intrinsics.IntrinsicImpl,java.util.List)">
+<h3>emitIntrinsic</h3>
+<div class="member-signature"><span class="modifiers">public static</span>&nbsp;<span class="return-type"><a href="../../ssa/Insn.html" title="class in io.github.eutro.wasm2j.ssa">Insn</a></span>&nbsp;<span class="member-name">emitIntrinsic</span>&#8203;(<span class="parameters"><a href="../../ssa/IRBuilder.html" title="class in io.github.eutro.wasm2j.ssa">IRBuilder</a>&nbsp;ib,
+<a href="../../intrinsics/IntrinsicImpl.html" title="class in io.github.eutro.wasm2j.intrinsics">IntrinsicImpl</a>&nbsp;intr,
+java.util.List&lt;<a href="../../ssa/Var.html" title="class in io.github.eutro.wasm2j.ssa">Var</a>&gt;&nbsp;args)</span></div>
 </section>
 </li>
 <li>

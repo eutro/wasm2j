@@ -103,7 +103,9 @@ loadScripts(document, 'script');</script>
 <tbody>
 <tr class="alt-color" id="i0">
 <td class="col-first"><code><a href="WirJavaConvention.html" title="interface in io.github.eutro.wasm2j.conf.api">WirJavaConvention</a></code></td>
-<th class="col-second" scope="row"><code><span class="member-name-link"><a href="#create(io.github.eutro.wasm2j.ssa.Module)">create</a></span>&#8203;(<a href="../../ssa/Module.html" title="class in io.github.eutro.wasm2j.ssa">Module</a>&nbsp;module)</code></th>
+<th class="col-second" scope="row"><code><span class="member-name-link"><a href="#create(io.github.eutro.wasm2j.ssa.Module,io.github.eutro.wasm2j.ssa.Module,io.github.eutro.wasm2j.passes.IRPass)">create</a></span>&#8203;(<a href="../../ssa/Module.html" title="class in io.github.eutro.wasm2j.ssa">Module</a>&nbsp;module,
+<a href="../../ssa/Module.html" title="class in io.github.eutro.wasm2j.ssa">Module</a>&nbsp;extrasModule,
+<a href="../../passes/IRPass.html" title="interface in io.github.eutro.wasm2j.passes">IRPass</a>&lt;<a href="../../ssa/Function.html" title="class in io.github.eutro.wasm2j.ssa">Function</a>,&#8203;<a href="../../ssa/Function.html" title="class in io.github.eutro.wasm2j.ssa">Function</a>&gt;&nbsp;convertWir)</code></th>
 <td class="col-last">&nbsp;</td>
 </tr>
 </tbody>
@@ -122,9 +124,11 @@ loadScripts(document, 'script');</script>
 <h2>Method Details</h2>
 <ul class="member-list">
 <li>
-<section class="detail" id="create(io.github.eutro.wasm2j.ssa.Module)">
+<section class="detail" id="create(io.github.eutro.wasm2j.ssa.Module,io.github.eutro.wasm2j.ssa.Module,io.github.eutro.wasm2j.passes.IRPass)">
 <h3>create</h3>
-<div class="member-signature"><span class="return-type"><a href="WirJavaConvention.html" title="interface in io.github.eutro.wasm2j.conf.api">WirJavaConvention</a></span>&nbsp;<span class="member-name">create</span>&#8203;(<span class="parameters"><a href="../../ssa/Module.html" title="class in io.github.eutro.wasm2j.ssa">Module</a>&nbsp;module)</span></div>
+<div class="member-signature"><span class="return-type"><a href="WirJavaConvention.html" title="interface in io.github.eutro.wasm2j.conf.api">WirJavaConvention</a></span>&nbsp;<span class="member-name">create</span>&#8203;(<span class="parameters"><a href="../../ssa/Module.html" title="class in io.github.eutro.wasm2j.ssa">Module</a>&nbsp;module,
+<a href="../../ssa/Module.html" title="class in io.github.eutro.wasm2j.ssa">Module</a>&nbsp;extrasModule,
+<a href="../../passes/IRPass.html" title="interface in io.github.eutro.wasm2j.passes">IRPass</a>&lt;<a href="../../ssa/Function.html" title="class in io.github.eutro.wasm2j.ssa">Function</a>,&#8203;<a href="../../ssa/Function.html" title="class in io.github.eutro.wasm2j.ssa">Function</a>&gt;&nbsp;convertWir)</span></div>
 </section>
 </li>
 </ul>

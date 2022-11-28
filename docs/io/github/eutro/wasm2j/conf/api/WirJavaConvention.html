@@ -15,8 +15,8 @@
 <script type="text/javascript" src="../../../../../../script-dir/jquery-ui.min.js"></script>
 </head>
 <body class="class-declaration-page">
-<script type="text/javascript">var data = {"i0":18,"i1":18,"i2":18,"i3":18,"i4":18,"i5":18,"i6":18};
-var tabs = {65535:["t0","All Methods"],2:["t2","Instance Methods"],16:["t5","Default Methods"]};
+<script type="text/javascript">var data = {"i0":6,"i1":6,"i2":6,"i3":6,"i4":18,"i5":6,"i6":6,"i7":18,"i8":18};
+var tabs = {65535:["t0","All Methods"],2:["t2","Instance Methods"],4:["t3","Abstract Methods"],16:["t5","Default Methods"]};
 var altColor = "alt-color";
 var rowColor = "row-color";
 var tableTab = "table-tab";
@@ -76,10 +76,6 @@ loadScripts(document, 'script');</script>
 <h1 title="Interface WirJavaConvention" class="title">Interface WirJavaConvention</h1>
 </div>
 <section class="description">
-<dl class="notes">
-<dt>All Known Implementing Classes:</dt>
-<dd><code><a href="../impl/DefaultFactory.DefaultWirJavaConvention.html" title="class in io.github.eutro.wasm2j.conf.impl">DefaultFactory.DefaultWirJavaConvention</a></code></dd>
-</dl>
 <hr>
 <pre>public interface <span class="type-name-label">WirJavaConvention</span></pre>
 </section>
@@ -90,7 +86,7 @@ loadScripts(document, 'script');</script>
 <section class="method-summary" id="method.summary">
 <h2>Method Summary</h2>
 <div class="member-summary" id="method-summary-table">
-<div class="table-tabs" role="tablist" aria-orientation="horizontal"><button role="tab" aria-selected="true" aria-controls="method-summary-table.tabpanel" tabindex="0" onkeydown="switchTab(event)" id="t0" class="active-table-tab">All Methods</button><button role="tab" aria-selected="false" aria-controls="method-summary-table.tabpanel" tabindex="-1" onkeydown="switchTab(event)" id="t2" class="table-tab" onclick="show(2);">Instance Methods</button><button role="tab" aria-selected="false" aria-controls="method-summary-table.tabpanel" tabindex="-1" onkeydown="switchTab(event)" id="t5" class="table-tab" onclick="show(16);">Default Methods</button></div>
+<div class="table-tabs" role="tablist" aria-orientation="horizontal"><button role="tab" aria-selected="true" aria-controls="method-summary-table.tabpanel" tabindex="0" onkeydown="switchTab(event)" id="t0" class="active-table-tab">All Methods</button><button role="tab" aria-selected="false" aria-controls="method-summary-table.tabpanel" tabindex="-1" onkeydown="switchTab(event)" id="t2" class="table-tab" onclick="show(2);">Instance Methods</button><button role="tab" aria-selected="false" aria-controls="method-summary-table.tabpanel" tabindex="-1" onkeydown="switchTab(event)" id="t3" class="table-tab" onclick="show(4);">Abstract Methods</button><button role="tab" aria-selected="false" aria-controls="method-summary-table.tabpanel" tabindex="-1" onkeydown="switchTab(event)" id="t5" class="table-tab" onclick="show(16);">Default Methods</button></div>
 <div id="method-summary-table.tabpanel" role="tabpanel">
 <table class="summary-table" aria-labelledby="t0">
 <thead>
@@ -102,38 +98,48 @@ loadScripts(document, 'script');</script>
 </thead>
 <tbody>
 <tr class="alt-color" id="i0">
-<td class="col-first"><code>default void</code></td>
-<th class="col-second" scope="row"><code><span class="member-name-link"><a href="#buildConstructor()">buildConstructor</a></span>()</code></th>
+<td class="col-first"><code><a href="DataConvention.html" title="interface in io.github.eutro.wasm2j.conf.api">DataConvention</a></code></td>
+<th class="col-second" scope="row"><code><span class="member-name-link"><a href="#getData(int)">getData</a></span>&#8203;(int&nbsp;index)</code></th>
 <td class="col-last">&nbsp;</td>
 </tr>
 <tr class="row-color" id="i1">
-<td class="col-first"><code>default <a href="FunctionConvention.html" title="interface in io.github.eutro.wasm2j.conf.api">FunctionConvention</a></code></td>
-<th class="col-second" scope="row"><code><span class="member-name-link"><a href="#getFunction(int)">getFunction</a></span>&#8203;(int&nbsp;index)</code></th>
+<td class="col-first"><code><a href="ElemConvention.html" title="interface in io.github.eutro.wasm2j.conf.api">ElemConvention</a></code></td>
+<th class="col-second" scope="row"><code><span class="member-name-link"><a href="#getElem(int)">getElem</a></span>&#8203;(int&nbsp;index)</code></th>
 <td class="col-last">&nbsp;</td>
 </tr>
 <tr class="alt-color" id="i2">
-<td class="col-first"><code>default <a href="GlobalConvention.html" title="interface in io.github.eutro.wasm2j.conf.api">GlobalConvention</a></code></td>
-<th class="col-second" scope="row"><code><span class="member-name-link"><a href="#getGlobal(int)">getGlobal</a></span>&#8203;(int&nbsp;index)</code></th>
+<td class="col-first"><code><a href="FunctionConvention.html" title="interface in io.github.eutro.wasm2j.conf.api">FunctionConvention</a></code></td>
+<th class="col-second" scope="row"><code><span class="member-name-link"><a href="#getFunction(int)">getFunction</a></span>&#8203;(int&nbsp;index)</code></th>
 <td class="col-last">&nbsp;</td>
 </tr>
 <tr class="row-color" id="i3">
+<td class="col-first"><code><a href="GlobalConvention.html" title="interface in io.github.eutro.wasm2j.conf.api">GlobalConvention</a></code></td>
+<th class="col-second" scope="row"><code><span class="member-name-link"><a href="#getGlobal(int)">getGlobal</a></span>&#8203;(int&nbsp;index)</code></th>
+<td class="col-last">&nbsp;</td>
+</tr>
+<tr class="alt-color" id="i4">
 <td class="col-first"><code>default <a href="CallingConvention.html" title="interface in io.github.eutro.wasm2j.conf.api">CallingConvention</a></code></td>
 <th class="col-second" scope="row"><code><span class="member-name-link"><a href="#getIndirectCallingConvention()">getIndirectCallingConvention</a></span>()</code></th>
 <td class="col-last">&nbsp;</td>
 </tr>
-<tr class="alt-color" id="i4">
-<td class="col-first"><code>default <a href="MemoryConvention.html" title="interface in io.github.eutro.wasm2j.conf.api">MemoryConvention</a></code></td>
+<tr class="row-color" id="i5">
+<td class="col-first"><code><a href="MemoryConvention.html" title="interface in io.github.eutro.wasm2j.conf.api">MemoryConvention</a></code></td>
 <th class="col-second" scope="row"><code><span class="member-name-link"><a href="#getMemory(int)">getMemory</a></span>&#8203;(int&nbsp;index)</code></th>
 <td class="col-last">&nbsp;</td>
 </tr>
-<tr class="row-color" id="i5">
-<td class="col-first"><code>default <a href="TableConvention.html" title="interface in io.github.eutro.wasm2j.conf.api">TableConvention</a></code></td>
+<tr class="alt-color" id="i6">
+<td class="col-first"><code><a href="TableConvention.html" title="interface in io.github.eutro.wasm2j.conf.api">TableConvention</a></code></td>
 <th class="col-second" scope="row"><code><span class="member-name-link"><a href="#getTable(int)">getTable</a></span>&#8203;(int&nbsp;index)</code></th>
 <td class="col-last">&nbsp;</td>
 </tr>
-<tr class="alt-color" id="i6">
+<tr class="row-color" id="i7">
 <td class="col-first"><code>default void</code></td>
-<th class="col-second" scope="row"><code><span class="member-name-link"><a href="#preEmit()">preEmit</a></span>()</code></th>
+<th class="col-second" scope="row"><code><span class="member-name-link"><a href="#postConvert()">postConvert</a></span>()</code></th>
+<td class="col-last">&nbsp;</td>
+</tr>
+<tr class="alt-color" id="i8">
+<td class="col-first"><code>default void</code></td>
+<th class="col-second" scope="row"><code><span class="member-name-link"><a href="#preConvert()">preConvert</a></span>()</code></th>
 <td class="col-last">&nbsp;</td>
 </tr>
 </tbody>
@@ -154,25 +160,37 @@ loadScripts(document, 'script');</script>
 <li>
 <section class="detail" id="getFunction(int)">
 <h3>getFunction</h3>
-<div class="member-signature"><span class="modifiers">default</span>&nbsp;<span class="return-type"><a href="FunctionConvention.html" title="interface in io.github.eutro.wasm2j.conf.api">FunctionConvention</a></span>&nbsp;<span class="member-name">getFunction</span>&#8203;(<span class="parameters">int&nbsp;index)</span></div>
+<div class="member-signature"><span class="return-type"><a href="FunctionConvention.html" title="interface in io.github.eutro.wasm2j.conf.api">FunctionConvention</a></span>&nbsp;<span class="member-name">getFunction</span>&#8203;(<span class="parameters">int&nbsp;index)</span></div>
 </section>
 </li>
 <li>
 <section class="detail" id="getGlobal(int)">
 <h3>getGlobal</h3>
-<div class="member-signature"><span class="modifiers">default</span>&nbsp;<span class="return-type"><a href="GlobalConvention.html" title="interface in io.github.eutro.wasm2j.conf.api">GlobalConvention</a></span>&nbsp;<span class="member-name">getGlobal</span>&#8203;(<span class="parameters">int&nbsp;index)</span></div>
+<div class="member-signature"><span class="return-type"><a href="GlobalConvention.html" title="interface in io.github.eutro.wasm2j.conf.api">GlobalConvention</a></span>&nbsp;<span class="member-name">getGlobal</span>&#8203;(<span class="parameters">int&nbsp;index)</span></div>
 </section>
 </li>
 <li>
 <section class="detail" id="getMemory(int)">
 <h3>getMemory</h3>
-<div class="member-signature"><span class="modifiers">default</span>&nbsp;<span class="return-type"><a href="MemoryConvention.html" title="interface in io.github.eutro.wasm2j.conf.api">MemoryConvention</a></span>&nbsp;<span class="member-name">getMemory</span>&#8203;(<span class="parameters">int&nbsp;index)</span></div>
+<div class="member-signature"><span class="return-type"><a href="MemoryConvention.html" title="interface in io.github.eutro.wasm2j.conf.api">MemoryConvention</a></span>&nbsp;<span class="member-name">getMemory</span>&#8203;(<span class="parameters">int&nbsp;index)</span></div>
 </section>
 </li>
 <li>
 <section class="detail" id="getTable(int)">
 <h3>getTable</h3>
-<div class="member-signature"><span class="modifiers">default</span>&nbsp;<span class="return-type"><a href="TableConvention.html" title="interface in io.github.eutro.wasm2j.conf.api">TableConvention</a></span>&nbsp;<span class="member-name">getTable</span>&#8203;(<span class="parameters">int&nbsp;index)</span></div>
+<div class="member-signature"><span class="return-type"><a href="TableConvention.html" title="interface in io.github.eutro.wasm2j.conf.api">TableConvention</a></span>&nbsp;<span class="member-name">getTable</span>&#8203;(<span class="parameters">int&nbsp;index)</span></div>
+</section>
+</li>
+<li>
+<section class="detail" id="getData(int)">
+<h3>getData</h3>
+<div class="member-signature"><span class="return-type"><a href="DataConvention.html" title="interface in io.github.eutro.wasm2j.conf.api">DataConvention</a></span>&nbsp;<span class="member-name">getData</span>&#8203;(<span class="parameters">int&nbsp;index)</span></div>
+</section>
+</li>
+<li>
+<section class="detail" id="getElem(int)">
+<h3>getElem</h3>
+<div class="member-signature"><span class="return-type"><a href="ElemConvention.html" title="interface in io.github.eutro.wasm2j.conf.api">ElemConvention</a></span>&nbsp;<span class="member-name">getElem</span>&#8203;(<span class="parameters">int&nbsp;index)</span></div>
 </section>
 </li>
 <li>
@@ -182,15 +200,15 @@ loadScripts(document, 'script');</script>
 </section>
 </li>
 <li>
-<section class="detail" id="preEmit()">
-<h3>preEmit</h3>
-<div class="member-signature"><span class="modifiers">default</span>&nbsp;<span class="return-type">void</span>&nbsp;<span class="member-name">preEmit</span>()</div>
+<section class="detail" id="preConvert()">
+<h3>preConvert</h3>
+<div class="member-signature"><span class="modifiers">default</span>&nbsp;<span class="return-type">void</span>&nbsp;<span class="member-name">preConvert</span>()</div>
 </section>
 </li>
 <li>
-<section class="detail" id="buildConstructor()">
-<h3>buildConstructor</h3>
-<div class="member-signature"><span class="modifiers">default</span>&nbsp;<span class="return-type">void</span>&nbsp;<span class="member-name">buildConstructor</span>()</div>
+<section class="detail" id="postConvert()">
+<h3>postConvert</h3>
+<div class="member-signature"><span class="modifiers">default</span>&nbsp;<span class="return-type">void</span>&nbsp;<span class="member-name">postConvert</span>()</div>
 </section>
 </li>
 </ul>

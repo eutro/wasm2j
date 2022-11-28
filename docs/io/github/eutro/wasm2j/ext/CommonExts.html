@@ -166,36 +166,41 @@ extends java.lang.Object</pre>
 <td class="col-last">&nbsp;</td>
 </tr>
 <tr class="row-color">
+<td class="col-first"><code>static <a href="Ext.html" title="class in io.github.eutro.wasm2j.ext">Ext</a>&lt;<a href="MetadataState.html" title="class in io.github.eutro.wasm2j.ext">MetadataState</a>&gt;</code></td>
+<th class="col-second" scope="row"><code><span class="member-name-link"><a href="#METADATA_STATE">METADATA_STATE</a></span></code></th>
+<td class="col-last">&nbsp;</td>
+</tr>
+<tr class="alt-color">
 <td class="col-first"><code>static <a href="Ext.html" title="class in io.github.eutro.wasm2j.ext">Ext</a>&lt;<a href="../ssa/BasicBlock.html" title="class in io.github.eutro.wasm2j.ssa">BasicBlock</a>&gt;</code></td>
 <th class="col-second" scope="row"><code><span class="member-name-link"><a href="#OWNING_BLOCK">OWNING_BLOCK</a></span></code></th>
 <td class="col-last">&nbsp;</td>
 </tr>
-<tr class="alt-color">
+<tr class="row-color">
 <td class="col-first"><code>static <a href="Ext.html" title="class in io.github.eutro.wasm2j.ext">Ext</a>&lt;<a href="../ssa/Effect.html" title="class in io.github.eutro.wasm2j.ssa">Effect</a>&gt;</code></td>
 <th class="col-second" scope="row"><code><span class="member-name-link"><a href="#OWNING_EFFECT">OWNING_EFFECT</a></span></code></th>
 <td class="col-last">&nbsp;</td>
 </tr>
-<tr class="row-color">
+<tr class="alt-color">
 <td class="col-first"><code>static <a href="Ext.html" title="class in io.github.eutro.wasm2j.ext">Ext</a>&lt;<a href="../ssa/Function.html" title="class in io.github.eutro.wasm2j.ssa">Function</a>&gt;</code></td>
 <th class="col-second" scope="row"><code><span class="member-name-link"><a href="#OWNING_FUNCTION">OWNING_FUNCTION</a></span></code></th>
 <td class="col-last">&nbsp;</td>
 </tr>
-<tr class="alt-color">
-<td class="col-first"><code>static <a href="Ext.html" title="class in io.github.eutro.wasm2j.ext">Ext</a>&lt;java.lang.Boolean&gt;</code></td>
-<th class="col-second" scope="row"><code><span class="member-name-link"><a href="#PHI_LOWERED">PHI_LOWERED</a></span></code></th>
+<tr class="row-color">
+<td class="col-first"><code>static <a href="Ext.html" title="class in io.github.eutro.wasm2j.ext">Ext</a>&lt;<a href="../ssa/Module.html" title="class in io.github.eutro.wasm2j.ssa">Module</a>&gt;</code></td>
+<th class="col-second" scope="row"><code><span class="member-name-link"><a href="#OWNING_MODULE">OWNING_MODULE</a></span></code></th>
 <td class="col-last">&nbsp;</td>
 </tr>
-<tr class="row-color">
+<tr class="alt-color">
 <td class="col-first"><code>static <a href="Ext.html" title="class in io.github.eutro.wasm2j.ext">Ext</a>&lt;java.util.List&lt;<a href="../ssa/BasicBlock.html" title="class in io.github.eutro.wasm2j.ssa">BasicBlock</a>&gt;&gt;</code></td>
 <th class="col-second" scope="row"><code><span class="member-name-link"><a href="#PREDS">PREDS</a></span></code></th>
 <td class="col-last">&nbsp;</td>
 </tr>
-<tr class="alt-color">
+<tr class="row-color">
 <td class="col-first"><code>static <a href="Ext.html" title="class in io.github.eutro.wasm2j.ext">Ext</a>&lt;java.lang.Boolean&gt;</code></td>
 <th class="col-second" scope="row"><code><span class="member-name-link"><a href="#STACKIFIED">STACKIFIED</a></span></code></th>
 <td class="col-last">&nbsp;</td>
 </tr>
-<tr class="row-color">
+<tr class="alt-color">
 <td class="col-first"><code>static <a href="Ext.html" title="class in io.github.eutro.wasm2j.ext">Ext</a>&lt;java.util.Set&lt;<a href="../ssa/Insn.html" title="class in io.github.eutro.wasm2j.ssa">Insn</a>&gt;&gt;</code></td>
 <th class="col-second" scope="row"><code><span class="member-name-link"><a href="#USED_AT">USED_AT</a></span></code></th>
 <td class="col-last">&nbsp;</td>
@@ -268,6 +273,12 @@ extends java.lang.Object</pre>
 <h2>Field Details</h2>
 <ul class="member-list">
 <li>
+<section class="detail" id="METADATA_STATE">
+<h3>METADATA_STATE</h3>
+<div class="member-signature"><span class="modifiers">public static final</span>&nbsp;<span class="return-type"><a href="Ext.html" title="class in io.github.eutro.wasm2j.ext">Ext</a>&lt;<a href="MetadataState.html" title="class in io.github.eutro.wasm2j.ext">MetadataState</a>&gt;</span>&nbsp;<span class="member-name">METADATA_STATE</span></div>
+</section>
+</li>
+<li>
 <section class="detail" id="IDOM">
 <h3>IDOM</h3>
 <div class="member-signature"><span class="modifiers">public static final</span>&nbsp;<span class="return-type"><a href="Ext.html" title="class in io.github.eutro.wasm2j.ext">Ext</a>&lt;<a href="../ssa/BasicBlock.html" title="class in io.github.eutro.wasm2j.ssa">BasicBlock</a>&gt;</span>&nbsp;<span class="member-name">IDOM</span></div>
@@ -298,12 +309,6 @@ extends java.lang.Object</pre>
 </section>
 </li>
 <li>
-<section class="detail" id="PHI_LOWERED">
-<h3>PHI_LOWERED</h3>
-<div class="member-signature"><span class="modifiers">public static final</span>&nbsp;<span class="return-type"><a href="Ext.html" title="class in io.github.eutro.wasm2j.ext">Ext</a>&lt;java.lang.Boolean&gt;</span>&nbsp;<span class="member-name">PHI_LOWERED</span></div>
-</section>
-</li>
-<li>
 <section class="detail" id="STACKIFIED">
 <h3>STACKIFIED</h3>
 <div class="member-signature"><span class="modifiers">public static final</span>&nbsp;<span class="return-type"><a href="Ext.html" title="class in io.github.eutro.wasm2j.ext">Ext</a>&lt;java.lang.Boolean&gt;</span>&nbsp;<span class="member-name">STACKIFIED</span></div>
@@ -319,6 +324,12 @@ extends java.lang.Object</pre>
 <section class="detail" id="USED_AT">
 <h3>USED_AT</h3>
 <div class="member-signature"><span class="modifiers">public static final</span>&nbsp;<span class="return-type"><a href="Ext.html" title="class in io.github.eutro.wasm2j.ext">Ext</a>&lt;java.util.Set&lt;<a href="../ssa/Insn.html" title="class in io.github.eutro.wasm2j.ssa">Insn</a>&gt;&gt;</span>&nbsp;<span class="member-name">USED_AT</span></div>
+</section>
+</li>
+<li>
+<section class="detail" id="OWNING_MODULE">
+<h3>OWNING_MODULE</h3>
+<div class="member-signature"><span class="modifiers">public static final</span>&nbsp;<span class="return-type"><a href="Ext.html" title="class in io.github.eutro.wasm2j.ext">Ext</a>&lt;<a href="../ssa/Module.html" title="class in io.github.eutro.wasm2j.ssa">Module</a>&gt;</span>&nbsp;<span class="member-name">OWNING_MODULE</span></div>
 </section>
 </li>
 <li>

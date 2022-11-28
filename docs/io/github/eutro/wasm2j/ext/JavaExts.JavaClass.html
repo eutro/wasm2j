@@ -111,16 +111,21 @@ extends <a href="ExtHolder.html" title="class in io.github.eutro.wasm2j.ext">Ext
 </thead>
 <tbody>
 <tr class="alt-color">
+<td class="col-first"><code>int</code></td>
+<th class="col-second" scope="row"><code><span class="member-name-link"><a href="#access">access</a></span></code></th>
+<td class="col-last">&nbsp;</td>
+</tr>
+<tr class="row-color">
 <td class="col-first"><code>java.util.List&lt;<a href="JavaExts.JavaField.html" title="class in io.github.eutro.wasm2j.ext">JavaExts.JavaField</a>&gt;</code></td>
 <th class="col-second" scope="row"><code><span class="member-name-link"><a href="#fields">fields</a></span></code></th>
 <td class="col-last">&nbsp;</td>
 </tr>
-<tr class="row-color">
+<tr class="alt-color">
 <td class="col-first"><code>java.util.List&lt;<a href="JavaExts.JavaMethod.html" title="class in io.github.eutro.wasm2j.ext">JavaExts.JavaMethod</a>&gt;</code></td>
 <th class="col-second" scope="row"><code><span class="member-name-link"><a href="#methods">methods</a></span></code></th>
 <td class="col-last">&nbsp;</td>
 </tr>
-<tr class="alt-color">
+<tr class="row-color">
 <td class="col-first"><code>java.lang.String</code></td>
 <th class="col-second" scope="row"><code><span class="member-name-link"><a href="#name">name</a></span></code></th>
 <td class="col-last">&nbsp;</td>
@@ -146,6 +151,11 @@ extends <a href="ExtHolder.html" title="class in io.github.eutro.wasm2j.ext">Ext
 <tbody>
 <tr class="alt-color">
 <th class="col-constructor-name" scope="row"><code><span class="member-name-link"><a href="#%3Cinit%3E(java.lang.String)">JavaClass</a></span>&#8203;(java.lang.String&nbsp;name)</code></th>
+<td class="col-last">&nbsp;</td>
+</tr>
+<tr class="row-color">
+<th class="col-constructor-name" scope="row"><code><span class="member-name-link"><a href="#%3Cinit%3E(java.lang.String,int)">JavaClass</a></span>&#8203;(java.lang.String&nbsp;name,
+int&nbsp;access)</code></th>
 <td class="col-last">&nbsp;</td>
 </tr>
 </tbody>
@@ -185,13 +195,13 @@ extends <a href="ExtHolder.html" title="class in io.github.eutro.wasm2j.ext">Ext
 </div>
 <div class="inherited-list">
 <h3 id="methods.inherited.from.class.io.github.eutro.wasm2j.ext.ExtHolder">Methods inherited from class&nbsp;io.github.eutro.wasm2j.ext.<a href="ExtHolder.html" title="class in io.github.eutro.wasm2j.ext">ExtHolder</a></h3>
-<code><a href="ExtHolder.html#attachExt(io.github.eutro.wasm2j.ext.Ext,T)">attachExt</a>, <a href="ExtHolder.html#getExt(io.github.eutro.wasm2j.ext.Ext)">getExt</a>, <a href="ExtHolder.html#removeExt(io.github.eutro.wasm2j.ext.Ext)">removeExt</a></code></div>
+<code><a href="ExtHolder.html#attachExt(io.github.eutro.wasm2j.ext.Ext,T)">attachExt</a>, <a href="ExtHolder.html#getNullable(io.github.eutro.wasm2j.ext.Ext)">getNullable</a>, <a href="ExtHolder.html#removeExt(io.github.eutro.wasm2j.ext.Ext)">removeExt</a></code></div>
 <div class="inherited-list">
 <h3 id="methods.inherited.from.class.java.lang.Object">Methods inherited from class&nbsp;java.lang.Object</h3>
 <code>clone, equals, finalize, getClass, hashCode, notify, notifyAll, wait, wait, wait</code></div>
 <div class="inherited-list">
 <h3 id="methods.inherited.from.class.io.github.eutro.wasm2j.ext.ExtContainer">Methods inherited from interface&nbsp;io.github.eutro.wasm2j.ext.<a href="ExtContainer.html" title="interface in io.github.eutro.wasm2j.ext">ExtContainer</a></h3>
-<code><a href="ExtContainer.html#getExtOrRun(io.github.eutro.wasm2j.ext.Ext,O,io.github.eutro.wasm2j.passes.IRPass)">getExtOrRun</a>, <a href="ExtContainer.html#getExtOrThrow(io.github.eutro.wasm2j.ext.Ext)">getExtOrThrow</a></code></div>
+<code><a href="ExtContainer.html#getExt(io.github.eutro.wasm2j.ext.Ext)">getExt</a>, <a href="ExtContainer.html#getExtOrRun(io.github.eutro.wasm2j.ext.Ext,O,io.github.eutro.wasm2j.passes.IRPass)">getExtOrRun</a>, <a href="ExtContainer.html#getExtOrThrow(io.github.eutro.wasm2j.ext.Ext)">getExtOrThrow</a></code></div>
 </section>
 </li>
 </ul>
@@ -207,6 +217,12 @@ extends <a href="ExtHolder.html" title="class in io.github.eutro.wasm2j.ext">Ext
 <section class="detail" id="name">
 <h3>name</h3>
 <div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type">java.lang.String</span>&nbsp;<span class="member-name">name</span></div>
+</section>
+</li>
+<li>
+<section class="detail" id="access">
+<h3>access</h3>
+<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type">int</span>&nbsp;<span class="member-name">access</span></div>
 </section>
 </li>
 <li>
@@ -229,6 +245,13 @@ extends <a href="ExtHolder.html" title="class in io.github.eutro.wasm2j.ext">Ext
 <section class="constructor-details" id="constructor.detail">
 <h2>Constructor Details</h2>
 <ul class="member-list">
+<li>
+<section class="detail" id="&lt;init&gt;(java.lang.String,int)">
+<h3>JavaClass</h3>
+<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="member-name">JavaClass</span>&#8203;(<span class="parameters">java.lang.String&nbsp;name,
+int&nbsp;access)</span></div>
+</section>
+</li>
 <li>
 <section class="detail" id="&lt;init&gt;(java.lang.String)">
 <h3>JavaClass</h3>

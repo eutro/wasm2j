@@ -111,16 +111,21 @@ extends java.lang.Object</pre>
 <td class="col-last">&nbsp;</td>
 </tr>
 <tr class="alt-color">
-<td class="col-first"><code>static class&nbsp;</code></td>
-<th class="col-second" scope="row"><code><span class="member-name-link"><a href="WasmOps.OperatorType.html" title="class in io.github.eutro.wasm2j.ops">WasmOps.OperatorType</a></span></code></th>
+<td class="col-first"><code>static interface&nbsp;</code></td>
+<th class="col-second" scope="row"><code><span class="member-name-link"><a href="WasmOps.For.html" title="annotation in io.github.eutro.wasm2j.ops">WasmOps.For</a></span></code></th>
 <td class="col-last">&nbsp;</td>
 </tr>
 <tr class="row-color">
 <td class="col-first"><code>static class&nbsp;</code></td>
-<th class="col-second" scope="row"><code><span class="member-name-link"><a href="WasmOps.StoreType.html" title="enum in io.github.eutro.wasm2j.ops">WasmOps.StoreType</a></span></code></th>
+<th class="col-second" scope="row"><code><span class="member-name-link"><a href="WasmOps.OperatorType.html" title="class in io.github.eutro.wasm2j.ops">WasmOps.OperatorType</a></span></code></th>
 <td class="col-last">&nbsp;</td>
 </tr>
 <tr class="alt-color">
+<td class="col-first"><code>static class&nbsp;</code></td>
+<th class="col-second" scope="row"><code><span class="member-name-link"><a href="WasmOps.StoreType.html" title="enum in io.github.eutro.wasm2j.ops">WasmOps.StoreType</a></span></code></th>
+<td class="col-last">&nbsp;</td>
+</tr>
+<tr class="row-color">
 <td class="col-first"><code>static class&nbsp;</code></td>
 <th class="col-second" scope="row"><code><span class="member-name-link"><a href="WasmOps.WithMemArg.html" title="class in io.github.eutro.wasm2j.ops">WasmOps.WithMemArg</a>&lt;<a href="WasmOps.WithMemArg.html" title="type parameter in WasmOps.WithMemArg">T</a>&gt;</span></code></th>
 <td class="col-last">&nbsp;</td>
@@ -167,6 +172,16 @@ extends java.lang.Object</pre>
 </tr>
 <tr class="alt-color">
 <td class="col-first"><code>static <a href="UnaryOpKey.html" title="class in io.github.eutro.wasm2j.ops">UnaryOpKey</a>&lt;java.lang.Integer&gt;</code></td>
+<th class="col-second" scope="row"><code><span class="member-name-link"><a href="#DATA_DROP">DATA_DROP</a></span></code></th>
+<td class="col-last">&nbsp;</td>
+</tr>
+<tr class="row-color">
+<td class="col-first"><code>static <a href="UnaryOpKey.html" title="class in io.github.eutro.wasm2j.ops">UnaryOpKey</a>&lt;java.lang.Integer&gt;</code></td>
+<th class="col-second" scope="row"><code><span class="member-name-link"><a href="#ELEM_DROP">ELEM_DROP</a></span></code></th>
+<td class="col-last">&nbsp;</td>
+</tr>
+<tr class="alt-color">
+<td class="col-first"><code>static <a href="UnaryOpKey.html" title="class in io.github.eutro.wasm2j.ops">UnaryOpKey</a>&lt;java.lang.Integer&gt;</code></td>
 <th class="col-second" scope="row"><code><span class="member-name-link"><a href="#FUNC_REF">FUNC_REF</a></span></code></th>
 <td class="col-last">&nbsp;</td>
 </tr>
@@ -186,38 +201,78 @@ extends java.lang.Object</pre>
 <td class="col-last">&nbsp;</td>
 </tr>
 <tr class="alt-color">
-<td class="col-first"><code>static <a href="SimpleOpKey.html" title="class in io.github.eutro.wasm2j.ops">SimpleOpKey</a></code></td>
-<th class="col-second" scope="row"><code><span class="member-name-link"><a href="#MEM_GROW">MEM_GROW</a></span></code></th>
+<td class="col-first"><code>static <a href="UnaryOpKey.html" title="class in io.github.eutro.wasm2j.ops">UnaryOpKey</a>&lt;<a href="../util/Pair.html" title="class in io.github.eutro.wasm2j.util">Pair</a>&lt;java.lang.Integer,&#8203;java.lang.Integer&gt;&gt;</code></td>
+<th class="col-second" scope="row"><code><span class="member-name-link"><a href="#MEM_COPY">MEM_COPY</a></span></code></th>
 <td class="col-last">&nbsp;</td>
 </tr>
 <tr class="row-color">
-<td class="col-first"><code>static <a href="UnaryOpKey.html" title="class in io.github.eutro.wasm2j.ops">UnaryOpKey</a>&lt;<a href="WasmOps.WithMemArg.html" title="class in io.github.eutro.wasm2j.ops">WasmOps.WithMemArg</a>&lt;<a href="WasmOps.DerefType.html" title="class in io.github.eutro.wasm2j.ops">WasmOps.DerefType</a>&gt;&gt;</code></td>
-<th class="col-second" scope="row"><code><span class="member-name-link"><a href="#MEM_LOAD">MEM_LOAD</a></span></code></th>
-<td class="col-last">&nbsp;</td>
-</tr>
-<tr class="alt-color">
-<td class="col-first"><code>static <a href="SimpleOpKey.html" title="class in io.github.eutro.wasm2j.ops">SimpleOpKey</a></code></td>
-<th class="col-second" scope="row"><code><span class="member-name-link"><a href="#MEM_SIZE">MEM_SIZE</a></span></code></th>
-<td class="col-last">&nbsp;</td>
-</tr>
-<tr class="row-color">
-<td class="col-first"><code>static <a href="UnaryOpKey.html" title="class in io.github.eutro.wasm2j.ops">UnaryOpKey</a>&lt;<a href="WasmOps.WithMemArg.html" title="class in io.github.eutro.wasm2j.ops">WasmOps.WithMemArg</a>&lt;<a href="WasmOps.StoreType.html" title="enum in io.github.eutro.wasm2j.ops">WasmOps.StoreType</a>&gt;&gt;</code></td>
-<th class="col-second" scope="row"><code><span class="member-name-link"><a href="#MEM_STORE">MEM_STORE</a></span></code></th>
-<td class="col-last">&nbsp;</td>
-</tr>
-<tr class="alt-color">
-<td class="col-first"><code>static <a href="UnaryOpKey.html" title="class in io.github.eutro.wasm2j.ops">UnaryOpKey</a>&lt;<a href="WasmOps.OperatorType.html" title="class in io.github.eutro.wasm2j.ops">WasmOps.OperatorType</a>&gt;</code></td>
-<th class="col-second" scope="row"><code><span class="member-name-link"><a href="#OPERATOR">OPERATOR</a></span></code></th>
-<td class="col-last">&nbsp;</td>
-</tr>
-<tr class="row-color">
-<td class="col-first"><code>static <a href="SimpleOpKey.html" title="class in io.github.eutro.wasm2j.ops">SimpleOpKey</a></code></td>
-<th class="col-second" scope="row"><code><span class="member-name-link"><a href="#SELECT">SELECT</a></span></code></th>
+<td class="col-first"><code>static <a href="UnaryOpKey.html" title="class in io.github.eutro.wasm2j.ops">UnaryOpKey</a>&lt;java.lang.Integer&gt;</code></td>
+<th class="col-second" scope="row"><code><span class="member-name-link"><a href="#MEM_FILL">MEM_FILL</a></span></code></th>
 <td class="col-last">&nbsp;</td>
 </tr>
 <tr class="alt-color">
 <td class="col-first"><code>static <a href="UnaryOpKey.html" title="class in io.github.eutro.wasm2j.ops">UnaryOpKey</a>&lt;java.lang.Integer&gt;</code></td>
+<th class="col-second" scope="row"><code><span class="member-name-link"><a href="#MEM_GROW">MEM_GROW</a></span></code></th>
+<td class="col-last">&nbsp;</td>
+</tr>
+<tr class="row-color">
+<td class="col-first"><code>static <a href="UnaryOpKey.html" title="class in io.github.eutro.wasm2j.ops">UnaryOpKey</a>&lt;<a href="../util/Pair.html" title="class in io.github.eutro.wasm2j.util">Pair</a>&lt;java.lang.Integer,&#8203;java.lang.Integer&gt;&gt;</code></td>
+<th class="col-second" scope="row"><code><span class="member-name-link"><a href="#MEM_INIT">MEM_INIT</a></span></code></th>
+<td class="col-last">&nbsp;</td>
+</tr>
+<tr class="alt-color">
+<td class="col-first"><code>static <a href="UnaryOpKey.html" title="class in io.github.eutro.wasm2j.ops">UnaryOpKey</a>&lt;<a href="WasmOps.WithMemArg.html" title="class in io.github.eutro.wasm2j.ops">WasmOps.WithMemArg</a>&lt;<a href="WasmOps.DerefType.html" title="class in io.github.eutro.wasm2j.ops">WasmOps.DerefType</a>&gt;&gt;</code></td>
+<th class="col-second" scope="row"><code><span class="member-name-link"><a href="#MEM_LOAD">MEM_LOAD</a></span></code></th>
+<td class="col-last">&nbsp;</td>
+</tr>
+<tr class="row-color">
+<td class="col-first"><code>static <a href="UnaryOpKey.html" title="class in io.github.eutro.wasm2j.ops">UnaryOpKey</a>&lt;java.lang.Integer&gt;</code></td>
+<th class="col-second" scope="row"><code><span class="member-name-link"><a href="#MEM_SIZE">MEM_SIZE</a></span></code></th>
+<td class="col-last">&nbsp;</td>
+</tr>
+<tr class="alt-color">
+<td class="col-first"><code>static <a href="UnaryOpKey.html" title="class in io.github.eutro.wasm2j.ops">UnaryOpKey</a>&lt;<a href="WasmOps.WithMemArg.html" title="class in io.github.eutro.wasm2j.ops">WasmOps.WithMemArg</a>&lt;<a href="WasmOps.StoreType.html" title="enum in io.github.eutro.wasm2j.ops">WasmOps.StoreType</a>&gt;&gt;</code></td>
+<th class="col-second" scope="row"><code><span class="member-name-link"><a href="#MEM_STORE">MEM_STORE</a></span></code></th>
+<td class="col-last">&nbsp;</td>
+</tr>
+<tr class="row-color">
+<td class="col-first"><code>static <a href="UnaryOpKey.html" title="class in io.github.eutro.wasm2j.ops">UnaryOpKey</a>&lt;<a href="WasmOps.OperatorType.html" title="class in io.github.eutro.wasm2j.ops">WasmOps.OperatorType</a>&gt;</code></td>
+<th class="col-second" scope="row"><code><span class="member-name-link"><a href="#OPERATOR">OPERATOR</a></span></code></th>
+<td class="col-last">&nbsp;</td>
+</tr>
+<tr class="alt-color">
+<td class="col-first"><code>static <a href="SimpleOpKey.html" title="class in io.github.eutro.wasm2j.ops">SimpleOpKey</a></code></td>
+<th class="col-second" scope="row"><code><span class="member-name-link"><a href="#SELECT">SELECT</a></span></code></th>
+<td class="col-last">&nbsp;</td>
+</tr>
+<tr class="row-color">
+<td class="col-first"><code>static <a href="UnaryOpKey.html" title="class in io.github.eutro.wasm2j.ops">UnaryOpKey</a>&lt;<a href="../util/Pair.html" title="class in io.github.eutro.wasm2j.util">Pair</a>&lt;java.lang.Integer,&#8203;java.lang.Integer&gt;&gt;</code></td>
+<th class="col-second" scope="row"><code><span class="member-name-link"><a href="#TABLE_COPY">TABLE_COPY</a></span></code></th>
+<td class="col-last">&nbsp;</td>
+</tr>
+<tr class="alt-color">
+<td class="col-first"><code>static <a href="UnaryOpKey.html" title="class in io.github.eutro.wasm2j.ops">UnaryOpKey</a>&lt;java.lang.Integer&gt;</code></td>
+<th class="col-second" scope="row"><code><span class="member-name-link"><a href="#TABLE_FILL">TABLE_FILL</a></span></code></th>
+<td class="col-last">&nbsp;</td>
+</tr>
+<tr class="row-color">
+<td class="col-first"><code>static <a href="UnaryOpKey.html" title="class in io.github.eutro.wasm2j.ops">UnaryOpKey</a>&lt;java.lang.Integer&gt;</code></td>
+<th class="col-second" scope="row"><code><span class="member-name-link"><a href="#TABLE_GROW">TABLE_GROW</a></span></code></th>
+<td class="col-last">&nbsp;</td>
+</tr>
+<tr class="alt-color">
+<td class="col-first"><code>static <a href="UnaryOpKey.html" title="class in io.github.eutro.wasm2j.ops">UnaryOpKey</a>&lt;<a href="../util/Pair.html" title="class in io.github.eutro.wasm2j.util">Pair</a>&lt;java.lang.Integer,&#8203;java.lang.Integer&gt;&gt;</code></td>
+<th class="col-second" scope="row"><code><span class="member-name-link"><a href="#TABLE_INIT">TABLE_INIT</a></span></code></th>
+<td class="col-last">&nbsp;</td>
+</tr>
+<tr class="row-color">
+<td class="col-first"><code>static <a href="UnaryOpKey.html" title="class in io.github.eutro.wasm2j.ops">UnaryOpKey</a>&lt;java.lang.Integer&gt;</code></td>
 <th class="col-second" scope="row"><code><span class="member-name-link"><a href="#TABLE_REF">TABLE_REF</a></span></code></th>
+<td class="col-last">&nbsp;</td>
+</tr>
+<tr class="alt-color">
+<td class="col-first"><code>static <a href="UnaryOpKey.html" title="class in io.github.eutro.wasm2j.ops">UnaryOpKey</a>&lt;java.lang.Integer&gt;</code></td>
+<th class="col-second" scope="row"><code><span class="member-name-link"><a href="#TABLE_SIZE">TABLE_SIZE</a></span></code></th>
 <td class="col-last">&nbsp;</td>
 </tr>
 <tr class="row-color">
@@ -338,13 +393,37 @@ extends java.lang.Object</pre>
 <li>
 <section class="detail" id="MEM_SIZE">
 <h3>MEM_SIZE</h3>
-<div class="member-signature"><span class="modifiers">public static final</span>&nbsp;<span class="return-type"><a href="SimpleOpKey.html" title="class in io.github.eutro.wasm2j.ops">SimpleOpKey</a></span>&nbsp;<span class="member-name">MEM_SIZE</span></div>
+<div class="member-signature"><span class="modifiers">public static final</span>&nbsp;<span class="return-type"><a href="UnaryOpKey.html" title="class in io.github.eutro.wasm2j.ops">UnaryOpKey</a>&lt;java.lang.Integer&gt;</span>&nbsp;<span class="member-name">MEM_SIZE</span></div>
 </section>
 </li>
 <li>
 <section class="detail" id="MEM_GROW">
 <h3>MEM_GROW</h3>
-<div class="member-signature"><span class="modifiers">public static final</span>&nbsp;<span class="return-type"><a href="SimpleOpKey.html" title="class in io.github.eutro.wasm2j.ops">SimpleOpKey</a></span>&nbsp;<span class="member-name">MEM_GROW</span></div>
+<div class="member-signature"><span class="modifiers">public static final</span>&nbsp;<span class="return-type"><a href="UnaryOpKey.html" title="class in io.github.eutro.wasm2j.ops">UnaryOpKey</a>&lt;java.lang.Integer&gt;</span>&nbsp;<span class="member-name">MEM_GROW</span></div>
+</section>
+</li>
+<li>
+<section class="detail" id="MEM_INIT">
+<h3>MEM_INIT</h3>
+<div class="member-signature"><span class="modifiers">public static final</span>&nbsp;<span class="return-type"><a href="UnaryOpKey.html" title="class in io.github.eutro.wasm2j.ops">UnaryOpKey</a>&lt;<a href="../util/Pair.html" title="class in io.github.eutro.wasm2j.util">Pair</a>&lt;java.lang.Integer,&#8203;java.lang.Integer&gt;&gt;</span>&nbsp;<span class="member-name">MEM_INIT</span></div>
+</section>
+</li>
+<li>
+<section class="detail" id="DATA_DROP">
+<h3>DATA_DROP</h3>
+<div class="member-signature"><span class="modifiers">public static final</span>&nbsp;<span class="return-type"><a href="UnaryOpKey.html" title="class in io.github.eutro.wasm2j.ops">UnaryOpKey</a>&lt;java.lang.Integer&gt;</span>&nbsp;<span class="member-name">DATA_DROP</span></div>
+</section>
+</li>
+<li>
+<section class="detail" id="MEM_COPY">
+<h3>MEM_COPY</h3>
+<div class="member-signature"><span class="modifiers">public static final</span>&nbsp;<span class="return-type"><a href="UnaryOpKey.html" title="class in io.github.eutro.wasm2j.ops">UnaryOpKey</a>&lt;<a href="../util/Pair.html" title="class in io.github.eutro.wasm2j.util">Pair</a>&lt;java.lang.Integer,&#8203;java.lang.Integer&gt;&gt;</span>&nbsp;<span class="member-name">MEM_COPY</span></div>
+</section>
+</li>
+<li>
+<section class="detail" id="MEM_FILL">
+<h3>MEM_FILL</h3>
+<div class="member-signature"><span class="modifiers">public static final</span>&nbsp;<span class="return-type"><a href="UnaryOpKey.html" title="class in io.github.eutro.wasm2j.ops">UnaryOpKey</a>&lt;java.lang.Integer&gt;</span>&nbsp;<span class="member-name">MEM_FILL</span></div>
 </section>
 </li>
 <li>
@@ -357,6 +436,42 @@ extends java.lang.Object</pre>
 <section class="detail" id="TABLE_REF">
 <h3>TABLE_REF</h3>
 <div class="member-signature"><span class="modifiers">public static final</span>&nbsp;<span class="return-type"><a href="UnaryOpKey.html" title="class in io.github.eutro.wasm2j.ops">UnaryOpKey</a>&lt;java.lang.Integer&gt;</span>&nbsp;<span class="member-name">TABLE_REF</span></div>
+</section>
+</li>
+<li>
+<section class="detail" id="TABLE_SIZE">
+<h3>TABLE_SIZE</h3>
+<div class="member-signature"><span class="modifiers">public static final</span>&nbsp;<span class="return-type"><a href="UnaryOpKey.html" title="class in io.github.eutro.wasm2j.ops">UnaryOpKey</a>&lt;java.lang.Integer&gt;</span>&nbsp;<span class="member-name">TABLE_SIZE</span></div>
+</section>
+</li>
+<li>
+<section class="detail" id="TABLE_GROW">
+<h3>TABLE_GROW</h3>
+<div class="member-signature"><span class="modifiers">public static final</span>&nbsp;<span class="return-type"><a href="UnaryOpKey.html" title="class in io.github.eutro.wasm2j.ops">UnaryOpKey</a>&lt;java.lang.Integer&gt;</span>&nbsp;<span class="member-name">TABLE_GROW</span></div>
+</section>
+</li>
+<li>
+<section class="detail" id="TABLE_INIT">
+<h3>TABLE_INIT</h3>
+<div class="member-signature"><span class="modifiers">public static final</span>&nbsp;<span class="return-type"><a href="UnaryOpKey.html" title="class in io.github.eutro.wasm2j.ops">UnaryOpKey</a>&lt;<a href="../util/Pair.html" title="class in io.github.eutro.wasm2j.util">Pair</a>&lt;java.lang.Integer,&#8203;java.lang.Integer&gt;&gt;</span>&nbsp;<span class="member-name">TABLE_INIT</span></div>
+</section>
+</li>
+<li>
+<section class="detail" id="ELEM_DROP">
+<h3>ELEM_DROP</h3>
+<div class="member-signature"><span class="modifiers">public static final</span>&nbsp;<span class="return-type"><a href="UnaryOpKey.html" title="class in io.github.eutro.wasm2j.ops">UnaryOpKey</a>&lt;java.lang.Integer&gt;</span>&nbsp;<span class="member-name">ELEM_DROP</span></div>
+</section>
+</li>
+<li>
+<section class="detail" id="TABLE_COPY">
+<h3>TABLE_COPY</h3>
+<div class="member-signature"><span class="modifiers">public static final</span>&nbsp;<span class="return-type"><a href="UnaryOpKey.html" title="class in io.github.eutro.wasm2j.ops">UnaryOpKey</a>&lt;<a href="../util/Pair.html" title="class in io.github.eutro.wasm2j.util">Pair</a>&lt;java.lang.Integer,&#8203;java.lang.Integer&gt;&gt;</span>&nbsp;<span class="member-name">TABLE_COPY</span></div>
+</section>
+</li>
+<li>
+<section class="detail" id="TABLE_FILL">
+<h3>TABLE_FILL</h3>
+<div class="member-signature"><span class="modifiers">public static final</span>&nbsp;<span class="return-type"><a href="UnaryOpKey.html" title="class in io.github.eutro.wasm2j.ops">UnaryOpKey</a>&lt;java.lang.Integer&gt;</span>&nbsp;<span class="member-name">TABLE_FILL</span></div>
 </section>
 </li>
 <li>

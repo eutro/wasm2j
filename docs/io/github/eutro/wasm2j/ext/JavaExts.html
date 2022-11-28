@@ -95,16 +95,21 @@ extends java.lang.Object</pre>
 </thead>
 <tbody>
 <tr class="alt-color">
-<td class="col-first"><code>static class&nbsp;</code></td>
-<th class="col-second" scope="row"><code><span class="member-name-link"><a href="JavaExts.JavaClass.html" title="class in io.github.eutro.wasm2j.ext">JavaExts.JavaClass</a></span></code></th>
+<td class="col-first"><code>static interface&nbsp;</code></td>
+<th class="col-second" scope="row"><code><span class="member-name-link"><a href="JavaExts.Handlable.html" title="interface in io.github.eutro.wasm2j.ext">JavaExts.Handlable</a></span></code></th>
 <td class="col-last">&nbsp;</td>
 </tr>
 <tr class="row-color">
 <td class="col-first"><code>static class&nbsp;</code></td>
-<th class="col-second" scope="row"><code><span class="member-name-link"><a href="JavaExts.JavaField.html" title="class in io.github.eutro.wasm2j.ext">JavaExts.JavaField</a></span></code></th>
+<th class="col-second" scope="row"><code><span class="member-name-link"><a href="JavaExts.JavaClass.html" title="class in io.github.eutro.wasm2j.ext">JavaExts.JavaClass</a></span></code></th>
 <td class="col-last">&nbsp;</td>
 </tr>
 <tr class="alt-color">
+<td class="col-first"><code>static class&nbsp;</code></td>
+<th class="col-second" scope="row"><code><span class="member-name-link"><a href="JavaExts.JavaField.html" title="class in io.github.eutro.wasm2j.ext">JavaExts.JavaField</a></span></code></th>
+<td class="col-last">&nbsp;</td>
+</tr>
+<tr class="row-color">
 <td class="col-first"><code>static class&nbsp;</code></td>
 <th class="col-second" scope="row"><code><span class="member-name-link"><a href="JavaExts.JavaMethod.html" title="class in io.github.eutro.wasm2j.ext">JavaExts.JavaMethod</a></span></code></th>
 <td class="col-last">&nbsp;</td>
@@ -130,28 +135,38 @@ extends java.lang.Object</pre>
 </thead>
 <tbody>
 <tr class="alt-color">
+<td class="col-first"><code>static <a href="Ext.html" title="class in io.github.eutro.wasm2j.ext">Ext</a>&lt;java.util.Map&lt;<a href="../intrinsics/IntrinsicImpl.html" title="class in io.github.eutro.wasm2j.intrinsics">IntrinsicImpl</a>,&#8203;<a href="JavaExts.JavaMethod.html" title="class in io.github.eutro.wasm2j.ext">JavaExts.JavaMethod</a>&gt;&gt;</code></td>
+<th class="col-second" scope="row"><code><span class="member-name-link"><a href="#ATTACHED_INTRINSICS">ATTACHED_INTRINSICS</a></span></code></th>
+<td class="col-last">&nbsp;</td>
+</tr>
+<tr class="row-color">
 <td class="col-first"><code>static <a href="https://asm.ow2.io/javadoc/org/objectweb/asm/Type.html" title="class or interface in org.objectweb.asm" class="external-link">Type</a></code></td>
 <th class="col-second" scope="row"><code><span class="member-name-link"><a href="#BOTTOM_TYPE">BOTTOM_TYPE</a></span></code></th>
 <td class="col-last">&nbsp;</td>
 </tr>
-<tr class="row-color">
-<td class="col-first"><code>static <a href="Ext.html" title="class in io.github.eutro.wasm2j.ext">Ext</a>&lt;java.lang.String&gt;</code></td>
-<th class="col-second" scope="row"><code><span class="member-name-link"><a href="#FUNCTION_DESCRIPTOR">FUNCTION_DESCRIPTOR</a></span></code></th>
+<tr class="alt-color">
+<td class="col-first"><code>static <a href="Ext.html" title="class in io.github.eutro.wasm2j.ext">Ext</a>&lt;<a href="JavaExts.JavaMethod.html" title="class in io.github.eutro.wasm2j.ext">JavaExts.JavaMethod</a>&gt;</code></td>
+<th class="col-second" scope="row"><code><span class="member-name-link"><a href="#FUNCTION_METHOD">FUNCTION_METHOD</a></span></code></th>
 <td class="col-last">&nbsp;</td>
 </tr>
-<tr class="alt-color">
+<tr class="row-color">
 <td class="col-first"><code>static <a href="Ext.html" title="class in io.github.eutro.wasm2j.ext">Ext</a>&lt;<a href="JavaExts.JavaClass.html" title="class in io.github.eutro.wasm2j.ext">JavaExts.JavaClass</a>&gt;</code></td>
 <th class="col-second" scope="row"><code><span class="member-name-link"><a href="#FUNCTION_OWNER">FUNCTION_OWNER</a></span></code></th>
 <td class="col-last">&nbsp;</td>
 </tr>
-<tr class="row-color">
+<tr class="alt-color">
 <td class="col-first"><code>static <a href="Ext.html" title="class in io.github.eutro.wasm2j.ext">Ext</a>&lt;<a href="JavaExts.JavaClass.html" title="class in io.github.eutro.wasm2j.ext">JavaExts.JavaClass</a>&gt;</code></td>
 <th class="col-second" scope="row"><code><span class="member-name-link"><a href="#JAVA_CLASS">JAVA_CLASS</a></span></code></th>
 <td class="col-last">&nbsp;</td>
 </tr>
-<tr class="alt-color">
+<tr class="row-color">
 <td class="col-first"><code>static <a href="Ext.html" title="class in io.github.eutro.wasm2j.ext">Ext</a>&lt;<a href="../ssa/Function.html" title="class in io.github.eutro.wasm2j.ssa">Function</a>&gt;</code></td>
 <th class="col-second" scope="row"><code><span class="member-name-link"><a href="#METHOD_IMPL">METHOD_IMPL</a></span></code></th>
+<td class="col-last">&nbsp;</td>
+</tr>
+<tr class="alt-color">
+<td class="col-first"><code>static <a href="Ext.html" title="class in io.github.eutro.wasm2j.ext">Ext</a>&lt;<a href="https://asm.ow2.io/javadoc/org/objectweb/asm/tree/MethodNode.html" title="class or interface in org.objectweb.asm.tree" class="external-link">MethodNode</a>&gt;</code></td>
+<th class="col-second" scope="row"><code><span class="member-name-link"><a href="#METHOD_NATIVE_IMPL">METHOD_NATIVE_IMPL</a></span></code></th>
 <td class="col-last">&nbsp;</td>
 </tr>
 <tr class="row-color">
@@ -212,21 +227,33 @@ extends java.lang.Object</pre>
 </section>
 </li>
 <li>
+<section class="detail" id="METHOD_NATIVE_IMPL">
+<h3>METHOD_NATIVE_IMPL</h3>
+<div class="member-signature"><span class="modifiers">public static final</span>&nbsp;<span class="return-type"><a href="Ext.html" title="class in io.github.eutro.wasm2j.ext">Ext</a>&lt;<a href="https://asm.ow2.io/javadoc/org/objectweb/asm/tree/MethodNode.html" title="class or interface in org.objectweb.asm.tree" class="external-link">MethodNode</a>&gt;</span>&nbsp;<span class="member-name">METHOD_NATIVE_IMPL</span></div>
+</section>
+</li>
+<li>
 <section class="detail" id="TYPE">
 <h3>TYPE</h3>
 <div class="member-signature"><span class="modifiers">public static final</span>&nbsp;<span class="return-type"><a href="Ext.html" title="class in io.github.eutro.wasm2j.ext">Ext</a>&lt;<a href="https://asm.ow2.io/javadoc/org/objectweb/asm/Type.html" title="class or interface in org.objectweb.asm" class="external-link">Type</a>&gt;</span>&nbsp;<span class="member-name">TYPE</span></div>
 </section>
 </li>
 <li>
-<section class="detail" id="FUNCTION_DESCRIPTOR">
-<h3>FUNCTION_DESCRIPTOR</h3>
-<div class="member-signature"><span class="modifiers">public static final</span>&nbsp;<span class="return-type"><a href="Ext.html" title="class in io.github.eutro.wasm2j.ext">Ext</a>&lt;java.lang.String&gt;</span>&nbsp;<span class="member-name">FUNCTION_DESCRIPTOR</span></div>
+<section class="detail" id="FUNCTION_METHOD">
+<h3>FUNCTION_METHOD</h3>
+<div class="member-signature"><span class="modifiers">public static final</span>&nbsp;<span class="return-type"><a href="Ext.html" title="class in io.github.eutro.wasm2j.ext">Ext</a>&lt;<a href="JavaExts.JavaMethod.html" title="class in io.github.eutro.wasm2j.ext">JavaExts.JavaMethod</a>&gt;</span>&nbsp;<span class="member-name">FUNCTION_METHOD</span></div>
 </section>
 </li>
 <li>
 <section class="detail" id="FUNCTION_OWNER">
 <h3>FUNCTION_OWNER</h3>
 <div class="member-signature"><span class="modifiers">public static final</span>&nbsp;<span class="return-type"><a href="Ext.html" title="class in io.github.eutro.wasm2j.ext">Ext</a>&lt;<a href="JavaExts.JavaClass.html" title="class in io.github.eutro.wasm2j.ext">JavaExts.JavaClass</a>&gt;</span>&nbsp;<span class="member-name">FUNCTION_OWNER</span></div>
+</section>
+</li>
+<li>
+<section class="detail" id="ATTACHED_INTRINSICS">
+<h3>ATTACHED_INTRINSICS</h3>
+<div class="member-signature"><span class="modifiers">public static final</span>&nbsp;<span class="return-type"><a href="Ext.html" title="class in io.github.eutro.wasm2j.ext">Ext</a>&lt;java.util.Map&lt;<a href="../intrinsics/IntrinsicImpl.html" title="class in io.github.eutro.wasm2j.intrinsics">IntrinsicImpl</a>,&#8203;<a href="JavaExts.JavaMethod.html" title="class in io.github.eutro.wasm2j.ext">JavaExts.JavaMethod</a>&gt;&gt;</span>&nbsp;<span class="member-name">ATTACHED_INTRINSICS</span></div>
 </section>
 </li>
 <li>

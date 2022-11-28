@@ -46,7 +46,7 @@ loadScripts(document, 'script');</script>
 <div>
 <ul class="sub-nav-list">
 <li>Summary:&nbsp;</li>
-<li>Nested&nbsp;|&nbsp;</li>
+<li><a href="#nested.class.summary">Nested</a>&nbsp;|&nbsp;</li>
 <li>Field&nbsp;|&nbsp;</li>
 <li>Constr&nbsp;|&nbsp;</li>
 <li><a href="#method.summary">Method</a></li>
@@ -78,18 +78,43 @@ loadScripts(document, 'script');</script>
 <section class="description">
 <dl class="notes">
 <dt>All Superinterfaces:</dt>
-<dd><code><a href="ExportableConvention.html" title="interface in io.github.eutro.wasm2j.conf.api">ExportableConvention</a></code></dd>
+<dd><code><a href="ConstructorCallback.html" title="interface in io.github.eutro.wasm2j.conf.api">ConstructorCallback</a></code>, <code><a href="ExportableConvention.html" title="interface in io.github.eutro.wasm2j.conf.api">ExportableConvention</a></code></dd>
 </dl>
 <dl class="notes">
 <dt>All Known Implementing Classes:</dt>
-<dd><code><a href="../impl/InstanceFunctionConvention.html" title="class in io.github.eutro.wasm2j.conf.impl">InstanceFunctionConvention</a></code></dd>
+<dd><code><a href="FunctionConvention.Delegating.html" title="class in io.github.eutro.wasm2j.conf.api">FunctionConvention.Delegating</a></code>, <code><a href="../impl/InstanceFunctionConvention.html" title="class in io.github.eutro.wasm2j.conf.impl">InstanceFunctionConvention</a></code></dd>
 </dl>
 <hr>
 <pre>public interface <span class="type-name-label">FunctionConvention</span>
-extends <a href="ExportableConvention.html" title="interface in io.github.eutro.wasm2j.conf.api">ExportableConvention</a></pre>
+extends <a href="ExportableConvention.html" title="interface in io.github.eutro.wasm2j.conf.api">ExportableConvention</a>, <a href="ConstructorCallback.html" title="interface in io.github.eutro.wasm2j.conf.api">ConstructorCallback</a></pre>
 </section>
 <section class="summary">
 <ul class="summary-list">
+<!-- ======== NESTED CLASS SUMMARY ======== -->
+<li>
+<section class="nested-class-summary" id="nested.class.summary">
+<h2>Nested Class Summary</h2>
+<div class="member-summary">
+<table class="summary-table">
+<caption><span>Nested Classes</span></caption>
+<thead>
+<tr>
+<th class="col-first" scope="col">Modifier and Type</th>
+<th class="col-second" scope="col">Interface</th>
+<th class="col-last" scope="col">Description</th>
+</tr>
+</thead>
+<tbody>
+<tr class="alt-color">
+<td class="col-first"><code>static class&nbsp;</code></td>
+<th class="col-second" scope="row"><code><span class="member-name-link"><a href="FunctionConvention.Delegating.html" title="class in io.github.eutro.wasm2j.conf.api">FunctionConvention.Delegating</a></span></code></th>
+<td class="col-last">&nbsp;</td>
+</tr>
+</tbody>
+</table>
+</div>
+</section>
+</li>
 <!-- ========== METHOD SUMMARY =========== -->
 <li>
 <section class="method-summary" id="method.summary">
@@ -123,8 +148,11 @@ extends <a href="ExportableConvention.html" title="interface in io.github.eutro.
 </div>
 </div>
 <div class="inherited-list">
+<h3 id="methods.inherited.from.class.io.github.eutro.wasm2j.conf.api.ConstructorCallback">Methods inherited from interface&nbsp;io.github.eutro.wasm2j.conf.api.<a href="ConstructorCallback.html" title="interface in io.github.eutro.wasm2j.conf.api">ConstructorCallback</a></h3>
+<code><a href="ConstructorCallback.html#modifyConstructor(io.github.eutro.wasm2j.ssa.IRBuilder,io.github.eutro.wasm2j.ext.JavaExts.JavaMethod,io.github.eutro.wasm2j.ssa.Module,io.github.eutro.wasm2j.ext.JavaExts.JavaClass)">modifyConstructor</a></code></div>
+<div class="inherited-list">
 <h3 id="methods.inherited.from.class.io.github.eutro.wasm2j.conf.api.ExportableConvention">Methods inherited from interface&nbsp;io.github.eutro.wasm2j.conf.api.<a href="ExportableConvention.html" title="interface in io.github.eutro.wasm2j.conf.api">ExportableConvention</a></h3>
-<code><a href="ExportableConvention.html#export(io.github.eutro.jwasm.tree.ExportNode)">export</a></code></div>
+<code><a href="ExportableConvention.html#export(io.github.eutro.jwasm.tree.ExportNode,io.github.eutro.wasm2j.ssa.Module,io.github.eutro.wasm2j.ext.JavaExts.JavaClass)">export</a></code></div>
 </section>
 </li>
 </ul>
@@ -176,7 +204,7 @@ extends <a href="ExportableConvention.html" title="interface in io.github.eutro.
 <div>
 <ul class="sub-nav-list">
 <li>Summary:&nbsp;</li>
-<li>Nested&nbsp;|&nbsp;</li>
+<li><a href="#nested.class.summary">Nested</a>&nbsp;|&nbsp;</li>
 <li>Field&nbsp;|&nbsp;</li>
 <li>Constr&nbsp;|&nbsp;</li>
 <li><a href="#method.summary">Method</a></li>

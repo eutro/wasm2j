@@ -15,8 +15,8 @@
 <script type="text/javascript" src="../../../../../../script-dir/jquery-ui.min.js"></script>
 </head>
 <body class="class-declaration-page">
-<script type="text/javascript">var data = {"i0":6,"i1":6,"i2":6,"i3":6};
-var tabs = {65535:["t0","All Methods"],2:["t2","Instance Methods"],4:["t3","Abstract Methods"]};
+<script type="text/javascript">var data = {"i0":18,"i1":18,"i2":18,"i3":6,"i4":6,"i5":6,"i6":6,"i7":6};
+var tabs = {65535:["t0","All Methods"],2:["t2","Instance Methods"],4:["t3","Abstract Methods"],16:["t5","Default Methods"]};
 var altColor = "alt-color";
 var rowColor = "row-color";
 var tableTab = "table-tab";
@@ -46,7 +46,7 @@ loadScripts(document, 'script');</script>
 <div>
 <ul class="sub-nav-list">
 <li>Summary:&nbsp;</li>
-<li>Nested&nbsp;|&nbsp;</li>
+<li><a href="#nested.class.summary">Nested</a>&nbsp;|&nbsp;</li>
 <li>Field&nbsp;|&nbsp;</li>
 <li>Constr&nbsp;|&nbsp;</li>
 <li><a href="#method.summary">Method</a></li>
@@ -78,24 +78,49 @@ loadScripts(document, 'script');</script>
 <section class="description">
 <dl class="notes">
 <dt>All Superinterfaces:</dt>
-<dd><code><a href="ExportableConvention.html" title="interface in io.github.eutro.wasm2j.conf.api">ExportableConvention</a></code></dd>
+<dd><code><a href="ConstructorCallback.html" title="interface in io.github.eutro.wasm2j.conf.api">ConstructorCallback</a></code>, <code><a href="ExportableConvention.html" title="interface in io.github.eutro.wasm2j.conf.api">ExportableConvention</a></code></dd>
 </dl>
 <dl class="notes">
 <dt>All Known Implementing Classes:</dt>
-<dd><code><a href="../impl/ByteBufferMemoryConvention.html" title="class in io.github.eutro.wasm2j.conf.impl">ByteBufferMemoryConvention</a></code></dd>
+<dd><code><a href="../impl/ByteBufferMemoryConvention.html" title="class in io.github.eutro.wasm2j.conf.impl">ByteBufferMemoryConvention</a></code>, <code><a href="MemoryConvention.Delegating.html" title="class in io.github.eutro.wasm2j.conf.api">MemoryConvention.Delegating</a></code></dd>
 </dl>
 <hr>
 <pre>public interface <span class="type-name-label">MemoryConvention</span>
-extends <a href="ExportableConvention.html" title="interface in io.github.eutro.wasm2j.conf.api">ExportableConvention</a></pre>
+extends <a href="ExportableConvention.html" title="interface in io.github.eutro.wasm2j.conf.api">ExportableConvention</a>, <a href="ConstructorCallback.html" title="interface in io.github.eutro.wasm2j.conf.api">ConstructorCallback</a></pre>
 </section>
 <section class="summary">
 <ul class="summary-list">
+<!-- ======== NESTED CLASS SUMMARY ======== -->
+<li>
+<section class="nested-class-summary" id="nested.class.summary">
+<h2>Nested Class Summary</h2>
+<div class="member-summary">
+<table class="summary-table">
+<caption><span>Nested Classes</span></caption>
+<thead>
+<tr>
+<th class="col-first" scope="col">Modifier and Type</th>
+<th class="col-second" scope="col">Interface</th>
+<th class="col-last" scope="col">Description</th>
+</tr>
+</thead>
+<tbody>
+<tr class="alt-color">
+<td class="col-first"><code>static class&nbsp;</code></td>
+<th class="col-second" scope="row"><code><span class="member-name-link"><a href="MemoryConvention.Delegating.html" title="class in io.github.eutro.wasm2j.conf.api">MemoryConvention.Delegating</a></span></code></th>
+<td class="col-last">&nbsp;</td>
+</tr>
+</tbody>
+</table>
+</div>
+</section>
+</li>
 <!-- ========== METHOD SUMMARY =========== -->
 <li>
 <section class="method-summary" id="method.summary">
 <h2>Method Summary</h2>
 <div class="member-summary" id="method-summary-table">
-<div class="table-tabs" role="tablist" aria-orientation="horizontal"><button role="tab" aria-selected="true" aria-controls="method-summary-table.tabpanel" tabindex="0" onkeydown="switchTab(event)" id="t0" class="active-table-tab">All Methods</button><button role="tab" aria-selected="false" aria-controls="method-summary-table.tabpanel" tabindex="-1" onkeydown="switchTab(event)" id="t2" class="table-tab" onclick="show(2);">Instance Methods</button><button role="tab" aria-selected="false" aria-controls="method-summary-table.tabpanel" tabindex="-1" onkeydown="switchTab(event)" id="t3" class="table-tab" onclick="show(4);">Abstract Methods</button></div>
+<div class="table-tabs" role="tablist" aria-orientation="horizontal"><button role="tab" aria-selected="true" aria-controls="method-summary-table.tabpanel" tabindex="0" onkeydown="switchTab(event)" id="t0" class="active-table-tab">All Methods</button><button role="tab" aria-selected="false" aria-controls="method-summary-table.tabpanel" tabindex="-1" onkeydown="switchTab(event)" id="t2" class="table-tab" onclick="show(2);">Instance Methods</button><button role="tab" aria-selected="false" aria-controls="method-summary-table.tabpanel" tabindex="-1" onkeydown="switchTab(event)" id="t3" class="table-tab" onclick="show(4);">Abstract Methods</button><button role="tab" aria-selected="false" aria-controls="method-summary-table.tabpanel" tabindex="-1" onkeydown="switchTab(event)" id="t5" class="table-tab" onclick="show(16);">Default Methods</button></div>
 <div id="method-summary-table.tabpanel" role="tabpanel">
 <table class="summary-table" aria-labelledby="t0">
 <thead>
@@ -107,24 +132,51 @@ extends <a href="ExportableConvention.html" title="interface in io.github.eutro.
 </thead>
 <tbody>
 <tr class="alt-color" id="i0">
+<td class="col-first"><code>default void</code></td>
+<th class="col-second" scope="row"><code><span class="member-name-link"><a href="#emitBoundsCheck(io.github.eutro.wasm2j.ssa.IRBuilder,int,io.github.eutro.wasm2j.ssa.Var)">emitBoundsCheck</a></span>&#8203;(<a href="../../ssa/IRBuilder.html" title="class in io.github.eutro.wasm2j.ssa">IRBuilder</a>&nbsp;ib,
+int&nbsp;mem,
+<a href="../../ssa/Var.html" title="class in io.github.eutro.wasm2j.ssa">Var</a>&nbsp;bound)</code></th>
+<td class="col-last">&nbsp;</td>
+</tr>
+<tr class="row-color" id="i1">
+<td class="col-first"><code>default void</code></td>
+<th class="col-second" scope="row"><code><span class="member-name-link"><a href="#emitMemCopy(io.github.eutro.wasm2j.ssa.IRBuilder,io.github.eutro.wasm2j.ssa.Effect,io.github.eutro.wasm2j.conf.api.MemoryConvention)">emitMemCopy</a></span>&#8203;(<a href="../../ssa/IRBuilder.html" title="class in io.github.eutro.wasm2j.ssa">IRBuilder</a>&nbsp;ib,
+<a href="../../ssa/Effect.html" title="class in io.github.eutro.wasm2j.ssa">Effect</a>&nbsp;effect,
+<a href="MemoryConvention.html" title="interface in io.github.eutro.wasm2j.conf.api">MemoryConvention</a>&nbsp;dst)</code></th>
+<td class="col-last">&nbsp;</td>
+</tr>
+<tr class="alt-color" id="i2">
+<td class="col-first"><code>default void</code></td>
+<th class="col-second" scope="row"><code><span class="member-name-link"><a href="#emitMemFill(io.github.eutro.wasm2j.ssa.IRBuilder,io.github.eutro.wasm2j.ssa.Effect)">emitMemFill</a></span>&#8203;(<a href="../../ssa/IRBuilder.html" title="class in io.github.eutro.wasm2j.ssa">IRBuilder</a>&nbsp;ib,
+<a href="../../ssa/Effect.html" title="class in io.github.eutro.wasm2j.ssa">Effect</a>&nbsp;effect)</code></th>
+<td class="col-last">&nbsp;</td>
+</tr>
+<tr class="row-color" id="i3">
 <td class="col-first"><code>void</code></td>
 <th class="col-second" scope="row"><code><span class="member-name-link"><a href="#emitMemGrow(io.github.eutro.wasm2j.ssa.IRBuilder,io.github.eutro.wasm2j.ssa.Effect)">emitMemGrow</a></span>&#8203;(<a href="../../ssa/IRBuilder.html" title="class in io.github.eutro.wasm2j.ssa">IRBuilder</a>&nbsp;ib,
 <a href="../../ssa/Effect.html" title="class in io.github.eutro.wasm2j.ssa">Effect</a>&nbsp;effect)</code></th>
 <td class="col-last">&nbsp;</td>
 </tr>
-<tr class="row-color" id="i1">
+<tr class="alt-color" id="i4">
+<td class="col-first"><code>void</code></td>
+<th class="col-second" scope="row"><code><span class="member-name-link"><a href="#emitMemInit(io.github.eutro.wasm2j.ssa.IRBuilder,io.github.eutro.wasm2j.ssa.Effect,io.github.eutro.wasm2j.ssa.Var)">emitMemInit</a></span>&#8203;(<a href="../../ssa/IRBuilder.html" title="class in io.github.eutro.wasm2j.ssa">IRBuilder</a>&nbsp;ib,
+<a href="../../ssa/Effect.html" title="class in io.github.eutro.wasm2j.ssa">Effect</a>&nbsp;effect,
+<a href="../../ssa/Var.html" title="class in io.github.eutro.wasm2j.ssa">Var</a>&nbsp;data)</code></th>
+<td class="col-last">&nbsp;</td>
+</tr>
+<tr class="row-color" id="i5">
 <td class="col-first"><code>void</code></td>
 <th class="col-second" scope="row"><code><span class="member-name-link"><a href="#emitMemLoad(io.github.eutro.wasm2j.ssa.IRBuilder,io.github.eutro.wasm2j.ssa.Effect)">emitMemLoad</a></span>&#8203;(<a href="../../ssa/IRBuilder.html" title="class in io.github.eutro.wasm2j.ssa">IRBuilder</a>&nbsp;ib,
 <a href="../../ssa/Effect.html" title="class in io.github.eutro.wasm2j.ssa">Effect</a>&nbsp;effect)</code></th>
 <td class="col-last">&nbsp;</td>
 </tr>
-<tr class="alt-color" id="i2">
+<tr class="alt-color" id="i6">
 <td class="col-first"><code>void</code></td>
 <th class="col-second" scope="row"><code><span class="member-name-link"><a href="#emitMemSize(io.github.eutro.wasm2j.ssa.IRBuilder,io.github.eutro.wasm2j.ssa.Effect)">emitMemSize</a></span>&#8203;(<a href="../../ssa/IRBuilder.html" title="class in io.github.eutro.wasm2j.ssa">IRBuilder</a>&nbsp;ib,
 <a href="../../ssa/Effect.html" title="class in io.github.eutro.wasm2j.ssa">Effect</a>&nbsp;effect)</code></th>
 <td class="col-last">&nbsp;</td>
 </tr>
-<tr class="row-color" id="i3">
+<tr class="row-color" id="i7">
 <td class="col-first"><code>void</code></td>
 <th class="col-second" scope="row"><code><span class="member-name-link"><a href="#emitMemStore(io.github.eutro.wasm2j.ssa.IRBuilder,io.github.eutro.wasm2j.ssa.Effect)">emitMemStore</a></span>&#8203;(<a href="../../ssa/IRBuilder.html" title="class in io.github.eutro.wasm2j.ssa">IRBuilder</a>&nbsp;ib,
 <a href="../../ssa/Effect.html" title="class in io.github.eutro.wasm2j.ssa">Effect</a>&nbsp;effect)</code></th>
@@ -135,8 +187,11 @@ extends <a href="ExportableConvention.html" title="interface in io.github.eutro.
 </div>
 </div>
 <div class="inherited-list">
+<h3 id="methods.inherited.from.class.io.github.eutro.wasm2j.conf.api.ConstructorCallback">Methods inherited from interface&nbsp;io.github.eutro.wasm2j.conf.api.<a href="ConstructorCallback.html" title="interface in io.github.eutro.wasm2j.conf.api">ConstructorCallback</a></h3>
+<code><a href="ConstructorCallback.html#modifyConstructor(io.github.eutro.wasm2j.ssa.IRBuilder,io.github.eutro.wasm2j.ext.JavaExts.JavaMethod,io.github.eutro.wasm2j.ssa.Module,io.github.eutro.wasm2j.ext.JavaExts.JavaClass)">modifyConstructor</a></code></div>
+<div class="inherited-list">
 <h3 id="methods.inherited.from.class.io.github.eutro.wasm2j.conf.api.ExportableConvention">Methods inherited from interface&nbsp;io.github.eutro.wasm2j.conf.api.<a href="ExportableConvention.html" title="interface in io.github.eutro.wasm2j.conf.api">ExportableConvention</a></h3>
-<code><a href="ExportableConvention.html#export(io.github.eutro.jwasm.tree.ExportNode)">export</a></code></div>
+<code><a href="ExportableConvention.html#export(io.github.eutro.jwasm.tree.ExportNode,io.github.eutro.wasm2j.ssa.Module,io.github.eutro.wasm2j.ext.JavaExts.JavaClass)">export</a></code></div>
 </section>
 </li>
 </ul>
@@ -176,6 +231,37 @@ extends <a href="ExportableConvention.html" title="interface in io.github.eutro.
 <a href="../../ssa/Effect.html" title="class in io.github.eutro.wasm2j.ssa">Effect</a>&nbsp;effect)</span></div>
 </section>
 </li>
+<li>
+<section class="detail" id="emitMemInit(io.github.eutro.wasm2j.ssa.IRBuilder,io.github.eutro.wasm2j.ssa.Effect,io.github.eutro.wasm2j.ssa.Var)">
+<h3>emitMemInit</h3>
+<div class="member-signature"><span class="return-type">void</span>&nbsp;<span class="member-name">emitMemInit</span>&#8203;(<span class="parameters"><a href="../../ssa/IRBuilder.html" title="class in io.github.eutro.wasm2j.ssa">IRBuilder</a>&nbsp;ib,
+<a href="../../ssa/Effect.html" title="class in io.github.eutro.wasm2j.ssa">Effect</a>&nbsp;effect,
+<a href="../../ssa/Var.html" title="class in io.github.eutro.wasm2j.ssa">Var</a>&nbsp;data)</span></div>
+</section>
+</li>
+<li>
+<section class="detail" id="emitBoundsCheck(io.github.eutro.wasm2j.ssa.IRBuilder,int,io.github.eutro.wasm2j.ssa.Var)">
+<h3>emitBoundsCheck</h3>
+<div class="member-signature"><span class="modifiers">default</span>&nbsp;<span class="return-type">void</span>&nbsp;<span class="member-name">emitBoundsCheck</span>&#8203;(<span class="parameters"><a href="../../ssa/IRBuilder.html" title="class in io.github.eutro.wasm2j.ssa">IRBuilder</a>&nbsp;ib,
+int&nbsp;mem,
+<a href="../../ssa/Var.html" title="class in io.github.eutro.wasm2j.ssa">Var</a>&nbsp;bound)</span></div>
+</section>
+</li>
+<li>
+<section class="detail" id="emitMemCopy(io.github.eutro.wasm2j.ssa.IRBuilder,io.github.eutro.wasm2j.ssa.Effect,io.github.eutro.wasm2j.conf.api.MemoryConvention)">
+<h3>emitMemCopy</h3>
+<div class="member-signature"><span class="modifiers">default</span>&nbsp;<span class="return-type">void</span>&nbsp;<span class="member-name">emitMemCopy</span>&#8203;(<span class="parameters"><a href="../../ssa/IRBuilder.html" title="class in io.github.eutro.wasm2j.ssa">IRBuilder</a>&nbsp;ib,
+<a href="../../ssa/Effect.html" title="class in io.github.eutro.wasm2j.ssa">Effect</a>&nbsp;effect,
+<a href="MemoryConvention.html" title="interface in io.github.eutro.wasm2j.conf.api">MemoryConvention</a>&nbsp;dst)</span></div>
+</section>
+</li>
+<li>
+<section class="detail" id="emitMemFill(io.github.eutro.wasm2j.ssa.IRBuilder,io.github.eutro.wasm2j.ssa.Effect)">
+<h3>emitMemFill</h3>
+<div class="member-signature"><span class="modifiers">default</span>&nbsp;<span class="return-type">void</span>&nbsp;<span class="member-name">emitMemFill</span>&#8203;(<span class="parameters"><a href="../../ssa/IRBuilder.html" title="class in io.github.eutro.wasm2j.ssa">IRBuilder</a>&nbsp;ib,
+<a href="../../ssa/Effect.html" title="class in io.github.eutro.wasm2j.ssa">Effect</a>&nbsp;effect)</span></div>
+</section>
+</li>
 </ul>
 </section>
 </li>
@@ -202,7 +288,7 @@ extends <a href="ExportableConvention.html" title="interface in io.github.eutro.
 <div>
 <ul class="sub-nav-list">
 <li>Summary:&nbsp;</li>
-<li>Nested&nbsp;|&nbsp;</li>
+<li><a href="#nested.class.summary">Nested</a>&nbsp;|&nbsp;</li>
 <li>Field&nbsp;|&nbsp;</li>
 <li>Constr&nbsp;|&nbsp;</li>
 <li><a href="#method.summary">Method</a></li>

@@ -15,7 +15,7 @@
 <script type="text/javascript" src="../../../../../script-dir/jquery-ui.min.js"></script>
 </head>
 <body class="class-declaration-page">
-<script type="text/javascript">var data = {"i0":6,"i1":6,"i2":18,"i3":18,"i4":6};
+<script type="text/javascript">var data = {"i0":6,"i1":18,"i2":18,"i3":18,"i4":6,"i5":6};
 var tabs = {65535:["t0","All Methods"],2:["t2","Instance Methods"],4:["t3","Abstract Methods"],16:["t5","Default Methods"]};
 var altColor = "alt-color";
 var rowColor = "row-color";
@@ -108,7 +108,7 @@ T&nbsp;value)</code></th>
 <td class="col-last">&nbsp;</td>
 </tr>
 <tr class="row-color" id="i1">
-<td class="col-first"><code>&lt;T&gt;&nbsp;java.util.Optional&lt;T&gt;</code></td>
+<td class="col-first"><code>default &lt;T&gt;&nbsp;java.util.Optional&lt;T&gt;</code></td>
 <th class="col-second" scope="row"><code><span class="member-name-link"><a href="#getExt(io.github.eutro.wasm2j.ext.Ext)">getExt</a></span>&#8203;(<a href="Ext.html" title="class in io.github.eutro.wasm2j.ext">Ext</a>&lt;T&gt;&nbsp;ext)</code></th>
 <td class="col-last">&nbsp;</td>
 </tr>
@@ -126,6 +126,11 @@ O&nbsp;o,
 <td class="col-last">&nbsp;</td>
 </tr>
 <tr class="alt-color" id="i4">
+<td class="col-first"><code>&lt;T&gt;&nbsp;T</code></td>
+<th class="col-second" scope="row"><code><span class="member-name-link"><a href="#getNullable(io.github.eutro.wasm2j.ext.Ext)">getNullable</a></span>&#8203;(<a href="Ext.html" title="class in io.github.eutro.wasm2j.ext">Ext</a>&lt;T&gt;&nbsp;ext)</code></th>
+<td class="col-last">&nbsp;</td>
+</tr>
+<tr class="row-color" id="i5">
 <td class="col-first"><code>&lt;T&gt;&nbsp;void</code></td>
 <th class="col-second" scope="row"><code><span class="member-name-link"><a href="#removeExt(io.github.eutro.wasm2j.ext.Ext)">removeExt</a></span>&#8203;(<a href="Ext.html" title="class in io.github.eutro.wasm2j.ext">Ext</a>&lt;T&gt;&nbsp;ext)</code></th>
 <td class="col-last">&nbsp;</td>
@@ -159,9 +164,16 @@ T&nbsp;value)</span></div>
 </section>
 </li>
 <li>
+<section class="detail" id="getNullable(io.github.eutro.wasm2j.ext.Ext)">
+<h3>getNullable</h3>
+<div class="member-signature"><span class="annotations">@Nullable
+</span><span class="type-parameters">&lt;T&gt;</span>&nbsp;<span class="return-type">T</span>&nbsp;<span class="member-name">getNullable</span>&#8203;(<span class="parameters"><a href="Ext.html" title="class in io.github.eutro.wasm2j.ext">Ext</a>&lt;T&gt;&nbsp;ext)</span></div>
+</section>
+</li>
+<li>
 <section class="detail" id="getExt(io.github.eutro.wasm2j.ext.Ext)">
 <h3>getExt</h3>
-<div class="member-signature"><span class="type-parameters">&lt;T&gt;</span>&nbsp;<span class="return-type">java.util.Optional&lt;T&gt;</span>&nbsp;<span class="member-name">getExt</span>&#8203;(<span class="parameters"><a href="Ext.html" title="class in io.github.eutro.wasm2j.ext">Ext</a>&lt;T&gt;&nbsp;ext)</span></div>
+<div class="member-signature"><span class="modifiers">default</span>&nbsp;<span class="type-parameters">&lt;T&gt;</span>&nbsp;<span class="return-type">java.util.Optional&lt;T&gt;</span>&nbsp;<span class="member-name">getExt</span>&#8203;(<span class="parameters"><a href="Ext.html" title="class in io.github.eutro.wasm2j.ext">Ext</a>&lt;T&gt;&nbsp;ext)</span></div>
 </section>
 </li>
 <li>

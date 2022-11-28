@@ -3,14 +3,14 @@ plugins {
     `maven-publish`
 }
 
-group = "io.github.eutro.jwasm"
-version = "${properties["ver_major"]}.${properties["ver_minor"]}.${properties["ver_patch"]}"
-val phase = properties["ver_phase"]
-if (phase != null) version = "$version-$phase"
-
 allprojects {
     apply<JavaLibraryPlugin>()
     apply<MavenPublishPlugin>()
+
+    group = "io.github.eutro.jwasm"
+    version = "${properties["ver_major"]}.${properties["ver_minor"]}.${properties["ver_patch"]}"
+    val phase = properties["ver_phase"]
+    if (phase != null) version = "$version-$phase"
 
     java {
         sourceCompatibility = JavaVersion.VERSION_1_8
@@ -47,28 +47,35 @@ project(":wasm2j-embed") {
         implementation("io.github.eutro.jwasm:jwasm-analysis:$jwasmVer")
         implementation("io.github.eutro.jwasm:jwasm-attrs:$jwasmVer")
         implementation("io.github.eutro.jwasm:jwasm-sexp:$jwasmVer")
-        implementation(rootProject)
+        implementation(project(":wasm2j-core"))
     }
 }
 
-dependencies {
-    implementation("org.ow2.asm:asm:9.4")
-    implementation("org.ow2.asm:asm-commons:9.4")
-    implementation("org.ow2.asm:asm-analysis:9.4")
-    implementation("org.ow2.asm:asm-util:9.4")
+project(":wasm2j-core") {
+    dependencies {
+        implementation("org.ow2.asm:asm:9.4")
+        implementation("org.ow2.asm:asm-commons:9.4")
+        implementation("org.ow2.asm:asm-analysis:9.4")
+        implementation("org.ow2.asm:asm-util:9.4")
 
-    implementation("io.github.eutro.jwasm:jwasm:$jwasmVer")
-    implementation("io.github.eutro.jwasm:jwasm-tree:$jwasmVer")
-    implementation("io.github.eutro.jwasm:jwasm-analysis:$jwasmVer")
-    implementation("io.github.eutro.jwasm:jwasm-attrs:$jwasmVer")
+        implementation("io.github.eutro.jwasm:jwasm:$jwasmVer")
+        implementation("io.github.eutro.jwasm:jwasm-tree:$jwasmVer")
+        implementation("io.github.eutro.jwasm:jwasm-analysis:$jwasmVer")
+        implementation("io.github.eutro.jwasm:jwasm-attrs:$jwasmVer")
+    }
+
+    sourceSets {
+        create("runtime")
+    }
 }
 
-sourceSets {
-    create("runtime")
-}
+val javadocModules = listOf(":wasm2j-core", ":wasm2j-embed")
 
 tasks.javadoc {
     setDestinationDir(file("docs"))
+    val javadocTasks = javadocModules.map { project(it).tasks.javadoc.get() }
+    source = files(*javadocTasks.flatMap { it.source }.toTypedArray()).asFileTree
+    classpath = files(*javadocTasks.flatMap { it.classpath }.toTypedArray())
     (options as StandardJavadocDocletOptions).run {
         locale("en")
         links(
@@ -78,6 +85,8 @@ tasks.javadoc {
         )
     }
 }
+
+defaultTasks("build", "javadoc")
 
 allprojects {
     tasks.test {

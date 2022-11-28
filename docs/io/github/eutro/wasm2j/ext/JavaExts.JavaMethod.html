@@ -15,7 +15,7 @@
 <script type="text/javascript" src="../../../../../script-dir/jquery-ui.min.js"></script>
 </head>
 <body class="class-declaration-page">
-<script type="text/javascript">var data = {"i0":9,"i1":10};
+<script type="text/javascript">var data = {"i0":9,"i1":9,"i2":10,"i3":10,"i4":10,"i5":10,"i6":10,"i7":10};
 var tabs = {65535:["t0","All Methods"],1:["t1","Static Methods"],2:["t2","Instance Methods"],8:["t4","Concrete Methods"]};
 var altColor = "alt-color";
 var rowColor = "row-color";
@@ -83,7 +83,7 @@ loadScripts(document, 'script');</script>
 <section class="description">
 <dl class="notes">
 <dt>All Implemented Interfaces:</dt>
-<dd><code><a href="ExtContainer.html" title="interface in io.github.eutro.wasm2j.ext">ExtContainer</a></code></dd>
+<dd><code><a href="ExtContainer.html" title="interface in io.github.eutro.wasm2j.ext">ExtContainer</a></code>, <code><a href="JavaExts.Handlable.html" title="interface in io.github.eutro.wasm2j.ext">JavaExts.Handlable</a></code></dd>
 </dl>
 <dl class="notes">
 <dt>Enclosing class:</dt>
@@ -91,7 +91,8 @@ loadScripts(document, 'script');</script>
 </dl>
 <hr>
 <pre>public static class <span class="type-name-label">JavaExts.JavaMethod</span>
-extends <a href="ExtHolder.html" title="class in io.github.eutro.wasm2j.ext">ExtHolder</a></pre>
+extends <a href="ExtHolder.html" title="class in io.github.eutro.wasm2j.ext">ExtHolder</a>
+implements <a href="JavaExts.Handlable.html" title="interface in io.github.eutro.wasm2j.ext">JavaExts.Handlable</a></pre>
 </section>
 <section class="summary">
 <ul class="summary-list">
@@ -112,7 +113,7 @@ extends <a href="ExtHolder.html" title="class in io.github.eutro.wasm2j.ext">Ext
 <tbody>
 <tr class="alt-color">
 <td class="col-first"><code>static class&nbsp;</code></td>
-<th class="col-second" scope="row"><code><span class="member-name-link"><a href="JavaExts.JavaMethod.Type.html" title="enum in io.github.eutro.wasm2j.ext">JavaExts.JavaMethod.Type</a></span></code></th>
+<th class="col-second" scope="row"><code><span class="member-name-link"><a href="JavaExts.JavaMethod.Kind.html" title="enum in io.github.eutro.wasm2j.ext">JavaExts.JavaMethod.Kind</a></span></code></th>
 <td class="col-last">&nbsp;</td>
 </tr>
 </tbody>
@@ -136,8 +137,8 @@ extends <a href="ExtHolder.html" title="class in io.github.eutro.wasm2j.ext">Ext
 </thead>
 <tbody>
 <tr class="alt-color">
-<td class="col-first"><code>java.lang.String</code></td>
-<th class="col-second" scope="row"><code><span class="member-name-link"><a href="#descriptor">descriptor</a></span></code></th>
+<td class="col-first"><code><a href="JavaExts.JavaMethod.Kind.html" title="enum in io.github.eutro.wasm2j.ext">JavaExts.JavaMethod.Kind</a></code></td>
+<th class="col-second" scope="row"><code><span class="member-name-link"><a href="#kind">kind</a></span></code></th>
 <td class="col-last">&nbsp;</td>
 </tr>
 <tr class="row-color">
@@ -148,11 +149,6 @@ extends <a href="ExtHolder.html" title="class in io.github.eutro.wasm2j.ext">Ext
 <tr class="alt-color">
 <td class="col-first"><code><a href="JavaExts.JavaClass.html" title="class in io.github.eutro.wasm2j.ext">JavaExts.JavaClass</a></code></td>
 <th class="col-second" scope="row"><code><span class="member-name-link"><a href="#owner">owner</a></span></code></th>
-<td class="col-last">&nbsp;</td>
-</tr>
-<tr class="row-color">
-<td class="col-first"><code><a href="JavaExts.JavaMethod.Type.html" title="enum in io.github.eutro.wasm2j.ext">JavaExts.JavaMethod.Type</a></code></td>
-<th class="col-second" scope="row"><code><span class="member-name-link"><a href="#type">type</a></span></code></th>
 <td class="col-last">&nbsp;</td>
 </tr>
 </tbody>
@@ -175,10 +171,10 @@ extends <a href="ExtHolder.html" title="class in io.github.eutro.wasm2j.ext">Ext
 </thead>
 <tbody>
 <tr class="alt-color">
-<th class="col-constructor-name" scope="row"><code><span class="member-name-link"><a href="#%3Cinit%3E(io.github.eutro.wasm2j.ext.JavaExts.JavaClass,java.lang.String,java.lang.String,io.github.eutro.wasm2j.ext.JavaExts.JavaMethod.Type)">JavaMethod</a></span>&#8203;(<a href="JavaExts.JavaClass.html" title="class in io.github.eutro.wasm2j.ext">JavaExts.JavaClass</a>&nbsp;owner,
+<th class="col-constructor-name" scope="row"><code><span class="member-name-link"><a href="#%3Cinit%3E(io.github.eutro.wasm2j.ext.JavaExts.JavaClass,java.lang.String,java.lang.String,io.github.eutro.wasm2j.ext.JavaExts.JavaMethod.Kind)">JavaMethod</a></span>&#8203;(<a href="JavaExts.JavaClass.html" title="class in io.github.eutro.wasm2j.ext">JavaExts.JavaClass</a>&nbsp;owner,
 java.lang.String&nbsp;name,
 java.lang.String&nbsp;descriptor,
-<a href="JavaExts.JavaMethod.Type.html" title="enum in io.github.eutro.wasm2j.ext">JavaExts.JavaMethod.Type</a>&nbsp;type)</code></th>
+<a href="JavaExts.JavaMethod.Kind.html" title="enum in io.github.eutro.wasm2j.ext">JavaExts.JavaMethod.Kind</a>&nbsp;kind)</code></th>
 <td class="col-last">&nbsp;</td>
 </tr>
 </tbody>
@@ -209,6 +205,38 @@ java.lang.reflect.Method&nbsp;method)</code></th>
 <td class="col-last">&nbsp;</td>
 </tr>
 <tr class="row-color" id="i1">
+<td class="col-first"><code>static <a href="JavaExts.JavaMethod.html" title="class in io.github.eutro.wasm2j.ext">JavaExts.JavaMethod</a></code></td>
+<th class="col-second" scope="row"><code><span class="member-name-link"><a href="#fromJava(java.lang.Class,java.lang.String,java.lang.Class...)">fromJava</a></span>&#8203;(java.lang.Class&lt;?&gt;&nbsp;owner,
+java.lang.String&nbsp;name,
+java.lang.Class&lt;?&gt;...&nbsp;parameterTypes)</code></th>
+<td class="col-last">&nbsp;</td>
+</tr>
+<tr class="alt-color" id="i2">
+<td class="col-first"><code>java.lang.String</code></td>
+<th class="col-second" scope="row"><code><span class="member-name-link"><a href="#getDescriptor()">getDescriptor</a></span>()</code></th>
+<td class="col-last">&nbsp;</td>
+</tr>
+<tr class="row-color" id="i3">
+<td class="col-first"><code><a href="https://asm.ow2.io/javadoc/org/objectweb/asm/Handle.html" title="class or interface in org.objectweb.asm" class="external-link">Handle</a></code></td>
+<th class="col-second" scope="row"><code><span class="member-name-link"><a href="#getHandle()">getHandle</a></span>()</code></th>
+<td class="col-last">&nbsp;</td>
+</tr>
+<tr class="alt-color" id="i4">
+<td class="col-first"><code>java.util.List&lt;<a href="https://asm.ow2.io/javadoc/org/objectweb/asm/Type.html" title="class or interface in org.objectweb.asm" class="external-link">Type</a>&gt;</code></td>
+<th class="col-second" scope="row"><code><span class="member-name-link"><a href="#getParamTys()">getParamTys</a></span>()</code></th>
+<td class="col-last">&nbsp;</td>
+</tr>
+<tr class="row-color" id="i5">
+<td class="col-first"><code>void</code></td>
+<th class="col-second" scope="row"><code><span class="member-name-link"><a href="#setDescriptor(java.lang.String)">setDescriptor</a></span>&#8203;(java.lang.String&nbsp;descriptor)</code></th>
+<td class="col-last">&nbsp;</td>
+</tr>
+<tr class="alt-color" id="i6">
+<td class="col-first"><code>void</code></td>
+<th class="col-second" scope="row"><code><span class="member-name-link"><a href="#setParamTys(java.util.List)">setParamTys</a></span>&#8203;(java.util.List&lt;<a href="https://asm.ow2.io/javadoc/org/objectweb/asm/Type.html" title="class or interface in org.objectweb.asm" class="external-link">Type</a>&gt;&nbsp;tys)</code></th>
+<td class="col-last">&nbsp;</td>
+</tr>
+<tr class="row-color" id="i7">
 <td class="col-first"><code>java.lang.String</code></td>
 <th class="col-second" scope="row"><code><span class="member-name-link"><a href="#toString()">toString</a></span>()</code></th>
 <td class="col-last">&nbsp;</td>
@@ -219,13 +247,13 @@ java.lang.reflect.Method&nbsp;method)</code></th>
 </div>
 <div class="inherited-list">
 <h3 id="methods.inherited.from.class.io.github.eutro.wasm2j.ext.ExtHolder">Methods inherited from class&nbsp;io.github.eutro.wasm2j.ext.<a href="ExtHolder.html" title="class in io.github.eutro.wasm2j.ext">ExtHolder</a></h3>
-<code><a href="ExtHolder.html#attachExt(io.github.eutro.wasm2j.ext.Ext,T)">attachExt</a>, <a href="ExtHolder.html#getExt(io.github.eutro.wasm2j.ext.Ext)">getExt</a>, <a href="ExtHolder.html#removeExt(io.github.eutro.wasm2j.ext.Ext)">removeExt</a></code></div>
+<code><a href="ExtHolder.html#attachExt(io.github.eutro.wasm2j.ext.Ext,T)">attachExt</a>, <a href="ExtHolder.html#getNullable(io.github.eutro.wasm2j.ext.Ext)">getNullable</a>, <a href="ExtHolder.html#removeExt(io.github.eutro.wasm2j.ext.Ext)">removeExt</a></code></div>
 <div class="inherited-list">
 <h3 id="methods.inherited.from.class.java.lang.Object">Methods inherited from class&nbsp;java.lang.Object</h3>
 <code>clone, equals, finalize, getClass, hashCode, notify, notifyAll, wait, wait, wait</code></div>
 <div class="inherited-list">
 <h3 id="methods.inherited.from.class.io.github.eutro.wasm2j.ext.ExtContainer">Methods inherited from interface&nbsp;io.github.eutro.wasm2j.ext.<a href="ExtContainer.html" title="interface in io.github.eutro.wasm2j.ext">ExtContainer</a></h3>
-<code><a href="ExtContainer.html#getExtOrRun(io.github.eutro.wasm2j.ext.Ext,O,io.github.eutro.wasm2j.passes.IRPass)">getExtOrRun</a>, <a href="ExtContainer.html#getExtOrThrow(io.github.eutro.wasm2j.ext.Ext)">getExtOrThrow</a></code></div>
+<code><a href="ExtContainer.html#getExt(io.github.eutro.wasm2j.ext.Ext)">getExt</a>, <a href="ExtContainer.html#getExtOrRun(io.github.eutro.wasm2j.ext.Ext,O,io.github.eutro.wasm2j.passes.IRPass)">getExtOrRun</a>, <a href="ExtContainer.html#getExtOrThrow(io.github.eutro.wasm2j.ext.Ext)">getExtOrThrow</a></code></div>
 </section>
 </li>
 </ul>
@@ -250,15 +278,9 @@ java.lang.reflect.Method&nbsp;method)</code></th>
 </section>
 </li>
 <li>
-<section class="detail" id="descriptor">
-<h3>descriptor</h3>
-<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type">java.lang.String</span>&nbsp;<span class="member-name">descriptor</span></div>
-</section>
-</li>
-<li>
-<section class="detail" id="type">
-<h3>type</h3>
-<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type"><a href="JavaExts.JavaMethod.Type.html" title="enum in io.github.eutro.wasm2j.ext">JavaExts.JavaMethod.Type</a></span>&nbsp;<span class="member-name">type</span></div>
+<section class="detail" id="kind">
+<h3>kind</h3>
+<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type"><a href="JavaExts.JavaMethod.Kind.html" title="enum in io.github.eutro.wasm2j.ext">JavaExts.JavaMethod.Kind</a></span>&nbsp;<span class="member-name">kind</span></div>
 </section>
 </li>
 </ul>
@@ -270,12 +292,12 @@ java.lang.reflect.Method&nbsp;method)</code></th>
 <h2>Constructor Details</h2>
 <ul class="member-list">
 <li>
-<section class="detail" id="&lt;init&gt;(io.github.eutro.wasm2j.ext.JavaExts.JavaClass,java.lang.String,java.lang.String,io.github.eutro.wasm2j.ext.JavaExts.JavaMethod.Type)">
+<section class="detail" id="&lt;init&gt;(io.github.eutro.wasm2j.ext.JavaExts.JavaClass,java.lang.String,java.lang.String,io.github.eutro.wasm2j.ext.JavaExts.JavaMethod.Kind)">
 <h3>JavaMethod</h3>
 <div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="member-name">JavaMethod</span>&#8203;(<span class="parameters"><a href="JavaExts.JavaClass.html" title="class in io.github.eutro.wasm2j.ext">JavaExts.JavaClass</a>&nbsp;owner,
 java.lang.String&nbsp;name,
 java.lang.String&nbsp;descriptor,
-<a href="JavaExts.JavaMethod.Type.html" title="enum in io.github.eutro.wasm2j.ext">JavaExts.JavaMethod.Type</a>&nbsp;type)</span></div>
+<a href="JavaExts.JavaMethod.Kind.html" title="enum in io.github.eutro.wasm2j.ext">JavaExts.JavaMethod.Kind</a>&nbsp;kind)</span></div>
 </section>
 </li>
 </ul>
@@ -291,6 +313,48 @@ java.lang.String&nbsp;descriptor,
 <h3>fromJava</h3>
 <div class="member-signature"><span class="modifiers">public static</span>&nbsp;<span class="return-type"><a href="JavaExts.JavaMethod.html" title="class in io.github.eutro.wasm2j.ext">JavaExts.JavaMethod</a></span>&nbsp;<span class="member-name">fromJava</span>&#8203;(<span class="parameters"><a href="JavaExts.JavaClass.html" title="class in io.github.eutro.wasm2j.ext">JavaExts.JavaClass</a>&nbsp;owner,
 java.lang.reflect.Method&nbsp;method)</span></div>
+</section>
+</li>
+<li>
+<section class="detail" id="fromJava(java.lang.Class,java.lang.String,java.lang.Class...)">
+<h3>fromJava</h3>
+<div class="member-signature"><span class="modifiers">public static</span>&nbsp;<span class="return-type"><a href="JavaExts.JavaMethod.html" title="class in io.github.eutro.wasm2j.ext">JavaExts.JavaMethod</a></span>&nbsp;<span class="member-name">fromJava</span>&#8203;(<span class="parameters">java.lang.Class&lt;?&gt;&nbsp;owner,
+java.lang.String&nbsp;name,
+java.lang.Class&lt;?&gt;...&nbsp;parameterTypes)</span></div>
+</section>
+</li>
+<li>
+<section class="detail" id="getParamTys()">
+<h3>getParamTys</h3>
+<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type">java.util.List&lt;<a href="https://asm.ow2.io/javadoc/org/objectweb/asm/Type.html" title="class or interface in org.objectweb.asm" class="external-link">Type</a>&gt;</span>&nbsp;<span class="member-name">getParamTys</span>()</div>
+</section>
+</li>
+<li>
+<section class="detail" id="setParamTys(java.util.List)">
+<h3>setParamTys</h3>
+<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type">void</span>&nbsp;<span class="member-name">setParamTys</span>&#8203;(<span class="parameters">java.util.List&lt;<a href="https://asm.ow2.io/javadoc/org/objectweb/asm/Type.html" title="class or interface in org.objectweb.asm" class="external-link">Type</a>&gt;&nbsp;tys)</span></div>
+</section>
+</li>
+<li>
+<section class="detail" id="getDescriptor()">
+<h3>getDescriptor</h3>
+<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type">java.lang.String</span>&nbsp;<span class="member-name">getDescriptor</span>()</div>
+</section>
+</li>
+<li>
+<section class="detail" id="setDescriptor(java.lang.String)">
+<h3>setDescriptor</h3>
+<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type">void</span>&nbsp;<span class="member-name">setDescriptor</span>&#8203;(<span class="parameters">java.lang.String&nbsp;descriptor)</span></div>
+</section>
+</li>
+<li>
+<section class="detail" id="getHandle()">
+<h3>getHandle</h3>
+<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type"><a href="https://asm.ow2.io/javadoc/org/objectweb/asm/Handle.html" title="class or interface in org.objectweb.asm" class="external-link">Handle</a></span>&nbsp;<span class="member-name">getHandle</span>()</div>
+<dl class="notes">
+<dt>Specified by:</dt>
+<dd><code><a href="JavaExts.Handlable.html#getHandle()">getHandle</a></code>&nbsp;in interface&nbsp;<code><a href="JavaExts.Handlable.html" title="interface in io.github.eutro.wasm2j.ext">JavaExts.Handlable</a></code></dd>
+</dl>
 </section>
 </li>
 <li>

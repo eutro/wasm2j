@@ -15,7 +15,7 @@
 <script type="text/javascript" src="../../../../../script-dir/jquery-ui.min.js"></script>
 </head>
 <body class="class-declaration-page">
-<script type="text/javascript">var data = {"i0":10,"i1":10,"i2":10,"i3":10,"i4":10,"i5":10};
+<script type="text/javascript">var data = {"i0":10,"i1":10,"i2":10,"i3":10,"i4":10,"i5":10,"i6":10};
 var tabs = {65535:["t0","All Methods"],2:["t2","Instance Methods"],8:["t4","Concrete Methods"]};
 var altColor = "alt-color";
 var rowColor = "row-color";
@@ -194,6 +194,11 @@ java.util.List&lt;<a href="Var.html" title="class in io.github.eutro.wasm2j.ssa"
 <td class="col-last">&nbsp;</td>
 </tr>
 <tr class="row-color" id="i5">
+<td class="col-first"><code><a href="Control.html" title="class in io.github.eutro.wasm2j.ssa">Control</a></code></td>
+<th class="col-second" scope="row"><code><span class="member-name-link"><a href="#jumpsTo(java.util.List)">jumpsTo</a></span>&#8203;(java.util.List&lt;<a href="BasicBlock.html" title="class in io.github.eutro.wasm2j.ssa">BasicBlock</a>&gt;&nbsp;targets)</code></th>
+<td class="col-last">&nbsp;</td>
+</tr>
+<tr class="alt-color" id="i6">
 <td class="col-first"><code>java.lang.String</code></td>
 <th class="col-second" scope="row"><code><span class="member-name-link"><a href="#toString()">toString</a></span>()</code></th>
 <td class="col-last">&nbsp;</td>
@@ -204,7 +209,7 @@ java.util.List&lt;<a href="Var.html" title="class in io.github.eutro.wasm2j.ssa"
 </div>
 <div class="inherited-list">
 <h3 id="methods.inherited.from.class.io.github.eutro.wasm2j.ext.DelegatingExtHolder">Methods inherited from class&nbsp;io.github.eutro.wasm2j.ext.<a href="../ext/DelegatingExtHolder.html" title="class in io.github.eutro.wasm2j.ext">DelegatingExtHolder</a></h3>
-<code><a href="../ext/DelegatingExtHolder.html#getExt(io.github.eutro.wasm2j.ext.Ext)">getExt</a></code></div>
+<code><a href="../ext/DelegatingExtHolder.html#getNullable(io.github.eutro.wasm2j.ext.Ext)">getNullable</a></code></div>
 <div class="inherited-list">
 <h3 id="methods.inherited.from.class.io.github.eutro.wasm2j.ext.ExtHolder">Methods inherited from class&nbsp;io.github.eutro.wasm2j.ext.<a href="../ext/ExtHolder.html" title="class in io.github.eutro.wasm2j.ext">ExtHolder</a></h3>
 <code><a href="../ext/ExtHolder.html#attachExt(io.github.eutro.wasm2j.ext.Ext,T)">attachExt</a>, <a href="../ext/ExtHolder.html#removeExt(io.github.eutro.wasm2j.ext.Ext)">removeExt</a></code></div>
@@ -213,7 +218,7 @@ java.util.List&lt;<a href="Var.html" title="class in io.github.eutro.wasm2j.ssa"
 <code>clone, equals, finalize, getClass, hashCode, notify, notifyAll, wait, wait, wait</code></div>
 <div class="inherited-list">
 <h3 id="methods.inherited.from.class.io.github.eutro.wasm2j.ext.ExtContainer">Methods inherited from interface&nbsp;io.github.eutro.wasm2j.ext.<a href="../ext/ExtContainer.html" title="interface in io.github.eutro.wasm2j.ext">ExtContainer</a></h3>
-<code><a href="../ext/ExtContainer.html#getExtOrRun(io.github.eutro.wasm2j.ext.Ext,O,io.github.eutro.wasm2j.passes.IRPass)">getExtOrRun</a>, <a href="../ext/ExtContainer.html#getExtOrThrow(io.github.eutro.wasm2j.ext.Ext)">getExtOrThrow</a></code></div>
+<code><a href="../ext/ExtContainer.html#getExt(io.github.eutro.wasm2j.ext.Ext)">getExt</a>, <a href="../ext/ExtContainer.html#getExtOrRun(io.github.eutro.wasm2j.ext.Ext,O,io.github.eutro.wasm2j.passes.IRPass)">getExtOrRun</a>, <a href="../ext/ExtContainer.html#getExtOrThrow(io.github.eutro.wasm2j.ext.Ext)">getExtOrThrow</a></code></div>
 </section>
 </li>
 </ul>
@@ -303,6 +308,12 @@ java.util.List&lt;<a href="Var.html" title="class in io.github.eutro.wasm2j.ssa"
 <section class="detail" id="jumpsTo(io.github.eutro.wasm2j.ssa.BasicBlock...)">
 <h3>jumpsTo</h3>
 <div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type"><a href="Control.html" title="class in io.github.eutro.wasm2j.ssa">Control</a></span>&nbsp;<span class="member-name">jumpsTo</span>&#8203;(<span class="parameters"><a href="BasicBlock.html" title="class in io.github.eutro.wasm2j.ssa">BasicBlock</a>...&nbsp;targets)</span></div>
+</section>
+</li>
+<li>
+<section class="detail" id="jumpsTo(java.util.List)">
+<h3>jumpsTo</h3>
+<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type"><a href="Control.html" title="class in io.github.eutro.wasm2j.ssa">Control</a></span>&nbsp;<span class="member-name">jumpsTo</span>&#8203;(<span class="parameters">java.util.List&lt;<a href="BasicBlock.html" title="class in io.github.eutro.wasm2j.ssa">BasicBlock</a>&gt;&nbsp;targets)</span></div>
 </section>
 </li>
 <li>

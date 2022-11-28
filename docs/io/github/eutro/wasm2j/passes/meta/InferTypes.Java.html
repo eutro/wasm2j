@@ -15,7 +15,7 @@
 <script type="text/javascript" src="../../../../../../script-dir/jquery-ui.min.js"></script>
 </head>
 <body class="class-declaration-page">
-<script type="text/javascript">var data = {"i0":10};
+<script type="text/javascript">var data = {"i0":10,"i1":10};
 var tabs = {65535:["t0","All Methods"],2:["t2","Instance Methods"],8:["t4","Concrete Methods"]};
 var altColor = "alt-color";
 var rowColor = "row-color";
@@ -153,13 +153,15 @@ extends <a href="InferTypes.html" title="class in io.github.eutro.wasm2j.passes.
 <th class="col-second" scope="row"><code><span class="member-name-link"><a href="#inferInsn(io.github.eutro.wasm2j.ssa.Insn)">inferInsn</a></span>&#8203;(<a href="../../ssa/Insn.html" title="class in io.github.eutro.wasm2j.ssa">Insn</a>&nbsp;insn)</code></th>
 <td class="col-last">&nbsp;</td>
 </tr>
+<tr class="row-color" id="i1">
+<td class="col-first"><code>void</code></td>
+<th class="col-second" scope="row"><code><span class="member-name-link"><a href="#runInPlace(io.github.eutro.wasm2j.ssa.Function)">runInPlace</a></span>&#8203;(<a href="../../ssa/Function.html" title="class in io.github.eutro.wasm2j.ssa">Function</a>&nbsp;func)</code></th>
+<td class="col-last">&nbsp;</td>
+</tr>
 </tbody>
 </table>
 </div>
 </div>
-<div class="inherited-list">
-<h3 id="methods.inherited.from.class.io.github.eutro.wasm2j.passes.meta.InferTypes">Methods inherited from class&nbsp;io.github.eutro.wasm2j.passes.meta.<a href="InferTypes.html" title="class in io.github.eutro.wasm2j.passes.meta">InferTypes</a></h3>
-<code><a href="InferTypes.html#runInPlace(io.github.eutro.wasm2j.ssa.Function)">runInPlace</a></code></div>
 <div class="inherited-list">
 <h3 id="methods.inherited.from.class.java.lang.Object">Methods inherited from class&nbsp;java.lang.Object</h3>
 <code>clone, equals, finalize, getClass, hashCode, notify, notifyAll, toString, wait, wait, wait</code></div>
@@ -201,6 +203,18 @@ extends <a href="InferTypes.html" title="class in io.github.eutro.wasm2j.passes.
 <dl class="notes">
 <dt>Specified by:</dt>
 <dd><code><a href="InferTypes.html#inferInsn(io.github.eutro.wasm2j.ssa.Insn)">inferInsn</a></code>&nbsp;in class&nbsp;<code><a href="InferTypes.html" title="class in io.github.eutro.wasm2j.passes.meta">InferTypes</a>&lt;<a href="https://asm.ow2.io/javadoc/org/objectweb/asm/Type.html" title="class or interface in org.objectweb.asm" class="external-link">Type</a>&gt;</code></dd>
+</dl>
+</section>
+</li>
+<li>
+<section class="detail" id="runInPlace(io.github.eutro.wasm2j.ssa.Function)">
+<h3>runInPlace</h3>
+<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type">void</span>&nbsp;<span class="member-name">runInPlace</span>&#8203;(<span class="parameters"><a href="../../ssa/Function.html" title="class in io.github.eutro.wasm2j.ssa">Function</a>&nbsp;func)</span></div>
+<dl class="notes">
+<dt>Specified by:</dt>
+<dd><code><a href="../InPlaceIRPass.html#runInPlace(T)">runInPlace</a></code>&nbsp;in interface&nbsp;<code><a href="../InPlaceIRPass.html" title="interface in io.github.eutro.wasm2j.passes">InPlaceIRPass</a>&lt;<a href="../../ssa/Function.html" title="class in io.github.eutro.wasm2j.ssa">Function</a>&gt;</code></dd>
+<dt>Overrides:</dt>
+<dd><code><a href="InferTypes.html#runInPlace(io.github.eutro.wasm2j.ssa.Function)">runInPlace</a></code>&nbsp;in class&nbsp;<code><a href="InferTypes.html" title="class in io.github.eutro.wasm2j.passes.meta">InferTypes</a>&lt;<a href="https://asm.ow2.io/javadoc/org/objectweb/asm/Type.html" title="class or interface in org.objectweb.asm" class="external-link">Type</a>&gt;</code></dd>
 </dl>
 </section>
 </li>
