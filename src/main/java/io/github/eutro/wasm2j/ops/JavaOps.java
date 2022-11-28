@@ -1,14 +1,19 @@
 package io.github.eutro.wasm2j.ops;
 
 import io.github.eutro.wasm2j.ext.CommonExts;
+import io.github.eutro.wasm2j.ext.JavaExts.Handlable;
+import io.github.eutro.wasm2j.ext.JavaExts.JavaField;
+import io.github.eutro.wasm2j.ext.JavaExts.JavaMethod;
 import io.github.eutro.wasm2j.intrinsics.IntrinsicImpl;
 import io.github.eutro.wasm2j.util.Disassembler;
-import io.github.eutro.wasm2j.ext.JavaExts.*;
 import org.jetbrains.annotations.Nullable;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
 import org.objectweb.asm.tree.AbstractInsnNode;
 import org.objectweb.asm.tree.InsnList;
+import org.objectweb.asm.tree.InsnNode;
+
+import static io.github.eutro.wasm2j.ext.CommonExts.markPure;
 
 public class JavaOps {
     public static final UnaryOpKey<IntrinsicImpl> INTRINSIC = new UnaryOpKey<>("intr");
@@ -118,6 +123,14 @@ public class JavaOps {
             }
         }
     }
+
+    public static Op IADD = markPure(insns(new InsnNode(Opcodes.IADD)));
+    public static Op LADD = markPure(insns(new InsnNode(Opcodes.LADD)));
+    public static Op ISUB = markPure(insns(new InsnNode(Opcodes.ISUB)));
+    public static Op IMUL = markPure(insns(new InsnNode(Opcodes.IMUL)));
+    public static Op I2L = markPure(insns(new InsnNode(Opcodes.I2L)));
+    public static Op I2L_U = markPure(INVOKE
+            .create(JavaMethod.fromJava(Integer.class, "toUnsignedLong", int.class)));
 
     static {
         for (OpKey key : new OpKey[]{

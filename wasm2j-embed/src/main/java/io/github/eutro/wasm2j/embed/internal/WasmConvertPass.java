@@ -32,7 +32,6 @@ import org.jetbrains.annotations.NotNull;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
 import org.objectweb.asm.tree.ClassNode;
-import org.objectweb.asm.tree.InsnNode;
 import org.objectweb.asm.tree.InvokeDynamicInsnNode;
 import org.objectweb.asm.tree.TypeInsnNode;
 
@@ -524,7 +523,7 @@ public class WasmConvertPass {
 
             private Var getAddr(IRBuilder ib, WasmOps.WithMemArg<?> arg, Var addr) {
                 if (arg.offset != 0) {
-                    return ib.insert(JavaOps.insns(new InsnNode(Opcodes.IADD))
+                    return ib.insert(JavaOps.IADD
                                     .insn(addr, ib.insert(CommonOps.constant(arg.offset), "offset")),
                             "addr");
                 }

@@ -16,104 +16,34 @@ public class SpecTest {
     public static final File DEBUG_OUTPUT_DIRECTORY = new File("build/wasmout");
     public static final String SOURCE = "" +
             "(module\n" +
-            "  (func (export \"ef0\") (result i32) (i32.const 0))\n" +
-            "  (func (export \"ef1\") (result i32) (i32.const 1))\n" +
-            "  (func (export \"ef2\") (result i32) (i32.const 2))\n" +
-            "  (func (export \"ef3\") (result i32) (i32.const 3))\n" +
-            "  (func (export \"ef4\") (result i32) (i32.const 4))\n" +
-            ")\n" +
-            "(register \"a\")" +
-            "(module\n" +
-            "  (type (func (result i32)))  ;; type #0\n" +
-            "  (import \"a\" \"ef0\" (func (result i32)))    ;; index 0\n" +
-            "  (import \"a\" \"ef1\" (func (result i32)))\n" +
-            "  (import \"a\" \"ef2\" (func (result i32)))\n" +
-            "  (import \"a\" \"ef3\" (func (result i32)))\n" +
-            "  (import \"a\" \"ef4\" (func (result i32)))    ;; index 4\n" +
-            "  (table $t0 30 30 funcref)\n" +
-            "  (table $t1 30 30 funcref)\n" +
-            "  (elem (table $t1) (i32.const 2) func 3 1 4 1)\n" +
-            "  (elem funcref\n" +
-            "    (ref.func 2) (ref.func 7) (ref.func 1) (ref.func 8))\n" +
-            "  (elem (table $t1) (i32.const 12) func 7 5 2 3 6)\n" +
-            "  (elem funcref\n" +
-            "    (ref.func 5) (ref.func 9) (ref.func 2) (ref.func 7) (ref.func 6))\n" +
-            "  (elem (table $t0) (i32.const 3) func 1 3 1 4)\n" +
-            "  (elem (table $t0) (i32.const 11) func 6 3 2 5 7)\n" +
-            "  (func (result i32) (i32.const 5))  ;; index 5\n" +
-            "  (func (result i32) (i32.const 6))\n" +
-            "  (func (result i32) (i32.const 7))\n" +
-            "  (func (result i32) (i32.const 8))\n" +
-            "  (func (result i32) (i32.const 9))  ;; index 9\n" +
-            "  (func (export \"test\")\n" +
-            "    (nop))\n" +
-            "  (func (export \"check_t0\") (param i32) (result i32)\n" +
-            "    (call_indirect $t1 (type 0) (local.get 0)))\n" +
-            "  (func (export \"check_t1\") (param i32) (result i32)\n" +
-            "    (call_indirect $t0 (type 0) (local.get 0)))\n" +
-            ")\n" +
+            "  (type (func (result i32)))\n" +
+            "  (table 128 128 funcref)\n" +
+            "  (elem (i32.const 112)\n" +
+            "         $f0 $f1 $f2 $f3 $f4 $f5 $f6 $f7 $f8 $f9 $f10 $f11 $f12 $f13 $f14 $f15)\n" +
+            "  (func $f0 (export \"f0\") (result i32) (i32.const 0))\n" +
+            "  (func $f1 (export \"f1\") (result i32) (i32.const 1))\n" +
+            "  (func $f2 (export \"f2\") (result i32) (i32.const 2))\n" +
+            "  (func $f3 (export \"f3\") (result i32) (i32.const 3))\n" +
+            "  (func $f4 (export \"f4\") (result i32) (i32.const 4))\n" +
+            "  (func $f5 (export \"f5\") (result i32) (i32.const 5))\n" +
+            "  (func $f6 (export \"f6\") (result i32) (i32.const 6))\n" +
+            "  (func $f7 (export \"f7\") (result i32) (i32.const 7))\n" +
+            "  (func $f8 (export \"f8\") (result i32) (i32.const 8))\n" +
+            "  (func $f9 (export \"f9\") (result i32) (i32.const 9))\n" +
+            "  (func $f10 (export \"f10\") (result i32) (i32.const 10))\n" +
+            "  (func $f11 (export \"f11\") (result i32) (i32.const 11))\n" +
+            "  (func $f12 (export \"f12\") (result i32) (i32.const 12))\n" +
+            "  (func $f13 (export \"f13\") (result i32) (i32.const 13))\n" +
+            "  (func $f14 (export \"f14\") (result i32) (i32.const 14))\n" +
+            "  (func $f15 (export \"f15\") (result i32) (i32.const 15))\n" +
+            "  (func (export \"test\") (param $n i32) (result i32)\n" +
+            "    (call_indirect (type 0) (local.get $n)))\n" +
+            "  (func (export \"run\") (param $targetOffs i32) (param $srcOffs i32) (param $len i32)\n" +
+            "    (table.copy (local.get $targetOffs) (local.get $srcOffs) (local.get $len))))\n" +
             "\n" +
-            "(invoke \"test\")\n" +
-            "(assert_trap (invoke \"check_t0\" (i32.const 0)) \"uninitialized element\")\n" +
-            "(assert_trap (invoke \"check_t0\" (i32.const 1)) \"uninitialized element\")\n" +
-            "(assert_return (invoke \"check_t0\" (i32.const 2)) (i32.const 3))\n" +
-            "(assert_return (invoke \"check_t0\" (i32.const 3)) (i32.const 1))\n" +
-            "(assert_return (invoke \"check_t0\" (i32.const 4)) (i32.const 4))\n" +
-            "(assert_return (invoke \"check_t0\" (i32.const 5)) (i32.const 1))\n" +
-            "(assert_trap (invoke \"check_t0\" (i32.const 6)) \"uninitialized element\")\n" +
-            "(assert_trap (invoke \"check_t0\" (i32.const 7)) \"uninitialized element\")\n" +
-            "(assert_trap (invoke \"check_t0\" (i32.const 8)) \"uninitialized element\")\n" +
-            "(assert_trap (invoke \"check_t0\" (i32.const 9)) \"uninitialized element\")\n" +
-            "(assert_trap (invoke \"check_t0\" (i32.const 10)) \"uninitialized element\")\n" +
-            "(assert_trap (invoke \"check_t0\" (i32.const 11)) \"uninitialized element\")\n" +
-            "(assert_return (invoke \"check_t0\" (i32.const 12)) (i32.const 7))\n" +
-            "(assert_return (invoke \"check_t0\" (i32.const 13)) (i32.const 5))\n" +
-            "(assert_return (invoke \"check_t0\" (i32.const 14)) (i32.const 2))\n" +
-            "(assert_return (invoke \"check_t0\" (i32.const 15)) (i32.const 3))\n" +
-            "(assert_return (invoke \"check_t0\" (i32.const 16)) (i32.const 6))\n" +
-            "(assert_trap (invoke \"check_t0\" (i32.const 17)) \"uninitialized element\")\n" +
-            "(assert_trap (invoke \"check_t0\" (i32.const 18)) \"uninitialized element\")\n" +
-            "(assert_trap (invoke \"check_t0\" (i32.const 19)) \"uninitialized element\")\n" +
-            "(assert_trap (invoke \"check_t0\" (i32.const 20)) \"uninitialized element\")\n" +
-            "(assert_trap (invoke \"check_t0\" (i32.const 21)) \"uninitialized element\")\n" +
-            "(assert_trap (invoke \"check_t0\" (i32.const 22)) \"uninitialized element\")\n" +
-            "(assert_trap (invoke \"check_t0\" (i32.const 23)) \"uninitialized element\")\n" +
-            "(assert_trap (invoke \"check_t0\" (i32.const 24)) \"uninitialized element\")\n" +
-            "(assert_trap (invoke \"check_t0\" (i32.const 25)) \"uninitialized element\")\n" +
-            "(assert_trap (invoke \"check_t0\" (i32.const 26)) \"uninitialized element\")\n" +
-            "(assert_trap (invoke \"check_t0\" (i32.const 27)) \"uninitialized element\")\n" +
-            "(assert_trap (invoke \"check_t0\" (i32.const 28)) \"uninitialized element\")\n" +
-            "(assert_trap (invoke \"check_t0\" (i32.const 29)) \"uninitialized element\")\n" +
-            "(assert_trap (invoke \"check_t1\" (i32.const 0)) \"uninitialized element\")\n" +
-            "(assert_trap (invoke \"check_t1\" (i32.const 1)) \"uninitialized element\")\n" +
-            "(assert_trap (invoke \"check_t1\" (i32.const 2)) \"uninitialized element\")\n" +
-            "(assert_return (invoke \"check_t1\" (i32.const 3)) (i32.const 1))\n" +
-            "(assert_return (invoke \"check_t1\" (i32.const 4)) (i32.const 3))\n" +
-            "(assert_return (invoke \"check_t1\" (i32.const 5)) (i32.const 1))\n" +
-            "(assert_return (invoke \"check_t1\" (i32.const 6)) (i32.const 4))\n" +
-            "(assert_trap (invoke \"check_t1\" (i32.const 7)) \"uninitialized element\")\n" +
-            "(assert_trap (invoke \"check_t1\" (i32.const 8)) \"uninitialized element\")\n" +
-            "(assert_trap (invoke \"check_t1\" (i32.const 9)) \"uninitialized element\")\n" +
-            "(assert_trap (invoke \"check_t1\" (i32.const 10)) \"uninitialized element\")\n" +
-            "(assert_return (invoke \"check_t1\" (i32.const 11)) (i32.const 6))\n" +
-            "(assert_return (invoke \"check_t1\" (i32.const 12)) (i32.const 3))\n" +
-            "(assert_return (invoke \"check_t1\" (i32.const 13)) (i32.const 2))\n" +
-            "(assert_return (invoke \"check_t1\" (i32.const 14)) (i32.const 5))\n" +
-            "(assert_return (invoke \"check_t1\" (i32.const 15)) (i32.const 7))\n" +
-            "(assert_trap (invoke \"check_t1\" (i32.const 16)) \"uninitialized element\")\n" +
-            "(assert_trap (invoke \"check_t1\" (i32.const 17)) \"uninitialized element\")\n" +
-            "(assert_trap (invoke \"check_t1\" (i32.const 18)) \"uninitialized element\")\n" +
-            "(assert_trap (invoke \"check_t1\" (i32.const 19)) \"uninitialized element\")\n" +
-            "(assert_trap (invoke \"check_t1\" (i32.const 20)) \"uninitialized element\")\n" +
-            "(assert_trap (invoke \"check_t1\" (i32.const 21)) \"uninitialized element\")\n" +
-            "(assert_trap (invoke \"check_t1\" (i32.const 22)) \"uninitialized element\")\n" +
-            "(assert_trap (invoke \"check_t1\" (i32.const 23)) \"uninitialized element\")\n" +
-            "(assert_trap (invoke \"check_t1\" (i32.const 24)) \"uninitialized element\")\n" +
-            "(assert_trap (invoke \"check_t1\" (i32.const 25)) \"uninitialized element\")\n" +
-            "(assert_trap (invoke \"check_t1\" (i32.const 26)) \"uninitialized element\")\n" +
-            "(assert_trap (invoke \"check_t1\" (i32.const 27)) \"uninitialized element\")\n" +
-            "(assert_trap (invoke \"check_t1\" (i32.const 28)) \"uninitialized element\")\n" +
-            "(assert_trap (invoke \"check_t1\" (i32.const 29)) \"uninitialized element\")";
+            "(assert_trap (invoke \"run\" (i32.const 0) (i32.const 112) (i32.const 4294967264))\n" +
+            "             \"out of bounds table access\")\n" +
+            "(assert_trap (invoke \"test\" (i32.const 0)) \"uninitialized element\")";
 
     @Test
     void inlineTest() {

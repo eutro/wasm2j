@@ -10,6 +10,8 @@ import io.github.eutro.wasm2j.ssa.IRBuilder;
 import io.github.eutro.wasm2j.ssa.Module;
 import io.github.eutro.wasm2j.ssa.Var;
 import io.github.eutro.wasm2j.util.IRUtils;
+import org.objectweb.asm.Opcodes;
+import org.objectweb.asm.tree.InsnNode;
 
 public interface TableConvention extends ExportableConvention, ConstructorCallback {
     void emitTableRef(IRBuilder ib, Effect effect);
@@ -30,7 +32,11 @@ public interface TableConvention extends ExportableConvention, ConstructorCallba
                 .create(table)
                 .insn()
                 .assignTo(sz));
-        IRUtils.trapWhen(ib, JavaOps.BR_COND.create(JavaOps.JumpType.IF_ICMPGT).insn(bound, sz),
+        sz = ib.insert(JavaOps.I2L.insn(sz), "szL");
+        IRUtils.trapWhen(ib, JavaOps.BR_COND.create(JavaOps.JumpType.IFGT)
+                        .insn(ib.insert(JavaOps.insns(new InsnNode(Opcodes.LCMP))
+                                .insn(bound, sz),
+                                "cmp")),
                 "out of bounds table access");
     }
 

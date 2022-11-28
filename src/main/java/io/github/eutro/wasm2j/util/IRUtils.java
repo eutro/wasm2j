@@ -3,9 +3,7 @@ package io.github.eutro.wasm2j.util;
 import io.github.eutro.wasm2j.ext.JavaExts;
 import io.github.eutro.wasm2j.ops.*;
 import io.github.eutro.wasm2j.ssa.*;
-import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
-import org.objectweb.asm.tree.InsnNode;
 
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodType;
@@ -15,11 +13,8 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.function.Consumer;
 
-import static io.github.eutro.wasm2j.ext.CommonExts.markPure;
 import static io.github.eutro.wasm2j.ops.JavaOps.JumpType.IFEQ;
 import static io.github.eutro.wasm2j.ops.JavaOps.JumpType.IF_ICMPLE;
-import static org.objectweb.asm.Opcodes.IADD;
-import static org.objectweb.asm.Opcodes.ISUB;
 
 public class IRUtils {
     public static final JavaExts.JavaClass BYTE_BUFFER_CLASS = new JavaExts.JavaClass(Type.getInternalName(ByteBuffer.class));
@@ -75,10 +70,9 @@ public class IRUtils {
     public static Var getAddr(IRBuilder ib, WasmOps.WithMemArg<?> wmArg, Var ptr) {
         return wmArg.offset == 0
                 ? ptr
-                : ib.insert(markPure(JavaOps.insns(new InsnNode(Opcodes.IADD)))
-                        .insn(ptr,
-                                ib.insert(CommonOps.constant(wmArg.offset),
-                                        "offset")),
+                : ib.insert(JavaOps.IADD.insn(ptr,
+                        ib.insert(CommonOps.constant(wmArg.offset),
+                                "offset")),
                 "addr");
     }
 
@@ -94,11 +88,9 @@ public class IRUtils {
         Var[] loopSuccs = new Var[allLoopVars.length];
         Var[] loopVs = new Var[allLoopVars.length];
 
-        Op add = JavaOps.insns(new InsnNode(IADD));
-        Op sub = JavaOps.insns(new InsnNode(ISUB));
         if (invert) {
             for (int i = 0; i < toInc.length; i++) {
-                allLoopVars[i] = ib.insert(sub.insn(ib.insert(add.insn(allLoopVars[i], len), "n-i"),
+                allLoopVars[i] = ib.insert(JavaOps.ISUB.insn(ib.insert(JavaOps.IADD.insn(allLoopVars[i], len), "n-i"),
                         ib.insert(CommonOps.constant(1), "1")), "n-i-1");
             }
         }
@@ -117,7 +109,7 @@ public class IRUtils {
         f.accept(loopVs);
 
         for (int i = 0; i < allLoopVars.length; i++) {
-            Op op = invert || i == toInc.length ? sub : add;
+            Op op = invert || i == toInc.length ? JavaOps.ISUB : JavaOps.IADD;
             ib.insert(op.insn(loopVs[i], ib.insert(CommonOps.constant(1), "i")), loopSuccs[i]);
         }
 
@@ -143,8 +135,12 @@ public class IRUtils {
         Var value = iter.next();
         Var len = iter.next();
 
-        Op add = JavaOps.insns(new InsnNode(IADD));
-        emitBoundsCheck.call(t, ib, thisIdx, ib.insert(add.insn(idx, len), "idxEnd"));
+        emitBoundsCheck.call(t, ib, thisIdx,
+                ib.insert(JavaOps.LADD.insn(
+                                ib.insert(JavaOps.I2L_U.insn(idx), "iL"),
+                                ib.insert(JavaOps.I2L_U.insn(len), "lenL")
+                        ),
+                        "idxEnd"));
         IRUtils.lenLoop(ib, new Var[]{idx}, false, len, vars -> store.call(thisIdx, vars[0], value));
     }
 
@@ -163,9 +159,11 @@ public class IRUtils {
         Var srcAddr = iter.next();
         Var len = iter.next();
 
-        Op add = JavaOps.insns(new InsnNode(IADD));
-        emitBoundsCheck.call(srcT, ib, thisIdx, ib.insert(add.insn(srcAddr, len), "srcEnd"));
-        emitBoundsCheck.call(dstT, ib, otherIdx, ib.insert(add.insn(dstAddr, len), "dstEnd"));
+        Var lenLong = ib.insert(JavaOps.I2L_U.insn(len), "lenL");
+        emitBoundsCheck.call(srcT, ib, thisIdx,
+                ib.insert(JavaOps.LADD.insn(ib.insert(JavaOps.I2L_U.insn(srcAddr), "sL"), lenLong), "srcEnd"));
+        emitBoundsCheck.call(dstT, ib, otherIdx,
+                ib.insert(JavaOps.LADD.insn(ib.insert(JavaOps.I2L_U.insn(dstAddr), "dL"), lenLong), "dstEnd"));
 
         BasicBlock endBb = ib.func.newBb();
         BasicBlock leBlock = ib.func.newBb(); // d <= s

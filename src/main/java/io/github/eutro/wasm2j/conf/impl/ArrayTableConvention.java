@@ -95,7 +95,7 @@ public class ArrayTableConvention extends DelegatingExporter implements TableCon
 
         Var tbl = table.get(ib);
         Var sz = ib.insert(JavaOps.insns(new InsnNode(Opcodes.ARRAYLENGTH)).insn(tbl), "sz");
-        Var newSz = ib.insert(JavaOps.insns(new InsnNode(Opcodes.IADD)).insn(growBy, sz), "newSz");
+        Var newSz = ib.insert(JavaOps.IADD.insn(growBy, sz), "newSz");
         if (max != null) {
             k = ib.func.newBb();
             ib.insertCtrl(JavaOps.BR_COND.create(JavaOps.JumpType.IF_ICMPGT)

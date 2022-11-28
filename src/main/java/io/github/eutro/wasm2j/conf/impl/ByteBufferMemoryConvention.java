@@ -138,7 +138,7 @@ public class ByteBufferMemoryConvention extends DelegatingExporter implements Me
         Var sz = ib.insert(JavaOps.insns(new InsnNode(Opcodes.IDIV))
                         .insn(rawSz, ib.insert(CommonOps.constant(PAGE_SIZE), "psz")),
                 "sz");
-        Var newSz = ib.insert(JavaOps.insns(new InsnNode(Opcodes.IADD))
+        Var newSz = ib.insert(JavaOps.IADD
                         .insn(sz, growBy),
                 "newSz");
 
@@ -157,9 +157,9 @@ public class ByteBufferMemoryConvention extends DelegatingExporter implements Me
                         .create(JavaExts.JavaMethod.fromJava(ByteBuffer.class, "order", ByteOrder.class))
                         .insn(ib.insert(JavaOps.INVOKE
                                                 .create(JavaExts.JavaMethod.fromJava(ByteBuffer.class, "allocateDirect", int.class))
-                                                .insn(ib.insert(JavaOps.insns(new InsnNode(Opcodes.IADD))
+                                                .insn(ib.insert(JavaOps.IADD
                                                                 .insn(rawSz,
-                                                                        ib.insert(JavaOps.insns(new InsnNode(Opcodes.IMUL))
+                                                                        ib.insert(JavaOps.IMUL
                                                                                         .insn(ib.insert(CommonOps.constant(PAGE_SIZE), "psz"),
                                                                                                 growBy),
                                                                                 "byRaw")),
@@ -232,7 +232,7 @@ public class ByteBufferMemoryConvention extends DelegatingExporter implements Me
 
         data = ib.insert(JavaOps.INVOKE.create(sliceMethod).insn(data), "sliced");
         data = ib.insert(JavaOps.INVOKE.create(positionMethod).insn(data, srcIdx), "positioned");
-        Var limit = ib.insert(JavaOps.insns(new InsnNode(Opcodes.IADD)).insn(srcIdx, length), "limit");
+        Var limit = ib.insert(JavaOps.IADD.insn(srcIdx, length), "limit");
         data = ib.insert(JavaOps.INVOKE.create(limitMethod).insn(data, limit), "limited");
 
         ib.insert(JavaOps.INVOKE.create(putMethod).insn(mem, data), "mem");

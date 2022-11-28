@@ -13,7 +13,8 @@ import io.github.eutro.wasm2j.ssa.Var;
 import io.github.eutro.wasm2j.util.IRUtils;
 import org.objectweb.asm.tree.InsnNode;
 
-import static org.objectweb.asm.Opcodes.IMUL;
+import static org.objectweb.asm.Opcodes.LCMP;
+import static org.objectweb.asm.Opcodes.LMUL;
 
 public interface MemoryConvention extends ExportableConvention, ConstructorCallback {
     void emitMemLoad(IRBuilder ib, Effect effect);
@@ -32,10 +33,14 @@ public interface MemoryConvention extends ExportableConvention, ConstructorCallb
                 .create(mem)
                 .insn()
                 .assignTo(sz));
-        Var szRaw = ib.insert(JavaOps.insns(new InsnNode(IMUL))
-                        .insn(sz, ib.insert(CommonOps.constant(Opcodes.PAGE_SIZE), "pgSz")),
+        sz = ib.insert(JavaOps.I2L.insn(sz), "szL");
+        Var szRaw = ib.insert(JavaOps.insns(new InsnNode(LMUL))
+                        .insn(sz, ib.insert(CommonOps.constant((long) Opcodes.PAGE_SIZE), "pgSz")),
                 "szRaw");
-        IRUtils.trapWhen(ib, JavaOps.BR_COND.create(JavaOps.JumpType.IF_ICMPGT).insn(bound, szRaw),
+        IRUtils.trapWhen(ib, JavaOps.BR_COND.create(JavaOps.JumpType.IFGT)
+                        .insn(ib.insert(JavaOps.insns(new InsnNode(LCMP))
+                                .insn(bound, szRaw),
+                                "cmp")),
                 "out of bounds memory access");
     }
 
