@@ -270,18 +270,21 @@ public abstract class InferTypes<Ty> implements InPlaceIRPass<Function> {
                         new SFuncType.Parser<>(Type::getType)::parse)
                         .andThen(it -> $ -> it))
                 .put(insn -> {
-                            String desc = ((MethodInsnNode) insn).desc;
+                            String desc = insn instanceof MethodInsnNode
+                                    ? ((MethodInsnNode) insn).desc
+                                    : ((InvokeDynamicInsnNode) insn).desc;
                             Type[] argTys = Type.getArgumentTypes(desc);
                             Type retTy = Type.getReturnType(desc);
                             Type[] res = retTy.getSize() == 0 ? new Type[0] : new Type[]{retTy};
                             intifyPrimitives(res);
                             int arity = argTys.length;
-                            if (insn.getOpcode() != INVOKESTATIC) {
+                            if (insn.getOpcode() != INVOKESTATIC &&
+                                    insn.getOpcode() != INVOKEDYNAMIC) {
                                 arity += 1;
                             }
                             return withArity(arity, $ -> res);
                         },
-                        INVOKESPECIAL, INVOKEVIRTUAL, INVOKEINTERFACE, INVOKESTATIC)
+                        INVOKESPECIAL, INVOKEVIRTUAL, INVOKEINTERFACE, INVOKESTATIC, INVOKEDYNAMIC)
                 .put(insn -> {
                             String desc = ((FieldInsnNode) insn).desc;
                             Type[] res = {Type.getType(desc)};

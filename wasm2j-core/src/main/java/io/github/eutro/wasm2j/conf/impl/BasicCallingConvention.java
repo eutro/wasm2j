@@ -131,7 +131,7 @@ public class BasicCallingConvention implements CallingConvention {
         return methodDesc(tn.params, tn.returns);
     }
 
-    private static Type methodDesc(byte[] params, byte[] returns) {
+    public static Type methodDesc(byte[] params, byte[] returns) {
         Type[] args = new Type[params.length];
         for (int i = 0; i < params.length; i++) {
             args[i] = javaType(params[i]);

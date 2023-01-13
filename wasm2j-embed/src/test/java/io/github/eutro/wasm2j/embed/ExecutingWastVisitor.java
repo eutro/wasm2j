@@ -19,8 +19,8 @@ public class ExecutingWastVisitor extends WastVisitor {
     private Module lastModule;
     private boolean wasRefused;
     private ModuleRefusedException refusalReason;
-    Map<String, ModuleInst> namedModuleInsts = new HashMap<>();
-    private ModuleInst lastModuleInst;
+    Map<String, Instance> namedModuleInsts = new HashMap<>();
+    private Instance lastInstance;
     private final WebAssembly wasm;
     private final Store store;
 
@@ -33,26 +33,26 @@ public class ExecutingWastVisitor extends WastVisitor {
         this(new WebAssembly());
     }
 
-    ModuleInst getInst(@Nullable String name) {
+    Instance getInst(@Nullable String name) {
         if (name == null) {
             if (wasRefused) throw new IllegalStateException();
-            return lastModuleInst;
+            return lastInstance;
         } else {
-            ModuleInst got = namedModuleInsts.get(name);
+            Instance got = namedModuleInsts.get(name);
             if (got == null) throw new NoSuchElementException(name);
             return got;
         }
     }
 
-    private final Map<String, ModuleInst> registered = new HashMap<>();
+    private final Map<String, Instance> registered = new HashMap<>();
 
     {
         // https://github.com/WebAssembly/spec/tree/main/interpreter#spectest-host-module
-        ExternVal globalI32 = ExternVal.global(new Global.BoxGlobal(666));
-        ExternVal globalI64 = ExternVal.global(new Global.BoxGlobal(666L));
-        ExternVal globalF32 = ExternVal.global(new Global.BoxGlobal(666F));
-        ExternVal globalF64 = ExternVal.global(new Global.BoxGlobal(666D));
-        Table.ArrayTable table = new Table.ArrayTable(10, 20);
+        ExternVal globalI32 = new Global.BoxGlobal(ValType.I32, 666).setMut(false);
+        ExternVal globalI64 = new Global.BoxGlobal(ValType.I64, 666L).setMut(false);
+        ExternVal globalF32 = new Global.BoxGlobal(ValType.F32, 666F).setMut(false);
+        ExternVal globalF64 = new Global.BoxGlobal(ValType.F64, 666D).setMut(false);
+        Table.ArrayTable table = new Table.ArrayTable(10, 20, ValType.FUNCREF);
         registered.put("spectest", name -> {
             switch (name) {
                 case "global_i32":
@@ -64,9 +64,9 @@ public class ExecutingWastVisitor extends WastVisitor {
                 case "global_f64":
                     return globalF64;
                 case "table":
-                    return ExternVal.table(table);
+                    return table;
                 case "memory":
-                    return ExternVal.memory(new Memory.ByteBufferMemory(1, 2));
+                    return new Memory.ByteBufferMemory(1, 2);
                 case "print":
                     return ExternVal.func(() -> System.out.println());
                 case "print_i32":
@@ -91,12 +91,12 @@ public class ExecutingWastVisitor extends WastVisitor {
             @Override
             public void visitEnd() {
                 try {
-                    lastModuleInst = linkAndInst();
-                    if (name != null) namedModuleInsts.put(name, lastModuleInst);
+                    lastInstance = linkAndInst();
+                    if (name != null) namedModuleInsts.put(name, lastInstance);
                     wasRefused = false;
                     refusalReason = null;
                 } catch (ModuleRefusedException e) {
-                    lastModuleInst = null;
+                    lastInstance = null;
                     wasRefused = true;
                     refusalReason = e;
                 } catch (Throwable t) {
@@ -115,7 +115,7 @@ public class ExecutingWastVisitor extends WastVisitor {
             public void visitInvoke(@Nullable String name, String string, Object... args) {
                 try {
                     wasm.instanceExport(getInst(name), string)
-                            .getAsFuncRaw()
+                            .getAsHandleRaw()
                             .invokeWithArguments(args);
                 } catch (Throwable t) {
                     throw Utils.rethrow(t);
@@ -127,7 +127,7 @@ public class ExecutingWastVisitor extends WastVisitor {
     @Override
     public void visitRegister(String string, @Nullable String name) {
         if (wasRefused) throw new RuntimeException("Previous module was refused", refusalReason);
-        registered.put(string, lastModuleInst);
+        registered.put(string, lastInstance);
     }
 
     @Override
@@ -259,23 +259,23 @@ public class ExecutingWastVisitor extends WastVisitor {
             lastModule = wasm.moduleFromNode(Parser.parseQuoteModule(module));
         }
 
-        protected ModuleInst linkAndInst() {
-            List<ModuleImport> imports = wasm.moduleImports(lastModule);
+        protected Instance linkAndInst() {
+            List<Import> imports = wasm.moduleImports(lastModule);
             List<ExternVal> importVals = new ArrayList<>(imports.size());
-            for (ModuleImport theImport : imports) {
+            for (Import theImport : imports) {
                 ExternVal theExport;
                 outer:
                 {
                     inner:
                     {
-                        ModuleInst importModule = registered.get(theImport.module);
+                        Instance importModule = registered.get(theImport.module);
                         if (importModule == null) break inner;
                         theExport = wasm.instanceExport(importModule, theImport.name);
                         if (theExport == null) break inner;
-                        if (theExport.getType() != theImport.type) break inner;
+                        if (!theImport.type.assignableFrom(theExport.getType())) break inner;
                         break outer;
                     }
-                    throw new LinkingException("unknown import");
+                    throw new LinkingException("unknown import: " + theImport);
                 }
                 importVals.add(theExport);
             }
@@ -300,13 +300,16 @@ public class ExecutingWastVisitor extends WastVisitor {
             this.toWhat = toWhat;
         }
 
-        ExternVal getExport(@Nullable String name, String string, ExternType type) {
+        ExternVal getExport(@Nullable String name, String string, ExternType.Kind kind) {
             ExternVal export = wasm.instanceExport(getInst(name), string);
             msg = String.format("%s.\"%s\"", name, string);
             if (export == null) {
                 throw new NoSuchElementException(msg);
-            } else if (export.getType() != type) {
-                throw new IllegalStateException(msg + " is not a " + type);
+            } else if (!export.matchesType(null, kind)) {
+                throw new IllegalStateException("Type mismatch, expected: "
+                        + kind +
+                        ", got: "
+                        + export.getType().getKind());
             }
             return export;
         }
@@ -315,7 +318,9 @@ public class ExecutingWastVisitor extends WastVisitor {
         public void visitInvoke(@Nullable String name, String string, Object... args) {
             msgExtra = Arrays.toString(args);
             try {
-                returned = getExport(name, string, ExternType.FUNC).getAsFuncRaw().invokeWithArguments(args);
+                returned = getExport(name, string, ExternType.Kind.FUNC)
+                        .getAsHandleRaw()
+                        .invokeWithArguments(args);
                 hasReturned = true;
             } catch (Throwable t) {
                 thrown = t;
@@ -326,7 +331,9 @@ public class ExecutingWastVisitor extends WastVisitor {
         public void visitGet(@Nullable String name, String string) {
             msgExtra = ".get";
             try {
-                returned = getExport(name, string, ExternType.GLOBAL).getAsGlobal().get();
+                returned = getExport(name, string, ExternType.Kind.GLOBAL)
+                        .getAsGlobal()
+                        .get();
                 hasReturned = true;
             } catch (Throwable t) {
                 thrown = t;
@@ -347,7 +354,7 @@ public class ExecutingWastVisitor extends WastVisitor {
                 th.addSuppressed(new RuntimeException(String.format("in %s #%d (%s/%s%s -> %s)",
                         inWhat,
                         arc,
-                        lastModuleInst.getClass().getSimpleName(),
+                        lastInstance.getClass().getSimpleName(),
                         msg,
                         msgExtra,
                         toWhat)));

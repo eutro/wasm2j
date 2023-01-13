@@ -5,6 +5,7 @@ import io.github.eutro.jwasm.sexp.Parser;
 import io.github.eutro.jwasm.sexp.Reader;
 import io.github.eutro.jwasm.tree.AbstractImportNode;
 import io.github.eutro.jwasm.tree.ExportNode;
+import io.github.eutro.jwasm.tree.ExportsNode;
 import io.github.eutro.jwasm.tree.ModuleNode;
 import io.github.eutro.wasm2j.embed.internal.WasmConvertPass;
 import io.github.eutro.wasm2j.ext.JavaExts;
@@ -58,24 +59,24 @@ public class WebAssembly {
 
     private final IRPass<ModuleNode, ClassNode> PASS = WasmConvertPass.getPass();
 
-    public ModuleInst moduleInstantiate(Store store, Module module, ExternVal[] imports) {
+    public Instance moduleInstantiate(Store store, Module module, ExternVal[] imports) {
         module.validate();
 
         {
-            List<ModuleImport> importVals = moduleImports(module);
-            if (importVals.size() != imports.length) {
+            List<Import> declaredImports = moduleImports(module);
+            if (declaredImports.size() != imports.length) {
                 throw new IllegalArgumentException(String.format("Import lengths mismatch, got: %d, expected: %s",
                         imports.length,
-                        importVals));
+                        declaredImports));
             }
             for (int i = 0; i < imports.length; i++) {
-                if (importVals.get(i).type != imports[i].getType()) {
+                if (!declaredImports.get(i).type.assignableFrom(imports[i].getType())) {
                     throw new IllegalArgumentException(String.format("Import types mismatch, got: %s, expected: %s",
                             Arrays.stream(imports)
                                     .map(ExternVal::getType)
                                     .map(Objects::toString)
                                     .collect(Collectors.joining(", ", "[", "]")),
-                            importVals
+                            declaredImports
                     ));
                 }
             }
@@ -84,7 +85,7 @@ public class WebAssembly {
         Class<?> moduleClass;
         try {
             ClassNode classNode = PASS.run(module.getNode());
-            classNode.interfaces.add(Type.getInternalName(ModuleInst.class));
+            classNode.interfaces.add(Type.getInternalName(Instance.class));
             moduleClass = store.defineClass(classNode, debugOutput);
         } catch (OutOfMemoryError e) {
             // chances are it was us here doing horrible things, so yield an exception instead of the error
@@ -100,37 +101,48 @@ public class WebAssembly {
         } catch (InstantiationException | IllegalAccessException e) {
             throw new IllegalStateException("Internal error instantiating module. This is a bug.", e);
         }
-        return (ModuleInst) inst;
+        return (Instance) inst;
     }
 
-    public List<ModuleImport> moduleImports(Module module) {
+    public List<Import> moduleImports(Module module) {
         module.validate();
         if (module.getNode().imports == null) return Collections.emptyList();
-        List<ModuleImport> ims = new ArrayList<>();
+        List<Import> ims = new ArrayList<>();
         for (AbstractImportNode iNode : module.getNode().imports) {
-            ims.add(new ModuleImport(
+            ims.add(new Import(
                     iNode.module,
                     iNode.name,
-                    ExternType.fromByte(iNode.importType())
+                    ExternType.fromImport(iNode, module.getNode())
             ));
         }
         return ims;
     }
 
-    public List<ModuleExport> moduleExports(Module module) {
+    public List<Export> moduleExports(Module module) {
         module.validate();
-        if (module.getNode().exports == null) return Collections.emptyList();
-        List<ModuleExport> exs = new ArrayList<>();
-        for (ExportNode export : module.getNode().exports) {
-            exs.add(new ModuleExport(
+        ExportsNode exports = module.getNode().exports;
+        if (exports == null || exports.exports.isEmpty()) return Collections.emptyList();
+        EnumMap<ExternType.Kind, List<ExternType>> imported = new EnumMap<>(ExternType.Kind.class);
+        for (Import moduleImport : moduleImports(module)) {
+            imported.computeIfAbsent(moduleImport.type.getKind(), $ -> new ArrayList<>()).add(moduleImport.type);
+        }
+        List<Export> exs = new ArrayList<>();
+        for (ExportNode export : exports) {
+            ExternType.Kind kind = ExternType.Kind.fromByte(export.type);
+            List<ExternType> importedOfKind = imported.getOrDefault(kind, Collections.emptyList());
+            exs.add(new Export(
                     export.name,
-                    ExternType.fromByte(export.type)
+                    export.index < importedOfKind.size()
+                            ? importedOfKind.get(export.index)
+                            : ExternType.getLocal(module.getNode(),
+                            kind,
+                            export.index - importedOfKind.size())
             ));
         }
         return exs;
     }
 
-    public ExternVal instanceExport(ModuleInst inst, String name) {
+    public ExternVal instanceExport(Instance inst, String name) {
         return inst.getExport(name);
     }
 }

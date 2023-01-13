@@ -170,7 +170,7 @@ public abstract class DefaultFactory implements WirJavaConventionFactory {
                     ModuleNode node = module.getExtOrThrow(WasmExts.MODULE);
                     Map<ExprNode, Function> funcMap = module.getExtOrThrow(WasmExts.FUNC_MAP);
 
-                    if (node.imports != null && node.imports.imports != null) {
+                    if (node.imports != null) {
                         for (AbstractImportNode importNode : node.imports) {
                             switch (importNode.importType()) {
                                 case IMPORTS_FUNC:
@@ -200,9 +200,9 @@ public abstract class DefaultFactory implements WirJavaConventionFactory {
                         }
                     }
 
-                    if (node.funcs != null && node.funcs.funcs != null) {
-                        assert node.types != null && node.types.types != null;
-                        assert node.codes != null && node.codes.codes != null;
+                    if (node.funcs != null && !node.funcs.funcs.isEmpty()) {
+                        assert node.types != null;
+                        assert node.codes != null;
                         int i = 0;
                         Iterator<CodeNode> it = node.codes.codes.iterator();
                         for (FuncNode fn : node.funcs) {

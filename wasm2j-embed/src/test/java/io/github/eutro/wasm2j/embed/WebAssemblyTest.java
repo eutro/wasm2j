@@ -16,6 +16,6 @@ class WebAssemblyTest {
                         "  (func $how (result i32) (i32.trunc_f32_s (f32.const 1.0)))" +
                         ")"
         );
-        ModuleInst inst = wasm.moduleInstantiate(store, module, new ExternVal[]{});
+        Instance inst = wasm.moduleInstantiate(store, module, new ExternVal[]{});
     }
 }

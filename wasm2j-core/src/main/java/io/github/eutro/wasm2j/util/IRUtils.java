@@ -1,8 +1,10 @@
 package io.github.eutro.wasm2j.util;
 
+import io.github.eutro.wasm2j.conf.impl.BasicCallingConvention;
 import io.github.eutro.wasm2j.ext.JavaExts;
 import io.github.eutro.wasm2j.ops.*;
 import io.github.eutro.wasm2j.ssa.*;
+import org.jetbrains.annotations.Nullable;
 import org.objectweb.asm.Type;
 
 import java.lang.invoke.MethodHandle;
@@ -13,6 +15,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.function.Consumer;
 
+import static io.github.eutro.jwasm.Opcodes.I32;
 import static io.github.eutro.wasm2j.ops.JavaOps.JumpType.IFEQ;
 import static io.github.eutro.wasm2j.ops.JavaOps.JumpType.IF_ICMPLE;
 
@@ -117,6 +120,13 @@ public class IRUtils {
         preds.set(1, ib.getBlock());
 
         ib.setBlock(endBlock);
+    }
+
+    public static Var emitNullableInt(IRBuilder ib, @Nullable Integer num) {
+        return num == null
+                ? ib.insert(CommonOps.constant(null), "nil")
+                : BasicCallingConvention.maybeBoxed(ib, ib.insert(CommonOps.constant(num), "n"),
+                I32, Type.getType(Integer.class));
     }
 
     //@formatter:off

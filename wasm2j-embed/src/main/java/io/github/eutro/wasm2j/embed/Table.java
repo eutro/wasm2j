@@ -6,9 +6,10 @@ import org.jetbrains.annotations.Nullable;
 
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodType;
+import java.lang.reflect.Array;
 import java.util.Arrays;
 
-public interface Table {
+public interface Table extends ExternVal {
     @GeneratedAccess
     @Nullable Object get(int index);
 
@@ -20,6 +21,9 @@ public interface Table {
 
     @GeneratedAccess
     default void init(int dstIdx, int srcIdx, int len, Object[] data) {
+        if (srcIdx + len > data.length || dstIdx + len > size()) {
+            throw new IndexOutOfBoundsException();
+        }
         for (int i = 0; i < len; i++) {
             set(dstIdx++, data[srcIdx++]);
         }
@@ -30,11 +34,18 @@ public interface Table {
         return -1;
     }
 
-    abstract class AbstractArrayTable implements Table {
-        private final Integer max;
+    @Override
+    ExternType.@NotNull Table getType();
 
-        public AbstractArrayTable(@Nullable Integer max) {
+    abstract class AbstractArrayTable implements Table {
+        protected final int min;
+        protected final Integer max;
+        protected final ValType componentType;
+
+        public AbstractArrayTable(int min, @Nullable Integer max, ValType componentType) {
+            this.min = min;
             this.max = max;
+            this.componentType = componentType;
         }
 
         protected abstract Object @NotNull [] getValues();
@@ -83,14 +94,23 @@ public interface Table {
             setValues(newValues);
             return sz;
         }
+
+        @Override
+        public ExternType.@NotNull Table getType() {
+            return new ExternType.Table(
+                    new ExternType.Limits(size(), max),
+                    componentType.getOpcode()
+            );
+        }
     }
 
     class ArrayTable extends AbstractArrayTable {
         private Object[] values;
 
-        public ArrayTable(int min, @Nullable Integer max) {
-            super(max);
-            this.values = new Object[min];
+        public ArrayTable(int min, @Nullable Integer max, ValType componentType) {
+            super(min, max, componentType);
+            // throws if given a primitive type
+            this.values = (Object[]) Array.newInstance(componentType.getType(), min);
         }
 
         @Override
@@ -105,9 +125,20 @@ public interface Table {
     }
 
     class HandleTable implements Table {
-        private final MethodHandle get, set, size, grow;
+        private final ExternType.Table type;
+        private final MethodHandle get;
+        private final MethodHandle set;
+        private final MethodHandle size;
+        private final MethodHandle grow;
 
-        public HandleTable(MethodHandle get, MethodHandle set, MethodHandle size, MethodHandle grow) {
+        public HandleTable(
+                ExternType.Table type,
+                MethodHandle get,
+                MethodHandle set,
+                MethodHandle size,
+                MethodHandle grow
+        ) {
+            this.type = type;
             this.get = get.asType(MethodType.methodType(Object.class, int.class));
             this.set = set.asType(MethodType.methodType(void.class, int.class, Object.class));
             this.size = size.asType(MethodType.methodType(int.class));
@@ -115,11 +146,12 @@ public interface Table {
         }
 
         @GeneratedAccess
-        public static HandleTable create(MethodHandle get,
+        public static HandleTable create(ExternType.Table kind,
+                                         MethodHandle get,
                                          MethodHandle set,
                                          MethodHandle size,
                                          MethodHandle grow) {
-            return new HandleTable(get, set, size, grow);
+            return new HandleTable(kind, get, set, size, grow);
         }
 
         @Override
@@ -156,6 +188,14 @@ public interface Table {
             } catch (Throwable t) {
                 throw Utils.rethrow(t);
             }
+        }
+
+        @Override
+        public ExternType.@NotNull Table getType() {
+            return new ExternType.Table(
+                    new ExternType.Limits(size(), type.limits.max),
+                    type.refType
+            );
         }
     }
 }

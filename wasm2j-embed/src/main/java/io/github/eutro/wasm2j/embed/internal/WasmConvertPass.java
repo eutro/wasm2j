@@ -55,12 +55,12 @@ public class WasmConvertPass {
             Object.class
     );
     public static final Type EV_TYPE = Type.getType(ExternVal.class);
-    public static final JavaExts.JavaMethod EV_GET_AS_FUNC = new JavaExts.JavaMethod(EV_CLASS, "getAsFunc",
+    public static final JavaExts.JavaMethod EV_GET_AS_FUNC = new JavaExts.JavaMethod(EV_CLASS, "getAsHandle",
             Type.getMethodDescriptor(
                     Type.getType(MethodHandle.class),
                     Type.getType(MethodType.class)
             ),
-            JavaExts.JavaMethod.Kind.VIRTUAL);
+            JavaExts.JavaMethod.Kind.INTERFACE);
     private static final JavaExts.JavaMethod ENUM_ORDINAL = JavaExts.JavaMethod.fromJava(Enum.class, "ordinal");
 
     public static IRPass<ModuleNode, ClassNode> getPass() {
@@ -74,10 +74,10 @@ public class WasmConvertPass {
                                     .replace('.', '/')
                                     + "/Module" + counter.getAndIncrement();
                         })
-                        .setModifyFuncConvention((convention, fn, idx) -> new EmbedFunctionConvention(convention))
-                        .setModifyTableConvention((convention, table, idx) -> new EmbedTableConvention(convention, idx))
+                        .setModifyFuncConvention((convention, fn, idx) -> new EmbedFunctionConvention(convention, fn.left))
+                        .setModifyTableConvention(EmbedTableConvention::new)
                         .setModifyGlobalConvention(EmbedGlobalConvention::new)
-                        .setModifyMemConvention((convention, table, idx) -> new EmbedMemConvention(convention, idx))
+                        .setModifyMemConvention(EmbedMemConvention::new)
                         .setFunctionImports(WasmConvertPass::createFunctionImport)
                         .setTableImports(WasmConvertPass::createTableImport)
                         .setGlobalImports(WasmConvertPass::createGlobalImport)
@@ -246,20 +246,17 @@ public class WasmConvertPass {
         TypeNode type = Objects.requireNonNull(Objects.requireNonNull(node.types).types).get(importNode.type);
 
         int importIdx = getOrMakeImportC(module).getAndIncrement();
-        JavaExts.JavaField field = new JavaExts.JavaField(jClass,
+        JavaExts.JavaField handleField = new JavaExts.JavaField(jClass,
                 mangle("f" + importIdx + '_' + importNode.module + '_' + importNode.name),
                 Type.getDescriptor(MethodHandle.class),
                 false);
-        jClass.fields.add(field);
-        field.otherAccess |= Opcodes.ACC_FINAL;
+        jClass.fields.add(handleField);
+        handleField.otherAccess |= Opcodes.ACC_FINAL;
         CallingConvention cc = Conventions.DEFAULT_CC; // FIXME get the correct CC
-        ValueGetter getHandle = Getters.fieldGetter(
-                Getters.GET_THIS,
-                field
-        );
+        ValueGetter getHandle = Getters.fieldGetter(Getters.GET_THIS, handleField);
         Type descTy = cc.getDescriptor(type);
         return new InstanceFunctionConvention(
-                ExportableConvention.fieldExporter(field),
+                ExportableConvention.fieldExporter(handleField),
                 getHandle,
                 new JavaExts.JavaMethod(
                         IRUtils.METHOD_HANDLE_CLASS,
@@ -304,7 +301,7 @@ public class WasmConvertPass {
                                 .insn(importVal, mty),
                         "handle");
                 ib.insert(
-                        JavaOps.PUT_FIELD.create(field).insn(IRUtils.getThis(ib), importAsHandle)
+                        JavaOps.PUT_FIELD.create(handleField).insn(IRUtils.getThis(ib), importAsHandle)
                                 .assignTo()
                 );
             }
@@ -312,11 +309,16 @@ public class WasmConvertPass {
             @Override
             public void export(ExportNode node, Module module, JavaExts.JavaClass jClass) {
                 super.export(node, module, jClass);
-                getOrMakeExports(module).put(node.name, ib ->
-                        ib.insert(JavaOps.INVOKE
-                                        .create(JavaExts.JavaMethod.fromJava(ExternVal.class, "func", MethodHandle.class))
-                                        .insn(getHandle.get(ib)),
-                                "export"));
+                getOrMakeExports(module).put(node.name, ib -> ib.insert(JavaOps.INVOKE.create(
+                                JavaExts.JavaMethod.fromJava(Func.HandleFunc.class,
+                                        "create", ExternType.Func.class, MethodHandle.class)
+                        ).insn(ib.insert(JavaOps.INVOKE.create(JavaExts.JavaMethod.fromJava(ExternType.Func.class,
+                                                        "parse", String.class))
+                                                .insn(ib.insert(CommonOps.constant(ExternType.Func.encode(type)),
+                                                        "encoded")),
+                                        "ty"),
+                                getHandle.get(ib)),
+                        "export"));
             }
         };
     }
@@ -406,11 +408,7 @@ public class WasmConvertPass {
             @Override
             public void export(ExportNode node, Module module, JavaExts.JavaClass jClass) {
                 ExportableConvention.fieldExporter(field).export(node, module, jClass);
-                getOrMakeExports(module).put(node.name, ib ->
-                        ib.insert(JavaOps.INVOKE
-                                        .create(JavaExts.JavaMethod.fromJava(ExternVal.class, "table", Table.class))
-                                        .insn(table.get(ib)),
-                                "export"));
+                getOrMakeExports(module).put(node.name, table);
             }
         };
     }
@@ -469,11 +467,7 @@ public class WasmConvertPass {
             @Override
             public void export(ExportNode node, Module module, JavaExts.JavaClass jClass) {
                 ExportableConvention.fieldExporter(field).export(node, module, jClass);
-                getOrMakeExports(module).put(node.name, ib ->
-                        ib.insert(JavaOps.INVOKE
-                                        .create(JavaExts.JavaMethod.fromJava(ExternVal.class, "global", Global.class))
-                                        .insn(global.get(ib)),
-                                "export"));
+                getOrMakeExports(module).put(node.name, global);
             }
         };
     }
@@ -500,7 +494,7 @@ public class WasmConvertPass {
                                         Type.getType(Memory.class),
                                         Type.INT_TYPE),
                                 Memory.Bootstrap.BOOTSTRAP_HANDLE,
-                                Memory.LoadMode.fromOpcode(arg.value.getOpcode())))
+                                Memory.LoadMode.fromOpcode(arg.value.getOpcode()).ordinal()))
                         .insn(memory.get(ib), getAddr(ib, arg, effect.insn().args.get(0)))
                         .copyFrom(effect));
             }
@@ -514,7 +508,7 @@ public class WasmConvertPass {
                                         Type.INT_TYPE,
                                         BasicCallingConvention.javaType(arg.value.getType())),
                                 Memory.Bootstrap.BOOTSTRAP_HANDLE,
-                                Memory.StoreMode.fromOpcode(arg.value.getOpcode())))
+                                Memory.StoreMode.fromOpcode(arg.value.getOpcode()).ordinal()))
                         .insn(memory.get(ib),
                                 getAddr(ib, arg, effect.insn().args.get(0)),
                                 effect.insn().args.get(1))
@@ -569,18 +563,17 @@ public class WasmConvertPass {
             @Override
             public void export(ExportNode node, Module module, JavaExts.JavaClass jClass) {
                 ExportableConvention.fieldExporter(field).export(node, module, jClass);
-                getOrMakeExports(module).put(node.name, ib ->
-                        ib.insert(JavaOps.INVOKE
-                                        .create(JavaExts.JavaMethod.fromJava(ExternVal.class, "memory", Memory.class))
-                                        .insn(memory.get(ib)),
-                                "export"));
+                getOrMakeExports(module).put(node.name, memory);
             }
         };
     }
 
     private static class EmbedFunctionConvention extends FunctionConvention.Delegating {
-        public EmbedFunctionConvention(FunctionConvention convention) {
+        private final FuncNode func;
+
+        public EmbedFunctionConvention(FunctionConvention convention, FuncNode func) {
             super(convention);
+            this.func = func;
         }
 
         @Override
@@ -593,35 +586,52 @@ public class WasmConvertPass {
                                 .assignTo(exportVar)
                 );
                 return ib.insert(JavaOps.INVOKE.create(
-                        new JavaExts.JavaMethod(
-                                EV_CLASS,
-                                "func",
-                                Type.getMethodDescriptor(
-                                        EV_TYPE,
-                                        Type.getType(MethodHandle.class)
-                                ),
-                                JavaExts.JavaMethod.Kind.STATIC
-                        )
-                ).insn(exportVar), "export");
+                                JavaExts.JavaMethod.fromJava(Func.HandleFunc.class,
+                                        "create", ExternType.Func.class, MethodHandle.class)
+                        ).insn(ib.insert(JavaOps.INVOKE.create(JavaExts.JavaMethod.fromJava(ExternType.Func.class,
+                                                        "parse", String.class))
+                                                .insn(ib.insert(CommonOps.constant(
+                                                                ExternType.Func.encode(Objects.requireNonNull(module
+                                                                                .getExtOrThrow(WasmExts.MODULE).types)
+                                                                        .types
+                                                                        .get(func.type))),
+                                                        "encoded")),
+                                        "ty"),
+                                exportVar),
+                        "export");
             });
         }
     }
 
     private static class EmbedTableConvention extends TableConvention.Delegating {
+        private final TableNode table;
         private final int idx;
-        ValueGetter getHandle, setHandle, sizeHandle, growHandle;
+        ValueGetter getExtern;
         private boolean exported = false;
 
-        public EmbedTableConvention(TableConvention convention, int idx) {
+        public EmbedTableConvention(TableConvention convention, TableNode table, int idx) {
             super(convention);
+            this.table = table;
             this.idx = idx;
         }
 
         @Override
-        public void modifyConstructor(IRBuilder ib, JavaExts.JavaMethod ctorMethod, Module module, JavaExts.JavaClass jClass) {
-            super.modifyConstructor(ib, ctorMethod, module, jClass);
+        public void modifyConstructor(IRBuilder jb, JavaExts.JavaMethod ctorMethod, Module module, JavaExts.JavaClass jClass) {
+            super.modifyConstructor(jb, ctorMethod, module, jClass);
             if (exported) {
-                getHandle = effectHandle(
+                ValueGetter kind = ib -> ib.insert(JavaOps.INVOKE
+                                .create(JavaExts.JavaMethod.fromJava(ExternType.Table.class,
+                                        "create",
+                                        int.class,
+                                        Integer.class,
+                                        byte.class))
+                                .insn(
+                                        ib.insert(CommonOps.constant(table.limits.min), "min"),
+                                        IRUtils.emitNullableInt(ib, table.limits.max),
+                                        ib.insert(CommonOps.constant(table.type), "ty")
+                                ),
+                        "kind");
+                ValueGetter getHandle = effectHandle(
                         "table" + idx + "$get",
                         module,
                         jClass,
@@ -629,7 +639,7 @@ public class WasmConvertPass {
                         WasmOps.TABLE_REF.create(idx),
                         delegate::emitTableRef
                 );
-                setHandle = effectHandle(
+                ValueGetter setHandle = effectHandle(
                         "table" + idx + "$set",
                         module,
                         jClass,
@@ -637,7 +647,7 @@ public class WasmConvertPass {
                         WasmOps.TABLE_STORE.create(idx),
                         delegate::emitTableStore
                 );
-                sizeHandle = effectHandle(
+                ValueGetter sizeHandle = effectHandle(
                         "table" + idx + "$size",
                         module,
                         jClass,
@@ -645,7 +655,7 @@ public class WasmConvertPass {
                         WasmOps.TABLE_SIZE.create(idx),
                         delegate::emitTableSize
                 );
-                growHandle = effectHandle(
+                ValueGetter growHandle = effectHandle(
                         "table" + idx + "$grow",
                         module,
                         jClass,
@@ -653,6 +663,24 @@ public class WasmConvertPass {
                         WasmOps.TABLE_GROW.create(idx),
                         delegate::emitTableGrow
                 );
+                getExtern = ib -> ib.insert(JavaOps.INVOKE
+                                .create(JavaExts.JavaMethod.fromJava(
+                                        Table.HandleTable.class,
+                                        "create",
+                                        ExternType.Table.class,
+                                        MethodHandle.class,
+                                        MethodHandle.class,
+                                        MethodHandle.class,
+                                        MethodHandle.class
+                                ))
+                                .insn(
+                                        kind.get(ib),
+                                        getHandle.get(ib),
+                                        setHandle.get(ib),
+                                        sizeHandle.get(ib),
+                                        growHandle.get(ib)
+                                ),
+                        "table");
             }
         }
 
@@ -660,29 +688,7 @@ public class WasmConvertPass {
         public void export(ExportNode node, Module module, JavaExts.JavaClass jClass) {
             super.export(node, module, jClass);
             exported = true;
-            getOrMakeExports(module).put(node.name, ib -> ib.insert(JavaOps.INVOKE
-                            .create(JavaExts.JavaMethod.fromJava(
-                                    ExternVal.class,
-                                    "table",
-                                    Table.class
-                            ))
-                            .insn(ib.insert(JavaOps.INVOKE
-                                            .create(JavaExts.JavaMethod.fromJava(
-                                                    Table.HandleTable.class,
-                                                    "create",
-                                                    MethodHandle.class,
-                                                    MethodHandle.class,
-                                                    MethodHandle.class,
-                                                    MethodHandle.class
-                                            ))
-                                            .insn(
-                                                    getHandle.get(ib),
-                                                    setHandle.get(ib),
-                                                    sizeHandle.get(ib),
-                                                    growHandle.get(ib)
-                                            ),
-                                    "table")),
-                    "extern"));
+            getOrMakeExports(module).put(node.name, ib -> getExtern.get(ib));
         }
     }
 
@@ -715,7 +721,7 @@ public class WasmConvertPass {
                         WasmOps.GLOBAL_REF.create(idx),
                         delegate::emitGlobalRef
                 );
-                setHandle = type.type != MUT_CONST ?
+                setHandle = type.mut != MUT_CONST ?
                         effectHandle(
                                 "global" + idx + "$set",
                                 module,
@@ -734,33 +740,30 @@ public class WasmConvertPass {
             exported = true;
             getOrMakeExports(module).put(node.name, ib -> ib.insert(JavaOps.INVOKE
                             .create(JavaExts.JavaMethod.fromJava(
-                                    ExternVal.class,
-                                    "global",
-                                    Global.class
+                                    Global.HandleGlobal.class,
+                                    "create",
+                                    byte.class,
+                                    MethodHandle.class,
+                                    MethodHandle.class
                             ))
-                            .insn(ib.insert(JavaOps.INVOKE
-                                            .create(JavaExts.JavaMethod.fromJava(
-                                                    Global.HandleGlobal.class,
-                                                    "create",
-                                                    MethodHandle.class,
-                                                    MethodHandle.class
-                                            ))
-                                            .insn(
-                                                    getHandle.get(ib),
-                                                    setHandle.get(ib)
-                                            ),
-                                    "global")),
-                    "extern"));
+                            .insn(
+                                    ib.insert(CommonOps.constant(type.type), "ty"),
+                                    getHandle.get(ib),
+                                    setHandle.get(ib)
+                            ),
+                    "global"));
         }
     }
 
     private static class EmbedMemConvention extends MemoryConvention.Delegating {
+        private final MemoryNode mem;
         private final int idx;
         ValueGetter getHandle, storeHandle, sizeHandle, growHandle, initHandle;
         private boolean exported;
 
-        public EmbedMemConvention(MemoryConvention convention, int idx) {
+        public EmbedMemConvention(MemoryConvention convention, MemoryNode mem, int idx) {
             super(convention);
+            this.mem = mem;
             this.idx = idx;
         }
 
@@ -890,29 +893,24 @@ public class WasmConvertPass {
             exported = true;
             getOrMakeExports(module).put(node.name, ib -> ib.insert(JavaOps.INVOKE
                             .create(JavaExts.JavaMethod.fromJava(
-                                    ExternVal.class,
-                                    "memory",
-                                    Memory.class
+                                    Memory.HandleMemory.class,
+                                    "create",
+                                    Integer.class,
+                                    MethodHandle.class,
+                                    MethodHandle.class,
+                                    MethodHandle.class,
+                                    MethodHandle.class,
+                                    MethodHandle.class
                             ))
-                            .insn(ib.insert(JavaOps.INVOKE
-                                            .create(JavaExts.JavaMethod.fromJava(
-                                                    Memory.HandleMemory.class,
-                                                    "create",
-                                                    MethodHandle.class,
-                                                    MethodHandle.class,
-                                                    MethodHandle.class,
-                                                    MethodHandle.class,
-                                                    MethodHandle.class
-                                            ))
-                                            .insn(
-                                                    getHandle.get(ib),
-                                                    storeHandle.get(ib),
-                                                    sizeHandle.get(ib),
-                                                    growHandle.get(ib),
-                                                    initHandle.get(ib)
-                                            ),
-                                    "global")),
-                    "extern"));
+                            .insn(
+                                    IRUtils.emitNullableInt(ib, mem.limits.max),
+                                    getHandle.get(ib),
+                                    storeHandle.get(ib),
+                                    sizeHandle.get(ib),
+                                    growHandle.get(ib),
+                                    initHandle.get(ib)
+                            ),
+                    "global"));
         }
     }
 }

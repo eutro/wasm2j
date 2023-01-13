@@ -3,6 +3,7 @@ package io.github.eutro.wasm2j.embed;
 import io.github.eutro.jwasm.Opcodes;
 import io.github.eutro.wasm2j.embed.internal.Utils;
 import io.github.eutro.wasm2j.ops.WasmOps;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.objectweb.asm.Handle;
 import org.objectweb.asm.Type;
@@ -16,7 +17,7 @@ import java.util.Map;
 import static io.github.eutro.jwasm.Opcodes.PAGE_SIZE;
 import static org.objectweb.asm.Opcodes.H_INVOKESTATIC;
 
-public interface Memory {
+public interface Memory extends ExternVal {
     interface HasOpcode {
         byte opcode();
 
@@ -132,7 +133,11 @@ public interface Memory {
     @GeneratedAccess
     void init(int dstIdx, int srcIdx, int len, ByteBuffer buf);
 
+    @Override
+    ExternType.@NotNull Mem getType();
+
     class HandleMemory implements Memory {
+        private final @Nullable Integer max;
         private final MethodHandle
                 loadHandle,
                 storeHandle,
@@ -141,12 +146,14 @@ public interface Memory {
                 init;
 
         private HandleMemory(
+                @Nullable Integer max,
                 MethodHandle loadHandle,
                 MethodHandle storeHandle,
                 MethodHandle size,
                 MethodHandle grow,
                 MethodHandle init
         ) {
+            this.max = max;
             this.loadHandle = loadHandle;
             this.storeHandle = storeHandle;
             this.size = size;
@@ -156,13 +163,14 @@ public interface Memory {
 
         @GeneratedAccess
         public static HandleMemory create(
+                @Nullable Integer max,
                 MethodHandle loadHandle,
                 MethodHandle storeHandle,
                 MethodHandle size,
                 MethodHandle grow,
                 MethodHandle init
         ) {
-            return new HandleMemory(loadHandle, storeHandle, size, grow, init);
+            return new HandleMemory(max, loadHandle, storeHandle, size, grow, init);
         }
 
         @Override
@@ -208,6 +216,11 @@ public interface Memory {
             } catch (Throwable t) {
                 throw Utils.rethrow(t);
             }
+        }
+
+        @Override
+        public ExternType.@NotNull Mem getType() {
+            return new ExternType.Mem(new ExternType.Limits(size(), max));
         }
     }
 
@@ -256,27 +269,31 @@ public interface Memory {
             } else {
                 throw new IllegalArgumentException();
             }
-            site.setTarget(MethodHandles.explicitCastArguments(
-                    handle.bindTo(site)
-                            .bindTo(modeOrdinal)
-                            .bindTo(invokedType),
-                    invokedType
-            ));
+            MethodHandle inserted = MethodHandles.insertArguments(handle, 0, site, modeOrdinal, invokedType);
+            site.setTarget(inserted.asType(invokedType));
             return site;
         }
 
         private static Object loadInit(MutableCallSite callSite, int typeOrdinal, MethodType type, Memory mem, int addr)
                 throws Throwable {
-            MethodHandle handle = mem.loadHandle(LoadMode.values()[typeOrdinal]).asType(type);
+            MethodHandle handle = MethodHandles.dropArguments(
+                    mem.loadHandle(LoadMode.values()[typeOrdinal]),
+                    0,
+                    Memory.class
+            ).asType(type);
             callSite.setTarget(handle);
-            return handle.invoke(addr);
+            return handle.invoke(mem, addr);
         }
 
         private static void storeInit(MutableCallSite callSite, int typeOrdinal, MethodType type, Memory mem, int addr, Object value)
                 throws Throwable {
-            MethodHandle handle = mem.storeHandle(StoreMode.values()[typeOrdinal]).asType(type);
+            MethodHandle handle = MethodHandles.dropArguments(
+                    mem.storeHandle(StoreMode.values()[typeOrdinal]),
+                    0,
+                    Memory.class
+            ).asType(type);
             callSite.setTarget(handle);
-            handle.invoke(addr, value);
+            handle.invoke(mem, addr, value);
         }
     }
 
@@ -423,6 +440,11 @@ public interface Memory {
                     .put(buf.slice()
                             .position(srcIdx)
                             .limit(srcIdx + len));
+        }
+
+        @Override
+        public ExternType.@NotNull Mem getType() {
+            return new ExternType.Mem(new ExternType.Limits(size(), max));
         }
     }
 }
