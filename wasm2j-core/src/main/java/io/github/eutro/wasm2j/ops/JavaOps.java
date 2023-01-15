@@ -131,6 +131,8 @@ public class JavaOps {
     public static Op I2L = markPure(insns(new InsnNode(Opcodes.I2L)));
     public static Op I2L_U = markPure(INVOKE
             .create(JavaMethod.fromJava(Integer.class, "toUnsignedLong", int.class)));
+    public static Op L2I_EXACT = markPure(INVOKE
+            .create(JavaMethod.fromJava(Math.class, "toIntExact", long.class)));
 
     static {
         for (OpKey key : new OpKey[]{

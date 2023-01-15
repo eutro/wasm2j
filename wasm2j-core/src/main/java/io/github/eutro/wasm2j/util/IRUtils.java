@@ -73,10 +73,12 @@ public class IRUtils {
     public static Var getAddr(IRBuilder ib, WasmOps.WithMemArg<?> wmArg, Var ptr) {
         return wmArg.offset == 0
                 ? ptr
-                : ib.insert(JavaOps.IADD.insn(ptr,
-                        ib.insert(CommonOps.constant(wmArg.offset),
-                                "offset")),
-                "addr");
+                : ib.insert(JavaOps.L2I_EXACT.insn(
+                ib.insert(JavaOps.LADD.insn(
+                        ib.insert(JavaOps.I2L_U.insn(ptr), "ptrL"),
+                        ib.insert(CommonOps.constant(Integer.toUnsignedLong(wmArg.offset)), "offset")
+                ), "addrL")
+        ), "addr");
     }
 
     public static void lenLoop(IRBuilder ib, Var[] toInc, boolean invert, Var len, Consumer<Var[]> f) {
