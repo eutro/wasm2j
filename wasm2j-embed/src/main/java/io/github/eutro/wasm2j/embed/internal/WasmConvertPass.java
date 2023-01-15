@@ -44,7 +44,6 @@ import java.util.function.BiConsumer;
 
 import static io.github.eutro.jwasm.Opcodes.MUT_CONST;
 import static io.github.eutro.wasm2j.conf.api.ExportableConvention.mangle;
-import static io.github.eutro.wasm2j.embed.WebAssembly.EV_CLASS;
 
 public class WasmConvertPass {
     private static final Ext<Map<String, ValueGetter>> EXPORTS_EXT = Ext.create(Map.class);
@@ -55,6 +54,7 @@ public class WasmConvertPass {
             Object.class
     );
     public static final Type EV_TYPE = Type.getType(ExternVal.class);
+    public static final JavaExts.JavaClass EV_CLASS = new JavaExts.JavaClass(Type.getInternalName(ExternVal.class));
     public static final JavaExts.JavaMethod EV_GET_AS_FUNC = new JavaExts.JavaMethod(EV_CLASS, "getAsHandle",
             Type.getMethodDescriptor(
                     Type.getType(MethodHandle.class),

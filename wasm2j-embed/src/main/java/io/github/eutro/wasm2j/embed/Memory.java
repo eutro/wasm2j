@@ -124,17 +124,42 @@ public interface Memory extends ExternVal {
     @GeneratedAccess
     MethodHandle storeHandle(StoreMode mode);
 
+    @Embedding("mem_size")
     @GeneratedAccess
     int size();
 
+    @Embedding("mem_grow")
     @GeneratedAccess
     int grow(int growByPages);
 
     @GeneratedAccess
     void init(int dstIdx, int srcIdx, int len, ByteBuffer buf);
 
+    @Embedding("mem_type")
     @Override
     ExternType.@NotNull Mem getType();
+
+    @Embedding("mem_read")
+    default byte read(int addr) {
+        try {
+            return (byte) (int) loadHandle(Memory.LoadMode.I32_LOAD8_S).invokeExact(addr);
+        } catch (RuntimeException | Error e) {
+            throw e;
+        } catch (Throwable t) {
+            throw new RuntimeException(t);
+        }
+    }
+
+    @Embedding("mem_write")
+    default void write(int addr, byte value) {
+        try {
+            storeHandle(Memory.StoreMode.I32_STORE8).invokeExact(addr, value);
+        } catch (RuntimeException | Error e) {
+            throw e;
+        } catch (Throwable t) {
+            throw new RuntimeException(t);
+        }
+    }
 
     class HandleMemory implements Memory {
         private final @Nullable Integer max;
@@ -306,6 +331,8 @@ public interface Memory extends ExternVal {
         private static final EnumMap<WasmOps.StoreType, MethodHandle> STORE_HANDLES =
                 new EnumMap<>(WasmOps.StoreType.class);
 
+        private static final MethodHandle GET_BUF;
+
         static {
             try {
                 MethodHandles.Lookup lookup = MethodHandles.lookup();
@@ -376,10 +403,12 @@ public interface Memory extends ExternVal {
                         lookup.findVirtual(ByteBuffer.class, "putLong", MethodType
                                 .methodType(ByteBuffer.class, int.class, long.class)));
 
+                GET_BUF = lookup.findGetter(ByteBufferMemory.class, "buf", ByteBuffer.class);
+
                 for (Map.Entry<WasmOps.StoreType, MethodHandle> entry : STORE_HANDLES.entrySet()) {
                     entry.setValue(entry.getValue().asType(entry.getValue().type().changeReturnType(void.class)));
                 }
-            } catch (IllegalAccessException | NoSuchMethodException e) {
+            } catch (IllegalAccessException | NoSuchMethodException | NoSuchFieldException e) {
                 throw new RuntimeException(e);
             }
         }
@@ -393,10 +422,16 @@ public interface Memory extends ExternVal {
                     .order(ByteOrder.LITTLE_ENDIAN);
         }
 
+        @Embedding("mem_alloc")
+        public ByteBufferMemory(ExternType.Mem type) {
+            this(type.limits.min, type.limits.max);
+        }
+
         @Override
         public MethodHandle loadHandle(LoadMode mode) {
             WasmOps.DerefType dTy = WasmOps.DerefType.fromOpcode(mode.opcode);
-            MethodHandle handle = LOAD_HANDLES.get(dTy.load).bindTo(buf);
+            MethodHandle handle = MethodHandles.collectArguments(LOAD_HANDLES.get(dTy.load),
+                    0, GET_BUF.bindTo(this));
             MethodHandle ext = EXT_HANDLES.get(dTy.ext);
             if (ext != null) handle = MethodHandles.filterReturnValue(handle, ext);
             return handle;

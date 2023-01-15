@@ -10,12 +10,15 @@ import java.lang.reflect.Array;
 import java.util.Arrays;
 
 public interface Table extends ExternVal {
+    @Embedding("table_read")
     @GeneratedAccess
     @Nullable Object get(int index);
 
+    @Embedding("table_write")
     @GeneratedAccess
     void set(int index, @Nullable Object value);
 
+    @Embedding("table_size")
     @GeneratedAccess
     int size();
 
@@ -29,11 +32,13 @@ public interface Table extends ExternVal {
         }
     }
 
+    @Embedding("table_grow")
     @GeneratedAccess
     default int grow(int growBy, @Nullable Object fillWith) {
         return -1;
     }
 
+    @Embedding("table_type")
     @Override
     ExternType.@NotNull Table getType();
 
@@ -99,7 +104,7 @@ public interface Table extends ExternVal {
         public ExternType.@NotNull Table getType() {
             return new ExternType.Table(
                     new ExternType.Limits(size(), max),
-                    componentType.getOpcode()
+                    componentType
             );
         }
     }
@@ -111,6 +116,11 @@ public interface Table extends ExternVal {
             super(min, max, componentType);
             // throws if given a primitive type
             this.values = (Object[]) Array.newInstance(componentType.getType(), min);
+        }
+
+        @Embedding("table_alloc")
+        public ArrayTable(ExternType.Table type) {
+            this(type.limits.min, type.limits.max, type.refType);
         }
 
         @Override

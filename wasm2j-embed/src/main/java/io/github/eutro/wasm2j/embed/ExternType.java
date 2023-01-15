@@ -59,25 +59,25 @@ public interface ExternType {
             this.results = results;
         }
 
-        public Func(@NotNull MethodType type) {
+        Func(@NotNull MethodType type) {
             this.type = type;
             this.params = null;
             this.results = null;
         }
 
-        public Func(TypeNode typeNode) {
+        Func(TypeNode typeNode) {
             this(typeNode.params, typeNode.returns);
         }
 
-        public Func(Void ignored, int type, ModuleNode module) {
+        Func(Void ignored, int type, ModuleNode module) {
             this(Objects.requireNonNull(module.types).types.get(type));
         }
 
-        public Func(FuncImportNode fin, ModuleNode module) {
+        Func(FuncImportNode fin, ModuleNode module) {
             this(null, fin.type, module);
         }
 
-        public Func(int index, ModuleNode module) {
+        Func(int index, ModuleNode module) {
             this(null, Objects.requireNonNull(module.funcs).funcs.get(index).type, module);
         }
 
@@ -159,28 +159,28 @@ public interface ExternType {
     class Table implements ExternType {
         @NotNull
         public final Limits limits;
-        public final byte refType;
+        public final ValType refType;
 
-        public Table(@NotNull Limits limits, byte refType) {
+        public Table(@NotNull Limits limits, ValType refType) {
             this.limits = limits;
             this.refType = refType;
         }
 
-        public Table(TableImportNode in) {
-            this(new Limits(in.limits), in.type);
+        Table(TableImportNode in) {
+            this(new Limits(in.limits), ValType.fromOpcode(in.type));
         }
 
-        public Table(int index, ModuleNode module) {
+        Table(int index, ModuleNode module) {
             this(Objects.requireNonNull(module.tables).tables.get(index));
         }
 
-        public Table(TableNode tableNode) {
-            this(new Limits(tableNode.limits), tableNode.type);
+        Table(TableNode tableNode) {
+            this(new Limits(tableNode.limits), ValType.fromOpcode(tableNode.type));
         }
 
         @GeneratedAccess
         public static ExternType.Table create(int min, @Nullable Integer max, byte type) {
-            return new Table(new Limits(min, max), type);
+            return new Table(new Limits(min, max), ValType.fromOpcode(type));
         }
 
         @Override
@@ -212,7 +212,7 @@ public interface ExternType {
 
         @Override
         public String toString() {
-            return limits + " " + Unparser.unparseType(refType);
+            return limits + " " + refType;
         }
     }
 
@@ -265,22 +265,22 @@ public interface ExternType {
 
     class Global implements ExternType {
         public final boolean isMut;
-        public final byte type;
+        public final ValType type;
 
-        public Global(boolean isMut, byte type) {
+        public Global(boolean isMut, ValType type) {
             this.isMut = isMut;
             this.type = type;
         }
 
-        public Global(GlobalTypeNode type) {
-            this(type.mut == Opcodes.MUT_VAR, type.type);
+        Global(GlobalTypeNode type) {
+            this(type.mut == Opcodes.MUT_VAR, ValType.fromOpcode(type.type));
         }
 
-        public Global(GlobalImportNode in) {
+        Global(GlobalImportNode in) {
             this(in.type);
         }
 
-        public Global(int index, ModuleNode module) {
+        Global(int index, ModuleNode module) {
             this(Objects.requireNonNull(module.globals).globals.get(index).type);
         }
 
@@ -299,7 +299,7 @@ public interface ExternType {
 
         @Override
         public String toString() {
-            return (isMut ? "mut" : "const") + " " + Unparser.unparseType(type);
+            return (isMut ? "mut" : "const") + " " + type;
         }
 
         @Override

@@ -5,15 +5,19 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.lang.invoke.MethodHandle;
+import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodType;
 
 public interface Global extends ExternVal {
+    @Embedding("global_read")
     @GeneratedAccess
     Object get();
 
+    @Embedding("global_write")
     @GeneratedAccess
     void set(Object value);
 
+    @Embedding("global_type")
     @Override
     ExternType.@NotNull Global getType();
 
@@ -21,6 +25,7 @@ public interface Global extends ExternVal {
         private final ValType type;
         private Object value;
         private boolean isMut = true;
+        private final MethodHandle checkHandle;
 
         public BoxGlobal(ValType type) {
             this(type, null);
@@ -28,7 +33,16 @@ public interface Global extends ExternVal {
 
         public BoxGlobal(ValType type, Object value) {
             this.type = type;
-            this.value = value;
+            checkHandle = MethodHandles
+                    .identity(type.getType())
+                    .asType(MethodType.methodType(Object.class, Object.class));
+            this.value = checkValue(value);
+        }
+
+        @Embedding("global_alloc")
+        public BoxGlobal(ExternType.Global type) {
+            this(type.type, null);
+            setMut(type.isMut);
         }
 
         public BoxGlobal setMut(boolean isMut) {
@@ -44,21 +58,31 @@ public interface Global extends ExternVal {
         @Override
         public void set(Object value) {
             if (!isMut) throw new IllegalStateException();
-            this.value = value;
+            this.value = checkValue(value);
+        }
+
+        private Object checkValue(Object value) {
+            try {
+                return checkHandle.invokeExact(value);
+            } catch (RuntimeException | Error e) {
+                throw e;
+            } catch (Throwable t) {
+                throw new RuntimeException(t);
+            }
         }
 
         @Override
         public ExternType.@NotNull Global getType() {
-            return new ExternType.Global(isMut, type.getOpcode());
+            return new ExternType.Global(isMut, type);
         }
     }
 
     class HandleGlobal implements Global {
-        private final byte type;
+        private final ValType type;
         private final MethodHandle get;
         private final @Nullable MethodHandle set;
 
-        public HandleGlobal(byte type, MethodHandle get, @Nullable MethodHandle set) {
+        public HandleGlobal(ValType type, MethodHandle get, @Nullable MethodHandle set) {
             this.type = type;
             this.get = get.asType(MethodType.methodType(Object.class));
             this.set = set == null ? null : set.asType(MethodType.methodType(void.class, Object.class));
@@ -66,7 +90,7 @@ public interface Global extends ExternVal {
 
         @GeneratedAccess
         public static HandleGlobal create(byte type, MethodHandle get, @Nullable MethodHandle set) {
-            return new HandleGlobal(type, get, set);
+            return new HandleGlobal(ValType.fromOpcode(type), get, set);
         }
 
         @Override
