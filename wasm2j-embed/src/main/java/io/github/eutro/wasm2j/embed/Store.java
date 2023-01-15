@@ -1,6 +1,7 @@
 package io.github.eutro.wasm2j.embed;
 
 import io.github.eutro.jwasm.tree.ModuleNode;
+import io.github.eutro.wasm2j.embed.internal.Utils;
 import io.github.eutro.wasm2j.embed.internal.WasmConvertPass;
 import io.github.eutro.wasm2j.passes.IRPass;
 import org.jetbrains.annotations.NotNull;
@@ -137,10 +138,8 @@ public final class Store {
             try {
                 MethodHandles.Lookup definedLookup = (MethodHandles.Lookup) defineHiddenClass.invokeExact(bytes);
                 return definedLookup.lookupClass();
-            } catch (RuntimeException | Error e) {
-                throw e;
             } catch (Throwable t) {
-                throw new RuntimeException(t);
+                throw Utils.rethrow(t);
             }
         }
     }

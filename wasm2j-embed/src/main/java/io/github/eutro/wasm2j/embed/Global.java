@@ -64,10 +64,8 @@ public interface Global extends ExternVal {
         private Object checkValue(Object value) {
             try {
                 return checkHandle.invokeExact(value);
-            } catch (RuntimeException | Error e) {
-                throw e;
             } catch (Throwable t) {
-                throw new RuntimeException(t);
+                throw Utils.rethrow(t);
             }
         }
 

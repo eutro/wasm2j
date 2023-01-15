@@ -143,10 +143,8 @@ public interface Memory extends ExternVal {
     default byte read(int addr) {
         try {
             return (byte) (int) loadHandle(Memory.LoadMode.I32_LOAD8_S).invokeExact(addr);
-        } catch (RuntimeException | Error e) {
-            throw e;
         } catch (Throwable t) {
-            throw new RuntimeException(t);
+            throw Utils.rethrow(t);
         }
     }
 
@@ -154,10 +152,8 @@ public interface Memory extends ExternVal {
     default void write(int addr, byte value) {
         try {
             storeHandle(Memory.StoreMode.I32_STORE8).invokeExact(addr, value);
-        } catch (RuntimeException | Error e) {
-            throw e;
         } catch (Throwable t) {
-            throw new RuntimeException(t);
+            throw Utils.rethrow(t);
         }
     }
 

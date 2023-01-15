@@ -364,10 +364,6 @@ public class ExecutingWastVisitor extends WastVisitor {
     }
 
     private static class LinkingException extends RuntimeException {
-        public LinkingException(Throwable t) {
-            super(t);
-        }
-
         public LinkingException(String msg) {
             super(msg);
         }

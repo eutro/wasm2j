@@ -1,5 +1,6 @@
 package io.github.eutro.wasm2j.embed;
 
+import io.github.eutro.wasm2j.embed.internal.Utils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -64,10 +65,8 @@ public interface Func extends ExternVal {
                 }
             }
             return results;
-        } catch (RuntimeException | Error e) {
-            throw e;
         } catch (Throwable t) {
-            throw new RuntimeException(t);
+            throw Utils.rethrow(t);
         }
     }
 
