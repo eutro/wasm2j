@@ -209,15 +209,15 @@ public class ByteBufferMemoryConvention extends DelegatingExporter implements Me
                 JavaExts.JavaMethod.Kind.VIRTUAL
         );
         JavaExts.JavaMethod positionMethod = new JavaExts.JavaMethod(
-                IRUtils.BYTE_BUFFER_CLASS,
+                IRUtils.BUFFER_CLASS,
                 "position",
-                "(I)Ljava/nio/ByteBuffer;",
+                "(I)Ljava/nio/Buffer;",
                 JavaExts.JavaMethod.Kind.VIRTUAL
         );
         JavaExts.JavaMethod limitMethod = new JavaExts.JavaMethod(
-                IRUtils.BYTE_BUFFER_CLASS,
+                IRUtils.BUFFER_CLASS,
                 "limit",
-                "(I)Ljava/nio/ByteBuffer;",
+                "(I)Ljava/nio/Buffer;",
                 JavaExts.JavaMethod.Kind.VIRTUAL
         );
         JavaExts.JavaMethod putMethod = new JavaExts.JavaMethod(
@@ -228,12 +228,12 @@ public class ByteBufferMemoryConvention extends DelegatingExporter implements Me
         );
 
         mem = ib.insert(JavaOps.INVOKE.create(sliceMethod).insn(mem), "sliced");
-        mem = ib.insert(JavaOps.INVOKE.create(positionMethod).insn(mem, dstIdx), "positioned");
+        ib.insert(JavaOps.INVOKE.create(positionMethod).insn(mem, dstIdx), "_positioned");
 
         data = ib.insert(JavaOps.INVOKE.create(sliceMethod).insn(data), "sliced");
-        data = ib.insert(JavaOps.INVOKE.create(positionMethod).insn(data, srcIdx), "positioned");
+        ib.insert(JavaOps.INVOKE.create(positionMethod).insn(data, srcIdx), "_positioned");
         Var limit = ib.insert(JavaOps.IADD.insn(srcIdx, length), "limit");
-        data = ib.insert(JavaOps.INVOKE.create(limitMethod).insn(data, limit), "limited");
+        ib.insert(JavaOps.INVOKE.create(limitMethod).insn(data, limit), "_limited");
 
         ib.insert(JavaOps.INVOKE.create(putMethod).insn(mem, data), "mem");
     }

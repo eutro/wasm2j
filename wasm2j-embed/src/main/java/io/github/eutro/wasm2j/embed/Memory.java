@@ -467,10 +467,10 @@ public interface Memory extends ExternVal {
 
         @Override
         public void init(int dstIdx, int srcIdx, int len, ByteBuffer buf) {
-            this.buf.slice().position(dstIdx)
-                    .put(buf.slice()
-                            .position(srcIdx)
-                            .limit(srcIdx + len));
+            ByteBuffer thisSliced = this.buf.slice(), otherSliced = buf.slice();
+            thisSliced.position(dstIdx);
+            otherSliced.position(srcIdx).limit(srcIdx + len);
+            thisSliced.put(otherSliced);
         }
 
         @Override

@@ -9,6 +9,7 @@ import org.objectweb.asm.Type;
 
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodType;
+import java.nio.Buffer;
 import java.nio.ByteBuffer;
 import java.util.Arrays;
 import java.util.Iterator;
@@ -21,6 +22,7 @@ import static io.github.eutro.wasm2j.ops.JavaOps.JumpType.IF_ICMPLE;
 
 public class IRUtils {
     public static final JavaExts.JavaClass BYTE_BUFFER_CLASS = new JavaExts.JavaClass(Type.getInternalName(ByteBuffer.class));
+    public static final JavaExts.JavaClass BUFFER_CLASS = new JavaExts.JavaClass(Type.getInternalName(Buffer.class));
     public static final JavaExts.JavaClass METHOD_HANDLE_CLASS = new JavaExts.JavaClass(Type.getInternalName(MethodHandle.class));
     public static final JavaExts.JavaClass MTY_CLASS = new JavaExts.JavaClass(Type.getInternalName(MethodType.class));
     public static final JavaExts.JavaMethod MTY_METHOD_TYPE = new JavaExts.JavaMethod(
