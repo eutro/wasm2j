@@ -1,12 +1,13 @@
 package io.github.eutro.wasm2j.conf.api;
 
 import io.github.eutro.wasm2j.conf.impl.DelegatingExporter;
+import io.github.eutro.wasm2j.ext.ExtContainer;
 import io.github.eutro.wasm2j.ext.JavaExts;
 import io.github.eutro.wasm2j.ssa.Effect;
 import io.github.eutro.wasm2j.ssa.IRBuilder;
 import io.github.eutro.wasm2j.ssa.Module;
 
-public interface FunctionConvention extends ExportableConvention, ConstructorCallback {
+public interface FunctionConvention extends ExportableConvention, ConstructorCallback, ExtContainer {
     void emitCall(IRBuilder ib, Effect effect);
 
     void emitFuncRef(IRBuilder ib, Effect effect);

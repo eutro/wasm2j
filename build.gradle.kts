@@ -37,6 +37,20 @@ allprojects {
     }
 }
 
+project(":wasm2j-api") {
+    dependencies {
+        implementation("org.ow2.asm:asm:9.4")
+        implementation("org.ow2.asm:asm-tree:9.4")
+        testImplementation("org.ow2.asm:asm-util:9.4")
+
+        implementation("io.github.eutro.jwasm:jwasm:$jwasmVer")
+        implementation("io.github.eutro.jwasm:jwasm-tree:$jwasmVer")
+        implementation("io.github.eutro.jwasm:jwasm-analysis:$jwasmVer")
+        implementation("io.github.eutro.jwasm:jwasm-sexp:$jwasmVer")
+        implementation(project(":wasm2j-core"))
+    }
+}
+
 project(":wasm2j-embed") {
     dependencies {
         implementation("org.ow2.asm:asm:9.4")
@@ -48,6 +62,7 @@ project(":wasm2j-embed") {
         implementation("io.github.eutro.jwasm:jwasm-attrs:$jwasmVer")
         implementation("io.github.eutro.jwasm:jwasm-sexp:$jwasmVer")
         implementation(project(":wasm2j-core"))
+        implementation(project(":wasm2j-api"))
     }
 }
 

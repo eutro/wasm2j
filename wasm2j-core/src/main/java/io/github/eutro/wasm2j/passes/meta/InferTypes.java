@@ -319,6 +319,8 @@ public abstract class InferTypes<Ty> implements InPlaceIRPass<Function> {
 
                 .put(" -> ", NOP)
                 .put("a -> ", POP, PUTSTATIC)
+                .put("a b -> b a b", DUP_X1)
+                .put("a b -> b a", SWAP)
 
                 .put("I -> J", I2L)
                 .put("I -> F", I2F)
@@ -393,7 +395,20 @@ public abstract class InferTypes<Ty> implements InPlaceIRPass<Function> {
                         JavaOps.GET_FIELD)
 
                 .put(insn -> {
-                            Type retTy = Type.getReturnType(JavaOps.INVOKE.cast(insn.op).arg.getDescriptor());
+                            JavaExts.JavaMethod method = JavaOps.INVOKE.cast(insn.op).arg;
+                            {
+                                int expectedArity = method.getParamTys().size() + (method.kind.isStatic() ? 0 : 1);
+                                int actualArity = insn.args.size();
+                                if (expectedArity != actualArity) {
+                                    throw new IllegalArgumentException(String.format(
+                                            "type mismatch: wrong number of arguments to %s, expected %d, got %d",
+                                            method, expectedArity, actualArity
+                                    ));
+                                }
+                            }
+                            // no type checking of anything else for both performance and simplicity
+
+                            Type retTy = Type.getReturnType(method.getDescriptor());
                             return intifyPrimitives(retTy.getSize() == 0 ? new Type[0] : new Type[]{retTy});
                         },
                         JavaOps.INVOKE)

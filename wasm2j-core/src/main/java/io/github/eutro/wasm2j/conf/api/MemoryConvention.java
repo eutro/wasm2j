@@ -2,6 +2,7 @@ package io.github.eutro.wasm2j.conf.api;
 
 import io.github.eutro.jwasm.Opcodes;
 import io.github.eutro.wasm2j.conf.impl.DelegatingExporter;
+import io.github.eutro.wasm2j.ext.ExtContainer;
 import io.github.eutro.wasm2j.ext.JavaExts;
 import io.github.eutro.wasm2j.ops.CommonOps;
 import io.github.eutro.wasm2j.ops.JavaOps;
@@ -16,7 +17,7 @@ import org.objectweb.asm.tree.InsnNode;
 import static org.objectweb.asm.Opcodes.LCMP;
 import static org.objectweb.asm.Opcodes.LMUL;
 
-public interface MemoryConvention extends ExportableConvention, ConstructorCallback {
+public interface MemoryConvention extends ExportableConvention, ConstructorCallback, ExtContainer {
     void emitMemLoad(IRBuilder ib, Effect effect);
 
     void emitMemStore(IRBuilder ib, Effect effect);

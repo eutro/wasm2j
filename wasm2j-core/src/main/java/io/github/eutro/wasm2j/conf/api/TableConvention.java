@@ -1,6 +1,7 @@
 package io.github.eutro.wasm2j.conf.api;
 
 import io.github.eutro.wasm2j.conf.impl.DelegatingExporter;
+import io.github.eutro.wasm2j.ext.ExtContainer;
 import io.github.eutro.wasm2j.ext.JavaExts;
 import io.github.eutro.wasm2j.ops.CommonOps;
 import io.github.eutro.wasm2j.ops.JavaOps;
@@ -13,7 +14,7 @@ import io.github.eutro.wasm2j.util.IRUtils;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.tree.InsnNode;
 
-public interface TableConvention extends ExportableConvention, ConstructorCallback {
+public interface TableConvention extends ExportableConvention, ConstructorCallback, ExtContainer {
     void emitTableRef(IRBuilder ib, Effect effect);
 
     void emitTableStore(IRBuilder ib, Effect effect);

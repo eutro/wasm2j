@@ -3,6 +3,7 @@ package io.github.eutro.wasm2j.conf.impl;
 import io.github.eutro.wasm2j.conf.api.CallingConvention;
 import io.github.eutro.wasm2j.conf.api.ExportableConvention;
 import io.github.eutro.wasm2j.conf.api.FunctionConvention;
+import io.github.eutro.wasm2j.ext.Ext;
 import io.github.eutro.wasm2j.ext.JavaExts;
 import io.github.eutro.wasm2j.ops.CommonOps;
 import io.github.eutro.wasm2j.ops.JavaOps;
@@ -18,9 +19,10 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class InstanceFunctionConvention extends DelegatingExporter implements FunctionConvention {
-    private final ValueGetter target;
-    private final JavaExts.JavaMethod method;
-    private final CallingConvention cc;
+    public static final Ext<InstanceFunctionConvention> FUNCTION_CONVENTION = new Ext<>(InstanceFunctionConvention.class);
+    public final ValueGetter target;
+    public final JavaExts.JavaMethod method;
+    public final CallingConvention cc;
 
     public InstanceFunctionConvention(
             ExportableConvention exporter,
@@ -31,6 +33,7 @@ public class InstanceFunctionConvention extends DelegatingExporter implements Fu
         super(exporter);
         this.target = target;
         this.method = method;
+        attachExt(FUNCTION_CONVENTION, this);
         this.cc = cc;
     }
 

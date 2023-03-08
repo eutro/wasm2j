@@ -11,7 +11,7 @@ public class Conventions {
                     .setFunctionImports(Imports.abstractMethodFuncImports(DEFAULT_CC))
                     .build();
 
-    public static DefaultFactory.Builder createBuilder() {
-        return DefaultFactory.builder();
+    public static WirJavaConventionFactory.Builder createBuilder() {
+        return WirJavaConventionFactory.builder();
     }
 }

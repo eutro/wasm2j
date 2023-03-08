@@ -51,6 +51,10 @@ public class JavaExts {
             return jClass;
         }
 
+        public Type getType() {
+            return Type.getObjectType(name);
+        }
+
         @Override
         public String toString() {
             return name.replace('/', '.');
@@ -110,6 +114,10 @@ public class JavaExts {
             );
         }
 
+        public Type getReturnTy() {
+            return returnTy;
+        }
+
         public void setDescriptor(String descriptor) {
             returnTy = Type.getReturnType(descriptor);
             paramTys = new ArrayList<>(Arrays.asList(Type.getArgumentTypes(descriptor)));
@@ -126,8 +134,7 @@ public class JavaExts {
             VIRTUAL(Opcodes.ACC_PUBLIC, Opcodes.INVOKEVIRTUAL, Opcodes.H_INVOKEVIRTUAL),
             FINAL(Opcodes.ACC_PRIVATE, Opcodes.INVOKESPECIAL, Opcodes.H_INVOKESPECIAL),
             ABSTRACT(Opcodes.ACC_ABSTRACT | Opcodes.ACC_PROTECTED, Opcodes.INVOKEVIRTUAL, Opcodes.H_INVOKEVIRTUAL),
-            INTERFACE(Opcodes.ACC_PUBLIC, Opcodes.INVOKEINTERFACE, Opcodes.H_INVOKEINTERFACE)
-            ;
+            INTERFACE(Opcodes.ACC_PUBLIC, Opcodes.INVOKEINTERFACE, Opcodes.H_INVOKEINTERFACE);
 
             public final int access;
             public final int opcode;
@@ -141,6 +148,10 @@ public class JavaExts {
 
             public boolean isInterface() {
                 return this == INTERFACE;
+            }
+
+            public boolean isStatic() {
+                return this == STATIC || this == STATIC_PRIVATE;
             }
         }
 

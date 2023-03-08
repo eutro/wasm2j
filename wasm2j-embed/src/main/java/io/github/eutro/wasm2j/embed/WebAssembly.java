@@ -1,6 +1,7 @@
 package io.github.eutro.wasm2j.embed;
 
 import io.github.eutro.jwasm.tree.ModuleNode;
+import io.github.eutro.wasm2j.support.ExternType;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;

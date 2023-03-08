@@ -1,20 +1,33 @@
 package io.github.eutro.wasm2j.util;
 
+import io.github.eutro.jwasm.tree.DataNode;
 import io.github.eutro.wasm2j.conf.impl.BasicCallingConvention;
 import io.github.eutro.wasm2j.ext.JavaExts;
 import io.github.eutro.wasm2j.ops.*;
 import io.github.eutro.wasm2j.ssa.*;
 import org.jetbrains.annotations.Nullable;
+import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
+import org.objectweb.asm.tree.InsnNode;
+import org.objectweb.asm.tree.IntInsnNode;
+import org.objectweb.asm.tree.MethodInsnNode;
+import org.objectweb.asm.tree.TypeInsnNode;
 
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodType;
 import java.nio.Buffer;
 import java.nio.ByteBuffer;
 import java.util.Arrays;
+import java.util.Base64;
 import java.util.Iterator;
 import java.util.List;
 import java.util.function.Consumer;
+import java.util.zip.GZIPInputStream;
+import java.util.zip.GZIPOutputStream;
 
 import static io.github.eutro.jwasm.Opcodes.I32;
 import static io.github.eutro.wasm2j.ops.JavaOps.JumpType.IFEQ;
@@ -133,6 +146,135 @@ public class IRUtils {
                 I32, Type.getType(Integer.class));
     }
 
+    private static final int FILL_DIRECT_MAX = Short.MAX_VALUE;
+
+    public static void fillAuto(DataNode data, IRBuilder ib, Var dataV) {
+        if (data.init.length <= FILL_DIRECT_MAX) {
+            fillWithDirectPuts(data, ib, dataV);
+        } else {
+            fillWithBase64(data, ib, dataV);
+        }
+    }
+
+    public static void fillWithDirectPuts(DataNode data, IRBuilder ib, Var dataV) {
+        // NB: Wasm memory is little endian, but when we write
+        // data segments we're calling #slice() first, which
+        // is always big endian
+        ByteBuffer buf = ByteBuffer.wrap(data.init);
+
+        JavaExts.JavaMethod putShort = new JavaExts.JavaMethod(
+                BYTE_BUFFER_CLASS,
+                "putShort",
+                "(S)Ljava/nio/ByteBuffer;",
+                JavaExts.JavaMethod.Kind.VIRTUAL
+        );
+        JavaExts.JavaMethod putByte = new JavaExts.JavaMethod(
+                BYTE_BUFFER_CLASS,
+                "put",
+                "(B)Ljava/nio/ByteBuffer;",
+                JavaExts.JavaMethod.Kind.VIRTUAL
+        );
+
+        while (buf.remaining() >= Short.BYTES) {
+            dataV = ib.insert(JavaOps.INVOKE.create(putShort)
+                            .insn(dataV, ib.insert(CommonOps.constant((int) buf.getShort()), "s")),
+                    "put");
+        }
+
+        while (buf.hasRemaining()) {
+            dataV = ib.insert(JavaOps.INVOKE.create(putByte)
+                            .insn(dataV, ib.insert(CommonOps.constant((int) buf.get()), "b")),
+                    "put");
+        }
+    }
+
+    @SuppressWarnings("CommentedOutCode")
+    public static void fillWithBase64(DataNode data, IRBuilder ib, Var dataV) {
+        byte[] encodedData = data.init;
+        {
+            ByteArrayOutputStream baos = new ByteArrayOutputStream();
+            try (GZIPOutputStream gos = new GZIPOutputStream(baos)) {
+                gos.write(encodedData);
+            } catch (IOException e) {
+                throw new IllegalStateException(e);
+            }
+            encodedData = baos.toByteArray();
+        }
+        String srcString = Base64.getEncoder().encodeToString(encodedData);
+
+        // byte[] data = Base64.getDecoder().decode(srcString);
+        JavaExts.JavaMethod getDecoder = JavaExts.JavaMethod.fromJava(Base64.class, "getDecoder");
+        JavaExts.JavaMethod decode = JavaExts.JavaMethod.fromJava(Base64.Decoder.class, "decode", String.class);
+        JavaExts.JavaMethod putBytes = new JavaExts.JavaMethod(
+                BYTE_BUFFER_CLASS,
+                "put",
+                "([BII)Ljava/nio/ByteBuffer;",
+                JavaExts.JavaMethod.Kind.VIRTUAL
+        );
+
+        Var decoder = ib.insert(JavaOps.INVOKE.create(getDecoder).insn(), "decoder");
+        Var constString = ib.insert(CommonOps.constant(srcString), "dataStr");
+        Var decoded = ib.insert(JavaOps.INVOKE.create(decode).insn(decoder, constString), "decoded");
+        Var len = ib.insert(CommonOps.constant(data.init.length), "len");
+
+        {
+            String gzipInputStream = Type.getInternalName(GZIPInputStream.class);
+            String byteArrayInputStream = Type.getInternalName(ByteArrayInputStream.class);
+            /*
+            GZIPInputStream gis = new GZIPInputStream(new ByteArrayInputStream(decoded));
+            byte[] decompressed = new byte[data.init.length];
+            int o = 0;
+            do {
+                int n = gis.read(decompressed, o, data.init.length - o);
+                o += n;
+            } while (o < data.init.length);
+             */
+            Var gis = ib.insert(JavaOps.insns(// [B
+                                    new TypeInsnNode(Opcodes.NEW, byteArrayInputStream), // [B LBaos;
+                                    new InsnNode(Opcodes.DUP_X1), // LBaos; [B LBaos;
+                                    new InsnNode(Opcodes.SWAP), // LBaos; LBaos; [B
+                                    new MethodInsnNode(Opcodes.INVOKESPECIAL, byteArrayInputStream,
+                                            "<init>", "([B)V", false), // LBaos;
+                                    new TypeInsnNode(Opcodes.NEW, gzipInputStream), // LBaos; LGis;
+                                    new InsnNode(Opcodes.DUP_X1), // LGis; LBaos; LGis;
+                                    new InsnNode(Opcodes.SWAP), // LGis; LGis; LBaos;
+                                    new MethodInsnNode(Opcodes.INVOKESPECIAL, gzipInputStream,
+                                            "<init>", "(Ljava/io/InputStream;)V", false)) // LGis;
+                            .insn(decoded),
+                    "gis");
+            decoded = ib.insert(JavaOps.insns(new IntInsnNode(Opcodes.NEWARRAY, Opcodes.T_BYTE)).insn(len),
+                    "decompressed");
+            BasicBlock loopBlock = ib.func.newBb();
+            BasicBlock contBlock = ib.func.newBb();
+            Var zero = ib.insert(CommonOps.constant(0), "0");
+            ib.insertCtrl(Control.br(loopBlock));
+            BasicBlock srcBlock = ib.getBlock();
+            ib.setBlock(loopBlock);
+            Var offsetOut = ib.func.newVar("o'");
+            Var offset = ib.insert(CommonOps.PHI
+                            .create(Arrays.asList(srcBlock, loopBlock))
+                            .insn(zero, offsetOut),
+                    "offset");
+            // offset.attachExt(JavaExts.TYPE, Type.INT_TYPE);
+            Var limit = ib.insert(JavaOps.ISUB.insn(len, offset), "limit");
+            Var read = ib.insert(JavaOps.INVOKE.create(JavaExts.JavaMethod.fromJava(
+                                    InputStream.class,
+                                    "read",
+                                    byte[].class, int.class, int.class
+                            ))
+                            .insn(gis, decoded, offset, limit),
+                    "read");
+            ib.insert(JavaOps.IADD.insn(offset, read).assignTo(offsetOut));
+            ib.insertCtrl(JavaOps.BR_COND.create(JavaOps.JumpType.IF_ICMPLT)
+                    .insn(offset, len)
+                    .jumpsTo(loopBlock, contBlock));
+            ib.setBlock(contBlock);
+        }
+
+        ib.insert(JavaOps.INVOKE.create(putBytes).insn(dataV, decoded,
+                ib.insert(CommonOps.constant(0), "0"), len), "put");
+    }
+
     //@formatter:off
     public interface StoreOrLoadFn { void call(int index, Var idx, Var val); }
     public interface BoundsCheckFn<T> { void call(T t, IRBuilder ib, int index, Var value); }
@@ -158,6 +300,7 @@ public class IRUtils {
         IRUtils.lenLoop(ib, new Var[]{idx}, false, len, vars -> store.call(thisIdx, vars[0], value));
     }
 
+    @SuppressWarnings("DuplicatedCode")
     public static <T> void emitCopy(IRBuilder ib,
                                     Effect effect,
                                     UnaryOpKey<Pair<Integer, Integer>> key,

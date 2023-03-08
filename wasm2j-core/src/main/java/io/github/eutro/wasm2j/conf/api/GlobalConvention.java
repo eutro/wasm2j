@@ -1,20 +1,23 @@
 package io.github.eutro.wasm2j.conf.api;
 
 import io.github.eutro.jwasm.tree.ExportNode;
+import io.github.eutro.wasm2j.conf.impl.DelegatingExporter;
+import io.github.eutro.wasm2j.ext.ExtContainer;
 import io.github.eutro.wasm2j.ext.JavaExts;
 import io.github.eutro.wasm2j.ssa.Effect;
 import io.github.eutro.wasm2j.ssa.IRBuilder;
 import io.github.eutro.wasm2j.ssa.Module;
 
-public interface GlobalConvention extends ExportableConvention, ConstructorCallback {
+public interface GlobalConvention extends ExportableConvention, ConstructorCallback, ExtContainer {
     void emitGlobalRef(IRBuilder ib, Effect effect);
 
     void emitGlobalStore(IRBuilder ib, Effect effect);
 
-    class Delegating implements GlobalConvention {
+    class Delegating extends DelegatingExporter implements GlobalConvention {
         protected final GlobalConvention delegate;
 
         public Delegating(GlobalConvention delegate) {
+            super(delegate);
             this.delegate = delegate;
         }
 

@@ -703,7 +703,7 @@ public class WasmToWir implements IRPass<ModuleNode, Module> {
 
         public FullConvertState(ModuleNode node) {
             TypeNode[] funcTypes = new TypeNode[0];
-            if (node.types != null && node.types.types != null) {
+            if (node.types != null) {
                 funcTypes = node.types.types.toArray(funcTypes);
             }
             this.funcTypes = funcTypes;
@@ -715,7 +715,7 @@ public class WasmToWir implements IRPass<ModuleNode, Module> {
                     }
                 }
             }
-            if (node.funcs != null && node.funcs.funcs != null) {
+            if (node.funcs != null) {
                 referencableFuncs.addAll(node.funcs.funcs);
             }
             this.referencableFuncs = referencableFuncs.toArray(new FuncNode[0]);

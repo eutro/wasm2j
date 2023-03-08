@@ -40,4 +40,22 @@ public class Getters {
     public static ValueGetterSetter staticGetter(JavaExts.JavaField field) {
         return fieldGetter(null, field);
     }
+
+    public static ValueGetterSetter methodGetterSetter(
+            ValueGetter target,
+            JavaExts.JavaMethod getter,
+            JavaExts.JavaMethod setter
+    ) {
+        return new ValueGetterSetter() {
+            @Override
+            public Var get(IRBuilder ib) {
+                return ib.insert(JavaOps.INVOKE.create(getter).insn(target.get(ib)), "got");
+            }
+
+            @Override
+            public void set(IRBuilder ib, Var val) {
+                ib.insert(JavaOps.INVOKE.create(setter).insn(target.get(ib), val).assignTo());
+            }
+        };
+    }
 }

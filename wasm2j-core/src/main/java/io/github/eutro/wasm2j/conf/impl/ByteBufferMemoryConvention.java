@@ -2,6 +2,7 @@ package io.github.eutro.wasm2j.conf.impl;
 
 import io.github.eutro.wasm2j.conf.api.ExportableConvention;
 import io.github.eutro.wasm2j.conf.api.MemoryConvention;
+import io.github.eutro.wasm2j.ext.Ext;
 import io.github.eutro.wasm2j.ext.JavaExts;
 import io.github.eutro.wasm2j.ops.CommonOps;
 import io.github.eutro.wasm2j.ops.JavaOps;
@@ -9,6 +10,7 @@ import io.github.eutro.wasm2j.ops.WasmOps;
 import io.github.eutro.wasm2j.ssa.*;
 import io.github.eutro.wasm2j.util.IRUtils;
 import io.github.eutro.wasm2j.util.Instructions;
+import io.github.eutro.wasm2j.util.Pair;
 import io.github.eutro.wasm2j.util.ValueGetterSetter;
 import org.jetbrains.annotations.Nullable;
 import org.objectweb.asm.Opcodes;
@@ -20,11 +22,18 @@ import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.util.Arrays;
 import java.util.Iterator;
+import java.util.Optional;
 
 import static io.github.eutro.jwasm.Opcodes.PAGE_SIZE;
 
 public class ByteBufferMemoryConvention extends DelegatingExporter implements MemoryConvention {
+    public static final Ext<ValueGetterSetter> MEMORY_BYTE_BUFFER = new Ext<>(ValueGetterSetter.class);
     public static final int MAX_PAGES = Integer.MAX_VALUE / PAGE_SIZE;
+    private static final JavaExts.JavaMethod BUFFER_SLICE = JavaExts.JavaMethod.fromJava(ByteBuffer.class, "slice");
+    private static final JavaExts.JavaMethod BUFFER_POSITION = JavaExts.JavaMethod.fromJava(ByteBuffer.class, "position", int.class);
+    private static final JavaExts.JavaMethod BUFFER_LIMIT = JavaExts.JavaMethod.fromJava(ByteBuffer.class, "limit", int.class);
+    private static final JavaExts.JavaMethod BUFFER_PUT_BUF = JavaExts.JavaMethod.fromJava(ByteBuffer.class, "put", ByteBuffer.class);
+
     private final ValueGetterSetter buffer;
     private final @Nullable Integer max;
 
@@ -35,6 +44,7 @@ public class ByteBufferMemoryConvention extends DelegatingExporter implements Me
     ) {
         super(exporter);
         this.buffer = buffer;
+        attachExt(MEMORY_BYTE_BUFFER, buffer);
         this.max = max;
     }
 
@@ -171,7 +181,7 @@ public class ByteBufferMemoryConvention extends DelegatingExporter implements Me
                                         "order")),
                 "newBufLE");
         ib.insert(JavaOps.INVOKE
-                        .create(JavaExts.JavaMethod.fromJava(ByteBuffer.class, "put", ByteBuffer.class))
+                        .create(BUFFER_PUT_BUF)
                         .insn(ib.insert(JavaOps.INVOKE.create(duplicate).insn(newBuf), "dupTgt"),
                                 ib.insert(JavaOps.INVOKE.create(duplicate).insn(theBuf), "dupSrc")),
                 "put");
@@ -236,5 +246,43 @@ public class ByteBufferMemoryConvention extends DelegatingExporter implements Me
         ib.insert(JavaOps.INVOKE.create(limitMethod).insn(data, limit), "_limited");
 
         ib.insert(JavaOps.INVOKE.create(putMethod).insn(mem, data), "mem");
+    }
+
+    @SuppressWarnings({"DuplicatedCode", "CommentedOutCode"})
+    @Override
+    public void emitMemCopy(IRBuilder ib, Effect effect, MemoryConvention dst) {
+        Optional<ValueGetterSetter> bbuf = dst.getExt(MEMORY_BYTE_BUFFER);
+        if (bbuf.isPresent()) {
+            ValueGetterSetter otherBuf = bbuf.get();
+
+            Pair<Integer, Integer> arg = WasmOps.MEM_COPY.cast(effect.insn().op).arg;
+            int thisIdx = arg.left;
+            int otherIdx = arg.right;
+            Iterator<Var> iter = effect.insn().args.iterator();
+            Var dstAddr = iter.next();
+            Var srcAddr = iter.next();
+            Var len = iter.next();
+
+            Var lenLong = ib.insert(JavaOps.I2L_U.insn(len), "lenL");
+            emitBoundsCheck(ib, thisIdx, ib.insert(JavaOps.LADD.insn(ib.insert(JavaOps.I2L_U.insn(srcAddr), "sL"), lenLong),
+                    "srcEnd"));
+            emitBoundsCheck(ib, otherIdx, ib.insert(JavaOps.LADD.insn(ib.insert(JavaOps.I2L_U.insn(dstAddr), "dL"), lenLong),
+                    "dstEnd"));
+
+            // ByteBuffer o = ByteBuffer.allocate(0);
+            // ByteBuffer t = ByteBuffer.allocate(0);
+            // int srcA = 0, dstA = 0, lenI = 0;
+            // t.slice().position(dstA).put(o.slice().position(srcA).limit(lenI));
+            Var target = otherBuf.get(ib);
+            target = ib.insert(JavaOps.INVOKE.create(BUFFER_SLICE).insn(target), "sliced");
+            target = ib.insert(JavaOps.INVOKE.create(BUFFER_POSITION).insn(target, dstAddr), "positioned");
+            Var src = buffer.get(ib);
+            src = ib.insert(JavaOps.INVOKE.create(BUFFER_SLICE).insn(src), "sliced");
+            src = ib.insert(JavaOps.INVOKE.create(BUFFER_POSITION).insn(src), "positioned");
+            src = ib.insert(JavaOps.INVOKE.create(BUFFER_LIMIT).insn(src), "limited");
+            ib.insert(JavaOps.INVOKE.create(BUFFER_PUT_BUF).insn(target, src), "put");
+        } else {
+            MemoryConvention.super.emitMemCopy(ib, effect, dst);
+        }
     }
 }

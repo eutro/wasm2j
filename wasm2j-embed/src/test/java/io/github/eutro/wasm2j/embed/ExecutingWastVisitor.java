@@ -6,6 +6,8 @@ import io.github.eutro.jwasm.sexp.wast.WastModuleVisitor;
 import io.github.eutro.jwasm.sexp.wast.WastReader;
 import io.github.eutro.jwasm.sexp.wast.WastVisitor;
 import io.github.eutro.wasm2j.embed.internal.Utils;
+import io.github.eutro.wasm2j.support.ExternType;
+import io.github.eutro.wasm2j.support.ValType;
 import org.jetbrains.annotations.Nullable;
 
 import java.lang.reflect.Array;

@@ -1,12 +1,15 @@
 package io.github.eutro.wasm2j.embed.internal;
 
 import io.github.eutro.jwasm.tree.*;
+import io.github.eutro.wasm2j.WasmCompiler;
 import io.github.eutro.wasm2j.conf.Conventions;
 import io.github.eutro.wasm2j.conf.Getters;
 import io.github.eutro.wasm2j.conf.api.*;
 import io.github.eutro.wasm2j.conf.impl.BasicCallingConvention;
 import io.github.eutro.wasm2j.conf.impl.InstanceFunctionConvention;
 import io.github.eutro.wasm2j.embed.*;
+import io.github.eutro.wasm2j.events.JirPassesEvent;
+import io.github.eutro.wasm2j.events.ModifyConventionsEvent;
 import io.github.eutro.wasm2j.ext.Ext;
 import io.github.eutro.wasm2j.ext.JavaExts;
 import io.github.eutro.wasm2j.ext.WasmExts;
@@ -15,15 +18,10 @@ import io.github.eutro.wasm2j.ops.JavaOps;
 import io.github.eutro.wasm2j.ops.Op;
 import io.github.eutro.wasm2j.ops.WasmOps;
 import io.github.eutro.wasm2j.passes.IRPass;
-import io.github.eutro.wasm2j.passes.InPlaceIRPass;
-import io.github.eutro.wasm2j.passes.Passes;
 import io.github.eutro.wasm2j.passes.convert.Handlify;
-import io.github.eutro.wasm2j.passes.convert.JirToJava;
-import io.github.eutro.wasm2j.passes.convert.WasmToWir;
-import io.github.eutro.wasm2j.passes.convert.WirToJir;
-import io.github.eutro.wasm2j.passes.misc.ForPass;
 import io.github.eutro.wasm2j.ssa.Module;
 import io.github.eutro.wasm2j.ssa.*;
+import io.github.eutro.wasm2j.support.ExternType;
 import io.github.eutro.wasm2j.util.IRUtils;
 import io.github.eutro.wasm2j.util.Pair;
 import io.github.eutro.wasm2j.util.ValueGetter;
@@ -64,115 +62,35 @@ public class WasmConvertPass {
     private static final JavaExts.JavaMethod ENUM_ORDINAL = JavaExts.JavaMethod.fromJava(Enum.class, "ordinal");
 
     public static IRPass<ModuleNode, ClassNode> getPass() {
+        WasmCompiler cc = new WasmCompiler();
+
         AtomicInteger counter = new AtomicInteger(0);
-        return WasmToWir.INSTANCE
-                .then(new WirToJir(Conventions.createBuilder()
-                        .setNameSupplier(() -> {
-                            String thisClassName = WebAssembly.class.getName();
-                            return thisClassName
-                                    .substring(0, thisClassName.lastIndexOf('.'))
-                                    .replace('.', '/')
-                                    + "/Module" + counter.getAndIncrement();
-                        })
-                        .setModifyFuncConvention((convention, fn, idx) -> new EmbedFunctionConvention(convention, fn.left))
-                        .setModifyTableConvention(EmbedTableConvention::new)
-                        .setModifyGlobalConvention(EmbedGlobalConvention::new)
-                        .setModifyMemConvention(EmbedMemConvention::new)
-                        .setFunctionImports(WasmConvertPass::createFunctionImport)
-                        .setTableImports(WasmConvertPass::createTableImport)
-                        .setGlobalImports(WasmConvertPass::createGlobalImport)
-                        .setMemoryImports(WasmConvertPass::createMemoryImport)
-                        .build()))
-                .then((InPlaceIRPass<Module>) module -> {
-                    JavaExts.JavaClass jClass = module.getExtOrThrow(JavaExts.JAVA_CLASS);
-                    Function getExport = new Function();
-                    JavaExts.JavaMethod method = new JavaExts.JavaMethod(
-                            jClass,
-                            "getExport",
-                            Type.getMethodDescriptor(
-                                    EV_TYPE,
-                                    Type.getType(String.class)
-                            ),
-                            JavaExts.JavaMethod.Kind.VIRTUAL
-                    );
-                    getExport.attachExt(JavaExts.FUNCTION_OWNER, jClass);
-                    getExport.attachExt(JavaExts.FUNCTION_METHOD, method);
-                    module.functions.add(getExport);
-                    method.attachExt(JavaExts.METHOD_IMPL, getExport);
-                    jClass.methods.add(method);
+        String thisClassName = WebAssembly.class.getName();
+        String packageName = thisClassName
+                .substring(0, thisClassName.lastIndexOf('.'))
+                .replace('.', '/');
+        cc.lift().listen(ModifyConventionsEvent.class, evt -> evt.conventionBuilder
+                .setNameSupplier(() -> packageName + "/Module" + counter.getAndIncrement())
+                .setModifyFuncConvention((convention, fn, idx) -> new EmbedFunctionConvention(convention, fn.left))
+                .setModifyTableConvention(EmbedTableConvention::new)
+                .setModifyGlobalConvention(EmbedGlobalConvention::new)
+                .setModifyMemConvention(EmbedMemConvention::new)
+                .setFunctionImports(WasmConvertPass::createFunctionImport)
+                .setTableImports(WasmConvertPass::createTableImport)
+                .setGlobalImports(WasmConvertPass::createGlobalImport)
+                .setMemoryImports(WasmConvertPass::createMemoryImport));
 
-                    IRBuilder ib = new IRBuilder(getExport, getExport.newBb());
-                    module.getExt(EXPORTS_EXT).ifPresent(exports -> {
-                        Map<Integer, List<Map.Entry<String, ValueGetter>>> hashes = new TreeMap<>();
-                        for (Map.Entry<String, ValueGetter> entry : exports.entrySet()) {
-                            hashes.computeIfAbsent(entry.getKey().hashCode(), $ -> new ArrayList<>())
-                                    .add(entry);
-                        }
+        cc.lift().listen(JirPassesEvent.class, WasmConvertPass::buildExports);
 
-                        List<BasicBlock> targets = new ArrayList<>();
-
-                        JavaExts.JavaClass stringClass = new JavaExts.JavaClass(Type.getInternalName(String.class));
-                        JavaExts.JavaMethod stringEquals = new JavaExts.JavaMethod(
-                                stringClass,
-                                "equals",
-                                "(Ljava/lang/Object;)Z",
-                                JavaExts.JavaMethod.Kind.VIRTUAL
-                        );
-
-                        Var name = ib.insert(CommonOps.ARG.create(0).insn(), "name");
-                        BasicBlock startBlock = ib.getBlock();
-                        BasicBlock endBlock = ib.func.newBb();
-                        for (List<Map.Entry<String, ValueGetter>> entries : hashes.values()) {
-                            ib.setBlock(ib.func.newBb());
-                            targets.add(ib.getBlock());
-
-                            BasicBlock k = ib.getBlock();
-                            Iterator<Map.Entry<String, ValueGetter>> it = entries.iterator();
-                            while (it.hasNext()) {
-                                ib.setBlock(k);
-                                Map.Entry<String, ValueGetter> entry = it.next();
-                                if (it.hasNext()) {
-                                    k = ib.func.newBb();
-                                } else {
-                                    k = endBlock;
-                                }
-                                Var isKey = ib.insert(JavaOps.INVOKE.create(stringEquals).insn(
-                                        ib.insert(CommonOps.constant(entry.getKey()), "key"),
-                                        name
-                                ), "isKey");
-
-                                BasicBlock isKeyBlock = ib.func.newBb();
-                                ib.insertCtrl(JavaOps.BR_COND
-                                        .create(JavaOps.JumpType.IFEQ).insn(isKey)
-                                        .jumpsTo(k, isKeyBlock));
-                                ib.setBlock(isKeyBlock);
-                                ib.insertCtrl(CommonOps.RETURN.insn(entry.getValue().get(ib)).jumpsTo());
-                            }
-                        }
-
-                        ib.setBlock(startBlock);
-                        Var hash = ib.insert(JavaOps.INVOKE.create(new JavaExts.JavaMethod(
-                                stringClass,
-                                "hashCode",
-                                "()I",
-                                JavaExts.JavaMethod.Kind.VIRTUAL
-                        )).insn(name), "hash");
-                        targets.add(endBlock);
-                        ib.insertCtrl(JavaOps.LOOKUPSWITCH
-                                .create(hashes.keySet().stream().mapToInt(x -> x).toArray())
-                                .insn(hash)
-                                .jumpsTo(targets.toArray(new BasicBlock[0])));
-                        ib.setBlock(endBlock);
-                    });
-                    ib.insertCtrl(CommonOps.RETURN.insn(
-                            ib.insert(CommonOps.constant(null), "null")
-                    ).jumpsTo());
-                })
-                .then(ForPass.liftFunctions(Passes.SSA_OPTS))
-                .then(ForPass.liftFunctions(Passes.JAVA_PREEMIT))
-                .then(JirToJava.INSTANCE)
-                //.then(CheckJava.INSTANCE)
-                ;
+        Queue<ClassNode> classes = cc.outputsAsQueue();
+        return node -> {
+            cc.submitNode(node);
+            ClassNode ret = classes.poll();
+            if (ret == null) {
+                throw new IllegalStateException();
+            }
+            return ret;
+        };
     }
 
     static ValueGetter effectHandle(
@@ -338,7 +256,7 @@ public class WasmConvertPass {
         JavaExts.JavaMethod grow = JavaExts.JavaMethod.fromJava(Table.class, "grow", int.class, Object.class);
         JavaExts.JavaMethod init = JavaExts.JavaMethod.fromJava(Table.class, "init", int.class, int.class, int.class, Object[].class);
         Type componentType = BasicCallingConvention.javaType(importNode.type);
-        return new TableConvention() {
+        return new TableConvention.Delegating(null) {
             @Override
             public void emitTableRef(IRBuilder ib, Effect effect) {
                 ib.insert(JavaOps.insns(new TypeInsnNode(Opcodes.CHECKCAST, componentType.getInternalName()))
@@ -424,7 +342,7 @@ public class WasmConvertPass {
         JavaExts.JavaMethod get = JavaExts.JavaMethod.fromJava(Global.class, "get");
         JavaExts.JavaMethod set = JavaExts.JavaMethod.fromJava(Global.class, "set", Object.class);
         Type objTy = Type.getType(Object.class);
-        return new GlobalConvention() {
+        return new GlobalConvention.Delegating(null) {
             @Override
             public void emitGlobalRef(IRBuilder ib, Effect effect) {
                 ib.insert(CommonOps.IDENTITY
@@ -485,7 +403,7 @@ public class WasmConvertPass {
         JavaExts.JavaMethod grow = JavaExts.JavaMethod.fromJava(Memory.class, "grow", int.class);
         JavaExts.JavaMethod init = JavaExts.JavaMethod.fromJava(Memory.class, "init",
                 int.class, int.class, int.class, ByteBuffer.class);
-        return new MemoryConvention() {
+        return new MemoryConvention.Delegating(null) {
             @Override
             public void emitMemLoad(IRBuilder ib, Effect effect) {
                 WasmOps.WithMemArg<WasmOps.DerefType> arg = WasmOps.MEM_LOAD.cast(effect.insn().op).arg;
@@ -566,6 +484,93 @@ public class WasmConvertPass {
                 getOrMakeExports(module).put(node.name, memory);
             }
         };
+    }
+
+    private static void buildExports(JirPassesEvent evt) {
+        Module module = evt.jir;
+        JavaExts.JavaClass jClass = module.getExtOrThrow(JavaExts.JAVA_CLASS);
+        Function getExport = new Function();
+        JavaExts.JavaMethod method = new JavaExts.JavaMethod(
+                jClass,
+                "getExport",
+                Type.getMethodDescriptor(
+                        EV_TYPE,
+                        Type.getType(String.class)
+                ),
+                JavaExts.JavaMethod.Kind.VIRTUAL
+        );
+        getExport.attachExt(JavaExts.FUNCTION_OWNER, jClass);
+        getExport.attachExt(JavaExts.FUNCTION_METHOD, method);
+        module.functions.add(getExport);
+        method.attachExt(JavaExts.METHOD_IMPL, getExport);
+        jClass.methods.add(method);
+
+        IRBuilder ib = new IRBuilder(getExport, getExport.newBb());
+        module.getExt(EXPORTS_EXT).ifPresent(exports -> {
+            Map<Integer, List<Map.Entry<String, ValueGetter>>> hashes = new TreeMap<>();
+            for (Map.Entry<String, ValueGetter> entry : exports.entrySet()) {
+                hashes.computeIfAbsent(entry.getKey().hashCode(), $ -> new ArrayList<>())
+                        .add(entry);
+            }
+
+            List<BasicBlock> targets = new ArrayList<>();
+
+            JavaExts.JavaClass stringClass = new JavaExts.JavaClass(Type.getInternalName(String.class));
+            JavaExts.JavaMethod stringEquals = new JavaExts.JavaMethod(
+                    stringClass,
+                    "equals",
+                    "(Ljava/lang/Object;)Z",
+                    JavaExts.JavaMethod.Kind.VIRTUAL
+            );
+
+            Var name = ib.insert(CommonOps.ARG.create(0).insn(), "name");
+            BasicBlock startBlock = ib.getBlock();
+            BasicBlock endBlock = ib.func.newBb();
+            for (List<Map.Entry<String, ValueGetter>> entries : hashes.values()) {
+                ib.setBlock(ib.func.newBb());
+                targets.add(ib.getBlock());
+
+                BasicBlock k = ib.getBlock();
+                Iterator<Map.Entry<String, ValueGetter>> it = entries.iterator();
+                while (it.hasNext()) {
+                    ib.setBlock(k);
+                    Map.Entry<String, ValueGetter> entry = it.next();
+                    if (it.hasNext()) {
+                        k = ib.func.newBb();
+                    } else {
+                        k = endBlock;
+                    }
+                    Var isKey = ib.insert(JavaOps.INVOKE.create(stringEquals).insn(
+                            ib.insert(CommonOps.constant(entry.getKey()), "key"),
+                            name
+                    ), "isKey");
+
+                    BasicBlock isKeyBlock = ib.func.newBb();
+                    ib.insertCtrl(JavaOps.BR_COND
+                            .create(JavaOps.JumpType.IFEQ).insn(isKey)
+                            .jumpsTo(k, isKeyBlock));
+                    ib.setBlock(isKeyBlock);
+                    ib.insertCtrl(CommonOps.RETURN.insn(entry.getValue().get(ib)).jumpsTo());
+                }
+            }
+
+            ib.setBlock(startBlock);
+            Var hash = ib.insert(JavaOps.INVOKE.create(new JavaExts.JavaMethod(
+                    stringClass,
+                    "hashCode",
+                    "()I",
+                    JavaExts.JavaMethod.Kind.VIRTUAL
+            )).insn(name), "hash");
+            targets.add(endBlock);
+            ib.insertCtrl(JavaOps.LOOKUPSWITCH
+                    .create(hashes.keySet().stream().mapToInt(x -> x).toArray())
+                    .insn(hash)
+                    .jumpsTo(targets.toArray(new BasicBlock[0])));
+            ib.setBlock(endBlock);
+        });
+        ib.insertCtrl(CommonOps.RETURN.insn(
+                ib.insert(CommonOps.constant(null), "null")
+        ).jumpsTo());
     }
 
     private static class EmbedFunctionConvention extends FunctionConvention.Delegating {
