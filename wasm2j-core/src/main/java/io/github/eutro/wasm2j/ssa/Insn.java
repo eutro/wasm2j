@@ -9,6 +9,9 @@ import java.util.Arrays;
 import java.util.List;
 
 public final class Insn extends DelegatingExtHolder {
+    public static boolean TRACK_INSN_CREATIONS = System.getenv("WASM2J_TRACK_INSN_CREATIONS") != null;
+
+    public Throwable created = TRACK_INSN_CREATIONS ? new Throwable("constructed") : null;
     public Op op;
     public List<Var> args;
 

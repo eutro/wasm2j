@@ -82,22 +82,22 @@ public interface WirJavaConventionFactory {
         }
 
         public Builder setModifyFuncConvention(ConventionModifier<FunctionConvention, Pair<FuncNode, CodeNode>> modifyFuncConvention) {
-            this.modifyFuncConvention = modifyFuncConvention;
+            this.modifyFuncConvention = this.modifyFuncConvention.andThen(modifyFuncConvention);
             return this;
         }
 
         public Builder setModifyTableConvention(ConventionModifier<TableConvention, TableNode> modifyTableConvention) {
-            this.modifyTableConvention = modifyTableConvention;
+            this.modifyTableConvention = this.modifyTableConvention.andThen(modifyTableConvention);
             return this;
         }
 
         public Builder setModifyGlobalConvention(ConventionModifier<GlobalConvention, GlobalNode> modifyGlobalConvention) {
-            this.modifyGlobalConvention = modifyGlobalConvention;
+            this.modifyGlobalConvention = this.modifyGlobalConvention.andThen(modifyGlobalConvention);
             return this;
         }
 
         public Builder setModifyMemConvention(ConventionModifier<MemoryConvention, MemoryNode> modifyMemConvention) {
-            this.modifyMemConvention = modifyMemConvention;
+            this.modifyMemConvention = this.modifyMemConvention.andThen(modifyMemConvention);
             return this;
         }
 

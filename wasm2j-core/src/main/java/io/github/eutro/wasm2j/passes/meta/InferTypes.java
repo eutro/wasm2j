@@ -52,6 +52,9 @@ public abstract class InferTypes<Ty> implements InPlaceIRPass<Function> {
                             effect,
                             block.toTargetString()
                     )));
+                    if (effect.insn().created != null) {
+                        e.addSuppressed(effect.insn().created);
+                    }
                     throw e;
                 }
             }

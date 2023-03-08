@@ -4,7 +4,6 @@ import io.github.eutro.jwasm.tree.AbstractImportNode;
 import io.github.eutro.jwasm.tree.ExportNode;
 import io.github.eutro.jwasm.tree.ModuleNode;
 import io.github.eutro.wasm2j.ModuleCompilation;
-import io.github.eutro.wasm2j.WasmCompiler;
 import io.github.eutro.wasm2j.conf.Conventions;
 import io.github.eutro.wasm2j.conf.Getters;
 import io.github.eutro.wasm2j.conf.api.ConstructorCallback;
@@ -17,7 +16,7 @@ import io.github.eutro.wasm2j.conf.impl.InstanceFunctionConvention;
 import io.github.eutro.wasm2j.events.EmitClassEvent;
 import io.github.eutro.wasm2j.events.EventSupplier;
 import io.github.eutro.wasm2j.events.ModifyConventionsEvent;
-import io.github.eutro.wasm2j.events.NewModuleCompilationEvent;
+import io.github.eutro.wasm2j.events.RunModuleCompilationEvent;
 import io.github.eutro.wasm2j.ext.JavaExts;
 import io.github.eutro.wasm2j.ops.CommonOps;
 import io.github.eutro.wasm2j.ops.JavaOps;
@@ -42,7 +41,9 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
-public class InterfaceBasedLinker extends EventSupplier<EmitClassEvent> implements Bit<InterfaceBasedLinker> {
+public class InterfaceBasedLinker<T extends EventSupplier<? super RunModuleCompilationEvent>>
+        extends EventSupplier<EmitClassEvent>
+        implements Bit<T, InterfaceBasedLinker<T>> {
     private final NameSupplier names;
 
     public InterfaceBasedLinker(NameSupplier names) {
@@ -141,7 +142,7 @@ public class InterfaceBasedLinker extends EventSupplier<EmitClassEvent> implemen
             ClassNode cn = new ClassNode();
             cn.visit(
                     Opcodes.V1_8,
-                    Opcodes.ACC_INTERFACE | Opcodes.ACC_PUBLIC | Opcodes.ACC_SUPER,
+                    Opcodes.ACC_INTERFACE | Opcodes.ACC_PUBLIC | Opcodes.ACC_ABSTRACT,
                     getClassName(),
                     null,
                     "java/lang/Object",
@@ -221,11 +222,11 @@ public class InterfaceBasedLinker extends EventSupplier<EmitClassEvent> implemen
     }
 
     @FunctionalInterface
-    interface LookupCb<T> {
-        T call(int modIdx, ModuleInterface itf);
+    interface LookupCb<T extends EventSupplier<? super RunModuleCompilationEvent>, R> {
+        R call(int modIdx, InterfaceBasedLinker<T>.ModuleInterface itf);
     }
 
-    <T> T lookupItf(SortedSet<ModuleInterface> importedModules, AbstractImportNode importNode, LookupCb<T> f) {
+    <R> R lookupItf(SortedSet<ModuleInterface> importedModules, AbstractImportNode importNode, LookupCb<T, R> f) {
         ModuleInterface itf = new ModuleInterface(importNode.module);
         int modIdx = importedModules.headSet(itf).size();
         itf = importedModules.tailSet(itf).first();
@@ -286,11 +287,11 @@ public class InterfaceBasedLinker extends EventSupplier<EmitClassEvent> implemen
     }
 
     @NotNull
-    private <T> T importGetterSetter(AbstractImportNode importNode,
+    private <R> R importGetterSetter(AbstractImportNode importNode,
                                      JavaExts.JavaField field,
                                      ModuleInterface itf,
                                      Type asmType,
-                                     GetterSetterCb<T> cb) {
+                                     GetterSetterCb<R> cb) {
         ValueGetterSetter target = Getters.fieldGetter(Getters.GET_THIS, field);
         JavaExts.JavaMethod getter = new JavaExts.JavaMethod(
                 itf.getJClass(),
@@ -346,8 +347,8 @@ public class InterfaceBasedLinker extends EventSupplier<EmitClassEvent> implemen
     }
 
     @Override
-    public InterfaceBasedLinker addTo(WasmCompiler cc) {
-        cc.listen(NewModuleCompilationEvent.class, evt -> {
+    public InterfaceBasedLinker<T> addTo(T cc) {
+        cc.listen(RunModuleCompilationEvent.class, evt -> {
             ModuleCompilation compilation = evt.compilation;
             SortedSet<ModuleInterface> importedModules = requireImports(compilation.node);
             List<JavaExts.JavaField> fields = importedModules.stream()

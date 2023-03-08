@@ -8,8 +8,12 @@ public interface NameMangler {
     String JVM_BANNED_CHARS = ".;[/<>";
     String EMPTY_TOKEN = "_EMPTY_";
 
-    NameMangler JVM_UNQUALIFIED = new BanChars(JVM_BANNED_CHARS, IllegalTokenPolicy.MANGLE_BIJECTIVE);
-    NameMangler JAVA_IDENT = new JavaIdent(IllegalTokenPolicy.MANGLE_BIJECTIVE);
+    static NameMangler jvmUnqualified(IllegalTokenPolicy policy) {
+        return new BanChars(JVM_BANNED_CHARS, policy);
+    }
+    static NameMangler javaIdent(IllegalTokenPolicy policy) {
+        return new JavaIdent(policy);
+    }
 
     String mangle(String name);
 
@@ -31,7 +35,7 @@ public interface NameMangler {
             if (this == OMIT) return;
             if (this == MANGLE_BIJECTIVE) {
                 if (c == '_') {
-                    into.format("_UNDERSCORE_");
+                    into.format("__");
                     return;
                 }
                 if (c == '-') {
@@ -97,13 +101,13 @@ public interface NameMangler {
             }
         }
 
-        private boolean isForbidden(int c) {
-            return FORBIDDEN.get(c);
+        private boolean isAllowed(int c) {
+            return !FORBIDDEN.get(c);
         }
 
         public String mangle(String str) {
             if (str.isEmpty()) return EMPTY_TOKEN;
-            IntPredicate pred = this::isForbidden;
+            IntPredicate pred = this::isAllowed;
             notOk:
             {
                 for (int i = 0; i < str.length(); i = str.offsetByCodePoints(i, 1)) {

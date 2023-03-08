@@ -13,13 +13,17 @@ import io.github.eutro.wasm2j.ssa.Module;
 import org.objectweb.asm.tree.ClassNode;
 
 public class ModuleCompilation extends EventSupplier<ModuleCompileEvent> {
+    private final WasmCompiler cc;
     public ModuleNode node;
 
-    public ModuleCompilation(ModuleNode node) {
+    public ModuleCompilation(WasmCompiler cc, ModuleNode node) {
+        this.cc = cc;
         this.node = node;
     }
 
-    public void submit() {
+    public void run() {
+        cc.dispatch(RunModuleCompilationEvent.class, new RunModuleCompilationEvent(this));
+
         Module wir = WasmToWir.INSTANCE.run(node);
         wir = dispatch(WirPassesEvent.class, new WirPassesEvent(wir)).wir;
 
@@ -38,5 +42,10 @@ public class ModuleCompilation extends EventSupplier<ModuleCompileEvent> {
 
         ClassNode classNode = JirToJava.INSTANCE.run(jir);
         dispatch(EmitClassEvent.class, new EmitClassEvent(classNode));
+    }
+
+    public ModuleCompilation setName(String name) {
+        listen(ModifyConventionsEvent.class, mce -> mce.conventionBuilder.setNameSupplier(() -> name));
+        return this;
     }
 }

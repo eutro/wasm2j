@@ -4,8 +4,6 @@ import io.github.eutro.jwasm.ByteInputStream;
 import io.github.eutro.jwasm.test.ModuleTestBase;
 import io.github.eutro.wasm2j.bits.InterfaceBasedLinker;
 import io.github.eutro.wasm2j.events.EmitClassEvent;
-import io.github.eutro.wasm2j.events.ModifyConventionsEvent;
-import io.github.eutro.wasm2j.events.NewModuleCompilationEvent;
 import io.github.eutro.wasm2j.support.CaseStyle;
 import io.github.eutro.wasm2j.support.NameMangler;
 import io.github.eutro.wasm2j.support.NameSupplier;
@@ -18,7 +16,8 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.UncheckedIOException;
 import java.nio.file.Files;
-import java.util.concurrent.atomic.AtomicReference;
+
+import static io.github.eutro.wasm2j.support.NameMangler.IllegalTokenPolicy.MANGLE_BIJECTIVE;
 
 public class InterfaceLinkingTest {
 
@@ -27,9 +26,9 @@ public class InterfaceLinkingTest {
     @Test
     void test() throws IOException {
         WasmCompiler cc = new WasmCompiler();
-        InterfaceBasedLinker ibl = cc.add(new InterfaceBasedLinker(NameSupplier.createSimple(
+        InterfaceBasedLinker<?> ibl = cc.add(new InterfaceBasedLinker<>(NameSupplier.createSimple(
                 PACKAGE,
-                NameMangler.JAVA_IDENT,
+                NameMangler.javaIdent(MANGLE_BIJECTIVE),
                 CaseStyle.LOWER_SNAKE, CaseStyle.UPPER_CAMEL,
                 CaseStyle.LOWER_SNAKE, CaseStyle.LOWER_CAMEL
         )));
@@ -46,17 +45,7 @@ public class InterfaceLinkingTest {
             }
         });
 
-        AtomicReference<String> name = new AtomicReference<>();
-        AtomicReference<String> itfName = new AtomicReference<>();
-        cc.lift().listen(ModifyConventionsEvent.class, mce -> mce.conventionBuilder
-                .setNameSupplier(name::get));
-        cc.listen(NewModuleCompilationEvent.class, nmce -> {
-            ibl.register(itfName.get(), nmce.compilation.node);
-        });
-
-        name.set(PACKAGE + "Main");
-        itfName.set("main_itf");
-        cc.submitText("(module" +
+        ModuleCompilation comp = cc.submitText("(module" +
                 "(func $bar (import \"foo\" \"bar\"))" +
                 "(global $glob (import \"foo\" \"glob\") (mut i32))" +
                 "(memory $mem (export \"mem\") (import \"mem\" \"mem\") 2)" +
@@ -64,11 +53,14 @@ public class InterfaceLinkingTest {
                 "  (global.set $glob (i32.const 100))" +
                 "  (call $bar))" +
                 "(start $main))");
+        ibl.register("main_itf", comp.node);
+        comp.setName(PACKAGE + "Main").run();
 
-        name.set(PACKAGE + "Aoc");
-        itfName.set("aoc_itf");
         try (InputStream is = ModuleTestBase.openResource(ModuleTestBase.AOC_SOLNS)) {
-            cc.submitBinary(new ByteInputStream.InputStreamByteInputStream(is));
+            comp = cc.submitBinary(new ByteInputStream.InputStreamByteInputStream(is));
+            comp.setName(PACKAGE + "Aoc");
+            ibl.register("aoc_itf", comp.node);
+            comp.run();
         }
 
         ibl.finish();

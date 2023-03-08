@@ -278,8 +278,9 @@ public class ByteBufferMemoryConvention extends DelegatingExporter implements Me
             target = ib.insert(JavaOps.INVOKE.create(BUFFER_POSITION).insn(target, dstAddr), "positioned");
             Var src = buffer.get(ib);
             src = ib.insert(JavaOps.INVOKE.create(BUFFER_SLICE).insn(src), "sliced");
-            src = ib.insert(JavaOps.INVOKE.create(BUFFER_POSITION).insn(src), "positioned");
-            src = ib.insert(JavaOps.INVOKE.create(BUFFER_LIMIT).insn(src), "limited");
+            src = ib.insert(JavaOps.INVOKE.create(BUFFER_POSITION).insn(src, srcAddr), "positioned");
+            Var limit = ib.insert(JavaOps.IADD.insn(srcAddr, len), "limit");
+            src = ib.insert(JavaOps.INVOKE.create(BUFFER_LIMIT).insn(src, limit), "limited");
             ib.insert(JavaOps.INVOKE.create(BUFFER_PUT_BUF).insn(target, src), "put");
         } else {
             MemoryConvention.super.emitMemCopy(ib, effect, dst);

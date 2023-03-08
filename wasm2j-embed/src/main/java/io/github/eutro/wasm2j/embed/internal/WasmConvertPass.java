@@ -84,7 +84,7 @@ public class WasmConvertPass {
 
         Queue<ClassNode> classes = cc.outputsAsQueue();
         return node -> {
-            cc.submitNode(node);
+            cc.submitNode(node).run();
             ClassNode ret = classes.poll();
             if (ret == null) {
                 throw new IllegalStateException();
