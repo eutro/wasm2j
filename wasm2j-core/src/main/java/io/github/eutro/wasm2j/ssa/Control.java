@@ -1,16 +1,17 @@
 package io.github.eutro.wasm2j.ssa;
 
+import io.github.eutro.wasm2j.ext.CommonExts;
 import io.github.eutro.wasm2j.ext.ExtHolder;
 import io.github.eutro.wasm2j.ops.CommonOps;
 
 import java.util.List;
 
 public final class Control extends ExtHolder {
-    public Insn insn;
+    private Insn insn;
     public List<BasicBlock> targets;
 
     public Control(Insn insn, List<BasicBlock> targets) {
-        this.insn = insn;
+        this.setInsn(insn);
         this.targets = targets;
     }
 
@@ -21,7 +22,7 @@ public final class Control extends ExtHolder {
     @Override
     public String toString() {
         StringBuilder sb = new StringBuilder();
-        sb.append(insn);
+        sb.append(insn());
         if (!targets.isEmpty()) {
             sb.append(" ->");
             for (BasicBlock target : targets) {
@@ -29,5 +30,14 @@ public final class Control extends ExtHolder {
             }
         }
         return sb.toString();
+    }
+
+    public Insn insn() {
+        return insn;
+    }
+
+    public void setInsn(Insn insn) {
+        insn.attachExt(CommonExts.OWNING_CONTROL, this);
+        this.insn = insn;
     }
 }

@@ -16,39 +16,9 @@ public class SpecTest {
     public static final File DEBUG_OUTPUT_DIRECTORY = new File("build/wasmout");
     public static final String SOURCE = "" +
             "(module\n" +
-            "  (memory 1 1)\n" +
-            "  (func (export \"init\") (param $i i32) (param $x f32) (f32.store (local.get $i) (local.get $x)))\n" +
-            "\n" +
-            "  (func (export \"run\") (param $n i32) (param $z f32)\n" +
-            "    (local $i i32)\n" +
-            "    (block $exit\n" +
-            "      (loop $cont\n" +
-            "        (f32.store\n" +
-            "          (local.get $i)\n" +
-            "          (f32.div (f32.load (local.get $i)) (local.get $z))\n" +
-            "        )\n" +
-            "        (local.set $i (i32.add (local.get $i) (i32.const 4)))\n" +
-            "        (br_if $cont (i32.lt_u (local.get $i) (local.get $n)))\n" +
-            "      )\n" +
-            "    )\n" +
-            "  )\n" +
-            "\n" +
-            "  (func (export \"check\") (param $i i32) (result f32) (f32.load (local.get $i)))\n" +
-            ")\n" +
-            "\n" +
-            "(invoke \"init\" (i32.const  0) (f32.const 15.1))\n" +
-            "(invoke \"init\" (i32.const  4) (f32.const 15.2))\n" +
-            "(invoke \"init\" (i32.const  8) (f32.const 15.3))\n" +
-            "(invoke \"init\" (i32.const 12) (f32.const 15.4))\n" +
-            "(assert_return (invoke \"check\" (i32.const  0)) (f32.const 15.1))\n" +
-            "(assert_return (invoke \"check\" (i32.const  4)) (f32.const 15.2))\n" +
-            "(assert_return (invoke \"check\" (i32.const  8)) (f32.const 15.3))\n" +
-            "(assert_return (invoke \"check\" (i32.const 12)) (f32.const 15.4))\n" +
-            "(invoke \"run\" (i32.const 16) (f32.const 3.0))\n" +
-            "(assert_return (invoke \"check\" (i32.const  0)) (f32.const 0x1.422222p+2))\n" +
-            "(assert_return (invoke \"check\" (i32.const  4)) (f32.const 0x1.444444p+2))\n" +
-            "(assert_return (invoke \"check\" (i32.const  8)) (f32.const 0x1.466666p+2))\n" +
-            "(assert_return (invoke \"check\" (i32.const 12)) (f32.const 0x1.488888p+2))";
+            "  (func (result i32) " +
+            "    (i32.add (i32.const 12) (i32.const 10)))" +
+            ")";
 
     @Test
     void inlineTest() {

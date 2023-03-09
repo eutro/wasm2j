@@ -21,7 +21,7 @@ public class CollapseJumps implements InPlaceIRPass<Function> {
         Map<BasicBlock, BasicBlock> killed = new HashMap<>();
         for (BasicBlock block : func.blocks) {
             if (killed.containsKey(block)) continue;
-            while (block.getControl().insn.op.key == CommonOps.BR.key) {
+            while (block.getControl().insn().op.key == CommonOps.BR.key) {
                 BasicBlock target = block.getControl().targets.get(0);
                 if (target.getExtOrThrow(CommonExts.PREDS).size() != 1) break;
                 // if the block has only one predecessor then it won't have phis either

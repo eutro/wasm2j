@@ -3,15 +3,15 @@ package io.github.eutro.wasm2j.passes.form;
 import io.github.eutro.wasm2j.ext.CommonExts;
 import io.github.eutro.wasm2j.ext.JavaExts;
 import io.github.eutro.wasm2j.intrinsics.IntrinsicImpl;
+import io.github.eutro.wasm2j.ops.CommonOps;
 import io.github.eutro.wasm2j.ops.JavaOps;
 import io.github.eutro.wasm2j.ops.Op;
 import io.github.eutro.wasm2j.ssa.Module;
 import io.github.eutro.wasm2j.ssa.*;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
+import java.util.*;
+
+import static io.github.eutro.wasm2j.ext.CommonExts.takeNull;
 
 public class LowerIntrinsics extends LowerCommon {
 
@@ -30,6 +30,23 @@ public class LowerIntrinsics extends LowerCommon {
     }
 
     public static Insn emitIntrinsic(IRBuilder ib, IntrinsicImpl intr, List<Var> args) {
+        foldConstant:
+        if (intr.eval != null) {
+            for (Var arg : args) {
+                if (arg.getNullable(CommonExts.CONSTANT_VALUE) == null) {
+                    break foldConstant;
+                }
+            }
+            List<Object> intrArgs = new ArrayList<>();
+            for (Var arg : args) {
+                intrArgs.add(takeNull(arg.getNullable(CommonExts.CONSTANT_VALUE)));
+            }
+            try {
+                Object result = intr.eval.invokeWithArguments(intrArgs);
+                return CommonOps.constant(result);
+            } catch (Throwable ignored) {
+            }
+        }
         if (intr.inline) {
             return new Inliner(ib)
                     .inline(Objects.requireNonNull(intr.impl), args);

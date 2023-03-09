@@ -42,7 +42,7 @@ public class LinearScan implements InPlaceIRPass<Function> {
                 for (Effect effect : block.getEffects()) {
                     effect.insn().attachExt(IC_EXT, insnCounter++);
                 }
-                block.getControl().insn.attachExt(IC_EXT, insnCounter++);
+                block.getControl().insn().attachExt(IC_EXT, insnCounter++);
                 CommonExts.LiveData liveData = block.getExtOrThrow(CommonExts.LIVE_DATA);
                 for (Var liveOutVar : liveData.liveOut) {
                     // set it to the start of the next block if the variable outlives
@@ -99,8 +99,8 @@ public class LinearScan implements InPlaceIRPass<Function> {
                     replaceVars(effect.insn(), allocated);
                     effect.insn().removeExt(IC_EXT);
                 }
-                replaceVars(block.getControl().insn, allocated);
-                block.getControl().insn.removeExt(IC_EXT);
+                replaceVars(block.getControl().insn(), allocated);
+                block.getControl().insn().removeExt(IC_EXT);
                 for (Var liveOutVar : block.getExtOrThrow(CommonExts.LIVE_DATA).liveOut) {
                     liveOutVar.removeExt(LAST_LIVE_BLOCK);
                 }

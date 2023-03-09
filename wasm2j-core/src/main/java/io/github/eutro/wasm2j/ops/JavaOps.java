@@ -5,6 +5,7 @@ import io.github.eutro.wasm2j.ext.JavaExts.Handlable;
 import io.github.eutro.wasm2j.ext.JavaExts.JavaField;
 import io.github.eutro.wasm2j.ext.JavaExts.JavaMethod;
 import io.github.eutro.wasm2j.intrinsics.IntrinsicImpl;
+import io.github.eutro.wasm2j.ssa.Var;
 import io.github.eutro.wasm2j.util.Disassembler;
 import org.jetbrains.annotations.Nullable;
 import org.objectweb.asm.Opcodes;
@@ -13,7 +14,10 @@ import org.objectweb.asm.tree.AbstractInsnNode;
 import org.objectweb.asm.tree.InsnList;
 import org.objectweb.asm.tree.InsnNode;
 
-import static io.github.eutro.wasm2j.ext.CommonExts.markPure;
+import java.util.ArrayList;
+import java.util.List;
+
+import static io.github.eutro.wasm2j.ext.CommonExts.*;
 
 public class JavaOps {
     public static final UnaryOpKey<IntrinsicImpl> INTRINSIC = new UnaryOpKey<>("intr");
@@ -125,14 +129,85 @@ public class JavaOps {
     }
 
     public static Op IADD = markPure(insns(new InsnNode(Opcodes.IADD)));
-    public static Op LADD = markPure(insns(new InsnNode(Opcodes.LADD)));
     public static Op ISUB = markPure(insns(new InsnNode(Opcodes.ISUB)));
+    public static Op LADD = markPure(insns(new InsnNode(Opcodes.LADD)));
     public static Op IMUL = markPure(insns(new InsnNode(Opcodes.IMUL)));
     public static Op I2L = markPure(insns(new InsnNode(Opcodes.I2L)));
     public static Op I2L_U = markPure(INVOKE
             .create(JavaMethod.fromJava(Integer.class, "toUnsignedLong", int.class)));
     public static Op L2I_EXACT = markPure(INVOKE
             .create(JavaMethod.fromJava(Math.class, "toIntExact", long.class)));
+
+    static {
+        IADD.attachExt(CONSTANT_PROPAGATOR, insn -> {
+            int constant = 0;
+            for (Var arg : insn.args) {
+                Object value = arg.getNullable(CommonExts.CONSTANT_VALUE);
+                if (value == null) return insn;
+                constant += (int) value;
+            }
+            return CommonOps.constant(constant);
+        });
+        ISUB.attachExt(CONSTANT_PROPAGATOR, insn -> {
+            Object lhs = insn.args.get(0).getNullable(CONSTANT_VALUE);
+            if (lhs == null) return insn;
+            Object rhs = insn.args.get(1).getNullable(CONSTANT_VALUE);
+            if (rhs == null) return insn;
+            return CommonOps.constant((int) lhs - (int) rhs);
+        });
+        IMUL.attachExt(CONSTANT_PROPAGATOR, insn -> {
+            int constant = 1;
+            for (Var arg : insn.args) {
+                Object value = arg.getNullable(CommonExts.CONSTANT_VALUE);
+                if (value == null) return insn;
+                constant *= (int) value;
+            }
+            return CommonOps.constant(constant);
+        });
+        LADD.attachExt(CONSTANT_PROPAGATOR, insn -> {
+            long constant = 0;
+            for (Var arg : insn.args) {
+                Object value = arg.getNullable(CommonExts.CONSTANT_VALUE);
+                if (value == null) return insn;
+                constant += (long) value;
+            }
+            return CommonOps.constant(constant);
+        });
+        I2L.attachExt(CONSTANT_PROPAGATOR, insn -> {
+            Object constValue = insn.args.get(0).getNullable(CONSTANT_VALUE);
+            if (constValue == null) return insn;
+            return CommonOps.constant((long) (int) constValue);
+        });
+        I2L_U.attachExt(CONSTANT_PROPAGATOR, insn -> {
+            Object constValue = insn.args.get(0).getNullable(CONSTANT_VALUE);
+            if (constValue == null) return insn;
+            return CommonOps.constant(Integer.toUnsignedLong((int) constValue));
+        });
+        L2I_EXACT.attachExt(CONSTANT_PROPAGATOR, insn -> {
+            Object constValue = insn.args.get(0).getNullable(CONSTANT_VALUE);
+            if (constValue == null) return insn;
+            long longValue = (long) constValue;
+            if (longValue != (int) longValue) return insn;
+            return CommonOps.constant((int) longValue);
+        });
+        INTRINSIC.attachExt(CONSTANT_PROPAGATOR, insn -> {
+            IntrinsicImpl intr = JavaOps.INTRINSIC.cast(insn.op).arg;
+            if (intr.eval == null) return insn;
+            for (Var arg : insn.args) {
+                if (arg.getNullable(CONSTANT_VALUE) == null) return insn;
+            }
+            List<Object> args = new ArrayList<>();
+            for (Var arg : insn.args) {
+                args.add(takeNull(arg.getNullable(CONSTANT_VALUE)));
+            }
+            try {
+                Object res = intr.eval.invokeWithArguments(args);
+                return CommonOps.constant(fillNull(res));
+            } catch (Throwable ignored) {
+                return insn;
+            }
+        });
+    }
 
     static {
         for (OpKey key : new OpKey[]{

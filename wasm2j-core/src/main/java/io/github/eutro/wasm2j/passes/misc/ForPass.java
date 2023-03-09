@@ -111,7 +111,7 @@ public class ForPass {
 
                 @Override
                 public Insn get(int index) {
-                    if (index == effectsSize) return basicBlock.getControl().insn;
+                    if (index == effectsSize) return basicBlock.getControl().insn();
                     return basicBlock.getEffects().get(index).insn();
                 }
 
@@ -119,8 +119,8 @@ public class ForPass {
                 public Insn set(int index, Insn element) {
                     if (index == effectsSize) {
                         Control control = basicBlock.getControl();
-                        Insn old = control.insn;
-                        control.insn = element;
+                        Insn old = control.insn();
+                        control.setInsn(element);
                         return old;
                     }
                     Effect effect = basicBlock.getEffects().get(index);

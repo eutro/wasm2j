@@ -21,7 +21,7 @@ public class Inliner {
     ) {
         BasicBlock startBlock;
         boolean blocksInlined = func.blocks.size() == 1
-                && func.blocks.get(0).getControl().insn.op == CommonOps.RETURN;
+                && func.blocks.get(0).getControl().insn().op == CommonOps.RETURN;
         BasicBlock targetBlock = null;
         if (blocksInlined) {
             startBlock = ib.getBlock();
@@ -50,14 +50,14 @@ public class Inliner {
                 ib.insert(insn.assignTo(refreshVars(effect.getAssignsTo())));
             }
             Control ctrl = thisBb.getControl();
-            if (ctrl.insn.op.key == CommonOps.RETURN.key) {
-                returnVars.put(iBb, refreshVars(ctrl.insn.args));
+            if (ctrl.insn().op.key == CommonOps.RETURN.key) {
+                returnVars.put(iBb, refreshVars(ctrl.insn().args));
                 if (!blocksInlined) {
                     ib.insertCtrl(Control.br(targetBlock));
                 }
             } else {
-                ib.insertCtrl(ctrl.insn.op
-                        .insn(refreshVars(ctrl.insn.args))
+                ib.insertCtrl(ctrl.insn().op
+                        .insn(refreshVars(ctrl.insn().args))
                         .jumpsTo(refreshBbs(ctrl.targets)));
             }
         }

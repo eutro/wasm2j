@@ -110,7 +110,7 @@ public class SSAify implements InPlaceIRPass<Function> {
                         it.set(newVar);
                     }
                 }
-                replaceUsages(block.getControl().insn);
+                replaceUsages(block.getControl().insn());
 
                 BlockData data = block.getExtOrThrow(bdExt);
                 for (BasicBlock succ : block.getControl().targets) {

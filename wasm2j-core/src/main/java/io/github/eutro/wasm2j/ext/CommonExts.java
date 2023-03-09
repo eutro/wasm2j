@@ -1,7 +1,8 @@
 package io.github.eutro.wasm2j.ext;
 
-import io.github.eutro.wasm2j.ssa.*;
 import io.github.eutro.wasm2j.ssa.Module;
+import io.github.eutro.wasm2j.ssa.*;
+import io.github.eutro.wasm2j.util.F;
 
 import java.util.HashSet;
 import java.util.LinkedHashSet;
@@ -17,6 +18,21 @@ public class CommonExts {
 
     public static final Ext<Boolean> IS_PURE = Ext.create(Boolean.class);
     public static final Ext<Boolean> IS_TRIVIAL = Ext.create(Boolean.class);
+
+    public static final Object CONSTANT_NULL_SENTINEL = new Object();
+
+    public static Object fillNull(Object obj) {
+        return obj == null ? CONSTANT_NULL_SENTINEL : obj;
+    }
+
+    public static Object takeNull(Object obj) {
+        return obj == CONSTANT_NULL_SENTINEL ? null : obj;
+    }
+
+    public static final Ext<Object> CONSTANT_VALUE = Ext.create(Object.class);
+
+    public static final Ext<F<Insn, Insn>> CONSTANT_PROPAGATOR = Ext.create(F.class);
+
     public static final Ext<Boolean> STACKIFIED = Ext.create(Boolean.class);
     public static final Ext<Boolean> IS_PHI = Ext.create(Boolean.class);
 
@@ -26,6 +42,7 @@ public class CommonExts {
     public static final Ext<Module> OWNING_MODULE = Ext.create(Module.class);
     public static final Ext<Function> OWNING_FUNCTION = Ext.create(Function.class);
     public static final Ext<BasicBlock> OWNING_BLOCK = Ext.create(BasicBlock.class);
+    public static final Ext<Control> OWNING_CONTROL = Ext.create(Control.class);
     public static final Ext<Effect> OWNING_EFFECT = Ext.create(Effect.class);
 
     public static final Ext<CodeType> CODE_TYPE = Ext.create(CodeType.class);

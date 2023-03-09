@@ -53,14 +53,14 @@ public class MergeConds implements InPlaceIRPass<Function> {
             }
 
             Control jump = basicBlock.getControl();
-            Insn insn = jump.insn;
+            Insn insn = jump.insn();
             if (insn.op.key != JavaOps.BR_COND || insn.args.size() != 1) continue;
             Var arg = insn.args.get(0);
             checkSelect(arg, (aInsn, boolTy) -> {
                 UnaryOpKey<JavaOps.JumpType>.UnaryOp jumpKey = JavaOps.BR_COND.cast(insn.op);
                 JavaOps.JumpType combined = jumpKey.arg.combine(boolTy);
                 if (combined == null) return;
-                jump.insn = JavaOps.BR_COND.create(combined).copyFrom(aInsn);
+                jump.setInsn(JavaOps.BR_COND.create(combined).copyFrom(aInsn));
             });
         }
 

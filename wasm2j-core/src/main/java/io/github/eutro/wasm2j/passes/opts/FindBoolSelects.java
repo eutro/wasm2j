@@ -41,16 +41,16 @@ public class FindBoolSelects implements InPlaceIRPass<Function> {
             BasicBlock pred = aPred.get(0);
 
             Control jump = pred.getControl();
-            if (jump.insn.op.key != JavaOps.BR_COND) continue;
+            if (jump.insn().op.key != JavaOps.BR_COND) continue;
 
-            JavaOps.JumpType jTy = JavaOps.BR_COND.cast(jump.insn.op).arg;
+            JavaOps.JumpType jTy = JavaOps.BR_COND.cast(jump.insn().op).arg;
             List<BasicBlock> jumpTargets = jump.targets;
             if (jumpTargets.size() != 2
                     || jumpTargets.get(0).getEffects().size() != 1
                     || jumpTargets.get(1).getEffects().size() != 1) continue;
 
-            if (jumpTargets.get(0).getControl().insn.op.key != CommonOps.BR.key
-                    || jumpTargets.get(1).getControl().insn.op.key != CommonOps.BR.key) continue;
+            if (jumpTargets.get(0).getControl().insn().op.key != CommonOps.BR.key
+                    || jumpTargets.get(1).getControl().insn().op.key != CommonOps.BR.key) continue;
 
             Effect ifFInsn = jumpTargets.get(0).getEffects().get(0);
             Effect ifTInsn = jumpTargets.get(1).getEffects().get(0);
@@ -62,7 +62,7 @@ public class FindBoolSelects implements InPlaceIRPass<Function> {
             if (!phi.insn().args.contains(ifFInsn.getAssignsTo().get(0))
                     || !phi.insn().args.contains(ifTInsn.getAssignsTo().get(0))) continue;
 
-            phi.setInsn(JavaOps.BOOL_SELECT.create(jTy).copyFrom(jump.insn));
+            phi.setInsn(JavaOps.BOOL_SELECT.create(jTy).copyFrom(jump.insn()));
             pred.setControl(Control.br(block));
             changed = true;
         }

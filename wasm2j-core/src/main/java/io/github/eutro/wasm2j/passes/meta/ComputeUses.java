@@ -24,7 +24,7 @@ public class ComputeUses implements InPlaceIRPass<Function> {
                 }
             }
             Control ctrl = block.getControl();
-            for (Var arg : ctrl.insn.args) {
+            for (Var arg : ctrl.insn().args) {
                 clearUses(arg);
             }
         }
@@ -38,8 +38,8 @@ public class ComputeUses implements InPlaceIRPass<Function> {
                 }
             }
             Control ctrl = block.getControl();
-            for (Var arg : ctrl.insn.args) {
-                getOrCreateUses(arg).add(ctrl.insn);
+            for (Var arg : ctrl.insn().args) {
+                getOrCreateUses(arg).add(ctrl.insn());
             }
         }
 

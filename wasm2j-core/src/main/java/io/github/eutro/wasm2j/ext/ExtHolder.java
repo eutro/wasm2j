@@ -19,10 +19,12 @@ public class ExtHolder implements ExtContainer {
         return map;
     }
 
+    @Override
     public <T> void attachExt(Ext<T> ext, T value) {
         getMap().put(ext, value);
     }
 
+    @Override
     public <T> void removeExt(Ext<T> ext) {
         getMap().remove(ext);
     }

@@ -9,6 +9,8 @@ import org.objectweb.asm.tree.AnnotationNode;
 import org.objectweb.asm.tree.ClassNode;
 import org.objectweb.asm.tree.MethodNode;
 
+import java.lang.invoke.MethodHandles;
+import java.lang.invoke.MethodType;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
@@ -47,6 +49,12 @@ public class JavaIntrinsics {
 
             boolean inline = (boolean) annotAsMap.getOrDefault("inline", true);
             IntrinsicImpl impl = new IntrinsicImpl(method, inline);
+            try {
+                impl.eval = MethodHandles.lookup().findStatic(Operators.class, method.name,
+                        MethodType.fromMethodDescriptorString(method.desc, Operators.class.getClassLoader()));
+            } catch (ReflectiveOperationException e) {
+                throw new IllegalStateException(e);
+            }
 
             if (annotAsMap.containsKey("iOp")) {
                 byte bOp = (byte) annotAsMap.getOrDefault("value", Opcodes.INSN_PREFIX);

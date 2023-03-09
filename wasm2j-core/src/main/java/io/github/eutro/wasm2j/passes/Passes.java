@@ -10,7 +10,8 @@ import io.github.eutro.wasm2j.ssa.Function;
 
 public class Passes {
     public static final IRPass<Function, Function> SSA_OPTS =
-            ForPass.liftInsns(IdentityElimination.INSTANCE).lift()
+            PropagateConstants.INSTANCE
+                    .then(ForPass.liftInsns(IdentityElimination.INSTANCE).lift())
                     .then(EliminateDeadVars.INSTANCE);
 
     public static final IRPass<Function, Function> JAVA_PREEMIT =

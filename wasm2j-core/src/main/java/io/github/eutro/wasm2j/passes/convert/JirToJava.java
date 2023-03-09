@@ -200,11 +200,11 @@ public class JirToJava implements IRPass<Module, ClassNode> {
                 emitStores(jb, effect);
             }
             Control ctrl = block.getControl();
-            Converter<Control> converter = CTRL_CONVERTERS.get(ctrl.insn.op.key);
+            Converter<Control> converter = CTRL_CONVERTERS.get(ctrl.insn().op.key);
             if (converter == null) {
-                throw missingConverter(ctrl.insn);
+                throw missingConverter(ctrl.insn());
             }
-            emitLoads(jb, ctrl.insn);
+            emitLoads(jb, ctrl.insn());
             converter.convert(jb, ctrl);
 
             if (mn.instructions.getLast() == frameNode) {
@@ -360,7 +360,7 @@ public class JirToJava implements IRPass<Module, ClassNode> {
             }
         });
         CTRL_CONVERTERS.put(JavaOps.BR_COND, (jb, ct) -> {
-            JavaOps.JumpType ty = JavaOps.BR_COND.cast(ct.insn.op).arg;
+            JavaOps.JumpType ty = JavaOps.BR_COND.cast(ct.insn().op).arg;
             BasicBlock targetBlock = ct.targets.get(0);
             BasicBlock fallthroughBlock = ct.targets.get(1);
             jb.visitJumpInsn(ty.opcode, targetBlock.getExtOrThrow(LABEL_EXT));
@@ -373,7 +373,7 @@ public class JirToJava implements IRPass<Module, ClassNode> {
         CTRL_CONVERTERS.put(CommonOps.RETURN.key, (jb, ct) ->
                 jb.returnValue());
         CTRL_CONVERTERS.put(JavaOps.INSNS, (jb, ct) ->
-                JavaOps.INSNS.cast(ct.insn.op).arg.accept(jb));
+                JavaOps.INSNS.cast(ct.insn().op).arg.accept(jb));
         CTRL_CONVERTERS.put(JavaOps.TABLESWITCH, (jb, ct) -> {
             Label[] labels = new Label[ct.targets.size() - 1];
             for (int i = 0; i < labels.length; i++) {
@@ -395,7 +395,7 @@ public class JirToJava implements IRPass<Module, ClassNode> {
             }
             jb.visitLookupSwitchInsn(
                     ct.targets.get(ct.targets.size() - 1).getExtOrThrow(LABEL_EXT),
-                    JavaOps.LOOKUPSWITCH.cast(ct.insn.op).arg,
+                    JavaOps.LOOKUPSWITCH.cast(ct.insn().op).arg,
                     labels
             );
         });
@@ -407,12 +407,12 @@ public class JirToJava implements IRPass<Module, ClassNode> {
                     tryingBlock.getExtOrThrow(NEXT_BLOCK_EXT) // must be nonnull
                             .getExtOrThrow(LABEL_EXT),
                     catchingBlock.getExtOrThrow(LABEL_EXT),
-                    JavaOps.TRY.cast(ct.insn.op).arg.getInternalName()
+                    JavaOps.TRY.cast(ct.insn().op).arg.getInternalName()
             );
         });
         CTRL_CONVERTERS.put(CommonOps.TRAP, (jb, ct) ->
                 jb.throwException(Type.getType(RuntimeException.class),
-                        CommonOps.TRAP.cast(ct.insn.op).arg));
+                        CommonOps.TRAP.cast(ct.insn().op).arg));
     }
 
     private static void emitLoads(JavaBuilder jb, Insn insn) {

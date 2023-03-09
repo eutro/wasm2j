@@ -125,9 +125,9 @@ public class WirToJir implements InPlaceIRPass<Module> {
         }
 
         private void translateControl(Control ctrl, IRBuilder jb) {
-            Converter<Control> cc = CTRL_CONVERTERS.get(ctrl.insn.op.key);
+            Converter<Control> cc = CTRL_CONVERTERS.get(ctrl.insn().op.key);
             if (cc == null) {
-                throw new IllegalArgumentException(ctrl.insn.op.key + " is not supported");
+                throw new IllegalArgumentException(ctrl.insn().op.key + " is not supported");
             }
             cc.convert(ctrl, jb, WirToJirPerFunc.this);
             jb.insertCtrl(ctrl);
@@ -259,9 +259,9 @@ public class WirToJir implements InPlaceIRPass<Module> {
         static {
             CTRL_CONVERTERS.put(CommonOps.RETURN.key, (ctrl, jb, slf) -> {
                 jb.func.getExt(WasmExts.TYPE).ifPresent(typeNode -> {
-                    Optional<Var> returns = slf.callConv.emitReturn(jb, null /*FIXME*/, ctrl.insn.args, typeNode);
-                    ctrl.insn.args.clear();
-                    returns.ifPresent(ctrl.insn.args::add);
+                    Optional<Var> returns = slf.callConv.emitReturn(jb, null /*FIXME*/, ctrl.insn().args, typeNode);
+                    ctrl.insn().args.clear();
+                    returns.ifPresent(ctrl.insn().args::add);
                 });
                 // else noop
             });
@@ -276,9 +276,9 @@ public class WirToJir implements InPlaceIRPass<Module> {
             }
 
             CTRL_CONVERTERS.put(WasmOps.BR_IF.key, (ctrl, jb, slf) ->
-                    ctrl.insn.op = JavaOps.BR_COND.create(JavaOps.JumpType.IFNE));
+                    ctrl.insn().op = JavaOps.BR_COND.create(JavaOps.JumpType.IFNE));
             CTRL_CONVERTERS.put(WasmOps.BR_TABLE.key, (ctrl, jb, slf) ->
-                    ctrl.insn.op = ctrl.targets.size() == 1 ? CommonOps.BR : JavaOps.TABLESWITCH.create());
+                    ctrl.insn().op = ctrl.targets.size() == 1 ? CommonOps.BR : JavaOps.TABLESWITCH.create());
         }
     }
 }

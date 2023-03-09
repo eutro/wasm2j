@@ -27,16 +27,17 @@ public class LowerPhis implements InPlaceIRPass<Function> {
                 List<BasicBlock> preds = CommonOps.PHI.cast(phi.insn().op).arg;
                 List<Var> vars = phi.insn().args;
                 assert preds.size() == vars.size();
+
+                for (Var var : phi.getAssignsTo()) {
+                    var.attachExt(CommonExts.IS_PHI, true);
+                }
+
                 Iterator<BasicBlock> bbIt = preds.iterator();
                 Iterator<Var> varIt = vars.iterator();
                 while (bbIt.hasNext()) {
                     BasicBlock pred = bbIt.next();
                     Var var = varIt.next();
                     pred.getEffects().add(CommonOps.IDENTITY.insn(var).copyFrom(phi));
-                }
-
-                for (Var var : phi.getAssignsTo()) {
-                    var.attachExt(CommonExts.IS_PHI, true);
                 }
 
                 iter.remove();

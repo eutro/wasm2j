@@ -78,8 +78,8 @@ public class Handlify implements IRPass<Function, @Nullable Function> {
         // no control flow
         if (function.blocks.size() != 1) return null;
         BasicBlock root = function.blocks.get(0);
-        if (root.getControl().insn.op != CommonOps.RETURN) return null;
-        if (root.getControl().insn.args.size() > 1) return null;
+        if (root.getControl().insn().op != CommonOps.RETURN) return null;
+        if (root.getControl().insn().args.size() > 1) return null;
 
         MetadataState ms = function.getExtOrThrow(CommonExts.METADATA_STATE);
         try {
@@ -103,12 +103,12 @@ public class Handlify implements IRPass<Function, @Nullable Function> {
         IRBuilder ib = new IRBuilder(func, func.newBb());
 
         // build up the function (as a continuation) in reverse
-        Var k = Objects.requireNonNull(getHandleFor(root.getControl().insn)).get(ib);
+        Var k = Objects.requireNonNull(getHandleFor(root.getControl().insn())).get(ib);
         List<Var> currentArgsList = new ArrayList<>();
         Map<Var, Integer> currentArgIdcs = new HashMap<>();
         Type returnType;
-        if (root.getControl().insn.args.size() == 1) {
-            Var retVar = root.getControl().insn.args.get(0);
+        if (root.getControl().insn().args.size() == 1) {
+            Var retVar = root.getControl().insn().args.get(0);
             returnType = retVar.getExtOrThrow(JavaExts.TYPE);
             currentArgsList.add(retVar);
             currentArgIdcs.put(retVar, 0);

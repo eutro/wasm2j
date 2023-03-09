@@ -170,7 +170,7 @@ public class Stackify implements InPlaceIRPass<Function> {
                 }
 
                 Node<Use> stackTop = pushOperands(insert.value == null
-                        ? block.getControl().insn
+                        ? block.getControl().insn()
                         : insert.value.insn())
                         .last;
                 while (stackTop != null) {
@@ -246,7 +246,7 @@ public class Stackify implements InPlaceIRPass<Function> {
                         }
                     }
                 }
-                checkInsn(stack, block.getControl().insn);
+                checkInsn(stack, block.getControl().insn());
                 if (!stack.isEmpty()) {
                     throw new IllegalStateException("unmatched stack pushes");
                 }

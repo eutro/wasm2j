@@ -73,7 +73,7 @@ public class WasmToWir implements IRPass<ModuleNode, Module> {
                 int i = 0;
                 for (CodeNode code : node.codes) {
                     errIndex++;
-                    assert node.funcs != null && node.funcs.funcs != null;
+                    assert node.funcs != null;
                     TypeNode type = state.funcTypes[node.funcs.funcs.get(i).type];
                     state.mapExprNode(
                             module,

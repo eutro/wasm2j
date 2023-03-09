@@ -24,7 +24,7 @@ public class EliminateDeadVars implements InPlaceIRPass<Function> {
                     usageCount.putIfAbsent(var, 0);
                 }
             }
-            for (Var arg : block.getControl().insn.args) {
+            for (Var arg : block.getControl().insn().args) {
                 usageCount.compute(arg, (var, integer) -> integer == null ? 1 : integer + 1);
             }
         }
