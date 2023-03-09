@@ -28,6 +28,9 @@ public class LinearScan implements InPlaceIRPass<Function> {
 
         List<BasicBlock> order = GraphWalker.blockWalker(func, true).postOrder().toList();
         Collections.reverse(order);
+        if (order.size() != func.blocks.size()) {
+            throw new IllegalStateException();
+        }
 
 
         Map<Type, Deque<Var>> unusedRegisters = new HashMap<>();
@@ -104,9 +107,8 @@ public class LinearScan implements InPlaceIRPass<Function> {
             }
         }
 
-        ms.invalidate(MetadataState.SSA_FORM,
-                MetadataState.LIVE_DATA,
-                MetadataState.USES);
+        ms.invalidate(MetadataState.SSA_FORM);
+        ms.varsChanged();
     }
 
     private static void replaceVars(Insn insn, Map<Var, Var> allocated) {

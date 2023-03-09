@@ -230,6 +230,7 @@ public class Stackify implements InPlaceIRPass<Function> {
 
         if (CHECK_STACK_INTEGRITY) checkStackIntegrity(func);
         ms.validate(MetadataState.STACKIFIED);
+        ms.invalidate(MetadataState.LIVE_DATA, MetadataState.USES);
     }
 
     private void checkStackIntegrity(Function func) {

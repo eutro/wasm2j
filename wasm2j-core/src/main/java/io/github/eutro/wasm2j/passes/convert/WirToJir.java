@@ -112,6 +112,8 @@ public class WirToJir implements InPlaceIRPass<Module> {
                 }
                 translateBbs(block.getControl().targets, startBlockMap);
             }
+
+            ms.graphChanged();
         }
 
         private void translateEffect(Effect fct, IRBuilder jb) {
@@ -238,9 +240,9 @@ public class WirToJir implements InPlaceIRPass<Module> {
 
             FX_CONVERTERS.put(WasmOps.SELECT, (fx, jb, slf) ->
                     jb.insert(JavaOps.SELECT.create(JavaOps.JumpType.IFNE)
-                            .insn(fx.insn().args.get(0 /* cond */),
-                                    fx.insn().args.get(1 /* ift -> taken */),
-                                    fx.insn().args.get(2 /* iff -> fallthrough */))
+                            .insn(fx.insn().args.get(1 /* ift -> taken */),
+                                    fx.insn().args.get(2 /* iff -> fallthrough */),
+                                    fx.insn().args.get(0 /* cond */))
                             .copyFrom(fx)));
 
             FX_CONVERTERS.put(WasmOps.OPERATOR, (fx, jb, slf) -> {

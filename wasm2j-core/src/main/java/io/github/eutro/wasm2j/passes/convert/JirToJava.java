@@ -260,15 +260,26 @@ public class JirToJava implements IRPass<Module, ClassNode> {
     static {
         FX_CONVERTERS.put(CommonOps.ARG, (jb, fx) ->
                 jb.loadArg(CommonOps.ARG.cast(fx.insn().op).arg));
-        for (OpKey key : new OpKey[]{JavaOps.INTRINSIC, JavaOps.SELECT}) {
-            FX_CONVERTERS.put(key, (jb, fx) -> {
-                throw new IllegalStateException(
-                        String.format(
-                                "intrinsic not lowered: %s",
-                                fx.insn().op
-                        ));
-            });
-        }
+        FX_CONVERTERS.put(JavaOps.INTRINSIC, (jb, fx) -> {
+            throw new IllegalStateException(
+                    String.format(
+                            "intrinsic not lowered: %s",
+                            fx.insn().op
+                    ));
+        });
+        FX_CONVERTERS.put(JavaOps.SELECT, (jb, fx) -> {
+            JavaOps.JumpType jumpType = JavaOps.SELECT.cast(fx.insn().op).arg;
+            Label elseLabel = jb.newLabel();
+
+            Var arg = fx.insn().args.get(0);
+            Type ty = arg.getExtOrThrow(JavaExts.TYPE);
+
+            jb.visitJumpInsn(jumpType.inverse.opcode, elseLabel);
+            jb.swap(ty, ty);
+            jb.mark(elseLabel);
+            if (ty.getSize() == 2) jb.pop2();
+            else jb.pop();
+        });
         FX_CONVERTERS.put(JavaOps.BOOL_SELECT, (jb, fx) -> {
             JavaOps.JumpType jumpType = JavaOps.BOOL_SELECT.cast(fx.insn().op).arg;
             Label elseLabel = jb.newLabel();

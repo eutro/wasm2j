@@ -60,7 +60,7 @@ public class FullTest {
     void testFull() throws Throwable {
         ModuleNode mn = Utils.getRawModuleNode("/aoc_bg.wasm");
         if (OMIT_EXCEPT != null) {
-            assert mn.codes != null && mn.codes.codes != null;
+            assert mn.codes != null;
             ListIterator<CodeNode> it = mn.codes.codes.listIterator();
             while (it.hasNext()) {
                 CodeNode code = it.next();
@@ -92,8 +92,7 @@ public class FullTest {
                 //.then(Utils.debugDisplay("postop"))
                 .then(ForPass.liftFunctions(CollapseJumps.INSTANCE))
                 .then(ForPass.liftFunctions(SSADisplay.debugDisplayOnError("lower",
-                        ForPass.liftBasicBlocks(MergeConds.INSTANCE)
-                                .then(LowerSelects.INSTANCE)
+                        MergeConds.INSTANCE
                                 .then(LowerPhis.INSTANCE)
                                 .then(Stackify.INSTANCE))))
 

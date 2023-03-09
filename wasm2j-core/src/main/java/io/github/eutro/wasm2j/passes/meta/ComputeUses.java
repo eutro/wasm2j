@@ -17,6 +17,20 @@ public class ComputeUses implements InPlaceIRPass<Function> {
         for (BasicBlock block : func.blocks) {
             for (Effect effect : block.getEffects()) {
                 for (Var arg : effect.insn().args) {
+                    clearUses(arg);
+                }
+                for (Var var : effect.getAssignsTo()) {
+                    clearUses(var);
+                }
+            }
+            Control ctrl = block.getControl();
+            for (Var arg : ctrl.insn.args) {
+                clearUses(arg);
+            }
+        }
+        for (BasicBlock block : func.blocks) {
+            for (Effect effect : block.getEffects()) {
+                for (Var arg : effect.insn().args) {
                     getOrCreateUses(arg).add(effect.insn());
                 }
                 for (Var var : effect.getAssignsTo()) {
@@ -31,6 +45,10 @@ public class ComputeUses implements InPlaceIRPass<Function> {
 
         MetadataState ms = func.getExtOrThrow(CommonExts.METADATA_STATE);
         ms.validate(MetadataState.USES);
+    }
+
+    private void clearUses(Var arg) {
+        arg.removeExt(CommonExts.USED_AT);
     }
 
     @NotNull

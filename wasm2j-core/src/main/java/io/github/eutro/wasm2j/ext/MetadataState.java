@@ -3,7 +3,6 @@ package io.github.eutro.wasm2j.ext;
 import io.github.eutro.wasm2j.passes.IRPass;
 import io.github.eutro.wasm2j.passes.form.LowerIntrinsics;
 import io.github.eutro.wasm2j.passes.form.LowerPhis;
-import io.github.eutro.wasm2j.passes.form.LowerSelects;
 import io.github.eutro.wasm2j.passes.form.SSAify;
 import io.github.eutro.wasm2j.passes.meta.*;
 import io.github.eutro.wasm2j.passes.opts.Stackify;
@@ -62,7 +61,6 @@ public class MetadataState {
             DOM_FRONTIER = new ComputableMetaKind<>("DOM_FRONTIER", ComputeDomFrontier.INSTANCE),
             INTRINSICS_LOWERED = new ComputableMetaKind<>("INTRINSICS_LOWERED",
                     LowerIntrinsics.INSTANCE,
-                    LowerSelects.INSTANCE,
                     LowerPhis.INSTANCE),
             STACKIFIED = new ComputableMetaKind<>("STACKIFIED", Stackify.INSTANCE),
             LIVE_DATA = new ComputableMetaKind<>("LIVE_DATA", ComputeLiveVars.INSTANCE),

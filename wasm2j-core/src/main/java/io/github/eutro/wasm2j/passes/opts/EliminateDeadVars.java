@@ -64,5 +64,8 @@ public class EliminateDeadVars implements InPlaceIRPass<Function> {
         for (BasicBlock block : function.blocks) {
             block.getEffects().removeAll(deadEffects);
         }
+
+        function.getExtOrThrow(CommonExts.METADATA_STATE)
+                .graphChanged();
     }
 }

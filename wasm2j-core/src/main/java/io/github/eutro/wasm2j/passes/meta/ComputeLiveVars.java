@@ -21,8 +21,7 @@ public class ComputeLiveVars implements InPlaceIRPass<Function> {
     @Override
     public void runInPlace(Function func) {
         MetadataState ms = func.getExtOrThrow(CommonExts.METADATA_STATE);
-        ms.ensureValid(func,
-                MetadataState.PREDS);
+        ms.ensureValid(func, MetadataState.PREDS);
 
         for (BasicBlock block : func.blocks) {
             LiveData data = new LiveData();

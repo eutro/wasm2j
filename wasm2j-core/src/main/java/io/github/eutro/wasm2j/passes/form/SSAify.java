@@ -148,7 +148,7 @@ public class SSAify implements InPlaceIRPass<Function> {
             block.removeExt(CommonExts.LIVE_DATA);
         }
 
-        ms.invalidate(MetadataState.LIVE_DATA);
+        ms.varsChanged();
         ms.validate(MetadataState.SSA_FORM);
     }
 }
