@@ -1,6 +1,6 @@
 package io.github.eutro.wasm2j.embed;
 
-import io.github.eutro.jwasm.sexp.Parser;
+import io.github.eutro.jwasm.sexp.WatParser;
 import io.github.eutro.jwasm.sexp.wast.ActionVisitor;
 import io.github.eutro.jwasm.sexp.wast.WastModuleVisitor;
 import io.github.eutro.jwasm.sexp.wast.WastReader;
@@ -248,17 +248,17 @@ public class ExecutingWastVisitor extends WastVisitor {
     private class LinkingModuleVisitor extends WastModuleVisitor {
         @Override
         public void visitWatModule(Object module) {
-            lastModule = wasm.moduleFromNode(Parser.parseModule(module));
+            lastModule = wasm.moduleFromNode(WatParser.DEFAULT.parseModule(module));
         }
 
         @Override
         public void visitBinaryModule(Object module) {
-            lastModule = wasm.moduleFromNode(Parser.parseBinaryModule(module));
+            lastModule = wasm.moduleFromNode(WatParser.DEFAULT.parseBinaryModule(module));
         }
 
         @Override
         public void visitQuoteModule(Object module) {
-            lastModule = wasm.moduleFromNode(Parser.parseQuoteModule(module));
+            lastModule = wasm.moduleFromNode(WatParser.DEFAULT.parseQuoteModule(module));
         }
 
         protected Instance linkAndInst() {

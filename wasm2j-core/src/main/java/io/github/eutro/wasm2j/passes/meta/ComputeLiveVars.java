@@ -2,6 +2,7 @@ package io.github.eutro.wasm2j.passes.meta;
 
 import io.github.eutro.wasm2j.ext.CommonExts;
 import io.github.eutro.wasm2j.ext.CommonExts.LiveData;
+import io.github.eutro.wasm2j.ext.MetadataState;
 import io.github.eutro.wasm2j.passes.InPlaceIRPass;
 import io.github.eutro.wasm2j.ssa.BasicBlock;
 import io.github.eutro.wasm2j.ssa.Effect;
@@ -10,6 +11,7 @@ import io.github.eutro.wasm2j.ssa.Var;
 
 import java.util.Iterator;
 import java.util.LinkedHashSet;
+import java.util.ListIterator;
 import java.util.Set;
 
 public class ComputeLiveVars implements InPlaceIRPass<Function> {
@@ -18,6 +20,10 @@ public class ComputeLiveVars implements InPlaceIRPass<Function> {
 
     @Override
     public void runInPlace(Function func) {
+        MetadataState ms = func.getExtOrThrow(CommonExts.METADATA_STATE);
+        ms.ensureValid(func,
+                MetadataState.PREDS);
+
         for (BasicBlock block : func.blocks) {
             LiveData data = new LiveData();
             block.attachExt(CommonExts.LIVE_DATA, data);
@@ -38,8 +44,8 @@ public class ComputeLiveVars implements InPlaceIRPass<Function> {
         }
 
         Set<BasicBlock> workQueue = new LinkedHashSet<>();
-        for (int i = func.blocks.size() - 1; i >= 0; i--) {
-            workQueue.add(func.blocks.get(i));
+        for (ListIterator<BasicBlock> li = func.blocks.listIterator(func.blocks.size()); li.hasPrevious();) {
+            workQueue.add(li.previous());
         }
         while (!workQueue.isEmpty()) {
             Iterator<BasicBlock> iterator = workQueue.iterator();
@@ -59,7 +65,7 @@ public class ComputeLiveVars implements InPlaceIRPass<Function> {
                 }
             }
             if (changed) {
-                workQueue.addAll(next.getExtOrRun(CommonExts.PREDS, func, ComputePreds.INSTANCE));
+                workQueue.addAll(next.getExtOrThrow(CommonExts.PREDS));
             }
         }
     }

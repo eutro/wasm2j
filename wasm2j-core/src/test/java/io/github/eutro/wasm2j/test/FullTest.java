@@ -21,6 +21,7 @@ import io.github.eutro.wasm2j.passes.misc.ForPass;
 import io.github.eutro.wasm2j.passes.opts.CollapseJumps;
 import io.github.eutro.wasm2j.passes.opts.MergeConds;
 import io.github.eutro.wasm2j.passes.opts.Stackify;
+import io.github.eutro.wasm2j.ssa.display.SSADisplay;
 import org.junit.jupiter.api.Test;
 import org.objectweb.asm.ClassWriter;
 import org.objectweb.asm.tree.ClassNode;
@@ -90,16 +91,16 @@ public class FullTest {
                 .then(ForPass.liftFunctions(ComputeDomFrontier.INSTANCE))
                 //.then(Utils.debugDisplay("postop"))
                 .then(ForPass.liftFunctions(CollapseJumps.INSTANCE))
-                .then(ForPass.liftFunctions(Utils.debugDisplayOnError("lower",
+                .then(ForPass.liftFunctions(SSADisplay.debugDisplayOnError("lower",
                         ForPass.liftBasicBlocks(MergeConds.INSTANCE)
                                 .then(LowerSelects.INSTANCE)
                                 .then(LowerPhis.INSTANCE)
                                 .then(Stackify.INSTANCE))))
 
-                .then(ForPass.liftFunctions(Utils.debugDisplayOnError("infer", InferTypes.Java.INSTANCE)))
+                .then(ForPass.liftFunctions(SSADisplay.debugDisplayOnError("infer", InferTypes.Java.INSTANCE)))
                 //.then(ForPass.liftFunctions(LinearScan.INSTANCE))
 
-                .then(ForPass.liftFunctions(Utils.debugDisplayOnError("verify", VerifyIntegrity.INSTANCE)))
+                .then(ForPass.liftFunctions(SSADisplay.debugDisplayOnError("verify", VerifyIntegrity.INSTANCE)))
 
                 //.then(ForPass.liftFunctions(ComputeDomFrontier.INSTANCE))
                 //.then(Utils.debugDisplay("preemit"))

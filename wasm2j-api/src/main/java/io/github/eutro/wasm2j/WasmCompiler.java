@@ -3,7 +3,7 @@ package io.github.eutro.wasm2j;
 import io.github.eutro.jwasm.ByteInputStream;
 import io.github.eutro.jwasm.ModuleReader;
 import io.github.eutro.jwasm.ValidationException;
-import io.github.eutro.jwasm.sexp.Parser;
+import io.github.eutro.jwasm.sexp.WatParser;
 import io.github.eutro.jwasm.tree.ModuleNode;
 import io.github.eutro.wasm2j.bits.Bit;
 import io.github.eutro.wasm2j.events.*;
@@ -20,7 +20,7 @@ import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.function.Consumer;
 
-import static io.github.eutro.jwasm.sexp.Reader.readAll;
+import static io.github.eutro.jwasm.sexp.WatReader.readAll;
 
 public class WasmCompiler extends EventSupplier<CompilerEvent> {
     @Contract(pure = true)
@@ -52,7 +52,7 @@ public class WasmCompiler extends EventSupplier<CompilerEvent> {
         if (exprs.size() != 1) {
             throw new ValidationException("Expected exactly one expression in source.");
         }
-        ModuleNode node = Parser.parseModule(exprs.get(0));
+        ModuleNode node = WatParser.DEFAULT.parseModule(exprs.get(0));
         return submitNode(node);
     }
 

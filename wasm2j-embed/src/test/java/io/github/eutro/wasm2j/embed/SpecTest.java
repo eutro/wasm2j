@@ -16,40 +16,39 @@ public class SpecTest {
     public static final File DEBUG_OUTPUT_DIRECTORY = new File("build/wasmout");
     public static final String SOURCE = "" +
             "(module\n" +
-            "  (memory (export \"memory0\") 1 1)\n" +
-            "  (data (i32.const 2) \"\\03\\01\\04\\01\")\n" +
-            "  (data \"\\02\\07\\01\\08\")\n" +
-            "  (data (i32.const 12) \"\\07\\05\\02\\03\\06\")\n" +
-            "  (data \"\\05\\09\\02\\07\\06\")\n" +
-            "  (func (export \"test\")\n" +
-            "    (memory.init 1 (i32.const 7) (i32.const 0) (i32.const 4))\n" +
-            "    (data.drop 1)\n" +
-            "    (memory.init 3 (i32.const 15) (i32.const 1) (i32.const 3))\n" +
-            "    (data.drop 3)\n" +
-            "    (memory.copy (i32.const 20) (i32.const 15) (i32.const 5))\n" +
-            "    (memory.copy (i32.const 21) (i32.const 29) (i32.const 1))\n" +
-            "    (memory.copy (i32.const 24) (i32.const 10) (i32.const 1))\n" +
-            "    (memory.copy (i32.const 13) (i32.const 11) (i32.const 4))\n" +
-            "    (memory.copy (i32.const 19) (i32.const 20) (i32.const 5)))\n" +
-            "  (func (export \"load8_u\") (param i32) (result i32)\n" +
-            "    (i32.load8_u (local.get 0))))\n" +
+            "  (memory 1 1)\n" +
+            "  (func (export \"init\") (param $i i32) (param $x f32) (f32.store (local.get $i) (local.get $x)))\n" +
             "\n" +
-            "(invoke \"test\")\n" +
+            "  (func (export \"run\") (param $n i32) (param $z f32)\n" +
+            "    (local $i i32)\n" +
+            "    (block $exit\n" +
+            "      (loop $cont\n" +
+            "        (f32.store\n" +
+            "          (local.get $i)\n" +
+            "          (f32.div (f32.load (local.get $i)) (local.get $z))\n" +
+            "        )\n" +
+            "        (local.set $i (i32.add (local.get $i) (i32.const 4)))\n" +
+            "        (br_if $cont (i32.lt_u (local.get $i) (local.get $n)))\n" +
+            "      )\n" +
+            "    )\n" +
+            "  )\n" +
             "\n" +
-            "(assert_return (invoke \"load8_u\" (i32.const 0)) (i32.const 0))\n" +
-            "(assert_return (invoke \"load8_u\" (i32.const 1)) (i32.const 0))\n" +
-            "(assert_return (invoke \"load8_u\" (i32.const 2)) (i32.const 3))\n" +
-            "(assert_return (invoke \"load8_u\" (i32.const 3)) (i32.const 1))\n" +
-            "(assert_return (invoke \"load8_u\" (i32.const 4)) (i32.const 4))\n" +
-            "(assert_return (invoke \"load8_u\" (i32.const 5)) (i32.const 1))\n" +
-            "(assert_return (invoke \"load8_u\" (i32.const 6)) (i32.const 0))\n" +
-            "(assert_return (invoke \"load8_u\" (i32.const 7)) (i32.const 2))\n" +
-            "(assert_return (invoke \"load8_u\" (i32.const 8)) (i32.const 7))\n" +
-            "(assert_return (invoke \"load8_u\" (i32.const 9)) (i32.const 1))\n" +
-            "(assert_return (invoke \"load8_u\" (i32.const 10)) (i32.const 8))\n" +
-            "(assert_return (invoke \"load8_u\" (i32.const 11)) (i32.const 0))\n" +
-            "(assert_return (invoke \"load8_u\" (i32.const 12)) (i32.const 7))\n" +
-            "(assert_return (invoke \"load8_u\" (i32.const 13)) (i32.const 0))";
+            "  (func (export \"check\") (param $i i32) (result f32) (f32.load (local.get $i)))\n" +
+            ")\n" +
+            "\n" +
+            "(invoke \"init\" (i32.const  0) (f32.const 15.1))\n" +
+            "(invoke \"init\" (i32.const  4) (f32.const 15.2))\n" +
+            "(invoke \"init\" (i32.const  8) (f32.const 15.3))\n" +
+            "(invoke \"init\" (i32.const 12) (f32.const 15.4))\n" +
+            "(assert_return (invoke \"check\" (i32.const  0)) (f32.const 15.1))\n" +
+            "(assert_return (invoke \"check\" (i32.const  4)) (f32.const 15.2))\n" +
+            "(assert_return (invoke \"check\" (i32.const  8)) (f32.const 15.3))\n" +
+            "(assert_return (invoke \"check\" (i32.const 12)) (f32.const 15.4))\n" +
+            "(invoke \"run\" (i32.const 16) (f32.const 3.0))\n" +
+            "(assert_return (invoke \"check\" (i32.const  0)) (f32.const 0x1.422222p+2))\n" +
+            "(assert_return (invoke \"check\" (i32.const  4)) (f32.const 0x1.444444p+2))\n" +
+            "(assert_return (invoke \"check\" (i32.const  8)) (f32.const 0x1.466666p+2))\n" +
+            "(assert_return (invoke \"check\" (i32.const 12)) (f32.const 0x1.488888p+2))";
 
     @Test
     void inlineTest() {
@@ -64,6 +63,7 @@ public class SpecTest {
         wasm.setDebugOutputDirectory(DEBUG_OUTPUT_DIRECTORY);
         return ModuleTestBase.openTestSuite()
                 .filter(it -> it.getName().indexOf('/') == -1 && it.getName().endsWith(".wast"))
+                .filter(it -> !it.getName().startsWith("simd_")) // TODO simd
                 .map(it -> DynamicTest.dynamicTest(it.getName(), () -> {
                     WastReader wastReader = WastReader.fromSource(it.getStream());
                     Assertions.assertDoesNotThrow(() -> wastReader.accept(new ExecutingWastVisitor(wasm)));

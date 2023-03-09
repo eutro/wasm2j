@@ -2,7 +2,8 @@ package io.github.eutro.wasm2j.bits;
 
 import io.github.eutro.jwasm.ByteInputStream;
 import io.github.eutro.jwasm.ModuleReader;
-import io.github.eutro.jwasm.sexp.Parser;
+import io.github.eutro.jwasm.sexp.WatParser;
+import io.github.eutro.jwasm.sexp.WatReader;
 import io.github.eutro.jwasm.tree.ModuleNode;
 import io.github.eutro.wasm2j.ModuleCompilation;
 import io.github.eutro.wasm2j.WasmCompiler;
@@ -19,8 +20,6 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.List;
-
-import static io.github.eutro.jwasm.sexp.Reader.*;
 
 public class FormatDetector {
     public static Bit<WasmCompiler, FormatDetector> BIT = FormatDetector::new;
@@ -48,11 +47,11 @@ public class FormatDetector {
         ModuleNode module;
         switch (Format.detect(buf)) {
             case TEXT: {
-                List<Object> objs = readAll(new ByteInputStream.ByteBufferByteInputStream(buf));
+                List<Object> objs = WatReader.readAll(new ByteInputStream.ByteBufferByteInputStream(buf));
                 if (objs.size() != 1) {
                     throw new IllegalArgumentException("wrong number of s-exprs in file");
                 }
-                module = Parser.parseModule(objs.get(0));
+                module = WatParser.DEFAULT.parseModule(objs.get(0));
                 break;
             }
             case BINARY: {

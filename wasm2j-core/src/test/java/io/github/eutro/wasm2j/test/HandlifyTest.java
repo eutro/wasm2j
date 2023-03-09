@@ -18,10 +18,8 @@ import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.tree.ClassNode;
 import org.objectweb.asm.tree.MethodNode;
 
-import java.io.File;
 import java.lang.invoke.MethodHandle;
 import java.nio.ByteBuffer;
-import java.nio.file.Files;
 import java.util.BitSet;
 
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
@@ -70,7 +68,7 @@ public class HandlifyTest {
         ClassWriter cw = new ClassWriter(ClassWriter.COMPUTE_FRAMES);
         outCn.accept(cw);
         byte[] bytes = cw.toByteArray();
-        Files.write(new File("build/handlify/Handlify.class").toPath(), bytes);
+        // Files.write(new File("build/handlify/Handlify.class").toPath(), bytes);
         Class<?> clazz = new ClassLoader() {
             Class<?> define() {
                 return defineClass(outCn.name.replace('/', '.'), bytes, 0, bytes.length);

@@ -8,6 +8,7 @@ import io.github.eutro.wasm2j.passes.convert.WasmToWir;
 import io.github.eutro.wasm2j.passes.convert.WirToJir;
 import io.github.eutro.wasm2j.passes.meta.ComputeDomFrontier;
 import io.github.eutro.wasm2j.passes.form.SSAify;
+import io.github.eutro.wasm2j.ssa.display.SSADisplay;
 import org.junit.jupiter.api.Test;
 
 public class IRTest {
@@ -23,7 +24,7 @@ public class IRTest {
                         ComputeDomFrontier.INSTANCE
                                 .then(SSAify.INSTANCE)
                 ))
-                .then(Utils.debugDisplay("wir")));
+                .then(SSADisplay.debugDisplay("wir")));
     }
 
     @Test
@@ -34,6 +35,6 @@ public class IRTest {
                                 .then(SSAify.INSTANCE)
                 ))
                 .then(new WirToJir(Conventions.DEFAULT_CONVENTIONS))
-                .then(Utils.debugDisplay("jir")));
+                .then(SSADisplay.debugDisplay("jir")));
     }
 }

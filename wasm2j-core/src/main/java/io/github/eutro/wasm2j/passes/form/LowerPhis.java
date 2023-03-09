@@ -36,7 +36,7 @@ public class LowerPhis implements InPlaceIRPass<Function> {
                 }
 
                 for (Var var : phi.getAssignsTo()) {
-                    var.attachExt(CommonExts.STACKIFIED, false);
+                    var.attachExt(CommonExts.IS_PHI, true);
                 }
 
                 iter.remove();

@@ -1,8 +1,10 @@
 package io.github.eutro.wasm2j.ssa.display;
 
+import io.github.eutro.wasm2j.passes.IRPass;
 import io.github.eutro.wasm2j.ssa.BasicBlock;
 import io.github.eutro.wasm2j.ssa.Control;
 import io.github.eutro.wasm2j.ssa.Function;
+import io.github.eutro.wasm2j.ssa.Module;
 import io.github.eutro.wasm2j.util.Pair;
 import org.w3c.dom.DOMImplementation;
 import org.w3c.dom.Document;
@@ -233,6 +235,44 @@ public class SSADisplay {
 
     private static Document createSvg() {
         return DOM_IMPL.createDocument(SVG_NS, "svg", null);
+    }
+
+    public static IRPass<Module, Module> debugDisplay(String prefix) {
+        return module -> {
+            int i = 0;
+            for (Function func : module.functions) {
+                debugDisplayToFile(
+                        displaySSA(func, DisplayInteraction.HIGHLIGHT_INTERESTING),
+                        "build/ssa/" + prefix + i + ".svg"
+                );
+                i++;
+            }
+            return module;
+        };
+    }
+
+    public static IRPass<Function, Function> debugDisplayOnError(String prefix, IRPass<Function, Function> pass) {
+        return new IRPass<Function, Function>() {
+            @Override
+            public boolean isInPlace() {
+                return pass.isInPlace();
+            }
+
+            @Override
+            public Function run(Function func) {
+                try {
+                    return pass.run(func);
+                } catch (Throwable t) {
+                    String file = "build/ssa/" + prefix + System.identityHashCode(t) + ".svg";
+                    debugDisplayToFile(
+                            displaySSA(func, DisplayInteraction.HIGHLIGHT_INTERESTING),
+                            file
+                    );
+                    t.addSuppressed(new RuntimeException("function written to file: " + new File(file).getAbsolutePath()));
+                    throw t;
+                }
+            }
+        };
     }
 
     public interface Drawer {

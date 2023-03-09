@@ -260,7 +260,7 @@ public class JirToJava implements IRPass<Module, ClassNode> {
     static {
         FX_CONVERTERS.put(CommonOps.ARG, (jb, fx) ->
                 jb.loadArg(CommonOps.ARG.cast(fx.insn().op).arg));
-        for (OpKey key : new OpKey[]{JavaOps.INTRINSIC, JavaOps.SELECT, JavaOps.BOOL_SELECT}) {
+        for (OpKey key : new OpKey[]{JavaOps.INTRINSIC, JavaOps.SELECT}) {
             FX_CONVERTERS.put(key, (jb, fx) -> {
                 throw new IllegalStateException(
                         String.format(
@@ -269,6 +269,17 @@ public class JirToJava implements IRPass<Module, ClassNode> {
                         ));
             });
         }
+        FX_CONVERTERS.put(JavaOps.BOOL_SELECT, (jb, fx) -> {
+            JavaOps.JumpType jumpType = JavaOps.BOOL_SELECT.cast(fx.insn().op).arg;
+            Label elseLabel = jb.newLabel();
+            Label endLabel = jb.newLabel();
+            jb.visitJumpInsn(jumpType.opcode, elseLabel);
+            jb.push(true);
+            jb.goTo(endLabel);
+            jb.mark(elseLabel);
+            jb.push(false);
+            jb.mark(endLabel);
+        });
         FX_CONVERTERS.put(CommonOps.PHI, (jb, fx) -> {
             // not our responsibility :P
             throw new IllegalStateException("phi node not lowered");

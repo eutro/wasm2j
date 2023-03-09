@@ -18,6 +18,7 @@ public class CommonExts {
     public static final Ext<Boolean> IS_PURE = Ext.create(Boolean.class);
     public static final Ext<Boolean> IS_TRIVIAL = Ext.create(Boolean.class);
     public static final Ext<Boolean> STACKIFIED = Ext.create(Boolean.class);
+    public static final Ext<Boolean> IS_PHI = Ext.create(Boolean.class);
 
     public static final Ext<Effect> ASSIGNED_AT = Ext.create(Effect.class);
     public static final Ext<Set<Insn>> USED_AT = Ext.create(Set.class);

@@ -1,5 +1,6 @@
 package io.github.eutro.wasm2j.passes;
 
+import io.github.eutro.wasm2j.passes.form.LinearScan;
 import io.github.eutro.wasm2j.passes.form.LowerIntrinsics;
 import io.github.eutro.wasm2j.passes.form.LowerPhis;
 import io.github.eutro.wasm2j.passes.form.LowerSelects;
@@ -21,5 +22,6 @@ public class Passes {
                     .then(SSA_OPTS)
                     .then(LowerPhis.INSTANCE)
                     .then(Stackify.INSTANCE)
-                    .then(InferTypes.Java.INSTANCE);
+                    .then(InferTypes.Java.INSTANCE)
+                    .then(LinearScan.INSTANCE);
 }

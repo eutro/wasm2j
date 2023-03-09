@@ -1,6 +1,6 @@
 package io.github.eutro.wasm2j.test;
 
-import io.github.eutro.jwasm.sexp.Parser;
+import io.github.eutro.jwasm.sexp.WatParser;
 import io.github.eutro.jwasm.sexp.wast.WastModuleVisitor;
 import io.github.eutro.jwasm.sexp.wast.WastReader;
 import io.github.eutro.jwasm.sexp.wast.WastVisitor;
@@ -16,6 +16,7 @@ import io.github.eutro.wasm2j.passes.convert.WirToJir;
 import io.github.eutro.wasm2j.passes.meta.CheckJava;
 import io.github.eutro.wasm2j.passes.meta.VerifyIntegrity;
 import io.github.eutro.wasm2j.passes.misc.ForPass;
+import io.github.eutro.wasm2j.ssa.display.SSADisplay;
 import org.jetbrains.annotations.Nullable;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.DynamicTest;
@@ -35,7 +36,7 @@ public class SpecTest {
                     .build()))
             .then(ForPass.liftFunctions(Passes.SSA_OPTS))
             .then(ForPass.liftFunctions(Passes.JAVA_PREEMIT))
-            .then(ForPass.liftFunctions(Utils.debugDisplayOnError("verify", VerifyIntegrity.INSTANCE)))
+            .then(ForPass.liftFunctions(SSADisplay.debugDisplayOnError("verify", VerifyIntegrity.INSTANCE)))
             .then(JirToJava.INSTANCE)
             .then(CheckJava.INSTANCE);
 
@@ -74,17 +75,17 @@ public class SpecTest {
             return new WastModuleVisitor() {
                 @Override
                 public void visitWatModule(Object module) {
-                    lastModule = Parser.parseModule(module);
+                    lastModule = WatParser.DEFAULT.parseModule(module);
                 }
 
                 @Override
                 public void visitBinaryModule(Object module) {
-                    lastModule = Parser.parseBinaryModule(module);
+                    lastModule = WatParser.DEFAULT.parseBinaryModule(module);
                 }
 
                 @Override
                 public void visitQuoteModule(Object module) {
-                    lastModule = Parser.parseQuoteModule(module);
+                    lastModule = WatParser.DEFAULT.parseQuoteModule(module);
                 }
 
                 @Override

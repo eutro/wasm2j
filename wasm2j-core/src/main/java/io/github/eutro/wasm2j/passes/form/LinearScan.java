@@ -15,11 +15,14 @@ public class LinearScan implements InPlaceIRPass<Function> {
 
     public static final LinearScan INSTANCE = new LinearScan();
     public static final Ext<Integer> IC_EXT = Ext.create(Integer.class);
+    public static final Ext<Integer> LAST_LIVE_BLOCK = Ext.create(Integer.class);
 
     @Override
     public void runInPlace(Function func) {
         MetadataState ms = func.getExtOrThrow(CommonExts.METADATA_STATE);
-        ms.ensureValid(func, MetadataState.USES);
+        ms.ensureValid(func,
+                MetadataState.USES,
+                MetadataState.LIVE_DATA);
 
         func.clearVarNames();
 
@@ -31,19 +34,25 @@ public class LinearScan implements InPlaceIRPass<Function> {
         Map<Var, Var> allocated = new HashMap<>();
 
         {
-            int ic = 0;
-            for (BasicBlock block : func.blocks) {
+            int insnCounter = 0;
+            for (BasicBlock block : order) {
                 for (Effect effect : block.getEffects()) {
-                    effect.insn().attachExt(IC_EXT, ic++);
+                    effect.insn().attachExt(IC_EXT, insnCounter++);
                 }
-                block.getControl().insn.attachExt(IC_EXT, ic++);
+                block.getControl().insn.attachExt(IC_EXT, insnCounter++);
+                CommonExts.LiveData liveData = block.getExtOrThrow(CommonExts.LIVE_DATA);
+                for (Var liveOutVar : liveData.liveOut) {
+                    // set it to the start of the next block if the variable outlives
+                    // this one, this will keep it alive even if this block jumps back
+                    liveOutVar.attachExt(LAST_LIVE_BLOCK, insnCounter);
+                }
             }
         }
 
         TreeSet<Interval> active = new TreeSet<>(Comparator.comparingInt(o -> o.end));
         {
             int ic = 0;
-            for (BasicBlock block : func.blocks) {
+            for (BasicBlock block : order) {
                 for (Effect effect : block.getEffects()) {
 
                     { // expire old intervals
@@ -59,6 +68,9 @@ public class LinearScan implements InPlaceIRPass<Function> {
                     }
 
                     for (Var var : effect.getAssignsTo()) {
+                        if (allocated.containsKey(var)) {
+                            continue;
+                        }
                         Interval interval = computeLiveInterval(var, ic);
                         if (interval == null) continue;
                         active.add(interval);
@@ -86,6 +98,9 @@ public class LinearScan implements InPlaceIRPass<Function> {
                 }
                 replaceVars(block.getControl().insn, allocated);
                 block.getControl().insn.removeExt(IC_EXT);
+                for (Var liveOutVar : block.getExtOrThrow(CommonExts.LIVE_DATA).liveOut) {
+                    liveOutVar.removeExt(LAST_LIVE_BLOCK);
+                }
             }
         }
 
@@ -119,7 +134,14 @@ public class LinearScan implements InPlaceIRPass<Function> {
                 end = useIc;
             }
         }
-        return new Interval(end + 1);
+        Optional<Integer> llb = var.getExt(LAST_LIVE_BLOCK);
+        if (llb.isPresent()) {
+            int lastLiveBlockIc = llb.get();
+            if (lastLiveBlockIc > end) {
+                end = lastLiveBlockIc;
+            }
+        }
+        return new Interval(end);
     }
 
     private static class Interval {

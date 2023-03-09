@@ -181,7 +181,7 @@ public class Stackify implements InPlaceIRPass<Function> {
 
                     Set<Insn> uses = reg.getExtOrThrow(CommonExts.USED_AT);
 
-                    if (reg.getExt(CommonExts.STACKIFIED).orElse(null) == Boolean.FALSE) {
+                    if (reg.getExt(CommonExts.IS_PHI).orElse(false)) {
                         // explicitly real variable, force load
                         insert = emitLoad(use, insert, block, func);
                         continue;

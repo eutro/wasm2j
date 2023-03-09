@@ -1,8 +1,8 @@
 package io.github.eutro.wasm2j.embed;
 
 import io.github.eutro.jwasm.ModuleReader;
-import io.github.eutro.jwasm.sexp.Parser;
-import io.github.eutro.jwasm.sexp.Reader;
+import io.github.eutro.jwasm.sexp.WatParser;
+import io.github.eutro.jwasm.sexp.WatReader;
 import io.github.eutro.jwasm.tree.AbstractImportNode;
 import io.github.eutro.jwasm.tree.ExportNode;
 import io.github.eutro.jwasm.tree.ExportsNode;
@@ -36,9 +36,9 @@ public class Module {
 
     @Embedding("module_parse")
     public static Module parse(String source) {
-        List<Object> objs = Reader.readAll(source);
+        List<Object> objs = WatReader.readAll(source);
         if (objs.size() != 1) throw new IllegalArgumentException("Too many modules in string");
-        ModuleNode node = Parser.parseModule(objs.get(0));
+        ModuleNode node = WatParser.DEFAULT.parseModule(objs.get(0));
         return new Module(node);
     }
 
