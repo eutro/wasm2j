@@ -4,6 +4,7 @@ import io.github.eutro.wasm2j.ext.CommonExts;
 import io.github.eutro.wasm2j.ext.Ext;
 import io.github.eutro.wasm2j.ext.JavaExts;
 import io.github.eutro.wasm2j.ext.MetadataState;
+import io.github.eutro.wasm2j.ops.JavaOps;
 import io.github.eutro.wasm2j.passes.InPlaceIRPass;
 import io.github.eutro.wasm2j.ssa.*;
 import io.github.eutro.wasm2j.util.GraphWalker;
@@ -14,8 +15,9 @@ import java.util.*;
 public class LinearScan implements InPlaceIRPass<Function> {
 
     public static final LinearScan INSTANCE = new LinearScan();
-    public static final Ext<Integer> IC_EXT = Ext.create(Integer.class);
-    public static final Ext<Integer> LAST_LIVE_BLOCK = Ext.create(Integer.class);
+    private static final Ext<Integer> IC_EXT = Ext.create(Integer.class);
+    private static final Ext<Boolean> DROP = Ext.create(Boolean.class);
+    private static final Ext<Integer> LAST_LIVE_BLOCK = Ext.create(Integer.class);
 
     @Override
     public void runInPlace(Function func) {
@@ -94,10 +96,15 @@ public class LinearScan implements InPlaceIRPass<Function> {
 
         {
             for (BasicBlock block : func.blocks) {
-                for (Effect effect : block.getEffects()) {
+                List<Effect> effects = new ArrayList<>(block.getEffects());
+                block.getEffects().clear();
+                for (Effect effect : effects) {
+                    block.getEffects().add(effect);
                     replaceVars(effect.getAssignsTo(), allocated);
                     replaceVars(effect.insn(), allocated);
-                    effect.insn().removeExt(IC_EXT);
+                    if (effect.getNullable(DROP) == Boolean.TRUE) {
+                        block.getEffects().add(JavaOps.DROP.insn(effect.getAssignsTo()).assignTo());
+                    }
                 }
                 replaceVars(block.getControl().insn(), allocated);
                 block.getControl().insn().removeExt(IC_EXT);
@@ -129,7 +136,15 @@ public class LinearScan implements InPlaceIRPass<Function> {
         if (var.getExt(CommonExts.STACKIFIED).orElse(false)) return null;
 
         Set<Insn> uses = var.getExtOrThrow(CommonExts.USED_AT);
-        int end = ic; // TODO drop if empty?
+        if (uses.isEmpty()) {
+            Effect effect = var.getExtOrThrow(CommonExts.ASSIGNED_AT);
+            if (effect.getAssignsTo().size() == 1) {
+                var.attachExt(CommonExts.STACKIFIED, true);
+                effect.attachExt(DROP, true);
+                return null;
+            }
+        }
+        int end = ic;
         for (Insn use : uses) {
             int useIc = use.getExtOrThrow(IC_EXT);
             if (useIc > end) {

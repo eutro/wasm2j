@@ -16,8 +16,11 @@ public class SpecTest {
     public static final File DEBUG_OUTPUT_DIRECTORY = new File("build/wasmout");
     public static final String SOURCE = "" +
             "(module\n" +
-            "  (func (result i32) " +
-            "    (i32.add (i32.const 12) (i32.const 10)))" +
+            "  (memory 1)\n" +
+            "  (data (i32.const 0) \"abcdefghijklmnopqrstuvwxyz\")\n" +
+            "  (func (export \"32u_bad\") (param $i i32)\n" +
+            "    (drop (i64.load32_u offset=4294967295 (local.get $i)))\n" +
+            "  )" +
             ")";
 
     @Test

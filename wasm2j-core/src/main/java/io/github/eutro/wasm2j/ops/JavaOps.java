@@ -31,6 +31,7 @@ public class JavaOps {
     public static final UnaryOpKey<Type> CATCH = new UnaryOpKey<>("catch");
 
     public static final Op THIS = new SimpleOpKey("this").create();
+    public static final Op DROP = new SimpleOpKey("drop").create();
 
     public static final UnaryOpKey<Handlable> HANDLE_OF = new UnaryOpKey<>("handle_of");
     public static final UnaryOpKey<JavaMethod> INVOKE = new UnaryOpKey<>("invoke");

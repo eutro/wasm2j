@@ -280,6 +280,16 @@ public class JirToJava implements IRPass<Module, ClassNode> {
             if (ty.getSize() == 2) jb.pop2();
             else jb.pop();
         });
+        FX_CONVERTERS.put(JavaOps.DROP.key, (jb, fx) -> {
+            List<Var> args = fx.insn().args;
+            ListIterator<Var> li = args.listIterator(args.size());
+            while (li.hasPrevious()) {
+                Var arg = li.previous();
+                Type ty = arg.getExtOrThrow(JavaExts.TYPE);
+                if (ty.getSize() == 2) jb.pop2();
+                else jb.pop();
+            }
+        });
         FX_CONVERTERS.put(JavaOps.BOOL_SELECT, (jb, fx) -> {
             JavaOps.JumpType jumpType = JavaOps.BOOL_SELECT.cast(fx.insn().op).arg;
             Label elseLabel = jb.newLabel();
