@@ -44,8 +44,8 @@ import static io.github.eutro.jwasm.Opcodes.MUT_CONST;
 import static io.github.eutro.wasm2j.conf.api.ExportableConvention.mangle;
 
 public class WasmConvertPass {
-    private static final Ext<Map<String, ValueGetter>> EXPORTS_EXT = Ext.create(Map.class);
-    private static final Ext<AtomicInteger> IMPORT_COUNTER_EXT = Ext.create(AtomicInteger.class);
+    private static final Ext<Map<String, ValueGetter>> EXPORTS_EXT = Ext.create(Map.class, "EXPORTS_EXT");
+    private static final Ext<AtomicInteger> IMPORT_COUNTER_EXT = Ext.create(AtomicInteger.class, "IMPORT_COUNTER_EXT");
     private static final JavaExts.JavaMethod MH_BIND_TO = JavaExts.JavaMethod.fromJava(
             MethodHandle.class,
             "bindTo",

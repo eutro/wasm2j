@@ -27,7 +27,7 @@ import java.util.Optional;
 import static io.github.eutro.jwasm.Opcodes.PAGE_SIZE;
 
 public class ByteBufferMemoryConvention extends DelegatingExporter implements MemoryConvention {
-    public static final Ext<ValueGetterSetter> MEMORY_BYTE_BUFFER = new Ext<>(ValueGetterSetter.class);
+    public static final Ext<ValueGetterSetter> MEMORY_BYTE_BUFFER = Ext.create(ValueGetterSetter.class, "MEMORY_BYTE_BUFFER");
     public static final int MAX_PAGES = Integer.MAX_VALUE / PAGE_SIZE;
     private static final JavaExts.JavaMethod BUFFER_SLICE = JavaExts.JavaMethod.fromJava(ByteBuffer.class, "slice");
     private static final JavaExts.JavaMethod BUFFER_POSITION = JavaExts.JavaMethod.fromJava(ByteBuffer.class, "position", int.class);

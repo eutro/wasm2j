@@ -1,8 +1,6 @@
 package io.github.eutro.wasm2j.ext;
 
-import java.util.AbstractList;
-import java.util.List;
-import java.util.RandomAccess;
+import java.util.*;
 
 public abstract class TrackedList<E> extends AbstractList<E> implements RandomAccess /* probably */ {
     private List<E> viewed;
@@ -64,5 +62,80 @@ public abstract class TrackedList<E> extends AbstractList<E> implements RandomAc
         E removed = viewed.remove(index);
         onRemoved(removed);
         return removed;
+    }
+
+    @Override
+    public void clear() {
+        for (E e : viewed) {
+            onRemoved(e);
+        }
+        viewed.clear();
+    }
+
+    @Override
+    public boolean addAll(int index, Collection<? extends E> c) {
+        for (E e : c) {
+            onAdded(e);
+        }
+        return viewed.addAll(index, c);
+    }
+
+    @Override
+    public ListIterator<E> listIterator(int index) {
+        ListIterator<E> li = viewed.listIterator(index);
+        return new ListIterator<E>() {
+            E last;
+
+            @Override
+            public boolean hasNext() {
+                return li.hasNext();
+            }
+
+            @Override
+            public E next() {
+                return last = li.next();
+            }
+
+            @Override
+            public boolean hasPrevious() {
+                return li.hasPrevious();
+            }
+
+            @Override
+            public E previous() {
+                return last = li.previous();
+            }
+
+            @Override
+            public int nextIndex() {
+                return li.nextIndex();
+            }
+
+            @Override
+            public int previousIndex() {
+                return li.previousIndex();
+            }
+
+            @Override
+            public void remove() {
+                li.remove();
+                onRemoved(last);
+                last = null;
+            }
+
+            @Override
+            public void set(E e) {
+                li.set(e);
+                onRemoved(last);
+                onAdded(e);
+                last = null;
+            }
+
+            @Override
+            public void add(E e) {
+                li.add(e);
+                onAdded(e);
+            }
+        };
     }
 }

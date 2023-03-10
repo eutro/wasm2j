@@ -26,11 +26,17 @@ public class ExtHolder implements ExtContainer {
 
     @Override
     public <T> void removeExt(Ext<T> ext) {
-        getMap().remove(ext);
+        if (map == null) return;
+        Map<Ext<?>, Object> map = this.map;
+        map.remove(ext);
+        if (map.isEmpty()) {
+            this.map = null;
+        }
     }
 
     @SuppressWarnings("unchecked")
     public <T> @Nullable T getNullable(Ext<T> ext) {
+        if (map == null) return null;
         return (T) getMap().get(ext);
     }
 

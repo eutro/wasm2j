@@ -30,7 +30,7 @@ public class SSAify implements InPlaceIRPass<Function> {
 
             final Map<Var, Effect> phis = new LinkedHashMap<>();
         }
-        Ext<BlockData> bdExt = new Ext<>(BlockData.class);
+        Ext<BlockData> bdExt = Ext.create(BlockData.class, "blockData");
         for (BasicBlock block : func.blocks) {
             block.attachExt(bdExt, new BlockData());
         }

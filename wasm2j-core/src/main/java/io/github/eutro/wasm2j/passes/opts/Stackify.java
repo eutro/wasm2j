@@ -114,8 +114,8 @@ public class Stackify implements InPlaceIRPass<Function> {
         }
     }
 
-    private static final Ext<Node<Effect>> NODE_EXT = Ext.create(Node.class);
-    private static final Ext<LinkedList<Effect>> LIST_EXT = Ext.create(LinkedList.class);
+    private static final Ext<Node<Effect>> NODE_EXT = Ext.create(Node.class, "NODE_EXT");
+    private static final Ext<LinkedList<Effect>> LIST_EXT = Ext.create(LinkedList.class, "LIST_EXT");
 
     private static class Use {
         final Insn insn;

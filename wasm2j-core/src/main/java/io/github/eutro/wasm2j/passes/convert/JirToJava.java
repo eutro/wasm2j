@@ -20,9 +20,9 @@ import org.objectweb.asm.tree.*;
 import java.util.*;
 
 public class JirToJava implements IRPass<Module, ClassNode> {
-    public static final Ext<Integer> LOCAL_EXT = Ext.create(Integer.class);
-    public static final Ext<Label> LABEL_EXT = Ext.create(Label.class);
-    public static final Ext<BasicBlock> NEXT_BLOCK_EXT = Ext.create(BasicBlock.class);
+    public static final Ext<Integer> LOCAL_EXT = Ext.create(Integer.class, "LOCAL_EXT");
+    public static final Ext<Label> LABEL_EXT = Ext.create(Label.class, "LABEL_EXT");
+    public static final Ext<BasicBlock> NEXT_BLOCK_EXT = Ext.create(BasicBlock.class, "NEXT_BLOCK_EXT");
 
     public static JirToJava INSTANCE = new JirToJava();
 

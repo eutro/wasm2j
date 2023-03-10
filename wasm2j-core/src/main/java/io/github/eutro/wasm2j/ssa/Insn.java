@@ -1,8 +1,11 @@
 package io.github.eutro.wasm2j.ssa;
 
+import io.github.eutro.wasm2j.ext.CommonExts;
 import io.github.eutro.wasm2j.ext.DelegatingExtHolder;
+import io.github.eutro.wasm2j.ext.Ext;
 import io.github.eutro.wasm2j.ext.ExtContainer;
 import io.github.eutro.wasm2j.ops.Op;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -17,7 +20,9 @@ public final class Insn extends DelegatingExtHolder {
 
     public Insn(Op op, List<Var> args) {
         this.op = op;
-        this.args = new ArrayList<>(args);
+        ArrayList<Var> al = new ArrayList<>(args);
+        al.trimToSize();
+        this.args = al;
     }
 
     public Insn(Op op, Var... args) {
@@ -56,5 +61,37 @@ public final class Insn extends DelegatingExtHolder {
 
     public Effect copyFrom(Effect fx) {
         return assignTo(fx.getAssignsTo());
+    }
+
+    // exts
+    private Object owner = null;
+
+    @SuppressWarnings("unchecked")
+    @Override
+    public <T> @Nullable T getNullable(Ext<T> ext) {
+        if (ext == CommonExts.OWNING_EFFECT) {
+            return owner instanceof Effect ? (T) owner : null;
+        } else if (ext == CommonExts.OWNING_CONTROL) {
+            return owner instanceof Control ? (T) owner : null;
+        }
+        return super.getNullable(ext);
+    }
+
+    @Override
+    public <T> void attachExt(Ext<T> ext, T value) {
+        if (ext == CommonExts.OWNING_EFFECT || ext == CommonExts.OWNING_CONTROL) {
+            owner = value;
+            return;
+        }
+        super.attachExt(ext, value);
+    }
+
+    @Override
+    public <T> void removeExt(Ext<T> ext) {
+        if (ext == CommonExts.OWNING_EFFECT || ext == CommonExts.OWNING_CONTROL) {
+            owner = null;
+            return;
+        }
+        super.removeExt(ext);
     }
 }

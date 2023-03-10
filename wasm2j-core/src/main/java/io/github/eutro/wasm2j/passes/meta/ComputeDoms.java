@@ -111,7 +111,7 @@ public class ComputeDoms implements InPlaceIRPass<Function> {
             }
 
             void run() {
-                Ext<Integer> indexExt = new Ext<>(Integer.class);
+                Ext<Integer> indexExt = Ext.create(Integer.class, "index");
                 int u, w;
                 for (int i = 0; i < n; i++) {
                     BasicBlock block = func.blocks.get(i);

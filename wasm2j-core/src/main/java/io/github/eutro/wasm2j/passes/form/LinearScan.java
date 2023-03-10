@@ -15,9 +15,9 @@ import java.util.*;
 public class LinearScan implements InPlaceIRPass<Function> {
 
     public static final LinearScan INSTANCE = new LinearScan();
-    private static final Ext<Integer> IC_EXT = Ext.create(Integer.class);
-    private static final Ext<Boolean> DROP = Ext.create(Boolean.class);
-    private static final Ext<Integer> LAST_LIVE_BLOCK = Ext.create(Integer.class);
+    private static final Ext<Integer> IC_EXT = Ext.create(Integer.class, "IC_EXT");
+    private static final Ext<Boolean> DROP = Ext.create(Boolean.class, "DROP");
+    private static final Ext<Integer> LAST_LIVE_BLOCK = Ext.create(Integer.class, "LAST_LIVE_BLOCK");
 
     @Override
     public void runInPlace(Function func) {

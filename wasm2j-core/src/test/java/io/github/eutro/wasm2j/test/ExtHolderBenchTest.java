@@ -13,16 +13,16 @@ public class ExtHolderBenchTest {
     public static final int INNER_ITER_COUNT = 1000;
 
     private static final List<Ext<Object>> EXTS = Arrays.asList(
-            new Ext<>(Object.class),
-            new Ext<>(Object.class),
-            new Ext<>(Object.class),
-            new Ext<>(Object.class),
-            new Ext<>(Object.class),
-            new Ext<>(Object.class),
-            new Ext<>(Object.class),
-            new Ext<>(Object.class),
-            new Ext<>(Object.class),
-            new Ext<>(Object.class)
+            Ext.create(Object.class, "a"),
+            Ext.create(Object.class, "b"),
+            Ext.create(Object.class, "c"),
+            Ext.create(Object.class, "d"),
+            Ext.create(Object.class, "e"),
+            Ext.create(Object.class, "f"),
+            Ext.create(Object.class, "g"),
+            Ext.create(Object.class, "h"),
+            Ext.create(Object.class, "i"),
+            Ext.create(Object.class, "j")
     );
 
     void testIt(Consumer<Ext<?>> cnsm) {

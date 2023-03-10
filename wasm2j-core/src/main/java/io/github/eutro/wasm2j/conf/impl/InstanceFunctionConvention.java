@@ -19,7 +19,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class InstanceFunctionConvention extends DelegatingExporter implements FunctionConvention {
-    public static final Ext<InstanceFunctionConvention> FUNCTION_CONVENTION = new Ext<>(InstanceFunctionConvention.class);
+    public static final Ext<InstanceFunctionConvention> FUNCTION_CONVENTION = Ext.create(InstanceFunctionConvention.class, "FUNCTION_CONVENTION");
     public final ValueGetter target;
     public final JavaExts.JavaMethod method;
     public final CallingConvention cc;

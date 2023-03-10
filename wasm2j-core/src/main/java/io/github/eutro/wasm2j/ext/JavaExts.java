@@ -13,13 +13,13 @@ import java.lang.reflect.Modifier;
 import java.util.*;
 
 public class JavaExts {
-    public static final Ext<Function> METHOD_IMPL = Ext.create(Function.class);
-    public static final Ext<MethodNode> METHOD_NATIVE_IMPL = Ext.create(MethodNode.class);
-    public static final Ext<Type> TYPE = Ext.create(Type.class);
-    public static final Ext<JavaMethod> FUNCTION_METHOD = Ext.create(JavaMethod.class);
-    public static final Ext<JavaClass> FUNCTION_OWNER = Ext.create(JavaClass.class);
+    public static final Ext<Function> METHOD_IMPL = Ext.create(Function.class, "METHOD_IMPL");
+    public static final Ext<MethodNode> METHOD_NATIVE_IMPL = Ext.create(MethodNode.class, "METHOD_NATIVE_IMPL");
+    public static final Ext<Type> TYPE = Ext.create(Type.class, "TYPE");
+    public static final Ext<JavaMethod> FUNCTION_METHOD = Ext.create(JavaMethod.class, "FUNCTION_METHOD");
+    public static final Ext<JavaClass> FUNCTION_OWNER = Ext.create(JavaClass.class, "FUNCTION_OWNER");
 
-    public static final Ext<Map<IntrinsicImpl, JavaMethod>> ATTACHED_INTRINSICS = Ext.create(Map.class);
+    public static final Ext<Map<IntrinsicImpl, JavaMethod>> ATTACHED_INTRINSICS = Ext.create(Map.class, "ATTACHED_INTRINSICS");
 
     public static Type BOTTOM_TYPE = Type.getType(Void.class);
 
@@ -215,5 +215,5 @@ public class JavaExts {
         }
     }
 
-    public static final Ext<JavaClass> JAVA_CLASS = Ext.create(JavaClass.class);
+    public static final Ext<JavaClass> JAVA_CLASS = Ext.create(JavaClass.class, "JAVA_CLASS");
 }

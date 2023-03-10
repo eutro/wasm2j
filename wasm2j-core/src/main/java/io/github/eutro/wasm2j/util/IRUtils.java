@@ -146,7 +146,7 @@ public class IRUtils {
                 I32, Type.getType(Integer.class));
     }
 
-    private static final int FILL_DIRECT_MAX = 1 << 12;
+    private static final int FILL_DIRECT_MAX = 256;
 
     public static void fillAuto(DataNode data, IRBuilder ib, Var dataV) {
         if (data.init.length <= FILL_DIRECT_MAX) {

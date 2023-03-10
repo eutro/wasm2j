@@ -1,9 +1,7 @@
 package io.github.eutro.wasm2j.ssa;
 
-import io.github.eutro.wasm2j.ext.CommonExts;
-import io.github.eutro.wasm2j.ext.ExtHolder;
-import io.github.eutro.wasm2j.ext.TrackedList;
-import io.github.eutro.wasm2j.ext.ExtContainer;
+import io.github.eutro.wasm2j.ext.*;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -62,5 +60,35 @@ public final class BasicBlock extends ExtHolder {
 
     public void setControl(Control control) {
         this.control = registerWithThis(control);
+    }
+
+    // exts
+    private Function owner = null;
+
+    @SuppressWarnings("unchecked")
+    @Override
+    public <T> @Nullable T getNullable(Ext<T> ext) {
+        if (ext == CommonExts.OWNING_FUNCTION) {
+            return (T) owner;
+        }
+        return super.getNullable(ext);
+    }
+
+    @Override
+    public <T> void attachExt(Ext<T> ext, T value) {
+        if (ext == CommonExts.OWNING_FUNCTION) {
+            owner = (Function) value;
+            return;
+        }
+        super.attachExt(ext, value);
+    }
+
+    @Override
+    public <T> void removeExt(Ext<T> ext) {
+        if (ext == CommonExts.OWNING_FUNCTION) {
+            owner = null;
+            return;
+        }
+        super.removeExt(ext);
     }
 }

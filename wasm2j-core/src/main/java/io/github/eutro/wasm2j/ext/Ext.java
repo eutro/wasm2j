@@ -10,14 +10,16 @@ public class Ext<T> implements Comparable<Ext<?>> {
 
     private final Class<T> type;
     public final int id = ID_COUNTER.getAndIncrement();
+    public final String name;
 
-    public Ext(Class<T> type) {
+    public Ext(Class<T> type, String name) {
         this.type = type;
+        this.name = name;
     }
 
     @SuppressWarnings("unchecked")
-    public static <T, R extends T> Ext<R> create(Class<T> type) {
-        return (Ext<R>) new Ext<>(type);
+    public static <T, R extends T> Ext<R> create(Class<T> type, String name) {
+        return (Ext<R>) new Ext<>(type, name);
     }
 
     public Class<T> getType() {
@@ -36,5 +38,10 @@ public class Ext<T> implements Comparable<Ext<?>> {
     @Override
     public int hashCode() {
         return id;
+    }
+
+    @Override
+    public String toString() {
+        return name + ": " + type.getName();
     }
 }

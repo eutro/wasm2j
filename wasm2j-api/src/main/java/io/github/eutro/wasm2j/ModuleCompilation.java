@@ -23,14 +23,13 @@ public class ModuleCompilation extends EventSupplier<ModuleCompileEvent> {
 
     public void run() {
         cc.dispatch(RunModuleCompilationEvent.class, new RunModuleCompilationEvent(this));
-
-        Module wir = WasmToWir.INSTANCE.run(node);
-        wir = dispatch(WirPassesEvent.class, new WirPassesEvent(wir)).wir;
-
         WirJavaConventionFactory conventions = dispatch(ModifyConventionsEvent.class,
                 new ModifyConventionsEvent(Conventions.createBuilder()))
                 .conventionBuilder
                 .build();
+
+        Module wir = WasmToWir.INSTANCE.run(node);
+        wir = dispatch(WirPassesEvent.class, new WirPassesEvent(wir)).wir;
 
         Module jir = new WirToJir(conventions).run(wir);
         jir = dispatch(JirPassesEvent.class, new JirPassesEvent(jir)).jir;

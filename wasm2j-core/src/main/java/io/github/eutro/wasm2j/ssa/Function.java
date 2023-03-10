@@ -1,9 +1,7 @@
 package io.github.eutro.wasm2j.ssa;
 
-import io.github.eutro.wasm2j.ext.CommonExts;
-import io.github.eutro.wasm2j.ext.ExtHolder;
-import io.github.eutro.wasm2j.ext.MetadataState;
-import io.github.eutro.wasm2j.ext.TrackedList;
+import io.github.eutro.wasm2j.ext.*;
+import org.jetbrains.annotations.Nullable;
 
 import java.lang.ref.SoftReference;
 import java.util.*;
@@ -46,10 +44,6 @@ public final class Function extends ExtHolder {
         return var;
     }
 
-    {
-        attachExt(CommonExts.METADATA_STATE, new MetadataState());
-    }
-
     public BasicBlock newBb() {
         BasicBlock bb = new BasicBlock();
         blocks.add(bb);
@@ -65,5 +59,44 @@ public final class Function extends ExtHolder {
         }
         sb.append("}");
         return sb.toString();
+    }
+
+    // exts
+    private MetadataState metaState = new MetadataState();
+    private Module owner;
+
+    @Override
+    public <T> void attachExt(Ext<T> ext, T value) {
+        if (ext == CommonExts.METADATA_STATE) {
+            metaState = (MetadataState) value;
+            return;
+        } else if (ext == CommonExts.OWNING_MODULE) {
+            owner = (Module) value;
+            return;
+        }
+        super.attachExt(ext, value);
+    }
+
+    @Override
+    public <T> void removeExt(Ext<T> ext) {
+        if (ext == CommonExts.METADATA_STATE) {
+            metaState = null;
+            return;
+        } else if (ext == CommonExts.OWNING_MODULE) {
+            owner = null;
+            return;
+        }
+        super.removeExt(ext);
+    }
+
+    @SuppressWarnings("unchecked")
+    @Override
+    public <T> @Nullable T getNullable(Ext<T> ext) {
+        if (ext == CommonExts.METADATA_STATE) {
+            return (T) metaState;
+        } else if (ext == CommonExts.OWNING_MODULE) {
+            return (T) owner;
+        }
+        return super.getNullable(ext);
     }
 }

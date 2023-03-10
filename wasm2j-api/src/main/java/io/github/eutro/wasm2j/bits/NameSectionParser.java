@@ -73,6 +73,7 @@ public class NameSectionParser<T extends EventSupplier<? super RunModuleCompilat
             if (id == 0) {
                 ByteInputStream<E> ss = bis.sectionStream();
                 moduleName = ss.getName();
+                ss.expectEmpty();
                 id = bis.get();
             } else {
                 moduleName = null;
@@ -86,6 +87,7 @@ public class NameSectionParser<T extends EventSupplier<? super RunModuleCompilat
             if (id == 1) {
                 ByteInputStream<E> ss = bis.sectionStream();
                 functionNames = parseNameMap(ss);
+                ss.expectEmpty();
                 id = bis.get();
             } else {
                 functionNames = null;
@@ -98,13 +100,14 @@ public class NameSectionParser<T extends EventSupplier<? super RunModuleCompilat
             if (id == 2) {
                 ByteInputStream<E> ss = bis.sectionStream();
                 localNames = parseIndirectNameMap(ss);
+                ss.expectEmpty();
                 id = bis.get();
             } else {
                 localNames = null;
             }
 
             if (id != -1) {
-                throw new ValidationException("too many or out of order sections in name section");
+                throw new ValidationException(String.format("too many or out of order sections in name section (id: %d)", id));
             }
         }
 
