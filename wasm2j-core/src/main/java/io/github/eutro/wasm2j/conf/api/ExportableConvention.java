@@ -1,12 +1,12 @@
 package io.github.eutro.wasm2j.conf.api;
 
 import io.github.eutro.jwasm.tree.ExportNode;
-import io.github.eutro.wasm2j.ext.JavaExts;
+import io.github.eutro.wasm2j.ssa.JClass;
 import io.github.eutro.wasm2j.ssa.Module;
 import org.objectweb.asm.Opcodes;
 
 public interface ExportableConvention {
-    void export(ExportNode node, Module module, JavaExts.JavaClass jClass);
+    void export(ExportNode node, Module module, JClass jClass);
 
     static String mangle(String name) {
         if (name.isEmpty()) {
@@ -33,17 +33,17 @@ public interface ExportableConvention {
         return sb.toString();
     }
 
-    static ExportableConvention fieldExporter(JavaExts.JavaField field) {
+    static ExportableConvention fieldExporter(JClass.JavaField field) {
         return (node, module, jClass) -> {
             field.otherAccess = (field.otherAccess & ~Opcodes.ACC_PRIVATE) | Opcodes.ACC_PUBLIC;
             field.name = mangle(node.name);
         };
     }
 
-    static ExportableConvention methodExporter(JavaExts.JavaMethod method) {
+    static ExportableConvention methodExporter(JClass.JavaMethod method) {
         return (node, module, jClass) -> {
             method.name = mangle(node.name);
-            method.kind = JavaExts.JavaMethod.Kind.VIRTUAL;
+            method.kind = JClass.JavaMethod.Kind.VIRTUAL;
         };
     }
 }

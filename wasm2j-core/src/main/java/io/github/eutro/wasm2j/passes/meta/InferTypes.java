@@ -398,7 +398,7 @@ public abstract class InferTypes<Ty> implements InPlaceIRPass<Function> {
                         JavaOps.GET_FIELD)
 
                 .put(insn -> {
-                            JavaExts.JavaMethod method = JavaOps.INVOKE.cast(insn.op).arg;
+                            JClass.JavaMethod method = JavaOps.INVOKE.cast(insn.op).arg;
                             {
                                 int expectedArity = method.getParamTys().size() + (method.kind.isStatic() ? 0 : 1);
                                 int actualArity = insn.args().size();
@@ -465,7 +465,7 @@ public abstract class InferTypes<Ty> implements InPlaceIRPass<Function> {
                     throw new RuntimeException("could not infer phi type");
                 }, CommonOps.PHI)
                 .put((Insn insn) -> {
-                            JavaExts.JavaMethod method = insn.getExtOrThrow(CommonExts.OWNING_EFFECT)
+                            JClass.JavaMethod method = insn.getExtOrThrow(CommonExts.OWNING_EFFECT)
                                     .getExtOrThrow(CommonExts.OWNING_BLOCK)
                                     .getExtOrThrow(CommonExts.OWNING_FUNCTION)
                                     .getExtOrThrow(JavaExts.FUNCTION_METHOD);

@@ -9,19 +9,21 @@ import io.github.eutro.wasm2j.ext.MetadataState;
 import io.github.eutro.wasm2j.ext.WasmExts;
 import io.github.eutro.wasm2j.intrinsics.IntrinsicImpl;
 import io.github.eutro.wasm2j.intrinsics.JavaIntrinsics;
-import io.github.eutro.wasm2j.ops.*;
+import io.github.eutro.wasm2j.ops.CommonOps;
+import io.github.eutro.wasm2j.ops.JavaOps;
+import io.github.eutro.wasm2j.ops.OpKey;
+import io.github.eutro.wasm2j.ops.WasmOps;
+import io.github.eutro.wasm2j.passes.IRPass;
 import io.github.eutro.wasm2j.passes.InPlaceIRPass;
-import io.github.eutro.wasm2j.passes.misc.ForPass;
 import io.github.eutro.wasm2j.ssa.Module;
 import io.github.eutro.wasm2j.ssa.*;
 import io.github.eutro.wasm2j.util.Pair;
 
 import java.util.*;
-import java.util.concurrent.atomic.AtomicReference;
 
 import static io.github.eutro.jwasm.Opcodes.*;
 
-public class WirToJir implements InPlaceIRPass<Module> {
+public class WirToJir implements IRPass<Module, JClass> {
     private final WirJavaConventionFactory conventionsFactory;
 
     public WirToJir(WirJavaConventionFactory conventionsFactory) {
@@ -29,36 +31,34 @@ public class WirToJir implements InPlaceIRPass<Module> {
     }
 
     @Override
-    public void runInPlace(Module module) {
-        if (module.getExt(CommonExts.CODE_TYPE).orElse(null) != CommonExts.CodeType.WASM) {
-            throw new IllegalArgumentException("module must be in WASM code type");
-        }
-
-        Module extrasModule = new Module(module);
-        AtomicReference<WirToJirPerFunc> pass = new AtomicReference<>();
-        WirJavaConvention conventions = conventionsFactory.create(module, extrasModule,
-                (InPlaceIRPass<Function>) function -> pass.get().runInPlace(function));
+    public JClass run(Module module) {
+        JClass jClass = new JClass(null);
+        WirJavaConvention conventions = conventionsFactory.create(module, jClass);
         WirToJirPerFunc convertPass = new WirToJirPerFunc(
                 conventions,
                 conventions.getIndirectCallingConvention()
         );
-        pass.set(convertPass);
+        conventions.convert(convertPass);
 
-        conventions.preConvert();
-        ForPass.liftFunctions(convertPass).runInPlace(module);
-        conventions.postConvert();
-
-        module.functions.addAll(extrasModule.functions);
-        extrasModule.functions = module.functions;
-        module.attachExt(CommonExts.CODE_TYPE, CommonExts.CodeType.JAVA);
+        return jClass;
     }
 
     public static class WirToJirPerFunc implements InPlaceIRPass<Function> {
-        private final WirJavaConvention conventions;
-        private final CallingConvention callConv;
-        private final Map<BasicBlock, BasicBlock> startBlockMap = new HashMap<>();
-        private final Map<BasicBlock, BasicBlock> endBlockMap = new HashMap<>();
-        private List<Var> args;
+        final WirJavaConvention conventions;
+        final CallingConvention callConv;
+
+        static class Ctx {
+            private final Map<BasicBlock, BasicBlock> startBlockMap = new HashMap<>();
+            private final Map<BasicBlock, BasicBlock> endBlockMap = new HashMap<>();
+            private final WirJavaConvention conventions;
+            private final CallingConvention callConv;
+            private List<Var> args;
+
+            Ctx(WirToJirPerFunc pass) {
+                this.conventions = pass.conventions;
+                this.callConv = pass.callConv;
+            }
+        }
 
         public WirToJirPerFunc(WirJavaConvention conventions, CallingConvention callConv) {
             this.conventions = conventions;
@@ -87,53 +87,54 @@ public class WirToJir implements InPlaceIRPass<Module> {
             for (int i = 0; i < type.params.length; i++) {
                 argVars.add(ib.insert(CommonOps.ARG.create(i).insn(), ib.func.newVar("arg", i)));
             }
-            args = callConv.receiveArguments(ib, argVars, type);
+            Ctx ctx = new Ctx(this);
+            ctx.args = callConv.receiveArguments(ib, argVars, type);
             ib.insertCtrl(Control.br(oldBlocks.get(0)));
             for (BasicBlock block : oldBlocks) {
                 ib.setBlock(func.newBb());
-                startBlockMap.put(block, ib.getBlock());
+                ctx.startBlockMap.put(block, ib.getBlock());
 
                 List<Effect> oldEffects = new ArrayList<>(block.getEffects());
                 block.getEffects().clear();
                 for (Effect effect : oldEffects) {
-                    translateEffect(effect, ib);
+                    translateEffect(ctx, effect, ib);
                 }
-                translateControl(block.getControl(), ib);
+                translateControl(ctx, block.getControl(), ib);
 
-                endBlockMap.put(block, ib.getBlock());
+                ctx.endBlockMap.put(block, ib.getBlock());
             }
 
             for (BasicBlock block : func.blocks) {
                 for (Effect effect : block.getEffects()) {
                     Insn insn = effect.insn();
                     if (insn.op.key != CommonOps.PHI) break;
-                    translateBbs(CommonOps.PHI.cast(insn.op).arg, endBlockMap);
+                    translateBbs(CommonOps.PHI.cast(insn.op).arg, ctx.endBlockMap);
                 }
-                translateBbs(block.getControl().targets, startBlockMap);
+                translateBbs(block.getControl().targets, ctx.startBlockMap);
             }
 
             ms.graphChanged();
         }
 
-        private void translateEffect(Effect fct, IRBuilder jb) {
+        private void translateEffect(Ctx ctx, Effect fct, IRBuilder jb) {
             Converter<Effect> cc = FX_CONVERTERS.get(fct.insn().op.key);
             if (cc == null) {
                 throw new IllegalArgumentException("op: " + fct.insn().op.key + " is not supported");
             }
-            cc.convert(fct, jb, WirToJirPerFunc.this);
+            cc.convert(fct, jb, ctx);
         }
 
-        private void translateControl(Control ctrl, IRBuilder jb) {
+        private void translateControl(Ctx ctx, Control ctrl, IRBuilder jb) {
             Converter<Control> cc = CTRL_CONVERTERS.get(ctrl.insn().op.key);
             if (cc == null) {
                 throw new IllegalArgumentException(ctrl.insn().op.key + " is not supported");
             }
-            cc.convert(ctrl, jb, WirToJirPerFunc.this);
+            cc.convert(ctrl, jb, ctx);
             jb.insertCtrl(ctrl);
         }
 
         private interface Converter<T> {
-            void convert(T t, IRBuilder jb, WirToJirPerFunc slf);
+            void convert(T t, IRBuilder jb, Ctx slf);
         }
 
         private static final Map<OpKey, Converter<Effect>> FX_CONVERTERS = new HashMap<>();

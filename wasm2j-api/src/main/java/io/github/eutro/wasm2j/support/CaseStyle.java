@@ -135,23 +135,13 @@ public interface CaseStyle {
 
         @Override
         public String[] splitToWords(String token) {
-            String[] longest = new String[0];
-            for (CaseStyle style : new CaseStyle[] {
-                    LOWER_CAMEL,
-                    UPPER_CAMEL,
-                    LOWER_SNAKE,
-                    UPPER_SNAKE,
-                    LOWER_KEBAB,
-            }) {
-                String[] split = style.splitToWords(token);
-                if (split.length > longest.length) {
-                    longest = split;
-                }
+            if (token.indexOf('-') != -1 || token.indexOf('_') != -1) {
+                return token.split("[-_]");
             }
-            if (longest.length <= 1) {
-                return fallback.splitToWords(token);
+            if (token.toUpperCase(Locale.ROOT).equals(token)) {
+                return UPPER_CAMEL.splitToWords(token);
             }
-            return longest;
+            return LOWER_CAMEL.splitToWords(token);
         }
 
         @Override

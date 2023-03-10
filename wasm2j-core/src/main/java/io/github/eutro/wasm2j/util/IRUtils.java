@@ -2,7 +2,6 @@ package io.github.eutro.wasm2j.util;
 
 import io.github.eutro.jwasm.tree.DataNode;
 import io.github.eutro.wasm2j.conf.impl.BasicCallingConvention;
-import io.github.eutro.wasm2j.ext.JavaExts;
 import io.github.eutro.wasm2j.ops.*;
 import io.github.eutro.wasm2j.ssa.*;
 import org.jetbrains.annotations.Nullable;
@@ -13,10 +12,7 @@ import org.objectweb.asm.tree.IntInsnNode;
 import org.objectweb.asm.tree.MethodInsnNode;
 import org.objectweb.asm.tree.TypeInsnNode;
 
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
+import java.io.*;
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodType;
 import java.nio.Buffer;
@@ -34,11 +30,11 @@ import static io.github.eutro.wasm2j.ops.JavaOps.JumpType.IFEQ;
 import static io.github.eutro.wasm2j.ops.JavaOps.JumpType.IF_ICMPLE;
 
 public class IRUtils {
-    public static final JavaExts.JavaClass BYTE_BUFFER_CLASS = new JavaExts.JavaClass(Type.getInternalName(ByteBuffer.class));
-    public static final JavaExts.JavaClass BUFFER_CLASS = new JavaExts.JavaClass(Type.getInternalName(Buffer.class));
-    public static final JavaExts.JavaClass METHOD_HANDLE_CLASS = new JavaExts.JavaClass(Type.getInternalName(MethodHandle.class));
-    public static final JavaExts.JavaClass MTY_CLASS = new JavaExts.JavaClass(Type.getInternalName(MethodType.class));
-    public static final JavaExts.JavaMethod MTY_METHOD_TYPE = new JavaExts.JavaMethod(
+    public static final JClass BYTE_BUFFER_CLASS = new JClass(Type.getInternalName(ByteBuffer.class));
+    public static final JClass BUFFER_CLASS = new JClass(Type.getInternalName(Buffer.class));
+    public static final JClass METHOD_HANDLE_CLASS = new JClass(Type.getInternalName(MethodHandle.class));
+    public static final JClass MTY_CLASS = new JClass(Type.getInternalName(MethodType.class));
+    public static final JClass.JavaMethod MTY_METHOD_TYPE = new JClass.JavaMethod(
             MTY_CLASS,
             "methodType",
             Type.getMethodType(
@@ -46,8 +42,9 @@ public class IRUtils {
                     Type.getType(Class.class),
                     Type.getType(Class[].class)
             ).getDescriptor(),
-            JavaExts.JavaMethod.Kind.STATIC
+            JClass.JavaMethod.Kind.STATIC
     );
+    public static final int MAX_USHORT = (1 << 16) - 1;
 
     public static Var getThis(IRBuilder ib) {
         return ib.insert(JavaOps.THIS.insn(), "this");
@@ -75,8 +72,8 @@ public class IRUtils {
                     default:
                         throw new IllegalArgumentException();
                 }
-                return JavaOps.GET_FIELD.create(new JavaExts.JavaField(
-                        new JavaExts.JavaClass(Type.getInternalName(boxedTy)),
+                return JavaOps.GET_FIELD.create(new JClass.JavaField(
+                        new JClass(Type.getInternalName(boxedTy)),
                         "TYPE",
                         Type.getDescriptor(Class.class),
                         true
@@ -162,17 +159,17 @@ public class IRUtils {
         // is always big endian
         ByteBuffer buf = ByteBuffer.wrap(data.init);
 
-        JavaExts.JavaMethod putShort = new JavaExts.JavaMethod(
+        JClass.JavaMethod putShort = new JClass.JavaMethod(
                 BYTE_BUFFER_CLASS,
                 "putShort",
                 "(S)Ljava/nio/ByteBuffer;",
-                JavaExts.JavaMethod.Kind.VIRTUAL
+                JClass.JavaMethod.Kind.VIRTUAL
         );
-        JavaExts.JavaMethod putByte = new JavaExts.JavaMethod(
+        JClass.JavaMethod putByte = new JClass.JavaMethod(
                 BYTE_BUFFER_CLASS,
                 "put",
                 "(B)Ljava/nio/ByteBuffer;",
-                JavaExts.JavaMethod.Kind.VIRTUAL
+                JClass.JavaMethod.Kind.VIRTUAL
         );
 
         while (buf.remaining() >= Short.BYTES) {
@@ -202,20 +199,57 @@ public class IRUtils {
         }
         String srcString = Base64.getEncoder().encodeToString(encodedData);
 
-        // byte[] data = Base64.getDecoder().decode(srcString);
-        JavaExts.JavaMethod getDecoder = JavaExts.JavaMethod.fromJava(Base64.class, "getDecoder");
-        JavaExts.JavaMethod decode = JavaExts.JavaMethod.fromJava(Base64.Decoder.class, "decode", String.class);
-        JavaExts.JavaMethod putBytes = new JavaExts.JavaMethod(
+        Var len = ib.insert(CommonOps.constant(data.init.length), "len");
+
+        Var decoded;
+        JClass.JavaMethod getDecoder = JClass.JavaMethod.fromJava(Base64.class, "getDecoder");
+        JClass.JavaMethod decode = JClass.JavaMethod.fromJava(Base64.Decoder.class, "decode", String.class);
+        Var decoder = ib.insert(JavaOps.INVOKE.create(getDecoder).insn(), "decoder");
+        if (srcString.length() > MAX_USHORT) {
+            int strLen = srcString.length();
+            // length must be divisible by 4
+            int maxLen = MAX_USHORT - (MAX_USHORT % 4);
+            String[] subStrings = new String[(strLen - 1) / maxLen + 1];
+            for (int i = 0; i < subStrings.length; i++) {
+                subStrings[i] = srcString.substring(i * maxLen,
+                        Math.min(strLen, (i + 1) * maxLen));
+            }
+
+            /*
+            Base64.Decoder dec = Base64.getDecoder();
+            ByteArrayOutputStream baos = new ByteArrayOutputStream(len);
+            for (String str : subStrings) {
+                baos.write(dec.decode(str));
+            }
+            byte[] data = baos.toByteArray();
+             */
+            String baosName = "java/io/ByteArrayOutputStream";
+            Var baos = ib.insert(JavaOps.insns(
+                    new TypeInsnNode(Opcodes.NEW, baosName),
+                    new InsnNode(Opcodes.DUP_X1),
+                    new InsnNode(Opcodes.SWAP),
+                    new MethodInsnNode(Opcodes.INVOKESPECIAL, baosName, "<init>", "(I)V"))
+                    .insn(len), "baos");
+            JClass.JavaMethod osWrite = JClass.JavaMethod.fromJava(OutputStream.class, "write", byte[].class);
+            for (String str : subStrings) {
+                Var constStr = ib.insert(CommonOps.constant(str), "str");
+                Var part = ib.insert(JavaOps.INVOKE.create(decode).insn(decoder, constStr), "decodedPart");
+                ib.insert(JavaOps.INVOKE.create(osWrite).insn(baos, part).assignTo());
+            }
+            JClass.JavaMethod baosToArray = JClass.JavaMethod.fromJava(ByteArrayOutputStream.class, "toByteArray");
+            decoded = ib.insert(JavaOps.INVOKE.create(baosToArray).insn(baos), "decoded");
+        } else {
+            // byte[] data = Base64.getDecoder().decode(srcString);
+            Var constString = ib.insert(CommonOps.constant(srcString), "dataStr");
+            decoded = ib.insert(JavaOps.INVOKE.create(decode).insn(decoder, constString), "decoded");
+        }
+
+        JClass.JavaMethod putBytes = new JClass.JavaMethod(
                 BYTE_BUFFER_CLASS,
                 "put",
                 "([BII)Ljava/nio/ByteBuffer;",
-                JavaExts.JavaMethod.Kind.VIRTUAL
+                JClass.JavaMethod.Kind.VIRTUAL
         );
-
-        Var decoder = ib.insert(JavaOps.INVOKE.create(getDecoder).insn(), "decoder");
-        Var constString = ib.insert(CommonOps.constant(srcString), "dataStr");
-        Var decoded = ib.insert(JavaOps.INVOKE.create(decode).insn(decoder, constString), "decoded");
-        Var len = ib.insert(CommonOps.constant(data.init.length), "len");
 
         {
             String gzipInputStream = Type.getInternalName(GZIPInputStream.class);
@@ -257,7 +291,7 @@ public class IRUtils {
                     "offset");
             // offset.attachExt(JavaExts.TYPE, Type.INT_TYPE);
             Var limit = ib.insert(JavaOps.ISUB.insn(len, offset), "limit");
-            Var read = ib.insert(JavaOps.INVOKE.create(JavaExts.JavaMethod.fromJava(
+            Var read = ib.insert(JavaOps.INVOKE.create(JClass.JavaMethod.fromJava(
                                     InputStream.class,
                                     "read",
                                     byte[].class, int.class, int.class

@@ -13,6 +13,7 @@ import io.github.eutro.wasm2j.passes.IRPass;
 import io.github.eutro.wasm2j.ssa.*;
 import io.github.eutro.wasm2j.ssa.Module;
 import io.github.eutro.wasm2j.util.IRUtils;
+import io.github.eutro.wasm2j.util.Lazy;
 import io.github.eutro.wasm2j.util.Pair;
 import io.github.eutro.wasm2j.util.ValueGetterSetter;
 import org.objectweb.asm.Opcodes;
@@ -29,9 +30,10 @@ import java.util.stream.Stream;
 import static io.github.eutro.jwasm.Opcodes.*;
 import static io.github.eutro.wasm2j.conf.Getters.GET_THIS;
 import static io.github.eutro.wasm2j.conf.Getters.fieldGetter;
+import static io.github.eutro.wasm2j.util.Lazy.lazy;
 
 public interface WirJavaConventionFactory {
-    WirJavaConvention create(Module module, Module extrasModule, IRPass<Function, Function> convertWir);
+    WirJavaConvention create(Module module, JClass jClass);
 
     class Builder {
         private ImportFactory<FuncImportNode, FunctionConvention> functionImports = unsupported("function imports");
@@ -117,40 +119,35 @@ public interface WirJavaConventionFactory {
 
         class Impl implements WirJavaConventionFactory {
             @Override
-            public WirJavaConvention create(Module module, Module extrasModule, IRPass<Function, Function> convert) {
-                JavaExts.JavaClass jClass = new JavaExts.JavaClass(nameSupplier.get());
-                module.attachExt(JavaExts.JAVA_CLASS, jClass);
-                return new DefaultWirJavaConvention(module, extrasModule, jClass, convert);
+            public WirJavaConvention create(Module module, JClass jClass) {
+                jClass.name = nameSupplier.get();
+                return new DefaultWirJavaConvention(module, jClass);
             }
 
             class DefaultWirJavaConvention implements WirJavaConvention {
                 private final Module module;
-                private final Module extrasModule;
-                private final IRPass<Function, Function> convert;
                 private final List<FunctionConvention> funcs = new ArrayList<>();
                 private final List<TypeNode> funcTypes = new ArrayList<>();
                 private final List<GlobalConvention> globals = new ArrayList<>();
                 private int iGlobals = 0;
-                private final List<JavaExts.JavaField> lGlobals = new ArrayList<>();
+                private final List<JClass.JavaField> lGlobals = new ArrayList<>();
                 private final List<MemoryConvention> memories = new ArrayList<>();
                 private int iMemories = 0;
-                private final List<JavaExts.JavaField> lMemories = new ArrayList<>();
+                private final List<JClass.JavaField> lMemories = new ArrayList<>();
                 private final List<TableConvention> tables = new ArrayList<>();
                 private int iTables = 0;
-                private final List<JavaExts.JavaField> lTables = new ArrayList<>();
-                private final JavaExts.JavaClass jClass;
-                private final List<JavaExts.JavaField> datas = new ArrayList<>();
-                private final List<JavaExts.JavaField> elems = new ArrayList<>();
+                private final List<JClass.JavaField> lTables = new ArrayList<>();
+                private final JClass jClass;
+                private final List<JClass.JavaField> datas = new ArrayList<>();
+                private final List<JClass.JavaMethod> dataInits = new ArrayList<>();
+                private final List<JClass.JavaField> elems = new ArrayList<>();
 
                 public DefaultWirJavaConvention(
                         Module module,
-                        Module extrasModule,
-                        JavaExts.JavaClass jClass,
-                        IRPass<Function, Function> convert) {
+                        JClass jClass
+                ) {
                     this.module = module;
                     this.jClass = jClass;
-                    this.extrasModule = extrasModule;
-                    this.convert = convert;
                 }
 
                 private CallingConvention getCC() {
@@ -174,9 +171,9 @@ public interface WirJavaConventionFactory {
                 }
 
                 @Override
-                public void preConvert() {
+                public void convert(IRPass<Function, Function> convert) {
                     ModuleNode node = module.getExtOrThrow(WasmExts.MODULE);
-                    Map<ExprNode, Function> funcMap = module.getExtOrThrow(WasmExts.FUNC_MAP);
+                    Map<ExprNode, Lazy<Function>> funcMap = module.funcMap;
 
                     if (node.imports != null) {
                         for (AbstractImportNode importNode : node.imports) {
@@ -208,6 +205,75 @@ public interface WirJavaConventionFactory {
                         }
                     }
 
+                    if (node.datas != null) {
+                        int dataIdx = -1;
+                        for (DataNode data : node.datas) {
+                            dataIdx++;
+                            JClass.JavaField field = new JClass.JavaField(
+                                    jClass,
+                                    "data" + dataIdx,
+                                    Type.getDescriptor(ByteBuffer.class),
+                                    false
+                            );
+                            JClass.JavaMethod method = new JClass.JavaMethod(
+                                    jClass,
+                                    "initData" + dataIdx,
+                                    "()V",
+                                    JClass.JavaMethod.Kind.FINAL
+                            );
+                            jClass.fields.add(field);
+                            jClass.methods.add(method);
+                            datas.add(field);
+                            dataInits.add(method);
+
+                            method.attachExt(JavaExts.METHOD_IMPL, lazy(() -> {
+                                Function func = new Function();
+                                func.attachExt(JavaExts.FUNCTION_OWNER, jClass);
+                                func.attachExt(JavaExts.FUNCTION_METHOD, method);
+
+                                IRBuilder dIb = new IRBuilder(func, func.newBb());
+                                Var dataV = dIb.insert(JavaOps.INVOKE.create(new JClass.JavaMethod(
+                                                        IRUtils.BYTE_BUFFER_CLASS,
+                                                        "allocate",
+                                                        "(I)Ljava/nio/ByteBuffer;",
+                                                        JClass.JavaMethod.Kind.STATIC
+                                                ))
+                                                .insn(dIb.insert(CommonOps.constant(data.init.length), "len")),
+                                        "data");
+
+                                Var slicedV = dIb.insert(JavaOps.INVOKE.create(new JClass.JavaMethod(
+                                                IRUtils.BYTE_BUFFER_CLASS,
+                                                "slice",
+                                                "()Ljava/nio/ByteBuffer;",
+                                                JClass.JavaMethod.Kind.VIRTUAL
+                                        )).insn(dataV),
+                                        "sliced");
+
+                                IRUtils.fillAuto(data, dIb, slicedV);
+
+                                dIb.insert(JavaOps.PUT_FIELD.create(field)
+                                        .insn(IRUtils.getThis(dIb), dataV)
+                                        .assignTo());
+                                dIb.insertCtrl(CommonOps.RETURN.insn().jumpsTo());
+
+                                return func;
+                            }));
+                        }
+                    }
+
+                    if (node.elems != null) {
+                        int elemIdx = -1;
+                        for (ElementNode elem : node.elems) {
+                            elemIdx++;
+                            Type elemType = BasicCallingConvention.javaType(elem.type);
+                            JClass.JavaField field = new JClass.JavaField(jClass, "elem" + elemIdx,
+                                    "[" + elemType.getDescriptor(),
+                                    false);
+                            jClass.fields.add(field);
+                            elems.add(field);
+                        }
+                    }
+
                     if (node.funcs != null && !node.funcs.funcs.isEmpty()) {
                         assert node.types != null;
                         assert node.codes != null;
@@ -216,11 +282,11 @@ public interface WirJavaConventionFactory {
                         for (FuncNode fn : node.funcs) {
                             CodeNode code = it.next();
                             TypeNode typeNode = node.types.types.get(fn.type);
-                            JavaExts.JavaMethod method = new JavaExts.JavaMethod(
+                            JClass.JavaMethod method = new JClass.JavaMethod(
                                     jClass,
                                     "func" + i++,
                                     getCC().getDescriptor(typeNode).getDescriptor(),
-                                    JavaExts.JavaMethod.Kind.FINAL
+                                    JClass.JavaMethod.Kind.FINAL
                             );
                             jClass.methods.add(method);
                             funcs.add(modifyFuncConvention
@@ -233,17 +299,20 @@ public interface WirJavaConventionFactory {
                                             Pair.of(fn, code),
                                             funcs.size()));
                             funcTypes.add(typeNode);
-                            Function implFunc = funcMap.get(code.expr);
-                            method.attachExt(JavaExts.METHOD_IMPL, implFunc);
-                            implFunc.attachExt(JavaExts.FUNCTION_METHOD, method);
-                            implFunc.attachExt(JavaExts.FUNCTION_OWNER, jClass);
+                            Lazy<Function> impl = funcMap.remove(code.expr);
+                            impl.mapInPlace(implFunc -> {
+                                implFunc.attachExt(JavaExts.FUNCTION_METHOD, method);
+                                implFunc.attachExt(JavaExts.FUNCTION_OWNER, jClass);
+                                return convert.run(implFunc);
+                            });
+                            method.attachExt(JavaExts.METHOD_IMPL, impl);
                         }
                     }
 
                     if (node.globals != null) {
                         int i = 0;
                         for (GlobalNode global : node.globals) {
-                            JavaExts.JavaField field = new JavaExts.JavaField(
+                            JClass.JavaField field = new JClass.JavaField(
                                     jClass,
                                     "global" + i++,
                                     BasicCallingConvention.javaType(global.type.type).getDescriptor(),
@@ -265,7 +334,7 @@ public interface WirJavaConventionFactory {
                     if (node.mems != null) {
                         int i = 0;
                         for (MemoryNode memory : node.mems) {
-                            JavaExts.JavaField field = new JavaExts.JavaField(
+                            JClass.JavaField field = new JClass.JavaField(
                                     jClass,
                                     "mem" + i++,
                                     Type.getDescriptor(ByteBuffer.class),
@@ -288,7 +357,7 @@ public interface WirJavaConventionFactory {
                         int i = 0;
                         for (TableNode table : node.tables) {
                             Type componentType = BasicCallingConvention.javaType(table.type);
-                            JavaExts.JavaField field = new JavaExts.JavaField(
+                            JClass.JavaField field = new JClass.JavaField(
                                     jClass,
                                     "table" + i++,
                                     "[" + componentType.getDescriptor(),
@@ -320,254 +389,250 @@ public interface WirJavaConventionFactory {
                                 default: throw new AssertionError();
                             }
                             // @formatter:on
-                            ecl.get(export.index).export(export, extrasModule, jClass);
+                            ecl.get(export.index).export(export, module, jClass);
                         }
                     }
 
-                    JavaExts.JavaMethod ctorMethod = new JavaExts.JavaMethod(
+                    JClass.JavaMethod ctorMethod = new JClass.JavaMethod(
                             jClass,
                             "<init>",
                             "()V",
-                            JavaExts.JavaMethod.Kind.VIRTUAL
+                            JClass.JavaMethod.Kind.VIRTUAL
                     );
                     jClass.methods.add(ctorMethod);
                     Function ctorImpl = new Function();
-                    extrasModule.functions.add(ctorImpl);
                     ctorImpl.attachExt(JavaExts.FUNCTION_METHOD, ctorMethod);
                     ctorImpl.attachExt(JavaExts.FUNCTION_OWNER, ctorMethod.owner);
-                    ctorMethod.attachExt(JavaExts.METHOD_IMPL, ctorImpl);
 
                     IRBuilder ib = new IRBuilder(ctorImpl, ctorImpl.newBb());
-                    ib.insert(JavaOps.INVOKE.create(new JavaExts.JavaMethod(
-                            new JavaExts.JavaClass("java/lang/Object"),
+                    ib.insert(JavaOps.INVOKE.create(new JClass.JavaMethod(
+                            new JClass("java/lang/Object"),
                             "<init>",
                             "()V",
-                            JavaExts.JavaMethod.Kind.FINAL
+                            JClass.JavaMethod.Kind.FINAL
                     )).insn(IRUtils.getThis(ib)).assignTo());
 
                     Stream.of(funcs, globals, tables, memories, constructorCallbacks)
                             .flatMap(Collection::stream)
-                            .forEach(it -> it.modifyConstructor(ib, ctorMethod, extrasModule, jClass));
+                            .forEach(it -> it.modifyConstructor(ib, ctorMethod, module, jClass));
 
-                    if (node.mems != null) {
-                        int i = iMemories;
-                        for (MemoryNode mem : node.mems) {
-                            JavaExts.JavaField memField = lMemories.get(i++);
-                            Var memV = ib.insert(JavaOps.INVOKE.create(new JavaExts.JavaMethod(
-                                            IRUtils.BYTE_BUFFER_CLASS,
-                                            "allocateDirect",
-                                            "(I)Ljava/nio/ByteBuffer;",
-                                            JavaExts.JavaMethod.Kind.STATIC
-                                    )).insn(ib.insert(CommonOps.constant(mem.limits.min * PAGE_SIZE),
-                                            "size")),
-                                    "mem");
-                            memV = ib.insert(JavaOps.INVOKE.create(new JavaExts.JavaMethod(
-                                            IRUtils.BYTE_BUFFER_CLASS,
-                                            "order",
-                                            "(Ljava/nio/ByteOrder;)Ljava/nio/ByteBuffer;",
-                                            JavaExts.JavaMethod.Kind.VIRTUAL
-                                    )).insn(memV,
-                                            ib.insert(JavaOps.GET_FIELD.create(new JavaExts.JavaField(
-                                                    new JavaExts.JavaClass(Type.getInternalName(ByteOrder.class)),
-                                                    "LITTLE_ENDIAN",
-                                                    "Ljava/nio/ByteOrder;",
-                                                    true
-                                            )).insn(), "order")),
-                                    "mem");
-                            ib.insert(JavaOps.PUT_FIELD.create(memField)
-                                    .insn(IRUtils.getThis(ib), memV)
-                                    .assignTo());
-                        }
-                    }
-
-                    if (node.tables != null) {
-                        int i = iTables;
-                        for (TableNode table : node.tables) {
-                            JavaExts.JavaField tableField = lTables.get(i++);
-                            InsnList insns = new InsnList();
-                            insns.add(new TypeInsnNode(Opcodes.ANEWARRAY,
-                                    BasicCallingConvention.javaType(table.type)
-                                            .getInternalName()));
-                            Var tableV = ib.insert(JavaOps.INSNS.create(insns)
-                                            .insn(ib.insert(CommonOps.constant(table.limits.min), "size")),
-                                    "table");
-                            ib.insert(JavaOps.PUT_FIELD.create(tableField)
-                                    .insn(IRUtils.getThis(ib), tableV)
-                                    .assignTo());
-                        }
-                    }
-
-                    if (node.globals != null) {
-                        int i = iGlobals;
-                        for (GlobalNode global : node.globals) {
-                            JavaExts.JavaField globalField = lGlobals.get(i++);
-                            Function globalFunc = funcMap.get(global.init);
-                            Var glInit = ib.insert(new Inliner(ib)
-                                            .inline(convert.run(globalFunc), Collections.emptyList()),
-                                    "global_init");
-                            module.functions.remove(globalFunc);
-                            ib.insert(JavaOps.PUT_FIELD.create(globalField)
-                                    .insn(IRUtils.getThis(ib), glInit)
-                                    .assignTo());
-                        }
-                    }
-
-                    if (node.elems != null) {
-                        int elemIdx = 0;
-                        for (ElementNode elem : node.elems) {
-                            Insn elemLen = CommonOps.constant(elem.indices != null ? elem.indices.length : elem.init.size());
-                            Type elemType = BasicCallingConvention.javaType(elem.type);
-                            Op aNewArray = JavaOps.insns(new TypeInsnNode(Opcodes.ANEWARRAY, elemType.getInternalName()));
-                            Var elemV = ib.insert(aNewArray.insn(ib.insert(elemLen, "elemsz")),
-                                    "elem");
-                            JavaExts.JavaField field = new JavaExts.JavaField(jClass, "elem" + elemIdx,
-                                    "[" + elemType.getDescriptor(),
-                                    false);
-                            jClass.fields.add(field);
-                            Var toAssign;
-                            if (elem.offset == null && elem.passive) {
-                                toAssign = elemV;
-                            } else {
-                                toAssign = ib.insert(aNewArray.insn(ib.insert(CommonOps.constant(0), "0")), "empty");
+                    // fetching values used in ctor
+                    ArrayList<Lazy<Function>>
+                            globalInits = new ArrayList<>(),
+                            elemOffsets = new ArrayList<>(),
+                            dataOffsets = new ArrayList<>();
+                    ArrayList<List<Lazy<Function>>> elemInits = new ArrayList<>();
+                    {
+                        if (node.globals != null) {
+                            for (GlobalNode global : node.globals) {
+                                globalInits.add(funcMap.remove(global.init));
                             }
-                            ib.insert(JavaOps.PUT_FIELD.create(field).insn(IRUtils.getThis(ib), toAssign).assignTo());
-                            elems.add(field);
-
-                            if (elem.indices != null) {
-                                for (int i = 0; i < elem.indices.length; i++) {
-                                    Var j = ib.insert(CommonOps.constant(i), "j");
-                                    Var f = ib.func.newVar("f");
-                                    getFunction(elem.indices[i])
-                                            .emitFuncRef(ib, WasmOps.FUNC_REF
-                                                    .create(elem.indices[i])
-                                                    .insn()
-                                                    .assignTo(f));
-                                    ib.insert(JavaOps.ARRAY_SET.create()
-                                            .insn(elemV, j, f)
-                                            .assignTo());
+                        }
+                        if (node.elems != null) {
+                            for (ElementNode elem : node.elems) {
+                                if (elem.indices == null) {
+                                    ArrayList<Lazy<Function>> inits = new ArrayList<>();
+                                    elemInits.add(inits);
+                                    for (ExprNode expr : elem.init) {
+                                        inits.add(funcMap.remove(expr));
+                                    }
+                                    inits.trimToSize();
                                 }
-                            } else {
-                                int i = 0;
-                                for (ExprNode expr : elem.init) {
-                                    Var j = ib.insert(CommonOps.constant(i), "j");
-                                    Function exprFunc = funcMap.get(expr);
-                                    Var f = ib.insert(new Inliner(ib)
-                                                    .inline(convert.run(exprFunc), Collections.emptyList()),
-                                            "f");
-                                    module.functions.remove(exprFunc);
-                                    ib.insert(JavaOps.ARRAY_SET.create()
-                                            .insn(elemV, j, f)
-                                            .assignTo());
-                                    i++;
+                                if (elem.offset != null) {
+                                    elemOffsets.add(funcMap.remove(elem.offset));
                                 }
                             }
-
-                            if (elem.offset != null) {
-                                Function offsetFunc = funcMap.get(elem.offset);
-                                Var offset = ib.insert(new Inliner(ib)
-                                                .inline(convert.run(offsetFunc), Collections.emptyList()),
-                                        "elem_offset");
-                                module.functions.remove(offsetFunc);
-                                getTable(elem.table)
-                                        .emitTableInit(ib,
-                                                WasmOps.TABLE_INIT
-                                                        .create(Pair.of(elem.table, elemIdx))
-                                                        .insn(offset,
-                                                                ib.insert(CommonOps.constant(0), "src"),
-                                                                ib.insert(elemLen, "len"))
-                                                        .assignTo(),
-                                                elemV);
+                        }
+                        if (node.datas != null) {
+                            for (DataNode data : node.datas) {
+                                if (data.offset != null) {
+                                    dataOffsets.add(funcMap.remove(data.offset));
+                                }
                             }
-
-                            elemIdx++;
                         }
+                        globalInits.trimToSize();
+                        elemOffsets.trimToSize();
+                        dataOffsets.trimToSize();
+                        elemInits.trimToSize();
                     }
 
-                    if (node.datas != null) {
-                        int dataIdx = -1;
-                        for (DataNode data : node.datas) {
-                            dataIdx++;
-                            JavaExts.JavaField field = new JavaExts.JavaField(
-                                    jClass,
-                                    "data" + dataIdx,
-                                    Type.getDescriptor(ByteBuffer.class),
-                                    false
-                            );
-                            JavaExts.JavaMethod method = new JavaExts.JavaMethod(
-                                    jClass,
-                                    "initData" + dataIdx,
-                                    "()V",
-                                    JavaExts.JavaMethod.Kind.FINAL
-                            );
-                            Function func = new Function();
-                            method.attachExt(JavaExts.METHOD_IMPL, func);
-                            func.attachExt(JavaExts.FUNCTION_OWNER, jClass);
-                            func.attachExt(JavaExts.FUNCTION_METHOD, method);
-                            extrasModule.functions.add(func);
-                            jClass.fields.add(field);
-                            jClass.methods.add(method);
-                            datas.add(field);
+                    ctorMethod.attachExt(JavaExts.METHOD_IMPL, lazy(() -> {
+                        if (node.mems != null) {
+                            int i = iMemories;
+                            for (MemoryNode mem : node.mems) {
+                                JClass.JavaField memField = lMemories.get(i++);
+                                Var memV = ib.insert(JavaOps.INVOKE.create(new JClass.JavaMethod(
+                                                IRUtils.BYTE_BUFFER_CLASS,
+                                                "allocateDirect",
+                                                "(I)Ljava/nio/ByteBuffer;",
+                                                JClass.JavaMethod.Kind.STATIC
+                                        )).insn(ib.insert(CommonOps.constant(mem.limits.min * PAGE_SIZE),
+                                                "size")),
+                                        "mem");
+                                memV = ib.insert(JavaOps.INVOKE.create(new JClass.JavaMethod(
+                                                IRUtils.BYTE_BUFFER_CLASS,
+                                                "order",
+                                                "(Ljava/nio/ByteOrder;)Ljava/nio/ByteBuffer;",
+                                                JClass.JavaMethod.Kind.VIRTUAL
+                                        )).insn(memV,
+                                                ib.insert(JavaOps.GET_FIELD.create(new JClass.JavaField(
+                                                        new JClass(Type.getInternalName(ByteOrder.class)),
+                                                        "LITTLE_ENDIAN",
+                                                        "Ljava/nio/ByteOrder;",
+                                                        true
+                                                )).insn(), "order")),
+                                        "mem");
+                                ib.insert(JavaOps.PUT_FIELD.create(memField)
+                                        .insn(IRUtils.getThis(ib), memV)
+                                        .assignTo());
+                            }
+                        }
 
-                            IRBuilder dIb = new IRBuilder(func, func.newBb());
-                            Var dataV = dIb.insert(JavaOps.INVOKE.create(new JavaExts.JavaMethod(
-                                                    IRUtils.BYTE_BUFFER_CLASS,
-                                                    "allocate",
-                                                    "(I)Ljava/nio/ByteBuffer;",
-                                                    JavaExts.JavaMethod.Kind.STATIC
-                                            ))
-                                            .insn(dIb.insert(CommonOps.constant(data.init.length), "len")),
-                                    "data");
+                        if (node.tables != null) {
+                            int i = iTables;
+                            for (TableNode table : node.tables) {
+                                JClass.JavaField tableField = lTables.get(i++);
+                                InsnList insns = new InsnList();
+                                insns.add(new TypeInsnNode(Opcodes.ANEWARRAY,
+                                        BasicCallingConvention.javaType(table.type)
+                                                .getInternalName()));
+                                Var tableV = ib.insert(JavaOps.INSNS.create(insns)
+                                                .insn(ib.insert(CommonOps.constant(table.limits.min), "size")),
+                                        "table");
+                                ib.insert(JavaOps.PUT_FIELD.create(tableField)
+                                        .insn(IRUtils.getThis(ib), tableV)
+                                        .assignTo());
+                            }
+                        }
 
-                            Var slicedV = dIb.insert(JavaOps.INVOKE.create(new JavaExts.JavaMethod(
-                                            IRUtils.BYTE_BUFFER_CLASS,
-                                            "slice",
-                                            "()Ljava/nio/ByteBuffer;",
-                                            JavaExts.JavaMethod.Kind.VIRTUAL
-                                    )).insn(dataV),
-                                    "sliced");
+                        if (node.globals != null) {
+                            int i = iGlobals;
+                            for (Lazy<Function> init : globalInits) {
+                                JClass.JavaField globalField = lGlobals.get(i++);
+                                Var glInit = ib.insert(new Inliner(ib)
+                                                .inline(convert.run(init.get()),
+                                                        Collections.emptyList()),
+                                        "global_init");
+                                ib.insert(JavaOps.PUT_FIELD.create(globalField)
+                                        .insn(IRUtils.getThis(ib), glInit)
+                                        .assignTo());
+                            }
+                        }
 
-                            IRUtils.fillAuto(data, dIb, slicedV);
+                        if (node.elems != null) {
+                            int elemIdx = 0;
+                            Iterator<Lazy<Function>> offsets = elemOffsets.iterator();
+                            Iterator<List<Lazy<Function>>> inits = elemInits.iterator();
+                            for (ElementNode elem : node.elems) {
+                                Insn elemLen = CommonOps.constant(elem.indices != null ? elem.indices.length : elem.init.size());
+                                Type elemType = BasicCallingConvention.javaType(elem.type);
+                                Op aNewArray = JavaOps.insns(new TypeInsnNode(Opcodes.ANEWARRAY, elemType.getInternalName()));
+                                Var elemV = ib.insert(aNewArray.insn(ib.insert(elemLen, "elemsz")),
+                                        "elem");
+                                Var toAssign;
+                                if (elem.offset == null && elem.passive) {
+                                    toAssign = elemV;
+                                } else {
+                                    toAssign = ib.insert(aNewArray.insn(ib.insert(CommonOps.constant(0), "0")), "empty");
+                                }
+                                ib.insert(JavaOps.PUT_FIELD.create(elems.get(elemIdx))
+                                        .insn(IRUtils.getThis(ib), toAssign).assignTo());
 
-                            dIb.insert(JavaOps.PUT_FIELD.create(field)
-                                    .insn(IRUtils.getThis(dIb), dataV)
+                                if (elem.indices != null) {
+                                    for (int i = 0; i < elem.indices.length; i++) {
+                                        Var j = ib.insert(CommonOps.constant(i), "j");
+                                        Var f = ib.func.newVar("f");
+                                        getFunction(elem.indices[i])
+                                                .emitFuncRef(ib, WasmOps.FUNC_REF
+                                                        .create(elem.indices[i])
+                                                        .insn()
+                                                        .assignTo(f));
+                                        ib.insert(JavaOps.ARRAY_SET.create()
+                                                .insn(elemV, j, f)
+                                                .assignTo());
+                                    }
+                                } else {
+                                    int i = 0;
+                                    for (Lazy<Function> expr : inits.next()) {
+                                        Var j = ib.insert(CommonOps.constant(i), "j");
+                                        Function exprFunc = expr.get();
+                                        Var f = ib.insert(new Inliner(ib)
+                                                        .inline(convert.run(exprFunc),
+                                                                Collections.emptyList()),
+                                                "f");
+                                        ib.insert(JavaOps.ARRAY_SET.create()
+                                                .insn(elemV, j, f)
+                                                .assignTo());
+                                        i++;
+                                    }
+                                }
+
+                                if (elem.offset != null) {
+                                    Var offset = ib.insert(new Inliner(ib)
+                                                    .inline(convert.run(offsets.next().get()),
+                                                            Collections.emptyList()),
+                                            "elem_offset");
+                                    getTable(elem.table)
+                                            .emitTableInit(ib,
+                                                    WasmOps.TABLE_INIT
+                                                            .create(Pair.of(elem.table, elemIdx))
+                                                            .insn(offset,
+                                                                    ib.insert(CommonOps.constant(0), "src"),
+                                                                    ib.insert(elemLen, "len"))
+                                                            .assignTo(),
+                                                    elemV);
+                                }
+
+                                elemIdx++;
+                            }
+                        }
+
+                        if (node.datas != null) {
+                            int dataIdx = -1;
+                            Iterator<Lazy<Function>> offsets = dataOffsets.iterator();
+                            for (DataNode data : node.datas) {
+                                dataIdx++;
+
+                                int fDataIdx = dataIdx;
+                                JClass.JavaMethod method = dataInits.get(dataIdx);
+
+                                ib.insert(JavaOps.INVOKE.create(method).insn(IRUtils.getThis(ib)).assignTo());
+
+                                if (data.offset != null) {
+                                    MemoryConvention mem = memories.get(data.memory);
+
+
+                                    Var dataOffset = ib.insert(new Inliner(ib)
+                                                    .inline(convert.run(offsets.next().get()), Collections.emptyList()),
+                                            "dataOffset");
+
+                                    mem.emitMemInit(ib, WasmOps.MEM_INIT
+                                                    .create(Pair.of(data.memory, fDataIdx))
+                                                    .insn(dataOffset,
+                                                            ib.insert(CommonOps.constant(0), "offset"),
+                                                            ib.insert(CommonOps.constant(data.init.length), "len"))
+                                                    .assignTo(),
+                                            ib.insert(JavaOps.GET_FIELD
+                                                    .create(datas.get(fDataIdx)).insn(IRUtils.getThis(ib)), "data"));
+                                }
+                            }
+                        }
+
+                        if (node.start != null) {
+                            FunctionConvention startMethod = funcs.get(node.start);
+                            startMethod.emitCall(ib, WasmOps.CALL
+                                    .create(new WasmOps.CallType(
+                                            node.start,
+                                            funcTypes.get(node.start)
+                                    ))
+                                    .insn()
                                     .assignTo());
-                            dIb.insertCtrl(CommonOps.RETURN.insn().jumpsTo());
-
-                            ib.insert(JavaOps.INVOKE.create(method).insn(IRUtils.getThis(ib)).assignTo());
-
-                            if (data.offset == null) continue;
-
-                            MemoryConvention mem = memories.get(data.memory);
-
-                            Function offsetFunc = funcMap.get(data.offset);
-                            Var dataOffset = ib.insert(new Inliner(ib)
-                                            .inline(convert.run(offsetFunc), Collections.emptyList()),
-                                    "dataOffset");
-                            module.functions.remove(offsetFunc);
-
-                            mem.emitMemInit(ib, WasmOps.MEM_INIT
-                                            .create(Pair.of(data.memory, dataIdx))
-                                            .insn(dataOffset,
-                                                    ib.insert(CommonOps.constant(0), "offset"),
-                                                    ib.insert(CommonOps.constant(data.init.length), "len"))
-                                            .assignTo(),
-                                    ib.insert(JavaOps.GET_FIELD
-                                            .create(datas.get(dataIdx)).insn(IRUtils.getThis(ib)), "data"));
                         }
-                    }
 
-                    if (node.start != null) {
-                        FunctionConvention startMethod = funcs.get(node.start);
-                        startMethod.emitCall(ib, WasmOps.CALL
-                                .create(new WasmOps.CallType(
-                                        node.start,
-                                        funcTypes.get(node.start)
-                                ))
-                                .insn()
-                                .assignTo());
-                    }
+                        ib.insertCtrl(CommonOps.RETURN.insn().jumpsTo());
 
-                    ib.insertCtrl(CommonOps.RETURN.insn().jumpsTo());
+                        return ib.func;
+                    }));
                 }
 
                 @Override
@@ -597,7 +662,7 @@ public interface WirJavaConventionFactory {
 
                 @Override
                 public ElemConvention getElem(int index) {
-                    JavaExts.JavaField elem = elems.get(index);
+                    JClass.JavaField elem = elems.get(index);
                     return new ElemConvention() {
                         @Override
                         public Type elementType() {

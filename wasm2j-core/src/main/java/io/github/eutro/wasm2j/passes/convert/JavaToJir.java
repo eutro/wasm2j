@@ -19,7 +19,7 @@ public class JavaToJir implements IRPass<MethodNode, Function> {
     @Override
     public Function run(MethodNode method) {
         Function func = new Function();
-        func.attachExt(JavaExts.FUNCTION_METHOD, new JavaExts.JavaMethod(
+        func.attachExt(JavaExts.FUNCTION_METHOD, new JClass.JavaMethod(
                 null,
                 method.name,
                 method.desc,

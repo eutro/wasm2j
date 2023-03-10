@@ -5,14 +5,12 @@ import io.github.eutro.wasm2j.ext.DelegatingExtHolder;
 import io.github.eutro.wasm2j.ext.Ext;
 import io.github.eutro.wasm2j.ext.ExtContainer;
 import io.github.eutro.wasm2j.ops.Op;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.AbstractList;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
+import java.util.*;
 
-public final class Insn extends DelegatingExtHolder {
+public final class Insn extends DelegatingExtHolder implements Iterable<Var> {
     public static boolean TRACK_INSN_CREATIONS = System.getenv("WASM2J_TRACK_INSN_CREATIONS") != null;
 
     public Throwable created = TRACK_INSN_CREATIONS ? new Throwable("constructed") : null;
@@ -113,7 +111,22 @@ public final class Insn extends DelegatingExtHolder {
         return new Args();
     }
 
+    @NotNull
+    @Override
+    public Iterator<Var> iterator() {
+        if (args == null) return Collections.emptyIterator();
+        if (args instanceof Var) return Collections.singletonList((Var) args).iterator();
+        else return Arrays.asList((Var[]) args).iterator();
+    }
+
     private class Args extends AbstractList<Var> implements List<Var> {
+        int size;
+        {
+            if (args == null) size = 0;
+            else if (args instanceof Var) size = 1;
+            else size = ((Var[]) args).length;
+        }
+
         @Override
         public Var get(int index) {
             if (args == null) throw new IndexOutOfBoundsException();
@@ -153,6 +166,7 @@ public final class Insn extends DelegatingExtHolder {
                 newArgs[oldArgs.length] = var;
                 args = newArgs;
             }
+            size++;
             return true;
         }
 
@@ -160,7 +174,9 @@ public final class Insn extends DelegatingExtHolder {
         public Var remove(int index) {
             if (args == null) {
                 throw new IndexOutOfBoundsException();
-            } else if (args instanceof Var) {
+            }
+            size--;
+            if (args instanceof Var) {
                 if (index != 0) throw new IndexOutOfBoundsException();
                 Var old = (Var) args;
                 args = null;
@@ -186,9 +202,12 @@ public final class Insn extends DelegatingExtHolder {
 
         @Override
         public int size() {
-            if (args == null) return 0;
-            if (args instanceof Var) return 1;
-            return ((Var[]) args).length;
+            return size;
+        }
+
+        @Override
+        public @NotNull Iterator<Var> iterator() {
+            return Insn.this.iterator();
         }
     }
 }

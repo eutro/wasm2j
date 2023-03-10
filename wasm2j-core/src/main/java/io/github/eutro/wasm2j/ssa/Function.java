@@ -82,15 +82,11 @@ public final class Function extends ExtHolder {
 
     // exts
     private MetadataState metaState = new MetadataState();
-    private Module owner;
 
     @Override
     public <T> void attachExt(Ext<T> ext, T value) {
         if (ext == CommonExts.METADATA_STATE) {
             metaState = (MetadataState) value;
-            return;
-        } else if (ext == CommonExts.OWNING_MODULE) {
-            owner = (Module) value;
             return;
         }
         super.attachExt(ext, value);
@@ -101,9 +97,6 @@ public final class Function extends ExtHolder {
         if (ext == CommonExts.METADATA_STATE) {
             metaState = null;
             return;
-        } else if (ext == CommonExts.OWNING_MODULE) {
-            owner = null;
-            return;
         }
         super.removeExt(ext);
     }
@@ -113,8 +106,6 @@ public final class Function extends ExtHolder {
     public <T> @Nullable T getNullable(Ext<T> ext) {
         if (ext == CommonExts.METADATA_STATE) {
             return (T) metaState;
-        } else if (ext == CommonExts.OWNING_MODULE) {
-            return (T) owner;
         }
         return super.getNullable(ext);
     }

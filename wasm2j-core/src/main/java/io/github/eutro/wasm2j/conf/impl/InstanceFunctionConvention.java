@@ -4,12 +4,12 @@ import io.github.eutro.wasm2j.conf.api.CallingConvention;
 import io.github.eutro.wasm2j.conf.api.ExportableConvention;
 import io.github.eutro.wasm2j.conf.api.FunctionConvention;
 import io.github.eutro.wasm2j.ext.Ext;
-import io.github.eutro.wasm2j.ext.JavaExts;
 import io.github.eutro.wasm2j.ops.CommonOps;
 import io.github.eutro.wasm2j.ops.JavaOps;
 import io.github.eutro.wasm2j.ops.WasmOps;
 import io.github.eutro.wasm2j.ssa.Effect;
 import io.github.eutro.wasm2j.ssa.IRBuilder;
+import io.github.eutro.wasm2j.ssa.JClass;
 import io.github.eutro.wasm2j.ssa.Var;
 import io.github.eutro.wasm2j.util.IRUtils;
 import io.github.eutro.wasm2j.util.ValueGetter;
@@ -21,13 +21,13 @@ import java.util.List;
 public class InstanceFunctionConvention extends DelegatingExporter implements FunctionConvention {
     public static final Ext<InstanceFunctionConvention> FUNCTION_CONVENTION = Ext.create(InstanceFunctionConvention.class, "FUNCTION_CONVENTION");
     public final ValueGetter target;
-    public final JavaExts.JavaMethod method;
+    public final JClass.JavaMethod method;
     public final CallingConvention cc;
 
     public InstanceFunctionConvention(
             ExportableConvention exporter,
             ValueGetter target,
-            JavaExts.JavaMethod method,
+            JClass.JavaMethod method,
             CallingConvention cc
     ) {
         super(exporter);
@@ -60,11 +60,11 @@ public class InstanceFunctionConvention extends DelegatingExporter implements Fu
         Var handle = ib.insert(JavaOps.HANDLE_OF.create(method).insn(),
                 "handle");
         ib.insert(JavaOps.INVOKE
-                .create(new JavaExts.JavaMethod(
+                .create(new JClass.JavaMethod(
                         IRUtils.METHOD_HANDLE_CLASS,
                         "bindTo",
                         "(Ljava/lang/Object;)Ljava/lang/invoke/MethodHandle;",
-                        JavaExts.JavaMethod.Kind.VIRTUAL
+                        JClass.JavaMethod.Kind.VIRTUAL
                 ))
                 .insn(handle, target.get(ib))
                 .copyFrom(effect));

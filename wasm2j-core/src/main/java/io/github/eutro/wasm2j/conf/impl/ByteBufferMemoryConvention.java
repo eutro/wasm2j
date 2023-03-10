@@ -3,7 +3,6 @@ package io.github.eutro.wasm2j.conf.impl;
 import io.github.eutro.wasm2j.conf.api.ExportableConvention;
 import io.github.eutro.wasm2j.conf.api.MemoryConvention;
 import io.github.eutro.wasm2j.ext.Ext;
-import io.github.eutro.wasm2j.ext.JavaExts;
 import io.github.eutro.wasm2j.ops.CommonOps;
 import io.github.eutro.wasm2j.ops.JavaOps;
 import io.github.eutro.wasm2j.ops.WasmOps;
@@ -29,10 +28,10 @@ import static io.github.eutro.jwasm.Opcodes.PAGE_SIZE;
 public class ByteBufferMemoryConvention extends DelegatingExporter implements MemoryConvention {
     public static final Ext<ValueGetterSetter> MEMORY_BYTE_BUFFER = Ext.create(ValueGetterSetter.class, "MEMORY_BYTE_BUFFER");
     public static final int MAX_PAGES = Integer.MAX_VALUE / PAGE_SIZE;
-    private static final JavaExts.JavaMethod BUFFER_SLICE = JavaExts.JavaMethod.fromJava(ByteBuffer.class, "slice");
-    private static final JavaExts.JavaMethod BUFFER_POSITION = JavaExts.JavaMethod.fromJava(ByteBuffer.class, "position", int.class);
-    private static final JavaExts.JavaMethod BUFFER_LIMIT = JavaExts.JavaMethod.fromJava(ByteBuffer.class, "limit", int.class);
-    private static final JavaExts.JavaMethod BUFFER_PUT_BUF = JavaExts.JavaMethod.fromJava(ByteBuffer.class, "put", ByteBuffer.class);
+    private static final JClass.JavaMethod BUFFER_SLICE = JClass.JavaMethod.fromJava(ByteBuffer.class, "slice");
+    private static final JClass.JavaMethod BUFFER_POSITION = JClass.JavaMethod.fromJava(ByteBuffer.class, "position", int.class);
+    private static final JClass.JavaMethod BUFFER_LIMIT = JClass.JavaMethod.fromJava(ByteBuffer.class, "limit", int.class);
+    private static final JClass.JavaMethod BUFFER_PUT_BUF = JClass.JavaMethod.fromJava(ByteBuffer.class, "put", ByteBuffer.class);
 
     private final ValueGetterSetter buffer;
     private final @Nullable Integer max;
@@ -53,11 +52,11 @@ public class ByteBufferMemoryConvention extends DelegatingExporter implements Me
         WasmOps.WithMemArg<WasmOps.DerefType> wmArg = WasmOps.MEM_LOAD.cast(effect.insn().op).arg;
         WasmOps.DerefType derefType = wmArg.value;
 
-        JavaExts.JavaMethod toInvoke = new JavaExts.JavaMethod(
+        JClass.JavaMethod toInvoke = new JClass.JavaMethod(
                 IRUtils.BYTE_BUFFER_CLASS,
                 derefType.load.funcName,
                 derefType.load.desc,
-                JavaExts.JavaMethod.Kind.VIRTUAL
+                JClass.JavaMethod.Kind.VIRTUAL
         );
         Var ptr = effect.insn().args().get(0);
         Insn loadInsn = JavaOps.INVOKE.create(toInvoke).insn(buffer.get(ib), IRUtils.getAddr(ib, wmArg, ptr));
@@ -88,18 +87,18 @@ public class ByteBufferMemoryConvention extends DelegatingExporter implements Me
     @Override
     public void emitMemSize(IRBuilder ib, Effect effect) {
         ib.insert(JavaOps.INVOKE
-                .create(new JavaExts.JavaMethod(
-                        new JavaExts.JavaClass(Type.getInternalName(Integer.class)),
+                .create(new JClass.JavaMethod(
+                        new JClass(Type.getInternalName(Integer.class)),
                         "divideUnsigned",
                         "(II)I",
-                        JavaExts.JavaMethod.Kind.STATIC
+                        JClass.JavaMethod.Kind.STATIC
                 ))
                 .insn(ib.insert(JavaOps.INVOKE
-                                        .create(new JavaExts.JavaMethod(
-                                                new JavaExts.JavaClass(Type.getInternalName(Buffer.class)),
+                                        .create(new JClass.JavaMethod(
+                                                new JClass(Type.getInternalName(Buffer.class)),
                                                 "capacity",
                                                 "()I",
-                                                JavaExts.JavaMethod.Kind.VIRTUAL
+                                                JClass.JavaMethod.Kind.VIRTUAL
                                         ))
                                         .insn(buffer.get(ib)),
                                 "rawSz"),
@@ -132,8 +131,8 @@ public class ByteBufferMemoryConvention extends DelegatingExporter implements Me
         return res;
          */
 
-        JavaExts.JavaMethod capacity = JavaExts.JavaMethod.fromJava(ByteBuffer.class, "capacity");
-        JavaExts.JavaMethod duplicate = JavaExts.JavaMethod.fromJava(ByteBuffer.class, "duplicate");
+        JClass.JavaMethod capacity = JClass.JavaMethod.fromJava(ByteBuffer.class, "capacity");
+        JClass.JavaMethod duplicate = JClass.JavaMethod.fromJava(ByteBuffer.class, "duplicate");
         Type oome = Type.getType(OutOfMemoryError.class);
 
         Var growBy = effect.insn().args().get(0);
@@ -164,9 +163,9 @@ public class ByteBufferMemoryConvention extends DelegatingExporter implements Me
         ib.setBlock(k);
 
         Var newBuf = ib.insert(JavaOps.INVOKE
-                        .create(JavaExts.JavaMethod.fromJava(ByteBuffer.class, "order", ByteOrder.class))
+                        .create(JClass.JavaMethod.fromJava(ByteBuffer.class, "order", ByteOrder.class))
                         .insn(ib.insert(JavaOps.INVOKE
-                                                .create(JavaExts.JavaMethod.fromJava(ByteBuffer.class, "allocateDirect", int.class))
+                                                .create(JClass.JavaMethod.fromJava(ByteBuffer.class, "allocateDirect", int.class))
                                                 .insn(ib.insert(JavaOps.IADD
                                                                 .insn(rawSz,
                                                                         ib.insert(JavaOps.IMUL
@@ -176,7 +175,7 @@ public class ByteBufferMemoryConvention extends DelegatingExporter implements Me
                                                         "newSzRaw")),
                                         "newBuf"),
                                 ib.insert(JavaOps.GET_FIELD
-                                                .create(JavaExts.JavaField.fromJava(ByteOrder.class, "LITTLE_ENDIAN"))
+                                                .create(JClass.JavaField.fromJava(ByteOrder.class, "LITTLE_ENDIAN"))
                                                 .insn(),
                                         "order")),
                 "newBufLE");
@@ -212,29 +211,29 @@ public class ByteBufferMemoryConvention extends DelegatingExporter implements Me
         Var length = iter.next();
 
         Var mem = buffer.get(ib);
-        JavaExts.JavaMethod sliceMethod = new JavaExts.JavaMethod(
+        JClass.JavaMethod sliceMethod = new JClass.JavaMethod(
                 IRUtils.BYTE_BUFFER_CLASS,
                 "slice",
                 "()Ljava/nio/ByteBuffer;",
-                JavaExts.JavaMethod.Kind.VIRTUAL
+                JClass.JavaMethod.Kind.VIRTUAL
         );
-        JavaExts.JavaMethod positionMethod = new JavaExts.JavaMethod(
+        JClass.JavaMethod positionMethod = new JClass.JavaMethod(
                 IRUtils.BUFFER_CLASS,
                 "position",
                 "(I)Ljava/nio/Buffer;",
-                JavaExts.JavaMethod.Kind.VIRTUAL
+                JClass.JavaMethod.Kind.VIRTUAL
         );
-        JavaExts.JavaMethod limitMethod = new JavaExts.JavaMethod(
+        JClass.JavaMethod limitMethod = new JClass.JavaMethod(
                 IRUtils.BUFFER_CLASS,
                 "limit",
                 "(I)Ljava/nio/Buffer;",
-                JavaExts.JavaMethod.Kind.VIRTUAL
+                JClass.JavaMethod.Kind.VIRTUAL
         );
-        JavaExts.JavaMethod putMethod = new JavaExts.JavaMethod(
+        JClass.JavaMethod putMethod = new JClass.JavaMethod(
                 IRUtils.BYTE_BUFFER_CLASS,
                 "put",
                 "(Ljava/nio/ByteBuffer;)Ljava/nio/ByteBuffer;",
-                JavaExts.JavaMethod.Kind.VIRTUAL
+                JClass.JavaMethod.Kind.VIRTUAL
         );
 
         mem = ib.insert(JavaOps.INVOKE.create(sliceMethod).insn(mem), "sliced");

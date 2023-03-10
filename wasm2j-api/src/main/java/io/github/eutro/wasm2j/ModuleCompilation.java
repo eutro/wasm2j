@@ -4,12 +4,15 @@ import io.github.eutro.jwasm.tree.ModuleNode;
 import io.github.eutro.wasm2j.conf.Conventions;
 import io.github.eutro.wasm2j.conf.api.WirJavaConventionFactory;
 import io.github.eutro.wasm2j.events.*;
+import io.github.eutro.wasm2j.ext.JavaExts;
 import io.github.eutro.wasm2j.passes.Passes;
 import io.github.eutro.wasm2j.passes.convert.JirToJava;
 import io.github.eutro.wasm2j.passes.convert.WasmToWir;
 import io.github.eutro.wasm2j.passes.convert.WirToJir;
-import io.github.eutro.wasm2j.passes.misc.ForPass;
+import io.github.eutro.wasm2j.ssa.Function;
+import io.github.eutro.wasm2j.ssa.JClass;
 import io.github.eutro.wasm2j.ssa.Module;
+import io.github.eutro.wasm2j.util.Lazy;
 import org.objectweb.asm.tree.ClassNode;
 
 public class ModuleCompilation extends EventSupplier<ModuleCompileEvent> {
@@ -31,12 +34,15 @@ public class ModuleCompilation extends EventSupplier<ModuleCompileEvent> {
         Module wir = WasmToWir.INSTANCE.run(node);
         wir = dispatch(WirPassesEvent.class, new WirPassesEvent(wir)).wir;
 
-        Module jir = new WirToJir(conventions).run(wir);
+        JClass jir = new WirToJir(conventions).run(wir);
         jir = dispatch(JirPassesEvent.class, new JirPassesEvent(jir)).jir;
 
-        jir = ForPass.liftFunctions(Passes.SSA_OPTS)
-                .then(ForPass.liftFunctions(Passes.JAVA_PREEMIT))
-                .run(jir);
+        for (JClass.JavaMethod method : jir.methods) {
+            Lazy<Function> impl = method.getNullable(JavaExts.METHOD_IMPL);
+            if (impl != null) {
+                impl.mapInPlace(func -> Passes.SSA_OPTS.then(Passes.JAVA_PREEMIT).run(func));
+            }
+        }
         jir = dispatch(JavaPreemitEvent.class, new JavaPreemitEvent(jir)).jir;
 
         ClassNode classNode = JirToJava.INSTANCE.run(jir);

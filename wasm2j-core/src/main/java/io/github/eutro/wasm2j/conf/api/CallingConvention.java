@@ -1,12 +1,12 @@
 package io.github.eutro.wasm2j.conf.api;
 
 import io.github.eutro.jwasm.tree.TypeNode;
-import io.github.eutro.wasm2j.ext.JavaExts;
 import io.github.eutro.wasm2j.ops.CommonOps;
 import io.github.eutro.wasm2j.ops.JavaOps;
 import io.github.eutro.wasm2j.ops.WasmOps;
 import io.github.eutro.wasm2j.ssa.Effect;
 import io.github.eutro.wasm2j.ssa.IRBuilder;
+import io.github.eutro.wasm2j.ssa.JClass;
 import io.github.eutro.wasm2j.ssa.Var;
 import org.objectweb.asm.Type;
 
@@ -33,11 +33,11 @@ public interface CallingConvention {
         Var[] rets = ty.getReturnType() == Type.VOID_TYPE
                 ? new Var[0]
                 : new Var[]{ib.func.newVar("ret")};
-        ib.insert(JavaOps.INVOKE.create(new JavaExts.JavaMethod(
+        ib.insert(JavaOps.INVOKE.create(new JClass.JavaMethod(
                         METHOD_HANDLE_CLASS,
                         "invokeExact",
                         ty.getDescriptor(),
-                        JavaExts.JavaMethod.Kind.VIRTUAL
+                        JClass.JavaMethod.Kind.VIRTUAL
                 ))
                 .insn(rawArgs)
                 .assignTo(rets));

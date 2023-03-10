@@ -1,10 +1,11 @@
 package io.github.eutro.wasm2j.ops;
 
 import io.github.eutro.wasm2j.ext.CommonExts;
-import io.github.eutro.wasm2j.ext.JavaExts.Handlable;
-import io.github.eutro.wasm2j.ext.JavaExts.JavaField;
-import io.github.eutro.wasm2j.ext.JavaExts.JavaMethod;
+import io.github.eutro.wasm2j.ssa.JClass.Handlable;
+import io.github.eutro.wasm2j.ssa.JClass.JavaField;
+import io.github.eutro.wasm2j.ssa.JClass.JavaMethod;
 import io.github.eutro.wasm2j.intrinsics.IntrinsicImpl;
+import io.github.eutro.wasm2j.ssa.JClass;
 import io.github.eutro.wasm2j.ssa.Var;
 import io.github.eutro.wasm2j.util.Disassembler;
 import org.jetbrains.annotations.Nullable;
@@ -135,9 +136,9 @@ public class JavaOps {
     public static Op IMUL = markPure(insns(new InsnNode(Opcodes.IMUL)));
     public static Op I2L = markPure(insns(new InsnNode(Opcodes.I2L)));
     public static Op I2L_U = markPure(INVOKE
-            .create(JavaMethod.fromJava(Integer.class, "toUnsignedLong", int.class)));
+            .create(JClass.JavaMethod.fromJava(Integer.class, "toUnsignedLong", int.class)));
     public static Op L2I_EXACT = markPure(INVOKE
-            .create(JavaMethod.fromJava(Math.class, "toIntExact", long.class)));
+            .create(JClass.JavaMethod.fromJava(Math.class, "toIntExact", long.class)));
 
     static {
         IADD.attachExt(CONSTANT_PROPAGATOR, insn -> {

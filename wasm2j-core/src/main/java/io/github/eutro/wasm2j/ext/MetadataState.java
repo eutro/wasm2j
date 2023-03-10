@@ -56,7 +56,7 @@ public class MetadataState {
 
     public static final ComputableMetaKind<Function>
             SSA_FORM = new ComputableMetaKind<>("SSA_FORM", SSAify.INSTANCE),
-            PREDS = new ComputableMetaKind<>("DOMS", ComputeDoms.INSTANCE),
+            PREDS = new ComputableMetaKind<>("PREDS", ComputePreds.INSTANCE),
             DOMS = new ComputableMetaKind<>("DOMS", ComputeDoms.INSTANCE),
             DOM_FRONTIER = new ComputableMetaKind<>("DOM_FRONTIER", ComputeDomFrontier.INSTANCE),
             INTRINSICS_LOWERED = new ComputableMetaKind<>("INTRINSICS_LOWERED",

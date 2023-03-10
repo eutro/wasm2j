@@ -7,9 +7,9 @@ import io.github.eutro.wasm2j.ops.CommonOps;
 import io.github.eutro.wasm2j.ops.JavaOps;
 import io.github.eutro.wasm2j.ops.OpKey;
 import io.github.eutro.wasm2j.passes.IRPass;
-import io.github.eutro.wasm2j.ssa.Module;
 import io.github.eutro.wasm2j.ssa.*;
 import io.github.eutro.wasm2j.util.GraphWalker;
+import io.github.eutro.wasm2j.util.Lazy;
 import io.github.eutro.wasm2j.util.Pair;
 import org.objectweb.asm.Label;
 import org.objectweb.asm.Opcodes;
@@ -19,7 +19,7 @@ import org.objectweb.asm.tree.*;
 
 import java.util.*;
 
-public class JirToJava implements IRPass<Module, ClassNode> {
+public class JirToJava implements IRPass<JClass, ClassNode> {
     public static final Ext<Integer> LOCAL_EXT = Ext.create(Integer.class, "LOCAL_EXT");
     public static final Ext<Label> LABEL_EXT = Ext.create(Label.class, "LABEL_EXT");
     public static final Ext<BasicBlock> NEXT_BLOCK_EXT = Ext.create(BasicBlock.class, "NEXT_BLOCK_EXT");
@@ -27,9 +27,7 @@ public class JirToJava implements IRPass<Module, ClassNode> {
     public static JirToJava INSTANCE = new JirToJava();
 
     @Override
-    public ClassNode run(Module module) {
-        JavaExts.JavaClass jClass = module.getExt(JavaExts.JAVA_CLASS)
-                .orElseThrow(() -> new RuntimeException("Missing Java class extension data"));
+    public ClassNode run(JClass jClass) {
 
         ClassNode cn = new ClassNode();
         cn.visit(
@@ -43,7 +41,7 @@ public class JirToJava implements IRPass<Module, ClassNode> {
 
         {
             Set<Pair<String, String>> existingFields = new HashSet<>();
-            for (JavaExts.JavaField field : jClass.fields) {
+            for (JClass.JavaField field : jClass.fields) {
                 while (!existingFields.add(Pair.of(field.name, field.descriptor))) {
                     field.name += "_";
                 }
@@ -58,16 +56,18 @@ public class JirToJava implements IRPass<Module, ClassNode> {
             }
         }
 
-        {
-            Set<Pair<String, String>> existingMethods = new HashSet<>();
-            for (JavaExts.JavaMethod method : jClass.methods) {
-                String desc = method.getDescriptor();
-                while (!existingMethods.add(Pair.of(method.name, desc))) {
-                    method.name += "_";
-                }
+        Set<Pair<String, String>> existingMethods = new HashSet<>();
+        List<JClass.JavaMethod> methods = jClass.methods;
+        // it may grow
+        //noinspection ForLoopReplaceableByForEach
+        for (int i = 0; i < methods.size(); i++) {
+            JClass.JavaMethod method = methods.get(i);
+
+            String desc = method.getDescriptor();
+            while (!existingMethods.add(Pair.of(method.name, desc))) {
+                method.name += "_";
             }
-        }
-        for (JavaExts.JavaMethod method : jClass.methods) {
+
             Optional<MethodNode> maybeNative = method.getExt(JavaExts.METHOD_NATIVE_IMPL);
             MethodNode mn = new MethodNode(
                     method.kind.access,
@@ -82,14 +82,16 @@ public class JirToJava implements IRPass<Module, ClassNode> {
                 mn.access &= ~Opcodes.ACC_PUBLIC;
                 mn.access |= Opcodes.ACC_PRIVATE;
             } else {
-                Optional<Function> maybeImpl = method.getExt(JavaExts.METHOD_IMPL);
-                if (maybeImpl.isPresent()) {
+                Lazy<Function> maybeImpl = method.getNullable(JavaExts.METHOD_IMPL);
+                if (maybeImpl != null) {
                     try {
-                        compileFuncInto(jClass, mn, maybeImpl.get());
+                        Function impl = maybeImpl.get();
+                        maybeImpl.set(null);
+                        compileFuncInto(jClass, mn, impl);
                     } catch (RuntimeException e) {
                         throw new RuntimeException("error generating code for method " + method.name, e);
                     }
-                } else if (method.kind != JavaExts.JavaMethod.Kind.ABSTRACT) {
+                } else if (method.kind != JClass.JavaMethod.Kind.ABSTRACT) {
                     throw new RuntimeException("method impl missing for non-abstract function");
                 }
             }
@@ -99,7 +101,7 @@ public class JirToJava implements IRPass<Module, ClassNode> {
         return cn;
     }
 
-    private void compileFuncInto(JavaExts.JavaClass jClass, MethodNode mn, Function impl) {
+    private void compileFuncInto(JClass jClass, MethodNode mn, Function impl) {
         // steps:
         // 1. sort blocks into a nice order (no need to overthink it)
         // 2. tag each block with a label for a jump target
@@ -322,7 +324,7 @@ public class JirToJava implements IRPass<Module, ClassNode> {
         FX_CONVERTERS.put(JavaOps.THIS.key, (jb, fx) ->
                 jb.loadThis());
         FX_CONVERTERS.put(JavaOps.GET_FIELD, (jb, fx) -> {
-            JavaExts.JavaField field = JavaOps.GET_FIELD.cast(fx.insn().op).arg;
+            JClass.JavaField field = JavaOps.GET_FIELD.cast(fx.insn().op).arg;
             Type owner = Type.getObjectType(field.owner.name);
             Type type = Type.getType(field.descriptor);
             if (field.isStatic) {
@@ -332,7 +334,7 @@ public class JirToJava implements IRPass<Module, ClassNode> {
             }
         });
         FX_CONVERTERS.put(JavaOps.PUT_FIELD, (jb, fx) -> {
-            JavaExts.JavaField field = JavaOps.PUT_FIELD.cast(fx.insn().op).arg;
+            JClass.JavaField field = JavaOps.PUT_FIELD.cast(fx.insn().op).arg;
             Type owner = Type.getObjectType(field.owner.name);
             Type type = Type.getType(field.descriptor);
             if (field.isStatic) {
@@ -342,7 +344,7 @@ public class JirToJava implements IRPass<Module, ClassNode> {
             }
         });
         FX_CONVERTERS.put(JavaOps.INVOKE, (jb, fx) -> {
-            JavaExts.JavaMethod method = JavaOps.INVOKE.cast(fx.insn().op).arg;
+            JClass.JavaMethod method = JavaOps.INVOKE.cast(fx.insn().op).arg;
             jb.visitMethodInsn(
                     method.kind.opcode,
                     method.owner.name,
@@ -356,7 +358,7 @@ public class JirToJava implements IRPass<Module, ClassNode> {
         FX_CONVERTERS.put(JavaOps.ARRAY_SET, (jb, fx) ->
                 jb.arrayStore(fx.insn().args().get(0).getExtOrThrow(JavaExts.TYPE).getElementType()));
         FX_CONVERTERS.put(JavaOps.HANDLE_OF, (jb, fx) -> {
-            JavaExts.Handlable handlable = JavaOps.HANDLE_OF.cast(fx.insn().op).arg;
+            JClass.Handlable handlable = JavaOps.HANDLE_OF.cast(fx.insn().op).arg;
             jb.push(handlable.getHandle());
         });
     }

@@ -5,7 +5,6 @@ import io.github.eutro.jwasm.attrs.InsnAttributes;
 import io.github.eutro.jwasm.attrs.Opcode;
 import io.github.eutro.jwasm.attrs.StackType;
 import io.github.eutro.jwasm.tree.*;
-import io.github.eutro.wasm2j.ext.CommonExts;
 import io.github.eutro.wasm2j.ext.WasmExts;
 import io.github.eutro.wasm2j.ops.CommonOps;
 import io.github.eutro.wasm2j.ops.WasmOps;
@@ -20,6 +19,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 
 import static io.github.eutro.jwasm.Opcodes.*;
+import static io.github.eutro.wasm2j.util.Lazy.lazy;
 
 public class WasmToWir implements IRPass<ModuleNode, Module> {
     public static final WasmToWir INSTANCE = new WasmToWir();
@@ -27,93 +27,71 @@ public class WasmToWir implements IRPass<ModuleNode, Module> {
     @Override
     public Module run(ModuleNode node) {
         Module module = new Module();
-        module.attachExt(CommonExts.CODE_TYPE, CommonExts.CodeType.WASM);
-        HashMap<ExprNode, Function> funcMap = new HashMap<>();
         module.attachExt(WasmExts.MODULE, node);
-        module.attachExt(WasmExts.FUNC_MAP, funcMap);
 
         FullConvertState state = new FullConvertState(node);
 
-        int errIndex = 0;
-        String errIn = "???";
+        if (node.globals != null) {
+            for (GlobalNode global : node.globals) {
+                state.mapExprNode(
+                        module,
+                        new TypeNode(new byte[0], new byte[]{global.type.type}),
+                        new byte[0],
+                        global.init
+                );
+            }
+        }
 
-        try {
-            if (node.globals != null) {
-                errIn = "global";
-                for (GlobalNode global : node.globals) {
-                    errIndex++;
+        if (node.datas != null) {
+            for (DataNode data : node.datas) {
+                if (data.offset != null) {
                     state.mapExprNode(
                             module,
-                            new TypeNode(new byte[0], new byte[]{global.type.type}),
+                            new TypeNode(new byte[0], new byte[]{I32}),
                             new byte[0],
-                            global.init
+                            data.offset
                     );
                 }
             }
+        }
 
-            if (node.datas != null) {
-                errIndex = 0;
-                errIn = "data";
-                for (DataNode data : node.datas) {
-                    errIndex++;
-                    if (data.offset != null) {
-                        state.mapExprNode(
-                                module,
-                                new TypeNode(new byte[0], new byte[]{I32}),
-                                new byte[0],
-                                data.offset
-                        );
-                    }
-                }
+        if (node.codes != null) {
+            int i = 0;
+            for (CodeNode code : node.codes) {
+                assert node.funcs != null;
+                TypeNode type = state.funcTypes[node.funcs.funcs.get(i).type];
+                state.mapExprNode(
+                        module,
+                        type,
+                        code.locals,
+                        code.expr
+                );
+                i++;
             }
+        }
 
-            if (node.codes != null) {
-                errIndex = 0;
-                errIn = "code";
-                int i = 0;
-                for (CodeNode code : node.codes) {
-                    errIndex++;
-                    assert node.funcs != null;
-                    TypeNode type = state.funcTypes[node.funcs.funcs.get(i).type];
+        if (node.elems != null) {
+            for (ElementNode elem : node.elems) {
+                if (elem.offset != null) {
+                    // allowed, it's either passive or declarative
                     state.mapExprNode(
                             module,
-                            type,
-                            code.locals,
-                            code.expr
+                            new TypeNode(new byte[0], new byte[]{I32}),
+                            new byte[0],
+                            elem.offset
                     );
-                    i++;
                 }
-            }
-
-            if (node.elems != null) {
-                errIndex = 0;
-                errIn = "elem";
-                for (ElementNode elem : node.elems) {
-                    errIndex++;
-                    if (elem.offset != null) {
-                        // allowed, it's either passive or declarative
+                if (elem.init != null) {
+                    for (ExprNode expr : elem.init) {
                         state.mapExprNode(
                                 module,
-                                new TypeNode(new byte[0], new byte[]{I32}),
+                                new TypeNode(new byte[0], new byte[]{elem.type}),
                                 new byte[0],
-                                elem.offset
+                                expr
                         );
-                    }
-                    if (elem.init != null) {
-                        for (ExprNode expr : elem.init) {
-                            state.mapExprNode(
-                                    module,
-                                    new TypeNode(new byte[0], new byte[]{elem.type}),
-                                    new byte[0],
-                                    expr
-                            );
-                        }
                     }
                 }
             }
-        } catch (Throwable t) {
-            t.addSuppressed(new RuntimeException(String.format("In %s #%d", errIn, errIndex)));
-            throw t;
         }
 
         return module;
@@ -734,10 +712,11 @@ public class WasmToWir implements IRPass<ModuleNode, Module> {
                     locals,
                     funcType.returns.length
             );
-            Function func = convertFunc(cs, expr);
-            module.functions.add(func);
-            func.attachExt(WasmExts.TYPE, funcType);
-            module.getExtOrThrow(WasmExts.FUNC_MAP).put(expr, func);
+            module.funcMap.put(expr, lazy(() -> {
+                Function func = convertFunc(cs, expr);
+                func.attachExt(WasmExts.TYPE, funcType);
+                return func;
+            }));
         }
 
         public Function convertFunc(

@@ -31,34 +31,34 @@ import java.util.*;
  * primitive instructions implemented, and as such this will return {@code null} in case of failure.
  */
 public class Handlify implements IRPass<Function, @Nullable Function> {
-    private static final JavaExts.JavaClass METHOD_HANDLES_CLASS = new JavaExts.JavaClass(Type.getInternalName(MethodHandles.class));
-    private static final JavaExts.JavaMethod MH_CONSTANT = new JavaExts.JavaMethod(METHOD_HANDLES_CLASS,
+    private static final JClass METHOD_HANDLES_CLASS = new JClass(Type.getInternalName(MethodHandles.class));
+    private static final JClass.JavaMethod MH_CONSTANT = new JClass.JavaMethod(METHOD_HANDLES_CLASS,
             "constant",
             "(Ljava/lang/Class;Ljava/lang/Object;)Ljava/lang/invoke/MethodHandle;",
-            JavaExts.JavaMethod.Kind.STATIC);
-    private static final JavaExts.JavaMethod MH_IDENTITY = new JavaExts.JavaMethod(METHOD_HANDLES_CLASS,
+            JClass.JavaMethod.Kind.STATIC);
+    private static final JClass.JavaMethod MH_IDENTITY = new JClass.JavaMethod(METHOD_HANDLES_CLASS,
             "identity",
             "(Ljava/lang/Class;)Ljava/lang/invoke/MethodHandle;",
-            JavaExts.JavaMethod.Kind.STATIC);
-    private static final JavaExts.JavaMethod MH_PERMUTE_ARGUMENTS = JavaExts.JavaMethod.fromJava(MethodHandles.class,
+            JClass.JavaMethod.Kind.STATIC);
+    private static final JClass.JavaMethod MH_PERMUTE_ARGUMENTS = JClass.JavaMethod.fromJava(MethodHandles.class,
             "permuteArguments",
             MethodHandle.class,
             MethodType.class,
             int[].class);
-    private static final JavaExts.JavaMethod MH_COLLECT_ARGUMENTS = JavaExts.JavaMethod.fromJava(MethodHandles.class,
+    private static final JClass.JavaMethod MH_COLLECT_ARGUMENTS = JClass.JavaMethod.fromJava(MethodHandles.class,
             "collectArguments",
             MethodHandle.class,
             int.class,
             MethodHandle.class);
-    private static final JavaExts.JavaMethod MH_AS_TYPE = JavaExts.JavaMethod.fromJava(MethodHandle.class,
+    private static final JClass.JavaMethod MH_AS_TYPE = JClass.JavaMethod.fromJava(MethodHandle.class,
             "asType",
             MethodType.class);
-    private static final JavaExts.JavaMethod MH_TYPE = JavaExts.JavaMethod.fromJava(MethodHandle.class,
+    private static final JClass.JavaMethod MH_TYPE = JClass.JavaMethod.fromJava(MethodHandle.class,
             "type");
-    private static final JavaExts.JavaMethod MTY_WITH_RETURN = JavaExts.JavaMethod.fromJava(MethodType.class,
+    private static final JClass.JavaMethod MTY_WITH_RETURN = JClass.JavaMethod.fromJava(MethodType.class,
             "changeReturnType",
             Class.class);
-    private static final JavaExts.JavaMethod MTY_PARAM_TY = JavaExts.JavaMethod.fromJava(MethodType.class,
+    private static final JClass.JavaMethod MTY_PARAM_TY = JClass.JavaMethod.fromJava(MethodType.class,
             "parameterType",
             int.class);
 
@@ -195,7 +195,7 @@ public class Handlify implements IRPass<Function, @Nullable Function> {
             Effect assignedAt = var.getExtOrThrow(CommonExts.ASSIGNED_AT);
             permArray[i] = CommonOps.ARG.cast(assignedAt.insn().op).arg;
         }
-        JavaExts.JavaMethod method = function.getExtOrThrow(JavaExts.FUNCTION_METHOD);
+        JClass.JavaMethod method = function.getExtOrThrow(JavaExts.FUNCTION_METHOD);
         k = permuteHandle(ib, k, method.getParamTys(), returnType, permArray);
 
         // bind the "free" arguments
@@ -306,17 +306,17 @@ public class Handlify implements IRPass<Function, @Nullable Function> {
                                 ib.insert(insn.op.insn(), "handle")),
                 "constHandle"));
         CONVERTERS.put(JavaOps.ARRAY_GET, insn -> ib -> ib.insert(JavaOps.INVOKE
-                        .create(new JavaExts.JavaMethod(METHOD_HANDLES_CLASS,
+                        .create(new JClass.JavaMethod(METHOD_HANDLES_CLASS,
                                 "arrayElementGetter",
                                 "(Ljava/lang/Class;)Ljava/lang/invoke/MethodHandle;",
-                                JavaExts.JavaMethod.Kind.STATIC))
+                                JClass.JavaMethod.Kind.STATIC))
                         .insn(ib.insert(IRUtils.loadClass(insn.args().get(0).getExtOrThrow(JavaExts.TYPE)), "ty")),
                 "aeg"));
         CONVERTERS.put(JavaOps.ARRAY_SET, insn -> ib -> ib.insert(JavaOps.INVOKE
-                        .create(new JavaExts.JavaMethod(METHOD_HANDLES_CLASS,
+                        .create(new JClass.JavaMethod(METHOD_HANDLES_CLASS,
                                 "arrayElementSetter",
                                 "(Ljava/lang/Class;)Ljava/lang/invoke/MethodHandle;",
-                                JavaExts.JavaMethod.Kind.STATIC))
+                                JClass.JavaMethod.Kind.STATIC))
                         .insn(ib.insert(IRUtils.loadClass(insn.args().get(0).getExtOrThrow(JavaExts.TYPE)), "ty")),
                 "aes"));
         CONVERTERS.put(JavaOps.INSNS, insn -> {
@@ -363,10 +363,10 @@ public class Handlify implements IRPass<Function, @Nullable Function> {
                     .getAssignsTo().get(0)
                     .getExtOrThrow(JavaExts.TYPE);
             return ib.insert(JavaOps.INVOKE
-                            .create(new JavaExts.JavaMethod(METHOD_HANDLES_CLASS,
+                            .create(new JClass.JavaMethod(METHOD_HANDLES_CLASS,
                                     "constant",
                                     "(Ljava/lang/Class;Ljava/lang/Object;)Ljava/lang/invoke/MethodHandle;",
-                                    JavaExts.JavaMethod.Kind.STATIC))
+                                    JClass.JavaMethod.Kind.STATIC))
                             .insn(ib.insert(IRUtils.loadClass(constType), "constTy"),
                                     boxed(ib, constType, ib.insert(insn.op.insn(), "constVal"))),
                     "constHandle");
@@ -430,11 +430,11 @@ public class Handlify implements IRPass<Function, @Nullable Function> {
                 throw new IllegalArgumentException();
         }
         return ib.insert(JavaOps.INVOKE
-                        .create(new JavaExts.JavaMethod(
-                                new JavaExts.JavaClass(Type.getInternalName(boxedClass)),
+                        .create(new JClass.JavaMethod(
+                                new JClass(Type.getInternalName(boxedClass)),
                                 "valueOf",
                                 Type.getMethodDescriptor(Type.getType(boxedClass), type),
-                                JavaExts.JavaMethod.Kind.STATIC
+                                JClass.JavaMethod.Kind.STATIC
                         ))
                         .insn(maybePrim),
                 "boxed");

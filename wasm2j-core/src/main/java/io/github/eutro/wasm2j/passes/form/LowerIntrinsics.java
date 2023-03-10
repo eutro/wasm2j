@@ -6,7 +6,6 @@ import io.github.eutro.wasm2j.intrinsics.IntrinsicImpl;
 import io.github.eutro.wasm2j.ops.CommonOps;
 import io.github.eutro.wasm2j.ops.JavaOps;
 import io.github.eutro.wasm2j.ops.Op;
-import io.github.eutro.wasm2j.ssa.Module;
 import io.github.eutro.wasm2j.ssa.*;
 
 import java.util.*;
@@ -51,19 +50,18 @@ public class LowerIntrinsics extends LowerCommon {
             return new Inliner(ib)
                     .inline(Objects.requireNonNull(intr.impl), args);
         } else {
-            Module module = ib.func.getExtOrThrow(CommonExts.OWNING_MODULE);
-            Map<IntrinsicImpl, JavaExts.JavaMethod> intrinsics = module.getExtOrRun(JavaExts.ATTACHED_INTRINSICS, module, md -> {
+            JClass jClass = ib.func.getExtOrThrow(JavaExts.FUNCTION_OWNER);
+            Map<IntrinsicImpl, JClass.JavaMethod> intrinsics = jClass.getExtOrRun(JavaExts.ATTACHED_INTRINSICS, jClass, md -> {
                 // TODO threading?
-                module.attachExt(JavaExts.ATTACHED_INTRINSICS, new HashMap<>());
+                jClass.attachExt(JavaExts.ATTACHED_INTRINSICS, new HashMap<>());
                 return null;
             });
-            JavaExts.JavaMethod intrMethod = intrinsics.computeIfAbsent(intr, it -> {
-                JavaExts.JavaClass jClass = module.getExtOrThrow(JavaExts.JAVA_CLASS);
-                JavaExts.JavaMethod method = new JavaExts.JavaMethod(
+            JClass.JavaMethod intrMethod = intrinsics.computeIfAbsent(intr, it -> {
+                JClass.JavaMethod method = new JClass.JavaMethod(
                         jClass,
                         intr.method.name,
                         intr.method.desc,
-                        JavaExts.JavaMethod.Kind.STATIC
+                        JClass.JavaMethod.Kind.STATIC
                 );
                 jClass.methods.add(method);
                 method.attachExt(JavaExts.METHOD_NATIVE_IMPL, intr.method);

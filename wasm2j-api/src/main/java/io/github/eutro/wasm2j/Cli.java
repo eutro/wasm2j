@@ -62,11 +62,12 @@ public class Cli {
         WasmCompiler cc = new WasmCompiler();
         FormatDetector fd = cc.add(FormatDetector.BIT);
         cc.add(new NameSectionParser<>());
+        CaseStyle.Detect sourceStyle = new CaseStyle.Detect(CaseStyle.LOWER_SNAKE);
         InterfaceBasedLinker<WasmCompiler> linker = cc.add(new InterfaceBasedLinker<>(NameSupplier.createSimple(
                 pkgName,
                 NameMangler.javaIdent(MANGLE_BIJECTIVE),
-                CaseStyle.LOWER_SNAKE, CaseStyle.UPPER_CAMEL,
-                CaseStyle.LOWER_SNAKE, CaseStyle.LOWER_CAMEL
+                sourceStyle, CaseStyle.UPPER_CAMEL,
+                sourceStyle, CaseStyle.LOWER_CAMEL
         )));
         new OutputsToDirectory<>(outputDir.toPath()).addTo(linker);
         for (String spec : paths) {
@@ -82,7 +83,7 @@ public class Cli {
             try {
                 ModuleCompilation comp = fd.submitFile(file.toPath());
                 comp.setName(pkgName +
-                        CaseStyle.LOWER_SNAKE.convertTo(
+                        sourceStyle.convertTo(
                                 CaseStyle.UPPER_CAMEL,
                                 name));
                 for (int i = 1; i < fileAndModules.length; i++) {

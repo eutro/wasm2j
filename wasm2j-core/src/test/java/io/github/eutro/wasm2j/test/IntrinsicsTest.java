@@ -1,19 +1,21 @@
 package io.github.eutro.wasm2j.test;
 
 import io.github.eutro.wasm2j.ext.JavaExts;
-import io.github.eutro.wasm2j.intrinsics.impls.Operators;
 import io.github.eutro.wasm2j.intrinsics.Intrinsic;
 import io.github.eutro.wasm2j.intrinsics.IntrinsicImpl;
 import io.github.eutro.wasm2j.intrinsics.JavaIntrinsics;
-import io.github.eutro.wasm2j.passes.*;
+import io.github.eutro.wasm2j.intrinsics.impls.Operators;
+import io.github.eutro.wasm2j.passes.IRPass;
+import io.github.eutro.wasm2j.passes.Passes;
 import io.github.eutro.wasm2j.passes.convert.JavaToJir;
 import io.github.eutro.wasm2j.passes.convert.JirToJava;
-import io.github.eutro.wasm2j.passes.misc.JoinPass;
 import io.github.eutro.wasm2j.passes.form.SSAify;
+import io.github.eutro.wasm2j.passes.misc.JoinPass;
 import io.github.eutro.wasm2j.ssa.Function;
-import io.github.eutro.wasm2j.ssa.Module;
+import io.github.eutro.wasm2j.ssa.JClass;
 import io.github.eutro.wasm2j.ssa.display.DisplayInteraction;
 import io.github.eutro.wasm2j.ssa.display.SSADisplay;
+import io.github.eutro.wasm2j.util.Lazy;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.objectweb.asm.ClassWriter;
@@ -55,20 +57,18 @@ public class IntrinsicsTest {
                                 .then(Passes.SSA_OPTS)
                                 .then(Passes.JAVA_PREEMIT),
                         mn -> {
-                            JavaExts.JavaClass clazz = new JavaExts.JavaClass("intrinsics/" + mn.name);
-                            clazz.methods.add(new JavaExts.JavaMethod(
+                            JClass clazz = new JClass("intrinsics/" + mn.name);
+                            clazz.methods.add(new JClass.JavaMethod(
                                     clazz,
                                     mn.name,
                                     mn.desc,
-                                    JavaExts.JavaMethod.Kind.STATIC
+                                    JClass.JavaMethod.Kind.STATIC
                             ));
                             return clazz;
                         },
                         (function, clazz) -> {
-                            clazz.methods.get(0).attachExt(JavaExts.METHOD_IMPL, function);
-                            Module md = new Module();
-                            md.attachExt(JavaExts.JAVA_CLASS, clazz);
-                            return md;
+                            clazz.methods.get(0).attachExt(JavaExts.METHOD_IMPL, Lazy.lazy(() -> function));
+                            return clazz;
                         }
                 )
                         .then(JirToJava.INSTANCE);

@@ -5,6 +5,7 @@ import io.github.eutro.wasm2j.ssa.BasicBlock;
 import io.github.eutro.wasm2j.ssa.Control;
 import io.github.eutro.wasm2j.ssa.Function;
 import io.github.eutro.wasm2j.ssa.Module;
+import io.github.eutro.wasm2j.util.Lazy;
 import io.github.eutro.wasm2j.util.Pair;
 import org.w3c.dom.DOMImplementation;
 import org.w3c.dom.Document;
@@ -240,9 +241,9 @@ public class SSADisplay {
     public static IRPass<Module, Module> debugDisplay(String prefix) {
         return module -> {
             int i = 0;
-            for (Function func : module.functions) {
+            for (Lazy<Function> func : module.funcMap.values()) {
                 debugDisplayToFile(
-                        displaySSA(func, DisplayInteraction.HIGHLIGHT_INTERESTING),
+                        displaySSA(func.get(), DisplayInteraction.HIGHLIGHT_INTERESTING),
                         "build/ssa/" + prefix + i + ".svg"
                 );
                 i++;

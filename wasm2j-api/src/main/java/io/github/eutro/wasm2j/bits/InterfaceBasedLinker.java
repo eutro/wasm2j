@@ -20,10 +20,8 @@ import io.github.eutro.wasm2j.events.RunModuleCompilationEvent;
 import io.github.eutro.wasm2j.ext.JavaExts;
 import io.github.eutro.wasm2j.ops.CommonOps;
 import io.github.eutro.wasm2j.ops.JavaOps;
-import io.github.eutro.wasm2j.ssa.Function;
-import io.github.eutro.wasm2j.ssa.IRBuilder;
 import io.github.eutro.wasm2j.ssa.Module;
-import io.github.eutro.wasm2j.ssa.Var;
+import io.github.eutro.wasm2j.ssa.*;
 import io.github.eutro.wasm2j.support.ExternType;
 import io.github.eutro.wasm2j.support.NameSupplier;
 import io.github.eutro.wasm2j.util.IRUtils;
@@ -40,6 +38,8 @@ import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
+
+import static io.github.eutro.wasm2j.util.Lazy.lazy;
 
 public class InterfaceBasedLinker<T extends EventSupplier<? super RunModuleCompilationEvent>>
         extends EventSupplier<EmitClassEvent>
@@ -67,15 +67,15 @@ public class InterfaceBasedLinker<T extends EventSupplier<? super RunModuleCompi
         private final Map<String, List<ExternType>> imports = new ConcurrentHashMap<>();
         private @Nullable GeneratedCode implementation = null;
         private final String name;
-        JavaExts.JavaClass jClass = null;
+        JClass jClass = null;
 
         public ModuleInterface(String moduleName) {
             name = moduleName;
         }
 
-        JavaExts.JavaClass getJClass() {
+        JClass getJClass() {
             if (jClass == null) {
-                jClass = new JavaExts.JavaClass(getClassName());
+                jClass = new JClass(getClassName());
             }
             return jClass;
         }
@@ -234,76 +234,77 @@ public class InterfaceBasedLinker<T extends EventSupplier<? super RunModuleCompi
         return f.call(modIdx, itf);
     }
 
-    ExportableConvention exporter(ValueGetter target, Map<String, JavaExts.JavaMethod> delegates) {
+    ExportableConvention exporter(ValueGetter target, Map<String, JClass.JavaMethod> delegates) {
         return (node, module, jClass) -> {
-            for (Map.Entry<String, JavaExts.JavaMethod> entry : delegates.entrySet()) {
-                JavaExts.JavaMethod method = entry.getValue();
-                Function func = new Function();
-                JavaExts.JavaMethod jMethod = new JavaExts.JavaMethod(
+            for (Map.Entry<String, JClass.JavaMethod> entry : delegates.entrySet()) {
+                JClass.JavaMethod method = entry.getValue();
+                JClass.JavaMethod jMethod = new JClass.JavaMethod(
                         jClass,
                         entry.getKey() == null
                                 ? names.fieldName(node.name)
                                 : names.fieldName(entry.getKey(), node.name),
                         method.getDescriptor(),
-                        JavaExts.JavaMethod.Kind.VIRTUAL
+                        JClass.JavaMethod.Kind.VIRTUAL
                 );
                 jClass.methods.add(jMethod);
-                jMethod.attachExt(JavaExts.METHOD_IMPL, func);
-                func.attachExt(JavaExts.FUNCTION_OWNER, jClass);
-                func.attachExt(JavaExts.FUNCTION_METHOD, jMethod);
-                module.functions.add(func);
-                IRBuilder ib = new IRBuilder(func, func.newBb());
-                List<Var> args = new ArrayList<>();
-                args.add(target.get(ib));
-                int paramCount = method.getParamTys().size();
-                for (int i = 0; i < paramCount; ++i) {
-                    args.add(ib.insert(CommonOps.ARG.create(i).insn(), ib.func.newVar("arg", i)));
-                }
-                List<Var> rets = new ArrayList<>();
-                if (!method.getReturnTy().equals(Type.VOID_TYPE)) {
-                    rets.add(func.newVar("ret"));
-                }
-                ib.insert(JavaOps.INVOKE.create(method)
-                        .insn(args)
-                        .assignTo(rets));
-                ib.insertCtrl(CommonOps.RETURN.insn(rets).jumpsTo());
+                jMethod.attachExt(JavaExts.METHOD_IMPL, lazy(() -> {
+                    Function func = new Function();
+                    func.attachExt(JavaExts.FUNCTION_OWNER, jClass);
+                    func.attachExt(JavaExts.FUNCTION_METHOD, jMethod);
+                    IRBuilder ib = new IRBuilder(func, func.newBb());
+                    List<Var> args = new ArrayList<>();
+                    args.add(target.get(ib));
+                    int paramCount = method.getParamTys().size();
+                    for (int i = 0; i < paramCount; ++i) {
+                        args.add(ib.insert(CommonOps.ARG.create(i).insn(), ib.func.newVar("arg", i)));
+                    }
+                    List<Var> rets = new ArrayList<>();
+                    if (!method.getReturnTy().equals(Type.VOID_TYPE)) {
+                        rets.add(func.newVar("ret"));
+                    }
+                    ib.insert(JavaOps.INVOKE.create(method)
+                            .insn(args)
+                            .assignTo(rets));
+                    ib.insertCtrl(CommonOps.RETURN.insn(rets).jumpsTo());
+                    return func;
+                }));
             }
         };
     }
 
-    ExportableConvention exporter(ValueGetter target, JavaExts.JavaMethod method) {
+    ExportableConvention exporter(ValueGetter target, JClass.JavaMethod method) {
         return exporter(target, Collections.singletonMap(null, method));
     }
 
-    ExportableConvention exporter(ValueGetter target, JavaExts.JavaMethod getter, JavaExts.JavaMethod setter) {
-        HashMap<String, JavaExts.JavaMethod> map = new HashMap<>();
+    ExportableConvention exporter(ValueGetter target, JClass.JavaMethod getter, JClass.JavaMethod setter) {
+        HashMap<String, JClass.JavaMethod> map = new HashMap<>();
         if (getter != null) map.put("get", getter);
         if (setter != null) map.put("set", setter);
         return exporter(target, map);
     }
 
     interface GetterSetterCb<T> {
-        T call(ValueGetterSetter target, JavaExts.JavaMethod getter, JavaExts.JavaMethod setter);
+        T call(ValueGetterSetter target, JClass.JavaMethod getter, JClass.JavaMethod setter);
     }
 
     @NotNull
     private <R> R importGetterSetter(AbstractImportNode importNode,
-                                     JavaExts.JavaField field,
+                                     JClass.JavaField field,
                                      ModuleInterface itf,
                                      Type asmType,
                                      GetterSetterCb<R> cb) {
         ValueGetterSetter target = Getters.fieldGetter(Getters.GET_THIS, field);
-        JavaExts.JavaMethod getter = new JavaExts.JavaMethod(
+        JClass.JavaMethod getter = new JClass.JavaMethod(
                 itf.getJClass(),
                 names.fieldName("get", importNode.name),
                 Type.getMethodDescriptor(asmType),
-                JavaExts.JavaMethod.Kind.INTERFACE
+                JClass.JavaMethod.Kind.INTERFACE
         );
-        JavaExts.JavaMethod setter = new JavaExts.JavaMethod(
+        JClass.JavaMethod setter = new JClass.JavaMethod(
                 itf.getJClass(),
                 names.fieldName("set", importNode.name),
                 Type.getMethodDescriptor(Type.VOID_TYPE, asmType),
-                JavaExts.JavaMethod.Kind.INTERFACE
+                JClass.JavaMethod.Kind.INTERFACE
         );
         return cb.call(target, getter, setter);
     }
@@ -351,8 +352,8 @@ public class InterfaceBasedLinker<T extends EventSupplier<? super RunModuleCompi
         cc.listen(RunModuleCompilationEvent.class, evt -> {
             ModuleCompilation compilation = evt.compilation;
             SortedSet<ModuleInterface> importedModules = requireImports(compilation.node);
-            List<JavaExts.JavaField> fields = importedModules.stream()
-                    .map(itf -> new JavaExts.JavaField(null, "_imported_" + itf.name,
+            List<JClass.JavaField> fields = importedModules.stream()
+                    .map(itf -> new JClass.JavaField(null, "_imported_" + itf.name,
                             "L" + itf.getClassName() + ";",
                             false))
                     .collect(Collectors.toList());
@@ -360,7 +361,7 @@ public class InterfaceBasedLinker<T extends EventSupplier<? super RunModuleCompi
                     .addConstructorCallback((ConstructorCallback.Abstract) (ib, ctor, module, jClass) -> {
                         List<Type> paramTys = ctor.getParamTys();
                         int arg = 0;
-                        for (JavaExts.JavaField field : fields) {
+                        for (JClass.JavaField field : fields) {
                             field.owner = jClass;
                             jClass.fields.add(field);
                             ib.insert(JavaOps.PUT_FIELD.create(field)
@@ -376,7 +377,7 @@ public class InterfaceBasedLinker<T extends EventSupplier<? super RunModuleCompi
                     .setModifyFuncConvention((functionConvention, funcNodeCodeNodePair, index) ->
                             new FunctionConvention.Delegating(functionConvention) {
                                 @Override
-                                public void export(ExportNode node, Module module, JavaExts.JavaClass jClass) {
+                                public void export(ExportNode node, Module module, JClass jClass) {
                                     InstanceFunctionConvention fc = functionConvention
                                             .getExtOrThrow(InstanceFunctionConvention.FUNCTION_CONVENTION);
                                     exporter(fc.target, fc.method).export(node, module, jClass);
@@ -384,12 +385,12 @@ public class InterfaceBasedLinker<T extends EventSupplier<? super RunModuleCompi
                             })
                     .setFunctionImports((module, importNode, jClass, idx) ->
                             lookupItf(importedModules, importNode, (modIdx, itf) -> {
-                                JavaExts.JavaMethod method = new JavaExts.JavaMethod(
+                                JClass.JavaMethod method = new JClass.JavaMethod(
                                         itf.getJClass(),
                                         names.fieldName(importNode.name),
                                         ((ExternType.Func) ExternType.fromImport(importNode, compilation.node))
                                                 .getMethodType().toMethodDescriptorString(),
-                                        JavaExts.JavaMethod.Kind.INTERFACE
+                                        JClass.JavaMethod.Kind.INTERFACE
                                 );
                                 return new InstanceFunctionConvention(
                                         exporter(Getters.GET_THIS, method),

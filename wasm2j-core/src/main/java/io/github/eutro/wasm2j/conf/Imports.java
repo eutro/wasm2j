@@ -7,8 +7,8 @@ import io.github.eutro.wasm2j.conf.api.CallingConvention;
 import io.github.eutro.wasm2j.conf.api.FunctionConvention;
 import io.github.eutro.wasm2j.conf.api.ImportFactory;
 import io.github.eutro.wasm2j.conf.impl.InstanceFunctionConvention;
-import io.github.eutro.wasm2j.ext.JavaExts;
 import io.github.eutro.wasm2j.ext.WasmExts;
+import io.github.eutro.wasm2j.ssa.JClass;
 import io.github.eutro.wasm2j.util.ValueGetter;
 import org.objectweb.asm.Type;
 
@@ -24,13 +24,13 @@ public class Imports {
         return (module, funcImport, jClass, idx) -> {
             ModuleNode node = module.getExtOrThrow(WasmExts.MODULE);
 
-            assert node.types != null && node.types.types != null;
-            JavaExts.JavaMethod method = new JavaExts.JavaMethod(
+            assert node.types != null;
+            JClass.JavaMethod method = new JClass.JavaMethod(
                     jClass,
                     funcImport.name,
                     cc.getDescriptor(node.types.types.get(funcImport.type))
                             .getDescriptor(),
-                    JavaExts.JavaMethod.Kind.ABSTRACT
+                    JClass.JavaMethod.Kind.ABSTRACT
             );
             return new InstanceFunctionConvention(
                     null,
@@ -44,10 +44,10 @@ public class Imports {
     public static ImportFactory<FuncImportNode, FunctionConvention>
     interfaceFuncImports(
             ValueGetter getter,
-            JavaExts.JavaClass iFace,
+            JClass iFace,
             CallingConvention cc
     ) {
-        Map<String, Map<String, JavaExts.JavaMethod>> index = new HashMap<>();
+        Map<String, Map<String, JClass.JavaMethod>> index = new HashMap<>();
         AtomicBoolean indexed = new AtomicBoolean();
         return (module, funcImport, jClass, idx) -> {
             if (!indexed.get()) {
@@ -55,7 +55,7 @@ public class Imports {
                     doIndex:
                     {
                         if (indexed.get()) break doIndex;
-                        for (JavaExts.JavaMethod method : iFace.methods) {
+                        for (JClass.JavaMethod method : iFace.methods) {
                             index.computeIfAbsent(method.name, $ -> new HashMap<>())
                                     .put(method.getDescriptor(), method);
                         }
@@ -66,15 +66,15 @@ public class Imports {
 
             ModuleNode node = module.getExtOrThrow(WasmExts.MODULE);
 
-            Map<String, JavaExts.JavaMethod> foundByName = index.get(funcImport.name);
+            Map<String, JClass.JavaMethod> foundByName = index.get(funcImport.name);
             if (foundByName == null) {
                 throw new RuntimeException("import " + funcImport.name + " not resolved");
             }
 
-            assert node.types != null && node.types.types != null;
+            assert node.types != null;
             TypeNode funcType = node.types.types.get(funcImport.type);
             Type targetDescriptor = cc.getDescriptor(funcType);
-            JavaExts.JavaMethod foundMethod = foundByName.get(targetDescriptor.getDescriptor());
+            JClass.JavaMethod foundMethod = foundByName.get(targetDescriptor.getDescriptor());
             if (foundMethod == null) {
                 throw new RuntimeException(
                         "import " + funcImport.name + " exists in interface, "

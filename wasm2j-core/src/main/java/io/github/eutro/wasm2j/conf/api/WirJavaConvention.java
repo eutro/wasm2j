@@ -1,5 +1,8 @@
 package io.github.eutro.wasm2j.conf.api;
 
+import io.github.eutro.wasm2j.passes.IRPass;
+import io.github.eutro.wasm2j.ssa.Function;
+
 public interface WirJavaConvention {
     FunctionConvention getFunction(int index);
 
@@ -17,7 +20,5 @@ public interface WirJavaConvention {
         throw new UnsupportedOperationException();
     }
 
-    default void preConvert() {}
-
-    default void postConvert() {}
+    default void convert(IRPass<Function, Function> convertPass) {}
 }

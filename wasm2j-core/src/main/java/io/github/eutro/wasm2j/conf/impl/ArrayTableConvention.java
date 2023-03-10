@@ -2,7 +2,6 @@ package io.github.eutro.wasm2j.conf.impl;
 
 import io.github.eutro.wasm2j.conf.api.ExportableConvention;
 import io.github.eutro.wasm2j.conf.api.TableConvention;
-import io.github.eutro.wasm2j.ext.JavaExts;
 import io.github.eutro.wasm2j.ops.CommonOps;
 import io.github.eutro.wasm2j.ops.JavaOps;
 import io.github.eutro.wasm2j.ssa.*;
@@ -16,7 +15,7 @@ import org.objectweb.asm.tree.TypeInsnNode;
 import java.util.Arrays;
 
 public class ArrayTableConvention extends DelegatingExporter implements TableConvention {
-    private static final JavaExts.JavaMethod SYSTEM_ARRAYCOPY = JavaExts.JavaMethod
+    private static final JClass.JavaMethod SYSTEM_ARRAYCOPY = JClass.JavaMethod
             .fromJava(System.class, "arraycopy", Object.class, int.class, Object.class, int.class, int.class);
     private final ValueGetterSetter table;
     private final Type componentType;
@@ -111,7 +110,7 @@ public class ArrayTableConvention extends DelegatingExporter implements TableCon
 
         Var newTbl = ib.insert(JavaOps.insns(new TypeInsnNode(Opcodes.CHECKCAST, "[" + componentType.getDescriptor()))
                 .insn(ib.insert(JavaOps.INVOKE
-                                .create(JavaExts.JavaMethod.fromJava(Arrays.class, "copyOf", Object[].class, int.class))
+                                .create(JClass.JavaMethod.fromJava(Arrays.class, "copyOf", Object[].class, int.class))
                                 .insn(tbl, newSz),
                         "newTblRaw")),
                 "newTbl");
@@ -121,7 +120,7 @@ public class ArrayTableConvention extends DelegatingExporter implements TableCon
         ib.insertCtrl(JavaOps.BR_COND.create(JavaOps.JumpType.IFNULL).insn(fillWith).jumpsTo(k, fillBlock));
         ib.setBlock(fillBlock);
         ib.insert(JavaOps.INVOKE
-                .create(JavaExts.JavaMethod.fromJava(Arrays.class, "fill", Object[].class, int.class, int.class, Object.class))
+                .create(JClass.JavaMethod.fromJava(Arrays.class, "fill", Object[].class, int.class, int.class, Object.class))
                 .insn(newTbl, sz, newSz, fillWith)
                 .assignTo());
         ib.insertCtrl(Control.br(k));

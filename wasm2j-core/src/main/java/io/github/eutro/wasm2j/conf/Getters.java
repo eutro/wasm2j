@@ -1,8 +1,8 @@
 package io.github.eutro.wasm2j.conf;
 
-import io.github.eutro.wasm2j.ext.JavaExts;
 import io.github.eutro.wasm2j.ops.JavaOps;
 import io.github.eutro.wasm2j.ssa.IRBuilder;
+import io.github.eutro.wasm2j.ssa.JClass;
 import io.github.eutro.wasm2j.ssa.Var;
 import io.github.eutro.wasm2j.util.IRUtils;
 import io.github.eutro.wasm2j.util.ValueGetter;
@@ -12,7 +12,7 @@ import org.jetbrains.annotations.Nullable;
 public class Getters {
     public static final ValueGetter GET_THIS = IRUtils::getThis;
 
-    public static ValueGetterSetter fieldGetter(@Nullable ValueGetter owner, JavaExts.JavaField field) {
+    public static ValueGetterSetter fieldGetter(@Nullable ValueGetter owner, JClass.JavaField field) {
         if (field.isStatic) {
             assert owner == null;
         } else {
@@ -37,14 +37,14 @@ public class Getters {
         };
     }
 
-    public static ValueGetterSetter staticGetter(JavaExts.JavaField field) {
+    public static ValueGetterSetter staticGetter(JClass.JavaField field) {
         return fieldGetter(null, field);
     }
 
     public static ValueGetterSetter methodGetterSetter(
             ValueGetter target,
-            JavaExts.JavaMethod getter,
-            JavaExts.JavaMethod setter
+            JClass.JavaMethod getter,
+            JClass.JavaMethod setter
     ) {
         return new ValueGetterSetter() {
             @Override

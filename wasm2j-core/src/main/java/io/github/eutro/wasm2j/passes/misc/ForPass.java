@@ -2,16 +2,13 @@ package io.github.eutro.wasm2j.passes.misc;
 
 import io.github.eutro.wasm2j.passes.IRPass;
 import io.github.eutro.wasm2j.passes.InPlaceIRPass;
-import io.github.eutro.wasm2j.ssa.Module;
 import io.github.eutro.wasm2j.ssa.*;
 
-import java.util.*;
+import java.util.AbstractList;
+import java.util.Iterator;
+import java.util.ListIterator;
 
 public class ForPass {
-    public static Functions liftFunctions(IRPass<Function, Function> pass) {
-        return new Functions(pass);
-    }
-
     public static BasicBlocks liftBasicBlocks(IRPass<BasicBlock, BasicBlock> pass) {
         return new BasicBlocks(pass);
     }
@@ -50,30 +47,6 @@ public class ForPass {
         }
     }
 
-    public static class Functions extends AbstractForPass<Function, Module> {
-
-        private Functions(IRPass<Function, Function> pass) {
-            super(pass);
-        }
-
-        @Override
-        protected Iterator<Function> getIter(Module module) {
-            return module.functions.iterator();
-        }
-
-        @Override
-        protected SetableIterator<Function> getSetableIter(Module module) {
-            List<Function> asList = new ArrayList<>(module.functions);
-            return new LISetableIterator<Function>(asList.listIterator()) {
-                @Override
-                public void finish() {
-                    module.functions.clear();
-                    module.functions.addAll(asList);
-                }
-            };
-        }
-    }
-
     public static class BasicBlocks extends AbstractForPass<BasicBlock, Function> {
 
         private BasicBlocks(IRPass<BasicBlock, BasicBlock> pass) {
@@ -88,10 +61,6 @@ public class ForPass {
         @Override
         protected SetableIterator<BasicBlock> getSetableIter(Function function) {
             return new LISetableIterator<>(function.blocks.listIterator());
-        }
-
-        public Functions lift() {
-            return liftFunctions(this);
         }
     }
 

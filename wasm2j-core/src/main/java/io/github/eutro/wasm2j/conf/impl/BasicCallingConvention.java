@@ -2,11 +2,11 @@ package io.github.eutro.wasm2j.conf.impl;
 
 import io.github.eutro.jwasm.tree.TypeNode;
 import io.github.eutro.wasm2j.conf.api.CallingConvention;
-import io.github.eutro.wasm2j.ext.JavaExts;
 import io.github.eutro.wasm2j.ops.CommonOps;
 import io.github.eutro.wasm2j.ops.JavaOps;
 import io.github.eutro.wasm2j.ssa.IRBuilder;
 import io.github.eutro.wasm2j.ssa.Insn;
+import io.github.eutro.wasm2j.ssa.JClass;
 import io.github.eutro.wasm2j.ssa.Var;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
@@ -75,11 +75,11 @@ public class BasicCallingConvention implements CallingConvention {
             case F32:
             case F64: {
                 Type boxedTy = boxedType(fromTy);
-                return ib.insert(JavaOps.INVOKE.create(new JavaExts.JavaMethod(
-                                        new JavaExts.JavaClass(boxedTy.getInternalName()),
+                return ib.insert(JavaOps.INVOKE.create(new JClass.JavaMethod(
+                                        new JClass(boxedTy.getInternalName()),
                                         "valueOf",
                                         Type.getMethodType(boxedTy, unboxedTy).getDescriptor(),
-                                        JavaExts.JavaMethod.Kind.STATIC))
+                                        JClass.JavaMethod.Kind.STATIC))
                                 .insn(val),
                         "boxed");
             }
@@ -105,11 +105,11 @@ public class BasicCallingConvention implements CallingConvention {
             case F64:
                 if (methodName == null) methodName = "doubleValue";
             {
-                return ib.insert(JavaOps.INVOKE.create(new JavaExts.JavaMethod(
-                                new JavaExts.JavaClass(Type.getInternalName(Number.class)),
+                return ib.insert(JavaOps.INVOKE.create(new JClass.JavaMethod(
+                                new JClass(Type.getInternalName(Number.class)),
                                 methodName,
                                 Type.getMethodType(unboxedTy).getDescriptor(),
-                                JavaExts.JavaMethod.Kind.VIRTUAL
+                                JClass.JavaMethod.Kind.VIRTUAL
                         ))
                         .insn(ib.insert(JavaOps.insns(new TypeInsnNode(Opcodes.CHECKCAST, Type.getInternalName(Number.class)))
                                         .insn(val),

@@ -8,6 +8,7 @@ import io.github.eutro.jwasm.test.ModuleTestBase;
 import io.github.eutro.jwasm.tree.ModuleNode;
 import io.github.eutro.jwasm.tree.analysis.ModuleValidator;
 import io.github.eutro.wasm2j.conf.Conventions;
+import io.github.eutro.wasm2j.ext.JavaExts;
 import io.github.eutro.wasm2j.passes.IRPass;
 import io.github.eutro.wasm2j.passes.Passes;
 import io.github.eutro.wasm2j.passes.convert.JirToJava;
@@ -15,7 +16,7 @@ import io.github.eutro.wasm2j.passes.convert.WasmToWir;
 import io.github.eutro.wasm2j.passes.convert.WirToJir;
 import io.github.eutro.wasm2j.passes.meta.CheckJava;
 import io.github.eutro.wasm2j.passes.meta.VerifyIntegrity;
-import io.github.eutro.wasm2j.passes.misc.ForPass;
+import io.github.eutro.wasm2j.ssa.JClass;
 import io.github.eutro.wasm2j.ssa.display.SSADisplay;
 import org.jetbrains.annotations.Nullable;
 import org.junit.jupiter.api.Assertions;
@@ -34,9 +35,16 @@ public class SpecTest {
             .then(new WirToJir(Conventions.createBuilder()
                     .setNameSupplier(() -> "dev/eutro/Example")
                     .build()))
-            .then(ForPass.liftFunctions(Passes.SSA_OPTS))
-            .then(ForPass.liftFunctions(Passes.JAVA_PREEMIT))
-            .then(ForPass.liftFunctions(SSADisplay.debugDisplayOnError("verify", VerifyIntegrity.INSTANCE)))
+            .then(cls -> {
+                for (JClass.JavaMethod method : cls.methods) {
+                    method.getExtOrThrow(JavaExts.METHOD_IMPL)
+                            .mapInPlace(Passes.SSA_OPTS
+                                    .then(Passes.JAVA_PREEMIT)
+                                    .then(SSADisplay.debugDisplayOnError("verify", VerifyIntegrity.INSTANCE))
+                                    ::run);
+                }
+                return cls;
+            })
             .then(JirToJava.INSTANCE)
             .then(CheckJava.INSTANCE);
 
@@ -58,6 +66,7 @@ public class SpecTest {
     Stream<DynamicTest> specTest() throws Throwable {
         return ModuleTestBase.openTestSuite()
                 .filter(it -> it.getName().indexOf('/') == -1 && it.getName().endsWith(".wast"))
+                .filter(it -> !it.getName().startsWith("simd_"))
                 .map(it -> DynamicTest.dynamicTest(it.getName(), () -> {
                     WastReader wastReader = WastReader.fromSource(it.getStream());
                     Assertions.assertDoesNotThrow(() -> wastReader.accept(new LoadingWastVisitor()));

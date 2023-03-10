@@ -2,9 +2,9 @@ package io.github.eutro.wasm2j.conf.api;
 
 import io.github.eutro.wasm2j.conf.impl.DelegatingExporter;
 import io.github.eutro.wasm2j.ext.ExtContainer;
-import io.github.eutro.wasm2j.ext.JavaExts;
 import io.github.eutro.wasm2j.ssa.Effect;
 import io.github.eutro.wasm2j.ssa.IRBuilder;
+import io.github.eutro.wasm2j.ssa.JClass;
 import io.github.eutro.wasm2j.ssa.Module;
 
 public interface FunctionConvention extends ExportableConvention, ConstructorCallback, ExtContainer {
@@ -31,7 +31,7 @@ public interface FunctionConvention extends ExportableConvention, ConstructorCal
         }
 
         @Override
-        public void modifyConstructor(IRBuilder ib, JavaExts.JavaMethod ctorMethod, Module module, JavaExts.JavaClass jClass) {
+        public void modifyConstructor(IRBuilder ib, JClass.JavaMethod ctorMethod, Module module, JClass jClass) {
             delegate.modifyConstructor(ib, ctorMethod, module, jClass);
         }
     }

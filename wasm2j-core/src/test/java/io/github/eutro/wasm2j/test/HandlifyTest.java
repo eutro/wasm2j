@@ -7,11 +7,11 @@ import io.github.eutro.wasm2j.passes.convert.Handlify;
 import io.github.eutro.wasm2j.passes.convert.JavaToJir;
 import io.github.eutro.wasm2j.passes.convert.JirToJava;
 import io.github.eutro.wasm2j.passes.form.SSAify;
-import io.github.eutro.wasm2j.passes.misc.ForPass;
 import io.github.eutro.wasm2j.passes.opts.CollapseJumps;
 import io.github.eutro.wasm2j.passes.opts.EliminateDeadBlocks;
 import io.github.eutro.wasm2j.ssa.Function;
-import io.github.eutro.wasm2j.ssa.Module;
+import io.github.eutro.wasm2j.ssa.JClass;
+import io.github.eutro.wasm2j.util.Lazy;
 import org.junit.jupiter.api.Test;
 import org.objectweb.asm.ClassWriter;
 import org.objectweb.asm.Opcodes;
@@ -49,20 +49,16 @@ public class HandlifyTest {
                 .then(new Handlify(keepFree))
                 .run(testMethod);
         assertNotNull(handlifyFunc);
-        Module module = new Module();
-        module.functions.add(handlifyFunc);
-        JavaExts.JavaClass jClass = new JavaExts.JavaClass("Handlify");
-        JavaExts.JavaMethod jMethod = new JavaExts.JavaMethod(
+        JClass jClass = new JClass("Handlify");
+        JClass.JavaMethod jMethod = new JClass.JavaMethod(
                 jClass, "testMethodHandle", "(I)Ljava/lang/invoke/MethodHandle;",
-                JavaExts.JavaMethod.Kind.STATIC);
+                JClass.JavaMethod.Kind.STATIC);
         jClass.methods.add(jMethod);
         handlifyFunc.attachExt(JavaExts.FUNCTION_METHOD, jMethod);
-        jMethod.attachExt(JavaExts.METHOD_IMPL, handlifyFunc);
-        module.attachExt(JavaExts.JAVA_CLASS, jClass);
+        jMethod.attachExt(JavaExts.METHOD_IMPL, Lazy.lazy(() -> handlifyFunc));
+        Passes.JAVA_PREEMIT.run(handlifyFunc);
 
-        ClassNode outCn = ForPass.liftFunctions(Passes.JAVA_PREEMIT)
-                .then(JirToJava.INSTANCE)
-                .run(module);
+        ClassNode outCn = JirToJava.INSTANCE.run(jClass);
         outCn.access |= Opcodes.ACC_PUBLIC;
 
         ClassWriter cw = new ClassWriter(ClassWriter.COMPUTE_FRAMES);
