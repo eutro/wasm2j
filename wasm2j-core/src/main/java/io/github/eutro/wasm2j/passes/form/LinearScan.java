@@ -100,10 +100,14 @@ public class LinearScan implements InPlaceIRPass<Function> {
                 block.getEffects().clear();
                 for (Effect effect : effects) {
                     block.getEffects().add(effect);
-                    replaceVars(effect.getAssignsTo(), allocated);
+                    List<Var> assignsTo = effect.getAssignsTo();
+                    replaceVars(assignsTo, allocated);
                     replaceVars(effect.insn(), allocated);
+                    for (Var var : assignsTo) {
+                        var.removeExt(CommonExts.USED_AT);
+                    }
                     if (effect.getNullable(DROP) == Boolean.TRUE) {
-                        block.getEffects().add(JavaOps.DROP.insn(effect.getAssignsTo()).assignTo());
+                        block.getEffects().add(JavaOps.DROP.insn(assignsTo).assignTo());
                     }
                 }
                 replaceVars(block.getControl().insn(), allocated);
@@ -111,15 +115,15 @@ public class LinearScan implements InPlaceIRPass<Function> {
                 for (Var liveOutVar : block.getExtOrThrow(CommonExts.LIVE_DATA).liveOut) {
                     liveOutVar.removeExt(LAST_LIVE_BLOCK);
                 }
+                block.removeExt(CommonExts.LIVE_DATA);
             }
         }
 
-        ms.invalidate(MetadataState.SSA_FORM);
-        ms.varsChanged();
+        ms.invalidate(MetadataState.SSA_FORM, MetadataState.USES, MetadataState.LIVE_DATA);
     }
 
     private static void replaceVars(Insn insn, Map<Var, Var> allocated) {
-        replaceVars(insn.args, allocated);
+        replaceVars(insn.args(), allocated);
     }
 
     private static void replaceVars(List<Var> vars, Map<Var, Var> allocated) {

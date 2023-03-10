@@ -79,7 +79,7 @@ public class Handlify implements IRPass<Function, @Nullable Function> {
         if (function.blocks.size() != 1) return null;
         BasicBlock root = function.blocks.get(0);
         if (root.getControl().insn().op != CommonOps.RETURN) return null;
-        if (root.getControl().insn().args.size() > 1) return null;
+        if (root.getControl().insn().args().size() > 1) return null;
 
         MetadataState ms = function.getExtOrThrow(CommonExts.METADATA_STATE);
         try {
@@ -107,8 +107,8 @@ public class Handlify implements IRPass<Function, @Nullable Function> {
         List<Var> currentArgsList = new ArrayList<>();
         Map<Var, Integer> currentArgIdcs = new HashMap<>();
         Type returnType;
-        if (root.getControl().insn().args.size() == 1) {
-            Var retVar = root.getControl().insn().args.get(0);
+        if (root.getControl().insn().args().size() == 1) {
+            Var retVar = root.getControl().insn().args().get(0);
             returnType = retVar.getExtOrThrow(JavaExts.TYPE);
             currentArgsList.add(retVar);
             currentArgIdcs.put(retVar, 0);
@@ -142,7 +142,7 @@ public class Handlify implements IRPass<Function, @Nullable Function> {
                             .insn(k, idxV, handle),
                     "k");
             boolean needsPermute = false;
-            for (Var arg : cont.insn.args) {
+            for (Var arg : cont.insn.args()) {
                 if (currentArgIdcs.containsKey(arg)) {
                     needsPermute = true;
                     break;
@@ -154,7 +154,7 @@ public class Handlify implements IRPass<Function, @Nullable Function> {
                 if (!isDropped) {
                     permutation.remove(idx);
                 }
-                permutation.addAll(idx, cont.insn.args);
+                permutation.addAll(idx, cont.insn.args());
                 int[] permutationIdcs = new int[permutation.size()];
                 currentArgsList.clear();
                 currentArgIdcs.clear();
@@ -179,7 +179,7 @@ public class Handlify implements IRPass<Function, @Nullable Function> {
                 if (!isDropped) {
                     currentArgsList.remove(idx);
                 }
-                currentArgsList.addAll(idx, cont.insn.args);
+                currentArgsList.addAll(idx, cont.insn.args());
                 currentArgIdcs.clear();
                 for (int i = 0; i < currentArgsList.size(); i++) {
                     Var var = currentArgsList.get(i);
@@ -273,10 +273,10 @@ public class Handlify implements IRPass<Function, @Nullable Function> {
 
     {
         CONVERTERS.put(CommonOps.IDENTITY.key, insn -> {
-            switch (insn.args.size()) {
+            switch (insn.args().size()) {
                 case 1:
                     return ib -> {
-                        Var arg = insn.args.get(0);
+                        Var arg = insn.args().get(0);
                         Type type = arg.getExtOrThrow(JavaExts.TYPE);
                         return ib.insert(JavaOps.INVOKE.create(MH_IDENTITY)
                                         .insn(ib.insert(IRUtils.loadClass(type), "ty")),
@@ -310,14 +310,14 @@ public class Handlify implements IRPass<Function, @Nullable Function> {
                                 "arrayElementGetter",
                                 "(Ljava/lang/Class;)Ljava/lang/invoke/MethodHandle;",
                                 JavaExts.JavaMethod.Kind.STATIC))
-                        .insn(ib.insert(IRUtils.loadClass(insn.args.get(0).getExtOrThrow(JavaExts.TYPE)), "ty")),
+                        .insn(ib.insert(IRUtils.loadClass(insn.args().get(0).getExtOrThrow(JavaExts.TYPE)), "ty")),
                 "aeg"));
         CONVERTERS.put(JavaOps.ARRAY_SET, insn -> ib -> ib.insert(JavaOps.INVOKE
                         .create(new JavaExts.JavaMethod(METHOD_HANDLES_CLASS,
                                 "arrayElementSetter",
                                 "(Ljava/lang/Class;)Ljava/lang/invoke/MethodHandle;",
                                 JavaExts.JavaMethod.Kind.STATIC))
-                        .insn(ib.insert(IRUtils.loadClass(insn.args.get(0).getExtOrThrow(JavaExts.TYPE)), "ty")),
+                        .insn(ib.insert(IRUtils.loadClass(insn.args().get(0).getExtOrThrow(JavaExts.TYPE)), "ty")),
                 "aes"));
         CONVERTERS.put(JavaOps.INSNS, insn -> {
             InsnList il = JavaOps.INSNS.cast(insn.op).arg;

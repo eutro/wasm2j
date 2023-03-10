@@ -59,7 +59,7 @@ public class ByteBufferMemoryConvention extends DelegatingExporter implements Me
                 derefType.load.desc,
                 JavaExts.JavaMethod.Kind.VIRTUAL
         );
-        Var ptr = effect.insn().args.get(0);
+        Var ptr = effect.insn().args().get(0);
         Insn loadInsn = JavaOps.INVOKE.create(toInvoke).insn(buffer.get(ib), IRUtils.getAddr(ib, wmArg, ptr));
         if (derefType.ext.insns.size() == 0) {
             ib.insert(loadInsn.copyFrom(effect));
@@ -79,8 +79,8 @@ public class ByteBufferMemoryConvention extends DelegatingExporter implements Me
                         .create(Instructions.copyList(wmArg.value.insns))
                         .insn(
                                 buffer.get(ib),
-                                IRUtils.getAddr(ib, wmArg, effect.insn().args.get(0)),
-                                effect.insn().args.get(1)
+                                IRUtils.getAddr(ib, wmArg, effect.insn().args().get(0)),
+                                effect.insn().args().get(1)
                         ),
                 "drop");
     }
@@ -136,7 +136,7 @@ public class ByteBufferMemoryConvention extends DelegatingExporter implements Me
         JavaExts.JavaMethod duplicate = JavaExts.JavaMethod.fromJava(ByteBuffer.class, "duplicate");
         Type oome = Type.getType(OutOfMemoryError.class);
 
-        Var growBy = effect.insn().args.get(0);
+        Var growBy = effect.insn().args().get(0);
         BasicBlock failBlock = ib.func.newBb();
 
         BasicBlock k = ib.func.newBb();
@@ -206,7 +206,7 @@ public class ByteBufferMemoryConvention extends DelegatingExporter implements Me
 
     @Override
     public void emitMemInit(IRBuilder ib, Effect effect, Var data) {
-        Iterator<Var> iter = effect.insn().args.iterator();
+        Iterator<Var> iter = effect.insn().args().iterator();
         Var dstIdx = iter.next();
         Var srcIdx = iter.next();
         Var length = iter.next();
@@ -258,7 +258,7 @@ public class ByteBufferMemoryConvention extends DelegatingExporter implements Me
             Pair<Integer, Integer> arg = WasmOps.MEM_COPY.cast(effect.insn().op).arg;
             int thisIdx = arg.left;
             int otherIdx = arg.right;
-            Iterator<Var> iter = effect.insn().args.iterator();
+            Iterator<Var> iter = effect.insn().args().iterator();
             Var dstAddr = iter.next();
             Var srcAddr = iter.next();
             Var len = iter.next();

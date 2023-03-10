@@ -40,22 +40,22 @@ public class MergeConds implements InPlaceIRPass<Function> {
             while (li.hasPrevious()) {
                 Effect prev = li.previous();
                 Insn insn = prev.insn();
-                if (insn.op.key != JavaOps.SELECT || insn.args.size() != 3) continue;
-                Var arg = insn.args.get(2);
+                if (insn.op.key != JavaOps.SELECT || insn.args().size() != 3) continue;
+                Var arg = insn.args().get(2);
                 checkSelect(arg, (aInsn, boolTy) -> {
                     JavaOps.JumpType thisTy = JavaOps.SELECT.cast(insn.op).arg;
                     JavaOps.JumpType combined = thisTy.combine(boolTy);
                     if (combined == null) return;
-                    List<Var> args = new ArrayList<>(insn.args.subList(0, 2));
-                    args.addAll(aInsn.args);
+                    List<Var> args = new ArrayList<>(insn.args().subList(0, 2));
+                    args.addAll(aInsn.args());
                     prev.setInsn(JavaOps.SELECT.create(combined).insn(args));
                 });
             }
 
             Control jump = basicBlock.getControl();
             Insn insn = jump.insn();
-            if (insn.op.key != JavaOps.BR_COND || insn.args.size() != 1) continue;
-            Var arg = insn.args.get(0);
+            if (insn.op.key != JavaOps.BR_COND || insn.args().size() != 1) continue;
+            Var arg = insn.args().get(0);
             checkSelect(arg, (aInsn, boolTy) -> {
                 UnaryOpKey<JavaOps.JumpType>.UnaryOp jumpKey = JavaOps.BR_COND.cast(insn.op);
                 JavaOps.JumpType combined = jumpKey.arg.combine(boolTy);

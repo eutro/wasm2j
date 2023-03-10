@@ -1,7 +1,6 @@
 package io.github.eutro.wasm2j.bits;
 
 import io.github.eutro.jwasm.ByteInputStream;
-import io.github.eutro.jwasm.ValidationException;
 import io.github.eutro.jwasm.tree.CustomNode;
 import io.github.eutro.wasm2j.conf.impl.InstanceFunctionConvention;
 import io.github.eutro.wasm2j.events.EventSupplier;
@@ -106,9 +105,9 @@ public class NameSectionParser<T extends EventSupplier<? super RunModuleCompilat
                 localNames = null;
             }
 
-            if (id != -1) {
-                throw new ValidationException(String.format("too many or out of order sections in name section (id: %d)", id));
-            }
+            //if (id != -1) {
+            //    throw new ValidationException(String.format("too many or out of order sections in name section (id: %d)", id));
+            //}
         }
 
         private <E extends Exception> SortedMap<Integer, SortedMap<Integer, String>>

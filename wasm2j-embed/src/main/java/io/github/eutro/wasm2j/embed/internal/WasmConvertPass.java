@@ -262,7 +262,7 @@ public class WasmConvertPass {
                 ib.insert(JavaOps.insns(new TypeInsnNode(Opcodes.CHECKCAST, componentType.getInternalName()))
                         .insn(ib.insert(JavaOps.INVOKE
                                         .create(get)
-                                        .insn(table.get(ib), effect.insn().args.get(0)),
+                                        .insn(table.get(ib), effect.insn().args().get(0)),
                                 "raw"))
                         .copyFrom(effect));
             }
@@ -272,8 +272,8 @@ public class WasmConvertPass {
                 ib.insert(JavaOps.INVOKE
                         .create(set)
                         .insn(table.get(ib),
-                                effect.insn().args.get(0),
-                                effect.insn().args.get(1))
+                                effect.insn().args().get(0),
+                                effect.insn().args().get(1))
                         .copyFrom(effect));
             }
 
@@ -290,8 +290,8 @@ public class WasmConvertPass {
                 ib.insert(JavaOps.INVOKE
                         .create(grow)
                         .insn(table.get(ib),
-                                effect.insn().args.get(0),
-                                effect.insn().args.get(1))
+                                effect.insn().args().get(0),
+                                effect.insn().args().get(1))
                         .copyFrom(effect));
             }
 
@@ -300,9 +300,9 @@ public class WasmConvertPass {
                 ib.insert(JavaOps.INVOKE
                         .create(init)
                         .insn(table.get(ib),
-                                effect.insn().args.get(0),
-                                effect.insn().args.get(1),
-                                effect.insn().args.get(2),
+                                effect.insn().args().get(0),
+                                effect.insn().args().get(1),
+                                effect.insn().args().get(2),
                                 data)
                         .copyFrom(effect));
             }
@@ -360,7 +360,7 @@ public class WasmConvertPass {
                         .create(set)
                         .insn(global.get(ib),
                                 BasicCallingConvention.maybeBoxed(ib,
-                                        effect.insn().args.get(0),
+                                        effect.insn().args().get(0),
                                         importNode.type.type,
                                         objTy))
                         .assignTo());
@@ -413,7 +413,7 @@ public class WasmConvertPass {
                                         Type.INT_TYPE),
                                 Memory.Bootstrap.BOOTSTRAP_HANDLE,
                                 Memory.LoadMode.fromOpcode(arg.value.getOpcode()).ordinal()))
-                        .insn(memory.get(ib), getAddr(ib, arg, effect.insn().args.get(0)))
+                        .insn(memory.get(ib), getAddr(ib, arg, effect.insn().args().get(0)))
                         .copyFrom(effect));
             }
 
@@ -428,8 +428,8 @@ public class WasmConvertPass {
                                 Memory.Bootstrap.BOOTSTRAP_HANDLE,
                                 Memory.StoreMode.fromOpcode(arg.value.getOpcode()).ordinal()))
                         .insn(memory.get(ib),
-                                getAddr(ib, arg, effect.insn().args.get(0)),
-                                effect.insn().args.get(1))
+                                getAddr(ib, arg, effect.insn().args().get(0)),
+                                effect.insn().args().get(1))
                         .copyFrom(effect));
             }
 
@@ -450,14 +450,14 @@ public class WasmConvertPass {
             @Override
             public void emitMemGrow(IRBuilder ib, Effect effect) {
                 ib.insert(JavaOps.INVOKE.create(grow)
-                        .insn(memory.get(ib), effect.insn().args.get(0)).copyFrom(effect));
+                        .insn(memory.get(ib), effect.insn().args().get(0)).copyFrom(effect));
             }
 
             @Override
             public void emitMemInit(IRBuilder ib, Effect effect, Var data) {
                 List<Var> args = new ArrayList<>();
                 args.add(memory.get(ib));
-                args.addAll(effect.insn().args);
+                args.addAll(effect.insn().args());
                 args.add(data);
                 ib.insert(JavaOps.INVOKE.create(init).insn(args).copyFrom(effect));
             }

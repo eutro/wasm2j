@@ -82,7 +82,7 @@ public class SSAify implements InPlaceIRPass<Function> {
 
             void replaceUsages(Insn insn) {
                 if (insn.op.key == CommonOps.PHI) return;
-                ListIterator<Var> iter = insn.args.listIterator();
+                ListIterator<Var> iter = insn.args().listIterator();
                 while (iter.hasNext()) {
                     iter.set(top(iter.next()));
                 }
@@ -121,7 +121,7 @@ public class SSAify implements InPlaceIRPass<Function> {
                                 = CommonOps.PHI.check(phiInsn.op).orElseThrow(RuntimeException::new);
                         Var branchVal = top(entry.getKey());
                         phi.arg.add(block);
-                        phiInsn.args.add(branchVal);
+                        phiInsn.args().add(branchVal);
                     }
                 }
 

@@ -23,7 +23,7 @@ public class LowerIntrinsics extends LowerCommon {
         Op op = insn.op;
         if (op.key == JavaOps.INTRINSIC) {
             IntrinsicImpl intr = JavaOps.INTRINSIC.cast(op).arg;
-            ib.insert(emitIntrinsic(ib, intr, effect.insn().args).copyFrom(effect));
+            ib.insert(emitIntrinsic(ib, intr, effect.insn().args()).copyFrom(effect));
             return true;
         }
         return false;

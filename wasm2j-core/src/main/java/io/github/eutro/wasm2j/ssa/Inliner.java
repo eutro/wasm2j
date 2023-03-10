@@ -43,21 +43,21 @@ public class Inliner {
                 } else if (op.key == CommonOps.PHI) {
                     insn = CommonOps.PHI.create(new ArrayList<>(
                                     Arrays.asList(refreshBbs(CommonOps.PHI.cast(op).arg))))
-                            .insn(refreshVars(effect.insn().args));
+                            .insn(refreshVars(effect.insn().args()));
                 } else {
-                    insn = op.insn(refreshVars(effect.insn().args));
+                    insn = op.insn(refreshVars(effect.insn().args()));
                 }
                 ib.insert(insn.assignTo(refreshVars(effect.getAssignsTo())));
             }
             Control ctrl = thisBb.getControl();
             if (ctrl.insn().op.key == CommonOps.RETURN.key) {
-                returnVars.put(iBb, refreshVars(ctrl.insn().args));
+                returnVars.put(iBb, refreshVars(ctrl.insn().args()));
                 if (!blocksInlined) {
                     ib.insertCtrl(Control.br(targetBlock));
                 }
             } else {
                 ib.insertCtrl(ctrl.insn().op
-                        .insn(refreshVars(ctrl.insn().args))
+                        .insn(refreshVars(ctrl.insn().args()))
                         .jumpsTo(refreshBbs(ctrl.targets)));
             }
         }

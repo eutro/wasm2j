@@ -142,7 +142,7 @@ public class JavaOps {
     static {
         IADD.attachExt(CONSTANT_PROPAGATOR, insn -> {
             int constant = 0;
-            for (Var arg : insn.args) {
+            for (Var arg : insn.args()) {
                 Object value = arg.getNullable(CommonExts.CONSTANT_VALUE);
                 if (value == null) return insn;
                 constant += (int) value;
@@ -150,15 +150,15 @@ public class JavaOps {
             return CommonOps.constant(constant);
         });
         ISUB.attachExt(CONSTANT_PROPAGATOR, insn -> {
-            Object lhs = insn.args.get(0).getNullable(CONSTANT_VALUE);
+            Object lhs = insn.args().get(0).getNullable(CONSTANT_VALUE);
             if (lhs == null) return insn;
-            Object rhs = insn.args.get(1).getNullable(CONSTANT_VALUE);
+            Object rhs = insn.args().get(1).getNullable(CONSTANT_VALUE);
             if (rhs == null) return insn;
             return CommonOps.constant((int) lhs - (int) rhs);
         });
         IMUL.attachExt(CONSTANT_PROPAGATOR, insn -> {
             int constant = 1;
-            for (Var arg : insn.args) {
+            for (Var arg : insn.args()) {
                 Object value = arg.getNullable(CommonExts.CONSTANT_VALUE);
                 if (value == null) return insn;
                 constant *= (int) value;
@@ -167,7 +167,7 @@ public class JavaOps {
         });
         LADD.attachExt(CONSTANT_PROPAGATOR, insn -> {
             long constant = 0;
-            for (Var arg : insn.args) {
+            for (Var arg : insn.args()) {
                 Object value = arg.getNullable(CommonExts.CONSTANT_VALUE);
                 if (value == null) return insn;
                 constant += (long) value;
@@ -175,17 +175,17 @@ public class JavaOps {
             return CommonOps.constant(constant);
         });
         I2L.attachExt(CONSTANT_PROPAGATOR, insn -> {
-            Object constValue = insn.args.get(0).getNullable(CONSTANT_VALUE);
+            Object constValue = insn.args().get(0).getNullable(CONSTANT_VALUE);
             if (constValue == null) return insn;
             return CommonOps.constant((long) (int) constValue);
         });
         I2L_U.attachExt(CONSTANT_PROPAGATOR, insn -> {
-            Object constValue = insn.args.get(0).getNullable(CONSTANT_VALUE);
+            Object constValue = insn.args().get(0).getNullable(CONSTANT_VALUE);
             if (constValue == null) return insn;
             return CommonOps.constant(Integer.toUnsignedLong((int) constValue));
         });
         L2I_EXACT.attachExt(CONSTANT_PROPAGATOR, insn -> {
-            Object constValue = insn.args.get(0).getNullable(CONSTANT_VALUE);
+            Object constValue = insn.args().get(0).getNullable(CONSTANT_VALUE);
             if (constValue == null) return insn;
             long longValue = (long) constValue;
             if (longValue != (int) longValue) return insn;
@@ -194,11 +194,11 @@ public class JavaOps {
         INTRINSIC.attachExt(CONSTANT_PROPAGATOR, insn -> {
             IntrinsicImpl intr = JavaOps.INTRINSIC.cast(insn.op).arg;
             if (intr.eval == null) return insn;
-            for (Var arg : insn.args) {
+            for (Var arg : insn.args()) {
                 if (arg.getNullable(CONSTANT_VALUE) == null) return insn;
             }
             List<Object> args = new ArrayList<>();
-            for (Var arg : insn.args) {
+            for (Var arg : insn.args()) {
                 args.add(takeNull(arg.getNullable(CONSTANT_VALUE)));
             }
             try {

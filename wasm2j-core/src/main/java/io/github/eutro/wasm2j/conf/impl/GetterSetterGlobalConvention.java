@@ -32,6 +32,6 @@ public class GetterSetterGlobalConvention extends DelegatingExporter implements 
 
     @Override
     public void emitGlobalStore(IRBuilder ib, Effect effect) {
-        setter.set(ib, effect.insn().args.get(0));
+        setter.set(ib, effect.insn().args().get(0));
     }
 }

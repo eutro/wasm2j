@@ -32,7 +32,7 @@ public class FieldGlobalConvention extends DelegatingExporter implements GlobalC
     @Override
     public void emitGlobalStore(IRBuilder ib, Effect effect) {
         ib.insert(JavaOps.PUT_FIELD.create(global)
-                .insn(target.get(ib), effect.insn().args.get(0))
+                .insn(target.get(ib), effect.insn().args().get(0))
                 .copyFrom(effect));
     }
 }

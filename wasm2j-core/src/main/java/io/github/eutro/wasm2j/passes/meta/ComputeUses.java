@@ -16,7 +16,7 @@ public class ComputeUses implements InPlaceIRPass<Function> {
     public void runInPlace(Function func) {
         for (BasicBlock block : func.blocks) {
             for (Effect effect : block.getEffects()) {
-                for (Var arg : effect.insn().args) {
+                for (Var arg : effect.insn().args()) {
                     clearUses(arg);
                 }
                 for (Var var : effect.getAssignsTo()) {
@@ -24,13 +24,13 @@ public class ComputeUses implements InPlaceIRPass<Function> {
                 }
             }
             Control ctrl = block.getControl();
-            for (Var arg : ctrl.insn().args) {
+            for (Var arg : ctrl.insn().args()) {
                 clearUses(arg);
             }
         }
         for (BasicBlock block : func.blocks) {
             for (Effect effect : block.getEffects()) {
-                for (Var arg : effect.insn().args) {
+                for (Var arg : effect.insn().args()) {
                     getOrCreateUses(arg).add(effect.insn());
                 }
                 for (Var var : effect.getAssignsTo()) {
@@ -38,7 +38,7 @@ public class ComputeUses implements InPlaceIRPass<Function> {
                 }
             }
             Control ctrl = block.getControl();
-            for (Var arg : ctrl.insn().args) {
+            for (Var arg : ctrl.insn().args()) {
                 getOrCreateUses(arg).add(ctrl.insn());
             }
         }

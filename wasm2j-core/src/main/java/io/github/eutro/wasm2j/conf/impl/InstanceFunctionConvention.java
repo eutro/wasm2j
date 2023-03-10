@@ -42,7 +42,7 @@ public class InstanceFunctionConvention extends DelegatingExporter implements Fu
         WasmOps.CallType callType = WasmOps.CALL.cast(effect.insn().op).arg;
         List<Var> args = new ArrayList<>();
         args.add(target.get(ib));
-        List<Var> rawArgs = cc.passArguments(ib, effect.insn().args, callType.type);
+        List<Var> rawArgs = cc.passArguments(ib, effect.insn().args(), callType.type);
         args.addAll(rawArgs);
         Var[] rets = cc.getDescriptor(callType.type).getReturnType() == Type.VOID_TYPE
                 ? new Var[0]

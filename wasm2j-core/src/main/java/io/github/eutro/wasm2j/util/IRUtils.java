@@ -286,7 +286,7 @@ public class IRUtils {
                                     T t,
                                     BoundsCheckFn<T> emitBoundsCheck) {
         int thisIdx = key.cast(effect.insn().op).arg;
-        Iterator<Var> iter = effect.insn().args.iterator();
+        Iterator<Var> iter = effect.insn().args().iterator();
         Var idx = iter.next();
         Var value = iter.next();
         Var len = iter.next();
@@ -311,7 +311,7 @@ public class IRUtils {
         Pair<Integer, Integer> arg = key.cast(effect.insn().op).arg;
         int thisIdx = arg.left;
         int otherIdx = arg.right;
-        Iterator<Var> iter = effect.insn().args.iterator();
+        Iterator<Var> iter = effect.insn().args().iterator();
         Var dstAddr = iter.next();
         Var srcAddr = iter.next();
         Var len = iter.next();

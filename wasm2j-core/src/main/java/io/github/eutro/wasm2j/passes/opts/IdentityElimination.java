@@ -13,14 +13,14 @@ public class IdentityElimination implements InPlaceIRPass<Insn> {
 
     @Override
     public void runInPlace(Insn insn) {
-        ListIterator<Var> iter = insn.args.listIterator();
+        ListIterator<Var> iter = insn.args().listIterator();
         while (iter.hasNext()) {
             Var arg = iter.next();
             arg.getExt(CommonExts.ASSIGNED_AT).ifPresent(assigned -> {
                 if (assigned.insn().op.key != CommonOps.IDENTITY.key) return;
                 if (assigned.getAssignsTo().size() != 1) return;
-                if (assigned.insn().args.size() != 1) return;
-                iter.set(assigned.insn().args.get(0));
+                if (assigned.insn().args().size() != 1) return;
+                iter.set(assigned.insn().args().get(0));
             });
         }
     }

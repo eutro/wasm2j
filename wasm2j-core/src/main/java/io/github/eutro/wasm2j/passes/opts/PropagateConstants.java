@@ -42,7 +42,7 @@ public class PropagateConstants implements InPlaceIRPass<Function> {
             Frame top = stack.pop();
             if (top.justPushed) {
                 stack.push(top);
-                for (Var arg : top.insn.args) {
+                for (Var arg : top.insn.args()) {
                     Insn argInsn = arg.getExtOrThrow(CommonExts.ASSIGNED_AT).insn();
                     if (seen.add(argInsn)) {
                         stack.push(new Frame(argInsn));

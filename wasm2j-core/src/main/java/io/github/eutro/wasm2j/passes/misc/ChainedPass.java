@@ -10,10 +10,12 @@ import java.util.ListIterator;
 public class ChainedPass<A, B, C> implements IRPass<A, C> {
     private final IRPass<A, B> firstPass;
     private final IRPass<B, C> nextPass;
+    private final boolean isInPlace;
 
     public ChainedPass(IRPass<A, B> firstPass, IRPass<B, C> nextPass) {
         this.firstPass = firstPass;
         this.nextPass = nextPass;
+        isInPlace = firstPass.isInPlace() && nextPass.isInPlace();
     }
 
     @SuppressWarnings("unchecked")
@@ -28,6 +30,11 @@ public class ChainedPass<A, B, C> implements IRPass<A, C> {
         passes.add(pass);
         Collections.reverse(passes);
         return (List<IRPass<Object, Object>>) (Object) passes;
+    }
+
+    @Override
+    public boolean isInPlace() {
+        return isInPlace;
     }
 
     @SuppressWarnings("unchecked")

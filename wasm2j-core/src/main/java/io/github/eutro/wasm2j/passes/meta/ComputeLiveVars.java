@@ -30,12 +30,12 @@ public class ComputeLiveVars implements InPlaceIRPass<Function> {
             Set<Var> assigned = data.kill;
 
             for (Effect effect : block.getEffects()) {
-                for (Var arg : effect.insn().args) {
+                for (Var arg : effect.insn().args()) {
                     if (!assigned.contains(arg)) used.add(arg);
                 }
                 assigned.addAll(effect.getAssignsTo());
             }
-            for (Var arg : block.getControl().insn().args) {
+            for (Var arg : block.getControl().insn().args()) {
                 if (!assigned.contains(arg)) used.add(arg);
             }
 

@@ -127,11 +127,11 @@ public class Stackify implements InPlaceIRPass<Function> {
         }
 
         Var getReg() {
-            return insn.args.get(index);
+            return insn.args().get(index);
         }
 
         void setReg(Var v) {
-            insn.args.set(index, v);
+            insn.args().set(index, v);
         }
 
         @Override
@@ -257,7 +257,7 @@ public class Stackify implements InPlaceIRPass<Function> {
     }
 
     private void checkInsn(Deque<Var> stack, Insn insn) {
-        List<Var> args = insn.args;
+        List<Var> args = insn.args();
         ListIterator<Var> iter = args.listIterator(args.size());
         boolean hasStackified = false;
         while (iter.hasPrevious()) {
@@ -300,14 +300,14 @@ public class Stackify implements InPlaceIRPass<Function> {
         Var remat = func.newVar("remat");
         remat.attachExt(CommonExts.STACKIFIED, true);
 
-        Effect reDef = def.insn().op.insn(def.insn().args).assignTo(remat);
-        for (Var arg : reDef.insn().args) {
+        Effect reDef = def.insn().op.insn(def.insn().args()).assignTo(remat);
+        for (Var arg : reDef.insn().args()) {
             arg.getExtOrThrow(CommonExts.USED_AT).add(reDef.insn());
         }
         Var origReg = use.getReg();
         use.setReg(remat);
         Set<Insn> regUses = origReg.getExtOrThrow(CommonExts.USED_AT);
-        if (!use.insn.args.contains(origReg)) {
+        if (!use.insn.args().contains(origReg)) {
             regUses.remove(use.insn);
         }
 
@@ -335,7 +335,7 @@ public class Stackify implements InPlaceIRPass<Function> {
         use.setReg(stacked);
         Effect load = CommonOps.IDENTITY.insn(reg).assignTo(stacked);
         Set<Insn> regUses = reg.getExtOrThrow(CommonExts.USED_AT);
-        if (!use.insn.args.contains(reg)) {
+        if (!use.insn.args().contains(reg)) {
             regUses.remove(use.insn);
         }
         regUses.add(load.insn());
@@ -352,7 +352,7 @@ public class Stackify implements InPlaceIRPass<Function> {
     }
 
     private LinkedList<Use> pushOperands(Insn insn) {
-        ListIterator<Var> iter = insn.args.listIterator();
+        ListIterator<Var> iter = insn.args().listIterator();
         return LinkedList.fromIterator(new Iterator<Use>() {
             @Override
             public boolean hasNext() {

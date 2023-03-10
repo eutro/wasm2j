@@ -28,7 +28,7 @@ public interface CallingConvention {
 
     default void emitCallIndirect(IRBuilder ib, Effect effect) {
         TypeNode callType = WasmOps.CALL_INDIRECT.cast(effect.insn().op).arg;
-        List<Var> rawArgs = passArguments(ib, effect.insn().args, callType);
+        List<Var> rawArgs = passArguments(ib, effect.insn().args(), callType);
         Type ty = getDescriptor(callType);
         Var[] rets = ty.getReturnType() == Type.VOID_TYPE
                 ? new Var[0]

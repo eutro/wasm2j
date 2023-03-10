@@ -37,7 +37,7 @@ public class ArrayTableConvention extends DelegatingExporter implements TableCon
     @Override
     public void emitTableRef(IRBuilder ib, Effect effect) {
         ib.insert(JavaOps.ARRAY_GET.create()
-                .insn(table.get(ib), effect.insn().args.get(0))
+                .insn(table.get(ib), effect.insn().args().get(0))
                 .copyFrom(effect));
 
     }
@@ -46,8 +46,8 @@ public class ArrayTableConvention extends DelegatingExporter implements TableCon
     public void emitTableStore(IRBuilder ib, Effect effect) {
         ib.insert(JavaOps.ARRAY_SET.create()
                 .insn(table.get(ib),
-                        effect.insn().args.get(0),
-                        effect.insn().args.get(1))
+                        effect.insn().args().get(0),
+                        effect.insn().args().get(1))
                 .assignTo());
 
     }
@@ -84,8 +84,8 @@ public class ArrayTableConvention extends DelegatingExporter implements TableCon
 
         Type oome = Type.getType(OutOfMemoryError.class);
 
-        Var growBy = effect.insn().args.get(0);
-        Var fillWith = effect.insn().args.get(1);
+        Var growBy = effect.insn().args().get(0);
+        Var fillWith = effect.insn().args().get(1);
 
         BasicBlock failBlock = ib.func.newBb();
 
@@ -151,10 +151,10 @@ public class ArrayTableConvention extends DelegatingExporter implements TableCon
         ib.insert(JavaOps.INVOKE
                 .create(SYSTEM_ARRAYCOPY)
                 .insn(data,
-                        effect.insn().args.get(1),
+                        effect.insn().args().get(1),
                         table.get(ib),
-                        effect.insn().args.get(0),
-                        effect.insn().args.get(2))
+                        effect.insn().args().get(0),
+                        effect.insn().args().get(2))
                 .copyFrom(effect));
     }
 }

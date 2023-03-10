@@ -45,12 +45,11 @@ public class WirToJir implements InPlaceIRPass<Module> {
         pass.set(convertPass);
 
         conventions.preConvert();
-        ForPass.liftFunctions(
-                        convertPass)
-                .runInPlace(module);
+        ForPass.liftFunctions(convertPass).runInPlace(module);
         conventions.postConvert();
 
         module.functions.addAll(extrasModule.functions);
+        extrasModule.functions = module.functions;
         module.attachExt(CommonExts.CODE_TYPE, CommonExts.CodeType.JAVA);
     }
 
@@ -240,9 +239,9 @@ public class WirToJir implements InPlaceIRPass<Module> {
 
             FX_CONVERTERS.put(WasmOps.SELECT, (fx, jb, slf) ->
                     jb.insert(JavaOps.SELECT.create(JavaOps.JumpType.IFNE)
-                            .insn(fx.insn().args.get(1 /* ift -> taken */),
-                                    fx.insn().args.get(2 /* iff -> fallthrough */),
-                                    fx.insn().args.get(0 /* cond */))
+                            .insn(fx.insn().args().get(1 /* ift -> taken */),
+                                    fx.insn().args().get(2 /* iff -> fallthrough */),
+                                    fx.insn().args().get(0 /* cond */))
                             .copyFrom(fx)));
 
             FX_CONVERTERS.put(WasmOps.OPERATOR, (fx, jb, slf) -> {
@@ -259,9 +258,10 @@ public class WirToJir implements InPlaceIRPass<Module> {
         static {
             CTRL_CONVERTERS.put(CommonOps.RETURN.key, (ctrl, jb, slf) -> {
                 jb.func.getExt(WasmExts.TYPE).ifPresent(typeNode -> {
-                    Optional<Var> returns = slf.callConv.emitReturn(jb, null /*FIXME*/, ctrl.insn().args, typeNode);
-                    ctrl.insn().args.clear();
-                    returns.ifPresent(ctrl.insn().args::add);
+                    List<Var> args = ctrl.insn().args();
+                    Optional<Var> returns = slf.callConv.emitReturn(jb, null /*FIXME*/, args, typeNode);
+                    args.clear();
+                    returns.ifPresent(args::add);
                 });
                 // else noop
             });

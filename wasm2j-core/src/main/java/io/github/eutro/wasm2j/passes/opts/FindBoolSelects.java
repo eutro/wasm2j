@@ -59,8 +59,8 @@ public class FindBoolSelects implements InPlaceIRPass<Function> {
             if (!(ifTInsn.insn().op.key == CommonOps.CONST
                     && ((Object) 1).equals(CommonOps.CONST.cast(ifTInsn.insn().op).arg))) continue;
 
-            if (!phi.insn().args.contains(ifFInsn.getAssignsTo().get(0))
-                    || !phi.insn().args.contains(ifTInsn.getAssignsTo().get(0))) continue;
+            if (!phi.insn().args().contains(ifFInsn.getAssignsTo().get(0))
+                    || !phi.insn().args().contains(ifTInsn.getAssignsTo().get(0))) continue;
 
             phi.setInsn(JavaOps.BOOL_SELECT.create(jTy).copyFrom(jump.insn()));
             pred.setControl(Control.br(block));

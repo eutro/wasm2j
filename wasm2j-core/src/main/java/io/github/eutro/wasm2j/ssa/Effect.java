@@ -3,21 +3,17 @@ package io.github.eutro.wasm2j.ssa;
 import io.github.eutro.wasm2j.ext.*;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.AbstractList;
 import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
 
 public final class Effect extends DelegatingExtHolder {
-    private final TrackedList<Var> assignsTo = new TrackedList<Var>(null) {
-        @Override
-        protected void onAdded(Var elt) {
-            elt.attachExt(CommonExts.ASSIGNED_AT, Effect.this);
-        }
-
-        @Override
-        protected void onRemoved(Var elt) {
-        }
-    };
+    // null if empty,
+    // Var if unary,
+    // Var[] otherwise.
+    // Micro-optimising the size of this is worth it because there are millions of these.
+    private Object assignsTo;
     private Insn insn;
 
     public Effect(List<Var> assignsTo, Insn insn) {
@@ -50,11 +46,33 @@ public final class Effect extends DelegatingExtHolder {
     }
 
     public List<Var> getAssignsTo() {
-        return assignsTo;
+        return new AssignedTo();
     }
 
     public void setAssignsTo(List<Var> assignsTo) {
-        this.assignsTo.setViewed(assignsTo);
+        switch (assignsTo.size()) {
+            case 0:
+                this.assignsTo = null;
+                break;
+            case 1: {
+                Var var = assignsTo.get(0);
+                this.assignsTo = var;
+                register(var);
+                break;
+            }
+            default: {
+                Var[] vars = assignsTo.toArray(new Var[0]);
+                this.assignsTo = vars;
+                for (Var var : vars) {
+                    register(var);
+                }
+                break;
+            }
+        }
+    }
+
+    private void register(Var var) {
+        var.attachExt(CommonExts.ASSIGNED_AT, this);
     }
 
     public Insn insn() {
@@ -94,5 +112,42 @@ public final class Effect extends DelegatingExtHolder {
             return;
         }
         super.removeExt(ext);
+    }
+
+    private class AssignedTo extends AbstractList<Var> implements List<Var> {
+        @Override
+        public Var get(int index) {
+            if (assignsTo == null) throw new IndexOutOfBoundsException();
+            if (assignsTo instanceof Var) {
+                if (index != 0) throw new IndexOutOfBoundsException();
+                return (Var) assignsTo;
+            }
+            Var[] vars = (Var[]) assignsTo;
+            return vars[index];
+        }
+
+        @Override
+        public Var set(int index, Var value) {
+            if (assignsTo == null) throw new IndexOutOfBoundsException();
+            if (assignsTo instanceof Var) {
+                if (index != 0) throw new IndexOutOfBoundsException();
+                Var old = (Var) assignsTo;
+                assignsTo = value;
+                register(value);
+                return old;
+            }
+            Var[] vars = (Var[]) assignsTo;
+            Var old = vars[index];
+            vars[index] = value;
+            register(value);
+            return old;
+        }
+
+        @Override
+        public int size() {
+            if (assignsTo == null) return 0;
+            if (assignsTo instanceof Var) return 1;
+            return ((Var[]) assignsTo).length;
+        }
     }
 }

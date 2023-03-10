@@ -220,9 +220,9 @@ public abstract class InferTypes<Ty> implements InPlaceIRPass<Function> {
 
         @NotNull
         private static Type[] getArgTys(Insn insn) {
-            Type[] argTys = new Type[insn.args.size()];
+            Type[] argTys = new Type[insn.args().size()];
             int i = 0;
-            for (Var arg : insn.args) {
+            for (Var arg : insn.args()) {
                 argTys[i++] = arg.getExt(JavaExts.TYPE).orElseThrow(() -> new RuntimeException(arg + " has no type"));
             }
             return argTys;
@@ -401,7 +401,7 @@ public abstract class InferTypes<Ty> implements InPlaceIRPass<Function> {
                             JavaExts.JavaMethod method = JavaOps.INVOKE.cast(insn.op).arg;
                             {
                                 int expectedArity = method.getParamTys().size() + (method.kind.isStatic() ? 0 : 1);
-                                int actualArity = insn.args.size();
+                                int actualArity = insn.args().size();
                                 if (expectedArity != actualArity) {
                                     throw new IllegalArgumentException(String.format(
                                             "type mismatch: wrong number of arguments to %s, expected %d, got %d",
@@ -417,7 +417,7 @@ public abstract class InferTypes<Ty> implements InPlaceIRPass<Function> {
                         JavaOps.INVOKE)
 
                 .put(insn -> intifyPrimitives(new Type[]{
-                                insn.args.get(0).getExt(JavaExts.TYPE)
+                                insn.args().get(0).getExt(JavaExts.TYPE)
                                         .map(Type::getElementType)
                                         .orElseThrow(RuntimeException::new)}),
                         JavaOps.ARRAY_GET)
@@ -454,7 +454,7 @@ public abstract class InferTypes<Ty> implements InPlaceIRPass<Function> {
                 .put("b b I -> b", JavaOps.SELECT)
                 .put(insn -> new Type[]{Type.INT_TYPE}, JavaOps.BOOL_SELECT)
                 .put((Insn insn) -> {
-                    for (Var arg : insn.args) {
+                    for (Var arg : insn.args()) {
                         Type ty = arg.getNullable(JavaExts.TYPE);
                         if (ty != null) {
                             if (ty != JavaExts.BOTTOM_TYPE) {

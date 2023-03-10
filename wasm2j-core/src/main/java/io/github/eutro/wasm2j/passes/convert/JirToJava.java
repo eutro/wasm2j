@@ -271,7 +271,7 @@ public class JirToJava implements IRPass<Module, ClassNode> {
             JavaOps.JumpType jumpType = JavaOps.SELECT.cast(fx.insn().op).arg;
             Label elseLabel = jb.newLabel();
 
-            Var arg = fx.insn().args.get(0);
+            Var arg = fx.insn().args().get(0);
             Type ty = arg.getExtOrThrow(JavaExts.TYPE);
 
             jb.visitJumpInsn(jumpType.inverse.opcode, elseLabel);
@@ -281,7 +281,7 @@ public class JirToJava implements IRPass<Module, ClassNode> {
             else jb.pop();
         });
         FX_CONVERTERS.put(JavaOps.DROP.key, (jb, fx) -> {
-            List<Var> args = fx.insn().args;
+            List<Var> args = fx.insn().args();
             ListIterator<Var> li = args.listIterator(args.size());
             while (li.hasPrevious()) {
                 Var arg = li.previous();
@@ -352,9 +352,9 @@ public class JirToJava implements IRPass<Module, ClassNode> {
             );
         });
         FX_CONVERTERS.put(JavaOps.ARRAY_GET, (jb, fx) ->
-                jb.arrayLoad(fx.insn().args.get(0).getExtOrThrow(JavaExts.TYPE).getElementType()));
+                jb.arrayLoad(fx.insn().args().get(0).getExtOrThrow(JavaExts.TYPE).getElementType()));
         FX_CONVERTERS.put(JavaOps.ARRAY_SET, (jb, fx) ->
-                jb.arrayStore(fx.insn().args.get(0).getExtOrThrow(JavaExts.TYPE).getElementType()));
+                jb.arrayStore(fx.insn().args().get(0).getExtOrThrow(JavaExts.TYPE).getElementType()));
         FX_CONVERTERS.put(JavaOps.HANDLE_OF, (jb, fx) -> {
             JavaExts.Handlable handlable = JavaOps.HANDLE_OF.cast(fx.insn().op).arg;
             jb.push(handlable.getHandle());
@@ -426,7 +426,7 @@ public class JirToJava implements IRPass<Module, ClassNode> {
     }
 
     private static void emitLoads(JavaBuilder jb, Insn insn) {
-        for (Var arg : insn.args) {
+        for (Var arg : insn.args()) {
             if (arg.getExt(CommonExts.STACKIFIED).orElse(false)) {
                 continue;
             }

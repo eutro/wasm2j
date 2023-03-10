@@ -17,14 +17,14 @@ public class EliminateDeadVars implements InPlaceIRPass<Function> {
         Map<Var, Integer> usageCount = new HashMap<>();
         for (BasicBlock block : function.blocks) {
             for (Effect effect : block.getEffects()) {
-                for (Var arg : effect.insn().args) {
+                for (Var arg : effect.insn().args()) {
                     usageCount.compute(arg, (var, integer) -> integer == null ? 1 : integer + 1);
                 }
                 for (Var var : effect.getAssignsTo()) {
                     usageCount.putIfAbsent(var, 0);
                 }
             }
-            for (Var arg : block.getControl().insn().args) {
+            for (Var arg : block.getControl().insn().args()) {
                 usageCount.compute(arg, (var, integer) -> integer == null ? 1 : integer + 1);
             }
         }
@@ -47,7 +47,7 @@ public class EliminateDeadVars implements InPlaceIRPass<Function> {
                     if (!dead.contains(var)) return;
                 }
                 deadEffects.add(effect);
-                for (Var arg : effect.insn().args) {
+                for (Var arg : effect.insn().args()) {
                     usageCount.compute(arg, (var, integer) -> {
                         int n = integer == null ? 0 : integer - 1;
                         if (n == 0) {

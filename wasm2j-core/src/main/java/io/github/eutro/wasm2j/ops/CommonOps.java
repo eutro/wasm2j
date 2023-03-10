@@ -32,8 +32,8 @@ public class CommonOps {
             key.attachExt(CommonExts.IS_PURE, true);
         }
         IDENTITY.attachExt(CommonExts.CONSTANT_PROPAGATOR, insn -> {
-            if (insn.args.size() == 1) {
-                Var arg = insn.args.get(0);
+            if (insn.args().size() == 1) {
+                Var arg = insn.args().get(0);
                 Object maybeValue = arg.getNullable(CommonExts.CONSTANT_VALUE);
                 if (maybeValue == null) return insn;
                 return constant(takeNull(maybeValue));
