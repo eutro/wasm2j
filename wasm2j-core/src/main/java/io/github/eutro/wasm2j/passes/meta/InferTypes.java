@@ -455,7 +455,7 @@ public abstract class InferTypes<Ty> implements InPlaceIRPass<Function> {
                 .put(insn -> new Type[]{Type.INT_TYPE}, JavaOps.BOOL_SELECT)
                 .put((Insn insn) -> {
                     for (Var arg : insn.args) {
-                        Type ty = arg.getExt(JavaExts.TYPE).orElse(null);
+                        Type ty = arg.getNullable(JavaExts.TYPE);
                         if (ty != null) {
                             if (ty != JavaExts.BOTTOM_TYPE) {
                                 return new Type[]{ty};

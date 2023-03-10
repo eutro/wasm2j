@@ -120,7 +120,7 @@ public class WasmConvertPass {
             for (int i = 0; i < argTys.length; i++) {
                 args.add(ib.insert(
                         CommonOps.ARG.create(i).insn(),
-                        "arg" + i));
+                        ib.func.newVar("arg", i)));
             }
             Var[] rets = mTy.getReturnType().getSize() == 0
                     ? new Var[0]

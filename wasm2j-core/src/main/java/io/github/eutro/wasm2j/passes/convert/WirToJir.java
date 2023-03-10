@@ -86,7 +86,7 @@ public class WirToJir implements InPlaceIRPass<Module> {
             TypeNode type = func.getExtOrThrow(WasmExts.TYPE);
             List<Var> argVars = new ArrayList<>(type.params.length);
             for (int i = 0; i < type.params.length; i++) {
-                argVars.add(ib.insert(CommonOps.ARG.create(i).insn(), "arg" + i));
+                argVars.add(ib.insert(CommonOps.ARG.create(i).insn(), ib.func.newVar("arg", i)));
             }
             args = callConv.receiveArguments(ib, argVars, type);
             ib.insertCtrl(Control.br(oldBlocks.get(0)));

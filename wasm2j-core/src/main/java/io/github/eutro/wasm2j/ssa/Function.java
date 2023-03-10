@@ -1,6 +1,7 @@
 package io.github.eutro.wasm2j.ssa;
 
 import io.github.eutro.wasm2j.ext.*;
+import org.intellij.lang.annotations.PrintFormat;
 import org.jetbrains.annotations.Nullable;
 
 import java.lang.ref.SoftReference;
@@ -19,15 +20,22 @@ public final class Function extends ExtHolder {
         }
     }; // [0] is entry
 
+    public static boolean UNIQUE_VAR_NAMES = System.getenv("WASM2J_UNIQUE_VAR_NAMES") != null;
+
     // if we hold on to them forever we can easily OOM, but we don't really
     // care about names except for debugging, so let the JVM clear it up if it has to
-    private SoftReference<Map<String, Integer>> varsRef = new SoftReference<>(new HashMap<>());
+    private SoftReference<Map<String, Integer>> varsRef = UNIQUE_VAR_NAMES ? new SoftReference<>(new HashMap<>()) : null;
 
     public void clearVarNames() {
-        varsRef = new SoftReference<>(new HashMap<>());
+        if (UNIQUE_VAR_NAMES) {
+            varsRef = new SoftReference<>(new HashMap<>());
+        }
     }
 
-    public Var newVar(String name) {
+    public Var newVar(String name, int indexHint) {
+        if (!UNIQUE_VAR_NAMES) {
+            return new Var(name, indexHint);
+        }
         Var var;
         Map<String, Integer> vars = varsRef.get();
         if (vars == null) {
@@ -35,13 +43,24 @@ public final class Function extends ExtHolder {
             varsRef = new SoftReference<>(vars);
         }
         if (vars.containsKey(name)) {
-            var = new Var(name, vars.get(name));
-            vars.computeIfPresent(name, ($, i) -> i + 1);
+            var = new Var(name, Math.max(indexHint, vars.get(name)));
+            vars.computeIfPresent(name, ($, i) -> Math.max(indexHint, i) + 1);
         } else {
-            var = new Var(name, 0);
+            var = new Var(name, indexHint);
             vars.put(name, 0);
         }
         return var;
+    }
+
+    public Var newVar(String name) {
+        return newVar(name, 0);
+    }
+
+    public Var newVarFmt(@PrintFormat String fmt, Object... args) {
+        if (!UNIQUE_VAR_NAMES) {
+            return newVar(fmt);
+        }
+        return newVar(String.format(fmt, args));
     }
 
     public BasicBlock newBb() {

@@ -11,6 +11,7 @@ import io.github.eutro.wasm2j.ssa.Var;
 
 import java.util.Iterator;
 import java.util.List;
+import java.util.ListIterator;
 
 public class LowerPhis implements InPlaceIRPass<Function> {
     public static final LowerPhis INSTANCE = new LowerPhis();
@@ -18,12 +19,14 @@ public class LowerPhis implements InPlaceIRPass<Function> {
     @Override
     public void runInPlace(Function func) {
         for (BasicBlock block : func.blocks) {
-            Iterator<Effect> iter = block.getEffects().iterator();
+            ListIterator<Effect> iter = block.getEffects().listIterator();
             while (iter.hasNext()) {
                 Effect phi = iter.next();
                 if (phi.insn().op.key != CommonOps.PHI) {
                     break;
                 }
+                iter.remove();
+
                 List<BasicBlock> preds = CommonOps.PHI.cast(phi.insn().op).arg;
                 List<Var> vars = phi.insn().args;
                 assert preds.size() == vars.size();
@@ -38,9 +41,10 @@ public class LowerPhis implements InPlaceIRPass<Function> {
                     BasicBlock pred = bbIt.next();
                     Var var = varIt.next();
                     pred.getEffects().add(CommonOps.IDENTITY.insn(var).copyFrom(phi));
+                    if (pred == block) {
+                        iter = block.getEffects().listIterator(iter.nextIndex());
+                    }
                 }
-
-                iter.remove();
             }
         }
 

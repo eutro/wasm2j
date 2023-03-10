@@ -60,7 +60,7 @@ public final class Insn extends DelegatingExtHolder {
     }
 
     public Effect copyFrom(Effect fx) {
-        return assignTo(fx.getAssignsTo());
+        return assignTo(new ArrayList<>(fx.getAssignsTo()));
     }
 
     // exts

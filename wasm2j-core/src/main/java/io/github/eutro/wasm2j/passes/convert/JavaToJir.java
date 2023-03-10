@@ -47,7 +47,7 @@ public class JavaToJir implements IRPass<MethodNode, Function> {
         public void convert(MethodNode method) {
             Type[] paramTypes = Type.getArgumentTypes(method.desc);
             for (int i = 0; i < paramTypes.length; i++) {
-                Var paramVar = func.newVar("param" + i);
+                Var paramVar = func.newVar("param", i);
                 bb.addEffect(CommonOps.ARG.create(i).insn().assignTo(paramVar));
                 vars.add(paramVar);
                 if (paramTypes[i].getSize() > 1) {
@@ -64,19 +64,15 @@ public class JavaToJir implements IRPass<MethodNode, Function> {
             if (stackHeight < stackVars.size()) {
                 return stackVars.get(stackHeight++);
             } else {
-                Var stackVar = func.newVar("stack" + stackHeight++);
+                Var stackVar = func.newVar("stack", stackHeight++);
                 stackVars.add(stackVar);
                 return stackVar;
             }
         }
 
-        Var peekVar(int depth) {
-            if (stackHeight == -1) throw new IllegalStateException("unknown stack");
-            return stackVars.get(stackHeight - depth - 1);
-        }
-
         Var peekVar() {
-            return peekVar(0);
+            if (stackHeight == -1) throw new IllegalStateException("unknown stack");
+            return stackVars.get(stackHeight - 1);
         }
 
         Var popVar() {
@@ -95,7 +91,7 @@ public class JavaToJir implements IRPass<MethodNode, Function> {
 
         private Var getVar(int var) {
             while (vars.size() <= var) {
-                vars.add(func.newVar("var" + vars.size()));
+                vars.add(func.newVar("var", vars.size()));
             }
             return vars.get(var);
         }

@@ -80,6 +80,29 @@ public abstract class TrackedList<E> extends AbstractList<E> implements RandomAc
         return viewed.addAll(index, c);
     }
 
+    public Iterator<E> iterator() {
+        Iterator<E> iter = viewed.iterator();
+        return new Iterator<E>() {
+            E last;
+
+            @Override
+            public boolean hasNext() {
+                return iter.hasNext();
+            }
+
+            @Override
+            public E next() {
+                return last = iter.next();
+            }
+
+            @Override
+            public void remove() {
+                iter.remove();
+                onRemoved(last);
+            }
+        };
+    }
+
     @Override
     public ListIterator<E> listIterator(int index) {
         ListIterator<E> li = viewed.listIterator(index);

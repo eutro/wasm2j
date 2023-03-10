@@ -228,7 +228,7 @@ public class WasmToWir implements IRPass<ModuleNode, Module> {
 
         public Var refVar(int n) {
             while (n >= varVals.size()) {
-                varVals.add(func.newVar("stack" + (varVals.size() - locals)));
+                varVals.add(func.newVar("stack", (varVals.size() - locals)));
             }
             return varVals.get(n);
         }
@@ -748,12 +748,12 @@ public class WasmToWir implements IRPass<ModuleNode, Module> {
             BasicBlock lastBb = cs.newBb();
             ConvertState.CtrlFrame rootFrame = cs.pushC(END, new TypeNode(new byte[0], new byte[0]), firstBb);
             for (int i = 0; i < cs.argC; i++) {
-                Var argVar = cs.func.newVar("arg" + i);
+                Var argVar = cs.func.newVar("arg", i);
                 cs.varVals.add(argVar);
                 firstBb.addEffect(CommonOps.ARG.create(i).insn().assignTo(argVar));
             }
             for (int i = 0; i < cs.localC; ++i) {
-                Var localVar = cs.func.newVar("local" + i);
+                Var localVar = cs.func.newVar("local", i);
                 cs.varVals.add(localVar);
                 firstBb.addEffect(WasmOps.ZEROINIT.create(cs.localTypes[i]).insn().assignTo(localVar));
             }

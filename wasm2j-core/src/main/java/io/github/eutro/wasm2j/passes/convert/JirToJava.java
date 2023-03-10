@@ -365,7 +365,7 @@ public class JirToJava implements IRPass<Module, ClassNode> {
         CTRL_CONVERTERS.put(CommonOps.BR.key, (jb, ct) -> {
             BasicBlock target = ct.targets.get(0);
             if (ct.getExtOrThrow(CommonExts.OWNING_BLOCK)
-                    .getExt(NEXT_BLOCK_EXT).orElse(null) != target) {
+                    .getNullable(NEXT_BLOCK_EXT) != target) {
                 jb.goTo(target.getExtOrThrow(LABEL_EXT));
             }
         });
@@ -375,7 +375,7 @@ public class JirToJava implements IRPass<Module, ClassNode> {
             BasicBlock fallthroughBlock = ct.targets.get(1);
             jb.visitJumpInsn(ty.opcode, targetBlock.getExtOrThrow(LABEL_EXT));
             BasicBlock nextBlock = ct.getExtOrThrow(CommonExts.OWNING_BLOCK)
-                    .getExt(NEXT_BLOCK_EXT).orElse(null);
+                    .getNullable(NEXT_BLOCK_EXT);
             if (fallthroughBlock != nextBlock) {
                 jb.goTo(fallthroughBlock.getExtOrThrow(LABEL_EXT));
             }

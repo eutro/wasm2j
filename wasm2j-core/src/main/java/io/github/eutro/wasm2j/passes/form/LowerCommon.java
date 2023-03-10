@@ -14,7 +14,7 @@ abstract class LowerCommon implements InPlaceIRPass<Function> {
     @Override
     public void runInPlace(Function func) {
         IRBuilder ib = new IRBuilder(func, null);
-        for (BasicBlock block : func.blocks) {
+        for (BasicBlock block : new ArrayList<>(func.blocks)) {
             ib.setBlock(block);
             Control sourceCtrl = block.getControl();
             block.setControl(null);

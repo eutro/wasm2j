@@ -97,7 +97,7 @@ public class Inliner {
             }
             returns = new ArrayList<>(expectedLength);
             for (int i = 0; i < expectedLength; i++) {
-                Var outVar = ib.func.newVar("ret." + i);
+                Var outVar = ib.func.newVar("ret", i);
                 returns.add(outVar);
                 ib.insert(CommonOps.PHI
                         .create(phiSources.get(i))

@@ -257,7 +257,7 @@ public class InterfaceBasedLinker<T extends EventSupplier<? super RunModuleCompi
                 args.add(target.get(ib));
                 int paramCount = method.getParamTys().size();
                 for (int i = 0; i < paramCount; ++i) {
-                    args.add(ib.insert(CommonOps.ARG.create(i).insn(), "arg" + i));
+                    args.add(ib.insert(CommonOps.ARG.create(i).insn(), ib.func.newVar("arg", i)));
                 }
                 List<Var> rets = new ArrayList<>();
                 if (!method.getReturnTy().equals(Type.VOID_TYPE)) {

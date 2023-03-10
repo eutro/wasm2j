@@ -83,7 +83,7 @@ public class LinearScan implements InPlaceIRPass<Function> {
                         Deque<Var> varDeque = unusedRegisters.computeIfAbsent(type, $ -> new ArrayDeque<>());
                         interval.reg = varDeque.pollLast();
                         if (interval.reg == null) {
-                            interval.reg = func.newVar("reg:" + type.getDescriptor());
+                            interval.reg = func.newVarFmt("reg:%s", type);
                             interval.reg.attachExt(JavaExts.TYPE, type);
                         }
                         allocated.put(var, interval.reg);
