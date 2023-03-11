@@ -13,10 +13,7 @@ import io.github.eutro.wasm2j.events.ModifyConventionsEvent;
 import io.github.eutro.wasm2j.ext.Ext;
 import io.github.eutro.wasm2j.ext.JavaExts;
 import io.github.eutro.wasm2j.ext.WasmExts;
-import io.github.eutro.wasm2j.ops.CommonOps;
-import io.github.eutro.wasm2j.ops.JavaOps;
-import io.github.eutro.wasm2j.ops.Op;
-import io.github.eutro.wasm2j.ops.WasmOps;
+import io.github.eutro.wasm2j.ops.*;
 import io.github.eutro.wasm2j.passes.IRPass;
 import io.github.eutro.wasm2j.passes.convert.Handlify;
 import io.github.eutro.wasm2j.ssa.Module;
@@ -44,20 +41,16 @@ import static io.github.eutro.wasm2j.util.Lazy.lazy;
 public class WasmConvertPass {
     private static final Ext<Map<String, ValueGetter>> EXPORTS_EXT = Ext.create(Map.class, "EXPORTS_EXT");
     private static final Ext<AtomicInteger> IMPORT_COUNTER_EXT = Ext.create(AtomicInteger.class, "IMPORT_COUNTER_EXT");
-    private static final JClass.JavaMethod MH_BIND_TO = JClass.JavaMethod.fromJava(
-            MethodHandle.class,
-            "bindTo",
-            Object.class
-    );
+    private static final JClass.JavaMethod MH_BIND_TO = IRUtils.METHOD_HANDLE_CLASS.lookupMethod("bindTo", Object.class);
     public static final Type EV_TYPE = Type.getType(ExternVal.class);
-    public static final JClass EV_CLASS = new JClass(Type.getInternalName(ExternVal.class));
-    public static final JClass.JavaMethod EV_GET_AS_FUNC = new JClass.JavaMethod(EV_CLASS, "getAsHandle",
-            Type.getMethodDescriptor(
-                    Type.getType(MethodHandle.class),
-                    Type.getType(MethodType.class)
-            ),
-            JClass.JavaMethod.Kind.INTERFACE);
-    private static final JClass.JavaMethod ENUM_ORDINAL = JClass.JavaMethod.fromJava(Enum.class, "ordinal");
+    public static final JClass EV_CLASS = JClass.emptyFromJava(ExternVal.class);
+    public static final JClass.JavaMethod EV_GET_AS_FUNC = EV_CLASS.lookupMethod("getAsHandle", MethodType.class);
+    private static final JClass.JavaMethod ENUM_ORDINAL = JClass.emptyFromJava(Enum.class).lookupMethod("ordinal");
+    private static final JClass STRING_CLASS = JClass.emptyFromJava(String.class);
+    private static final JClass.JavaMethod STRING_EQUALS = STRING_CLASS.lookupMethod("equals", Object.class);
+    private static final JClass TABLE_CLASS = JClass.emptyFromJava(Table.class);
+    private static final JClass GLOBAL_CLASS = JClass.emptyFromJava(Global.class);
+    private static final JClass MEMORY_CLASS = JClass.emptyFromJava(Memory.class);
 
     public static IRPass<ModuleNode, ClassNode> getPass() {
         WasmCompiler cc = new WasmCompiler();
@@ -195,7 +188,7 @@ public class WasmConvertPass {
                 Type[] argTys = descTy.getArgumentTypes();
                 Var paramClasses = ib.insert(JavaOps.insns(new TypeInsnNode(
                                         Opcodes.ANEWARRAY,
-                                        Type.getInternalName(Class.class)
+                                        "java/lang/Class"
                                 ))
                                 .insn(ib.insert(CommonOps.constant(argTys.length), "len")),
                         "paramTys");
@@ -222,15 +215,13 @@ public class WasmConvertPass {
             @Override
             public void export(ExportNode node, Module module, JClass jClass) {
                 super.export(node, module, jClass);
-                getOrMakeExports(jClass).put(node.name, ib -> ib.insert(JavaOps.INVOKE.create(
-                                JClass.JavaMethod.fromJava(Func.HandleFunc.class,
-                                        "create", ExternType.Func.class, MethodHandle.class)
-                        ).insn(ib.insert(JavaOps.INVOKE.create(JClass.JavaMethod.fromJava(ExternType.Func.class,
-                                                        "parse", String.class))
-                                                .insn(ib.insert(CommonOps.constant(ExternType.Func.encode(type)),
-                                                        "encoded")),
-                                        "ty"),
-                                getHandle.get(ib)),
+                getOrMakeExports(jClass).put(node.name, ib -> ib.insert(
+                        EmbedFunctionConvention.CREATE_HANDLE_FUNC
+                                .insn(ib.insert(EmbedFunctionConvention.PARSE_FUNC_TYPE
+                                                        .insn(ib.insert(CommonOps.constant(ExternType.Func.encode(type)),
+                                                                "encoded")),
+                                                "ty"),
+                                        getHandle.get(ib)),
                         "export"));
             }
         };
@@ -245,11 +236,11 @@ public class WasmConvertPass {
         );
         jClass.fields.add(field);
         ValueGetterSetter table = Getters.fieldGetter(Getters.GET_THIS, field);
-        JClass.JavaMethod get = JClass.JavaMethod.fromJava(Table.class, "get", int.class);
-        JClass.JavaMethod set = JClass.JavaMethod.fromJava(Table.class, "set", int.class, Object.class);
-        JClass.JavaMethod size = JClass.JavaMethod.fromJava(Table.class, "size");
-        JClass.JavaMethod grow = JClass.JavaMethod.fromJava(Table.class, "grow", int.class, Object.class);
-        JClass.JavaMethod init = JClass.JavaMethod.fromJava(Table.class, "init", int.class, int.class, int.class, Object[].class);
+        JClass.JavaMethod get = TABLE_CLASS.lookupMethod("get", int.class);
+        JClass.JavaMethod set = TABLE_CLASS.lookupMethod("set", int.class, Object.class);
+        JClass.JavaMethod size = TABLE_CLASS.lookupMethod("size");
+        JClass.JavaMethod grow = TABLE_CLASS.lookupMethod("grow", int.class, Object.class);
+        JClass.JavaMethod init = TABLE_CLASS.lookupMethod("init", int.class, int.class, int.class, Object[].class);
         Type componentType = BasicCallingConvention.javaType(importNode.type);
         return new TableConvention.Delegating(null) {
             @Override
@@ -304,7 +295,7 @@ public class WasmConvertPass {
 
             @Override
             public void modifyConstructor(IRBuilder ib, JClass.JavaMethod ctorMethod, Module module, JClass jClass) {
-                JClass.JavaMethod getAsTable = JClass.JavaMethod.fromJava(ExternVal.class, "getAsTable");
+                JClass.JavaMethod getAsTable = EV_CLASS.lookupMethod("getAsTable");
                 List<Type> params = ctorMethod.getParamTys();
                 params.add(EV_TYPE);
                 ib.insert(JavaOps.PUT_FIELD
@@ -334,8 +325,8 @@ public class WasmConvertPass {
                 false);
         jClass.fields.add(field);
         ValueGetterSetter global = Getters.fieldGetter(Getters.GET_THIS, field);
-        JClass.JavaMethod get = JClass.JavaMethod.fromJava(Global.class, "get");
-        JClass.JavaMethod set = JClass.JavaMethod.fromJava(Global.class, "set", Object.class);
+        JClass.JavaMethod get = GLOBAL_CLASS.lookupMethod("get");
+        JClass.JavaMethod set = GLOBAL_CLASS.lookupMethod("set", Object.class);
         Type objTy = Type.getType(Object.class);
         return new GlobalConvention.Delegating(null) {
             @Override
@@ -363,7 +354,7 @@ public class WasmConvertPass {
 
             @Override
             public void modifyConstructor(IRBuilder ib, JClass.JavaMethod ctorMethod, Module module, JClass jClass) {
-                JClass.JavaMethod getAsGlobal = JClass.JavaMethod.fromJava(ExternVal.class, "getAsGlobal");
+                JClass.JavaMethod getAsGlobal = EV_CLASS.lookupMethod("getAsGlobal");
                 List<Type> params = ctorMethod.getParamTys();
                 params.add(EV_TYPE);
                 ib.insert(JavaOps.PUT_FIELD
@@ -394,10 +385,9 @@ public class WasmConvertPass {
         );
         jClass.fields.add(field);
         ValueGetterSetter memory = Getters.fieldGetter(Getters.GET_THIS, field);
-        JClass.JavaMethod size = JClass.JavaMethod.fromJava(Memory.class, "size");
-        JClass.JavaMethod grow = JClass.JavaMethod.fromJava(Memory.class, "grow", int.class);
-        JClass.JavaMethod init = JClass.JavaMethod.fromJava(Memory.class, "init",
-                int.class, int.class, int.class, ByteBuffer.class);
+        JClass.JavaMethod size = MEMORY_CLASS.lookupMethod("size");
+        JClass.JavaMethod grow = MEMORY_CLASS.lookupMethod("grow", int.class);
+        JClass.JavaMethod init = MEMORY_CLASS.lookupMethod("init", int.class, int.class, int.class, ByteBuffer.class);
         return new MemoryConvention.Delegating(null) {
             @Override
             public void emitMemLoad(IRBuilder ib, Effect effect) {
@@ -459,7 +449,7 @@ public class WasmConvertPass {
 
             @Override
             public void modifyConstructor(IRBuilder ib, JClass.JavaMethod ctorMethod, Module module, JClass jClass) {
-                JClass.JavaMethod getAsMemory = JClass.JavaMethod.fromJava(ExternVal.class, "getAsMemory");
+                JClass.JavaMethod getAsMemory = EV_CLASS.lookupMethod("getAsMemory");
                 List<Type> params = ctorMethod.getParamTys();
                 params.add(EV_TYPE);
                 ib.insert(JavaOps.PUT_FIELD
@@ -507,14 +497,6 @@ public class WasmConvertPass {
 
                 List<BasicBlock> targets = new ArrayList<>();
 
-                JClass stringClass = new JClass(Type.getInternalName(String.class));
-                JClass.JavaMethod stringEquals = new JClass.JavaMethod(
-                        stringClass,
-                        "equals",
-                        "(Ljava/lang/Object;)Z",
-                        JClass.JavaMethod.Kind.VIRTUAL
-                );
-
                 Var name = ib.insert(CommonOps.ARG.create(0).insn(), "name");
                 BasicBlock startBlock = ib.getBlock();
                 BasicBlock endBlock = ib.func.newBb();
@@ -532,7 +514,7 @@ public class WasmConvertPass {
                         } else {
                             k = endBlock;
                         }
-                        Var isKey = ib.insert(JavaOps.INVOKE.create(stringEquals).insn(
+                        Var isKey = ib.insert(JavaOps.INVOKE.create(STRING_EQUALS).insn(
                                 ib.insert(CommonOps.constant(entry.getKey()), "key"),
                                 name
                         ), "isKey");
@@ -548,7 +530,7 @@ public class WasmConvertPass {
 
                 ib.setBlock(startBlock);
                 Var hash = ib.insert(JavaOps.INVOKE.create(new JClass.JavaMethod(
-                        stringClass,
+                        STRING_CLASS,
                         "hashCode",
                         "()I",
                         JClass.JavaMethod.Kind.VIRTUAL
@@ -569,6 +551,12 @@ public class WasmConvertPass {
     }
 
     private static class EmbedFunctionConvention extends FunctionConvention.Delegating {
+        public static final UnaryOpKey<JClass.JavaMethod>.UnaryOp CREATE_HANDLE_FUNC = JavaOps.INVOKE.create(
+                JClass.emptyFromJava(Func.HandleFunc.class)
+                        .lookupMethod("create", ExternType.Func.class, MethodHandle.class)
+        );
+        public static final UnaryOpKey<JClass.JavaMethod>.UnaryOp PARSE_FUNC_TYPE = JavaOps.INVOKE.create(JClass.emptyFromJava(ExternType.Func.class)
+                .lookupMethod("parse", String.class));
         private final FuncNode func;
 
         public EmbedFunctionConvention(FunctionConvention convention, FuncNode func) {
@@ -585,25 +573,33 @@ public class WasmConvertPass {
                         WasmOps.FUNC_REF.create(node.index).insn()
                                 .assignTo(exportVar)
                 );
-                return ib.insert(JavaOps.INVOKE.create(
-                                JClass.JavaMethod.fromJava(Func.HandleFunc.class,
-                                        "create", ExternType.Func.class, MethodHandle.class)
-                        ).insn(ib.insert(JavaOps.INVOKE.create(JClass.JavaMethod.fromJava(ExternType.Func.class,
-                                                        "parse", String.class))
-                                                .insn(ib.insert(CommonOps.constant(
-                                                                ExternType.Func.encode(Objects.requireNonNull(module
-                                                                                .getExtOrThrow(WasmExts.MODULE).types)
-                                                                        .types
-                                                                        .get(func.type))),
-                                                        "encoded")),
-                                        "ty"),
-                                exportVar),
+                return ib.insert(CREATE_HANDLE_FUNC
+                                .insn(ib.insert(PARSE_FUNC_TYPE
+                                                        .insn(ib.insert(CommonOps.constant(
+                                                                        ExternType.Func.encode(Objects.requireNonNull(module
+                                                                                        .getExtOrThrow(WasmExts.MODULE).types)
+                                                                                .types
+                                                                                .get(func.type))),
+                                                                "encoded")),
+                                                "ty"),
+                                        exportVar),
                         "export");
             });
         }
     }
 
     private static class EmbedTableConvention extends TableConvention.Delegating {
+        public static final UnaryOpKey<JClass.JavaMethod>.UnaryOp CREATE_HANDLE_TABLE = JavaOps.INVOKE
+                .create(JClass.emptyFromJava(Table.HandleTable.class)
+                        .lookupMethod("create",
+                                ExternType.Table.class,
+                                MethodHandle.class,
+                                MethodHandle.class,
+                                MethodHandle.class,
+                                MethodHandle.class));
+        public static final UnaryOpKey<JClass.JavaMethod>.UnaryOp CREATE_HANDLE_TABLE_TY = JavaOps.INVOKE
+                .create(JClass.emptyFromJava(ExternType.Table.class)
+                        .lookupMethod("create", int.class, Integer.class, byte.class));
         private final TableNode table;
         private final int idx;
         ValueGetter getExtern;
@@ -619,12 +615,7 @@ public class WasmConvertPass {
         public void modifyConstructor(IRBuilder jb, JClass.JavaMethod ctorMethod, Module module, JClass jClass) {
             super.modifyConstructor(jb, ctorMethod, module, jClass);
             if (exported) {
-                ValueGetter kind = ib -> ib.insert(JavaOps.INVOKE
-                                .create(JClass.JavaMethod.fromJava(ExternType.Table.class,
-                                        "create",
-                                        int.class,
-                                        Integer.class,
-                                        byte.class))
+                ValueGetter kind = ib -> ib.insert(EmbedTableConvention.CREATE_HANDLE_TABLE_TY
                                 .insn(
                                         ib.insert(CommonOps.constant(table.limits.min), "min"),
                                         IRUtils.emitNullableInt(ib, table.limits.max),
@@ -659,16 +650,7 @@ public class WasmConvertPass {
                         WasmOps.TABLE_GROW.create(idx),
                         delegate::emitTableGrow
                 );
-                getExtern = ib -> ib.insert(JavaOps.INVOKE
-                                .create(JClass.JavaMethod.fromJava(
-                                        Table.HandleTable.class,
-                                        "create",
-                                        ExternType.Table.class,
-                                        MethodHandle.class,
-                                        MethodHandle.class,
-                                        MethodHandle.class,
-                                        MethodHandle.class
-                                ))
+                getExtern = ib -> ib.insert(CREATE_HANDLE_TABLE
                                 .insn(
                                         kind.get(ib),
                                         getHandle.get(ib),
@@ -689,6 +671,9 @@ public class WasmConvertPass {
     }
 
     private static class EmbedGlobalConvention extends GlobalConvention.Delegating implements GlobalConvention {
+        public static final UnaryOpKey<JClass.JavaMethod>.UnaryOp CREATE_HANDLE_GLOBAL = JavaOps.INVOKE
+                .create(JClass.emptyFromJava(Global.HandleGlobal.class)
+                        .lookupMethod("create", byte.class, MethodHandle.class, MethodHandle.class));
         private final GlobalTypeNode type;
         private final int idx;
         ValueGetter getHandle, setHandle;
@@ -732,14 +717,7 @@ public class WasmConvertPass {
         public void export(ExportNode node, Module module, JClass jClass) {
             super.export(node, module, jClass);
             exported = true;
-            getOrMakeExports(jClass).put(node.name, ib -> ib.insert(JavaOps.INVOKE
-                            .create(JClass.JavaMethod.fromJava(
-                                    Global.HandleGlobal.class,
-                                    "create",
-                                    byte.class,
-                                    MethodHandle.class,
-                                    MethodHandle.class
-                            ))
+            getOrMakeExports(jClass).put(node.name, ib -> ib.insert(CREATE_HANDLE_GLOBAL
                             .insn(
                                     ib.insert(CommonOps.constant(type.type), "ty"),
                                     getHandle.get(ib),
@@ -750,6 +728,15 @@ public class WasmConvertPass {
     }
 
     private static class EmbedMemConvention extends MemoryConvention.Delegating {
+        public static final UnaryOpKey<JClass.JavaMethod>.UnaryOp CREATE_HANDLE_MEMORY = JavaOps.INVOKE
+                .create(JClass.emptyFromJava(Memory.HandleMemory.class)
+                        .lookupMethod("create",
+                                Integer.class,
+                                MethodHandle.class,
+                                MethodHandle.class,
+                                MethodHandle.class,
+                                MethodHandle.class,
+                                MethodHandle.class));
         private final MemoryNode mem;
         private final int idx;
         ValueGetter getHandle, storeHandle, sizeHandle, growHandle, initHandle;
@@ -878,17 +865,7 @@ public class WasmConvertPass {
         public void export(ExportNode node, Module module, JClass jClass) {
             super.export(node, module, jClass);
             exported = true;
-            getOrMakeExports(jClass).put(node.name, ib -> ib.insert(JavaOps.INVOKE
-                            .create(JClass.JavaMethod.fromJava(
-                                    Memory.HandleMemory.class,
-                                    "create",
-                                    Integer.class,
-                                    MethodHandle.class,
-                                    MethodHandle.class,
-                                    MethodHandle.class,
-                                    MethodHandle.class,
-                                    MethodHandle.class
-                            ))
+            getOrMakeExports(jClass).put(node.name, ib -> ib.insert(CREATE_HANDLE_MEMORY
                             .insn(
                                     IRUtils.emitNullableInt(ib, mem.limits.max),
                                     getHandle.get(ib),

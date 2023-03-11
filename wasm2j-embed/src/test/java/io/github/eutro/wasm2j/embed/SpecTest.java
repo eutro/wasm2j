@@ -16,10 +16,15 @@ public class SpecTest {
     public static final File DEBUG_OUTPUT_DIRECTORY = new File("build/wasmout");
     public static final String SOURCE = "" +
             "(module\n" +
-            "  (global (import \"spectest\" \"global_i32\") i32)\n" +
             "  (memory 1)\n" +
-            "  (data (global.get 0) \"a\")\n" +
-            ")";
+            "  (data (i32.const 0) \"abcdefghijklmnopqrstuvwxyz\")\n" +
+            "\n" +
+            "  (func (export \"8u_good1\") (param $i i32) (result i32)\n" +
+            "    (i32.load8_u offset=0 (local.get $i))                   ;; 97 'a'\n" +
+            "  ) \n" +
+            ")\n" +
+            "\n" +
+            "(assert_return (invoke \"8u_good1\" (i32.const 0)) (i32.const 97))";
 
     @Test
     void inlineTest() {

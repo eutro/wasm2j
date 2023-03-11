@@ -60,12 +60,7 @@ public class InstanceFunctionConvention extends DelegatingExporter implements Fu
         Var handle = ib.insert(JavaOps.HANDLE_OF.create(method).insn(),
                 "handle");
         ib.insert(JavaOps.INVOKE
-                .create(new JClass.JavaMethod(
-                        IRUtils.METHOD_HANDLE_CLASS,
-                        "bindTo",
-                        "(Ljava/lang/Object;)Ljava/lang/invoke/MethodHandle;",
-                        JClass.JavaMethod.Kind.VIRTUAL
-                ))
+                .create(IRUtils.METHOD_HANDLE_CLASS.lookupMethod("bindTo", Object.class))
                 .insn(handle, target.get(ib))
                 .copyFrom(effect));
     }

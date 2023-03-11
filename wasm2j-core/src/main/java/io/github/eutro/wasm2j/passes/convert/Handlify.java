@@ -31,7 +31,7 @@ import java.util.*;
  * primitive instructions implemented, and as such this will return {@code null} in case of failure.
  */
 public class Handlify implements IRPass<Function, @Nullable Function> {
-    private static final JClass METHOD_HANDLES_CLASS = new JClass(Type.getInternalName(MethodHandles.class));
+    private static final JClass METHOD_HANDLES_CLASS = JClass.emptyFromJava(MethodHandles.class);
     private static final JClass.JavaMethod MH_CONSTANT = new JClass.JavaMethod(METHOD_HANDLES_CLASS,
             "constant",
             "(Ljava/lang/Class;Ljava/lang/Object;)Ljava/lang/invoke/MethodHandle;",
@@ -40,25 +40,25 @@ public class Handlify implements IRPass<Function, @Nullable Function> {
             "identity",
             "(Ljava/lang/Class;)Ljava/lang/invoke/MethodHandle;",
             JClass.JavaMethod.Kind.STATIC);
-    private static final JClass.JavaMethod MH_PERMUTE_ARGUMENTS = JClass.JavaMethod.fromJava(MethodHandles.class,
+    private static final JClass.JavaMethod MH_PERMUTE_ARGUMENTS = METHOD_HANDLES_CLASS.lookupMethod(
             "permuteArguments",
             MethodHandle.class,
             MethodType.class,
             int[].class);
-    private static final JClass.JavaMethod MH_COLLECT_ARGUMENTS = JClass.JavaMethod.fromJava(MethodHandles.class,
+    private static final JClass.JavaMethod MH_COLLECT_ARGUMENTS = METHOD_HANDLES_CLASS.lookupMethod(
             "collectArguments",
             MethodHandle.class,
             int.class,
             MethodHandle.class);
-    private static final JClass.JavaMethod MH_AS_TYPE = JClass.JavaMethod.fromJava(MethodHandle.class,
+    private static final JClass.JavaMethod MH_AS_TYPE = IRUtils.METHOD_HANDLE_CLASS.lookupMethod(
             "asType",
             MethodType.class);
-    private static final JClass.JavaMethod MH_TYPE = JClass.JavaMethod.fromJava(MethodHandle.class,
+    private static final JClass.JavaMethod MH_TYPE = IRUtils.METHOD_HANDLE_CLASS.lookupMethod(
             "type");
-    private static final JClass.JavaMethod MTY_WITH_RETURN = JClass.JavaMethod.fromJava(MethodType.class,
+    private static final JClass.JavaMethod MTY_WITH_RETURN = IRUtils.MTY_CLASS.lookupMethod(
             "changeReturnType",
             Class.class);
-    private static final JClass.JavaMethod MTY_PARAM_TY = JClass.JavaMethod.fromJava(MethodType.class,
+    private static final JClass.JavaMethod MTY_PARAM_TY = IRUtils.MTY_CLASS.lookupMethod(
             "parameterType",
             int.class);
 
@@ -306,17 +306,11 @@ public class Handlify implements IRPass<Function, @Nullable Function> {
                                 ib.insert(insn.op.insn(), "handle")),
                 "constHandle"));
         CONVERTERS.put(JavaOps.ARRAY_GET, insn -> ib -> ib.insert(JavaOps.INVOKE
-                        .create(new JClass.JavaMethod(METHOD_HANDLES_CLASS,
-                                "arrayElementGetter",
-                                "(Ljava/lang/Class;)Ljava/lang/invoke/MethodHandle;",
-                                JClass.JavaMethod.Kind.STATIC))
+                        .create(METHOD_HANDLES_CLASS.lookupMethod("arrayElementGetter", Class.class))
                         .insn(ib.insert(IRUtils.loadClass(insn.args().get(0).getExtOrThrow(JavaExts.TYPE)), "ty")),
                 "aeg"));
         CONVERTERS.put(JavaOps.ARRAY_SET, insn -> ib -> ib.insert(JavaOps.INVOKE
-                        .create(new JClass.JavaMethod(METHOD_HANDLES_CLASS,
-                                "arrayElementSetter",
-                                "(Ljava/lang/Class;)Ljava/lang/invoke/MethodHandle;",
-                                JClass.JavaMethod.Kind.STATIC))
+                        .create(METHOD_HANDLES_CLASS.lookupMethod("arrayElementSetter", Class.class))
                         .insn(ib.insert(IRUtils.loadClass(insn.args().get(0).getExtOrThrow(JavaExts.TYPE)), "ty")),
                 "aes"));
         CONVERTERS.put(JavaOps.INSNS, insn -> {
@@ -363,10 +357,9 @@ public class Handlify implements IRPass<Function, @Nullable Function> {
                     .getAssignsTo().get(0)
                     .getExtOrThrow(JavaExts.TYPE);
             return ib.insert(JavaOps.INVOKE
-                            .create(new JClass.JavaMethod(METHOD_HANDLES_CLASS,
+                            .create(METHOD_HANDLES_CLASS.lookupMethod(
                                     "constant",
-                                    "(Ljava/lang/Class;Ljava/lang/Object;)Ljava/lang/invoke/MethodHandle;",
-                                    JClass.JavaMethod.Kind.STATIC))
+                                    Class.class, Object.class))
                             .insn(ib.insert(IRUtils.loadClass(constType), "constTy"),
                                     boxed(ib, constType, ib.insert(insn.op.insn(), "constVal"))),
                     "constHandle");

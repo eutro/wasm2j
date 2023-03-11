@@ -130,15 +130,22 @@ public class JavaOps {
         }
     }
 
-    public static Op IADD = markPure(insns(new InsnNode(Opcodes.IADD)));
-    public static Op ISUB = markPure(insns(new InsnNode(Opcodes.ISUB)));
-    public static Op LADD = markPure(insns(new InsnNode(Opcodes.LADD)));
-    public static Op IMUL = markPure(insns(new InsnNode(Opcodes.IMUL)));
-    public static Op I2L = markPure(insns(new InsnNode(Opcodes.I2L)));
-    public static Op I2L_U = markPure(INVOKE
-            .create(JClass.JavaMethod.fromJava(Integer.class, "toUnsignedLong", int.class)));
-    public static Op L2I_EXACT = markPure(INVOKE
-            .create(JClass.JavaMethod.fromJava(Math.class, "toIntExact", long.class)));
+    public static final Op IADD = markPure(insns(new InsnNode(Opcodes.IADD)));
+    public static final Op ISUB = markPure(insns(new InsnNode(Opcodes.ISUB)));
+    public static final Op LADD = markPure(insns(new InsnNode(Opcodes.LADD)));
+    public static final Op IMUL = markPure(insns(new InsnNode(Opcodes.IMUL)));
+    public static final Op I2L = markPure(insns(new InsnNode(Opcodes.I2L)));
+    public static final Op I2L_U;
+    public static final Op IDIV_U;
+
+    public static final Op L2I_EXACT = markPure(INVOKE
+            .create(JClass.emptyFromJava(Math.class).lookupMethod("toIntExact", long.class)));
+
+    static {
+        JClass integerClass = JClass.emptyFromJava(Integer.class);
+        I2L_U = markPure(INVOKE.create(integerClass.lookupMethod("toUnsignedLong", int.class)));
+        IDIV_U = INVOKE.create(integerClass.lookupMethod("divideUnsigned", int.class, int.class));
+    }
 
     static {
         IADD.attachExt(CONSTANT_PROPAGATOR, insn -> {

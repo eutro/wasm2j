@@ -14,9 +14,9 @@ public class Getters {
 
     public static ValueGetterSetter fieldGetter(@Nullable ValueGetter owner, JClass.JavaField field) {
         if (field.isStatic) {
-            assert owner == null;
+            if (owner != null) throw new IllegalArgumentException();
         } else {
-            assert owner != null;
+            if (owner == null) throw new IllegalArgumentException();
         }
         return new ValueGetterSetter() {
             @Override

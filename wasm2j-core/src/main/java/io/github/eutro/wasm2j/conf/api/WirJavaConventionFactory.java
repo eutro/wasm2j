@@ -232,21 +232,13 @@ public interface WirJavaConventionFactory {
                                 func.attachExt(JavaExts.FUNCTION_METHOD, method);
 
                                 IRBuilder dIb = new IRBuilder(func, func.newBb());
-                                Var dataV = dIb.insert(JavaOps.INVOKE.create(new JClass.JavaMethod(
-                                                        IRUtils.BYTE_BUFFER_CLASS,
-                                                        "allocate",
-                                                        "(I)Ljava/nio/ByteBuffer;",
-                                                        JClass.JavaMethod.Kind.STATIC
-                                                ))
+                                Var dataV = dIb.insert(JavaOps.INVOKE.create(
+                                                        IRUtils.BYTE_BUFFER_CLASS.lookupMethod("allocate", int.class))
                                                 .insn(dIb.insert(CommonOps.constant(data.init.length), "len")),
                                         "data");
 
-                                Var slicedV = dIb.insert(JavaOps.INVOKE.create(new JClass.JavaMethod(
-                                                IRUtils.BYTE_BUFFER_CLASS,
-                                                "slice",
-                                                "()Ljava/nio/ByteBuffer;",
-                                                JClass.JavaMethod.Kind.VIRTUAL
-                                        )).insn(dataV),
+                                Var slicedV = dIb.insert(JavaOps.INVOKE.create(ByteBufferMemoryConvention.BUFFER_SLICE)
+                                                .insn(dataV),
                                         "sliced");
 
                                 IRUtils.fillAuto(data, dIb, slicedV);
@@ -284,7 +276,7 @@ public interface WirJavaConventionFactory {
                             TypeNode typeNode = node.types.types.get(fn.type);
                             JClass.JavaMethod method = new JClass.JavaMethod(
                                     jClass,
-                                    "func" + i++,
+                                    "_func" + i++,
                                     getCC().getDescriptor(typeNode).getDescriptor(),
                                     JClass.JavaMethod.Kind.FINAL
                             );
@@ -461,26 +453,21 @@ public interface WirJavaConventionFactory {
                             int i = iMemories;
                             for (MemoryNode mem : node.mems) {
                                 JClass.JavaField memField = lMemories.get(i++);
-                                Var memV = ib.insert(JavaOps.INVOKE.create(new JClass.JavaMethod(
-                                                IRUtils.BYTE_BUFFER_CLASS,
+                                Var memV = ib.insert(JavaOps.INVOKE.create(IRUtils.BYTE_BUFFER_CLASS.lookupMethod(
                                                 "allocateDirect",
-                                                "(I)Ljava/nio/ByteBuffer;",
-                                                JClass.JavaMethod.Kind.STATIC
+                                                int.class
                                         )).insn(ib.insert(CommonOps.constant(mem.limits.min * PAGE_SIZE),
                                                 "size")),
                                         "mem");
-                                memV = ib.insert(JavaOps.INVOKE.create(new JClass.JavaMethod(
-                                                IRUtils.BYTE_BUFFER_CLASS,
-                                                "order",
-                                                "(Ljava/nio/ByteOrder;)Ljava/nio/ByteBuffer;",
-                                                JClass.JavaMethod.Kind.VIRTUAL
-                                        )).insn(memV,
-                                                ib.insert(JavaOps.GET_FIELD.create(new JClass.JavaField(
-                                                        new JClass(Type.getInternalName(ByteOrder.class)),
-                                                        "LITTLE_ENDIAN",
-                                                        "Ljava/nio/ByteOrder;",
-                                                        true
-                                                )).insn(), "order")),
+                                memV = ib.insert(JavaOps.INVOKE.create(IRUtils.BYTE_BUFFER_CLASS
+                                                        .lookupMethod("order", ByteOrder.class))
+                                                .insn(memV,
+                                                        ib.insert(JavaOps.GET_FIELD.create(new JClass.JavaField(
+                                                                ByteBufferMemoryConvention.BYTE_ORDER_CLASS,
+                                                                "LITTLE_ENDIAN",
+                                                                "Ljava/nio/ByteOrder;",
+                                                                true
+                                                        )).insn(), "order")),
                                         "mem");
                                 ib.insert(JavaOps.PUT_FIELD.create(memField)
                                         .insn(IRUtils.getThis(ib), memV)

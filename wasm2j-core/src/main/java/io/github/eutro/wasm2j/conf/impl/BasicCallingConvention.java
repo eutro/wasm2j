@@ -24,6 +24,9 @@ import java.util.Optional;
 import static io.github.eutro.jwasm.Opcodes.*;
 
 public class BasicCallingConvention implements CallingConvention {
+
+    private static final JClass NUMBER_CLASS = JClass.emptyFromJava(Number.class);
+
     public static Type javaType(byte type) {
         switch (type) {
             case I32:
@@ -106,12 +109,12 @@ public class BasicCallingConvention implements CallingConvention {
                 if (methodName == null) methodName = "doubleValue";
             {
                 return ib.insert(JavaOps.INVOKE.create(new JClass.JavaMethod(
-                                new JClass(Type.getInternalName(Number.class)),
+                                NUMBER_CLASS,
                                 methodName,
                                 Type.getMethodType(unboxedTy).getDescriptor(),
                                 JClass.JavaMethod.Kind.VIRTUAL
                         ))
-                        .insn(ib.insert(JavaOps.insns(new TypeInsnNode(Opcodes.CHECKCAST, Type.getInternalName(Number.class)))
+                        .insn(ib.insert(JavaOps.insns(new TypeInsnNode(Opcodes.CHECKCAST, NUMBER_CLASS.name))
                                         .insn(val),
                                 "cast")
                         ), "unboxed");

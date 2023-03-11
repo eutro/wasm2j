@@ -4,6 +4,7 @@ import io.github.eutro.wasm2j.ext.CommonExts;
 import io.github.eutro.wasm2j.ssa.BasicBlock;
 import io.github.eutro.wasm2j.ssa.Insn;
 import io.github.eutro.wasm2j.ssa.Var;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -44,5 +45,9 @@ public class CommonOps {
 
     public static Insn constant(Object k) {
         return CONST.create(k).insn();
+    }
+
+    public static boolean quickCheckConstant(Var var, @NotNull Object k) {
+        return k.equals(CommonOps.CONST.argNullable(var.getExtOrThrow(CommonExts.ASSIGNED_AT).insn().op));
     }
 }

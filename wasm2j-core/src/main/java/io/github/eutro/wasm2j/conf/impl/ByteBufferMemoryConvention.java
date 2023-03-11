@@ -16,7 +16,6 @@ import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
 import org.objectweb.asm.tree.InsnNode;
 
-import java.nio.Buffer;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.util.Arrays;
@@ -28,10 +27,11 @@ import static io.github.eutro.jwasm.Opcodes.PAGE_SIZE;
 public class ByteBufferMemoryConvention extends DelegatingExporter implements MemoryConvention {
     public static final Ext<ValueGetterSetter> MEMORY_BYTE_BUFFER = Ext.create(ValueGetterSetter.class, "MEMORY_BYTE_BUFFER");
     public static final int MAX_PAGES = Integer.MAX_VALUE / PAGE_SIZE;
-    private static final JClass.JavaMethod BUFFER_SLICE = JClass.JavaMethod.fromJava(ByteBuffer.class, "slice");
-    private static final JClass.JavaMethod BUFFER_POSITION = JClass.JavaMethod.fromJava(ByteBuffer.class, "position", int.class);
-    private static final JClass.JavaMethod BUFFER_LIMIT = JClass.JavaMethod.fromJava(ByteBuffer.class, "limit", int.class);
-    private static final JClass.JavaMethod BUFFER_PUT_BUF = JClass.JavaMethod.fromJava(ByteBuffer.class, "put", ByteBuffer.class);
+    public static final JClass BYTE_ORDER_CLASS = JClass.emptyFromJava(ByteOrder.class);
+    public static final JClass.JavaMethod BUFFER_SLICE = IRUtils.BYTE_BUFFER_CLASS.lookupMethod("slice");
+    private static final JClass.JavaMethod BUFFER_POSITION = IRUtils.BUFFER_CLASS.lookupMethod("position", int.class);
+    private static final JClass.JavaMethod BUFFER_LIMIT = IRUtils.BUFFER_CLASS.lookupMethod("limit", int.class);
+    private static final JClass.JavaMethod BUFFER_PUT_BUF = IRUtils.BYTE_BUFFER_CLASS.lookupMethod("put", ByteBuffer.class);
 
     private final ValueGetterSetter buffer;
     private final @Nullable Integer max;
@@ -86,20 +86,9 @@ public class ByteBufferMemoryConvention extends DelegatingExporter implements Me
 
     @Override
     public void emitMemSize(IRBuilder ib, Effect effect) {
-        ib.insert(JavaOps.INVOKE
-                .create(new JClass.JavaMethod(
-                        new JClass(Type.getInternalName(Integer.class)),
-                        "divideUnsigned",
-                        "(II)I",
-                        JClass.JavaMethod.Kind.STATIC
-                ))
+        ib.insert(JavaOps.IDIV_U
                 .insn(ib.insert(JavaOps.INVOKE
-                                        .create(new JClass.JavaMethod(
-                                                new JClass(Type.getInternalName(Buffer.class)),
-                                                "capacity",
-                                                "()I",
-                                                JClass.JavaMethod.Kind.VIRTUAL
-                                        ))
+                                        .create(IRUtils.BUFFER_CLASS.lookupMethod("capacity"))
                                         .insn(buffer.get(ib)),
                                 "rawSz"),
                         ib.insert(CommonOps.constant(PAGE_SIZE), "pgSz"))
@@ -131,8 +120,8 @@ public class ByteBufferMemoryConvention extends DelegatingExporter implements Me
         return res;
          */
 
-        JClass.JavaMethod capacity = JClass.JavaMethod.fromJava(ByteBuffer.class, "capacity");
-        JClass.JavaMethod duplicate = JClass.JavaMethod.fromJava(ByteBuffer.class, "duplicate");
+        JClass.JavaMethod capacity = IRUtils.BYTE_BUFFER_CLASS.lookupMethod("capacity");
+        JClass.JavaMethod duplicate = IRUtils.BYTE_BUFFER_CLASS.lookupMethod("duplicate");
         Type oome = Type.getType(OutOfMemoryError.class);
 
         Var growBy = effect.insn().args().get(0);
@@ -163,9 +152,9 @@ public class ByteBufferMemoryConvention extends DelegatingExporter implements Me
         ib.setBlock(k);
 
         Var newBuf = ib.insert(JavaOps.INVOKE
-                        .create(JClass.JavaMethod.fromJava(ByteBuffer.class, "order", ByteOrder.class))
+                        .create(IRUtils.BYTE_BUFFER_CLASS.lookupMethod("order", ByteOrder.class))
                         .insn(ib.insert(JavaOps.INVOKE
-                                                .create(JClass.JavaMethod.fromJava(ByteBuffer.class, "allocateDirect", int.class))
+                                                .create(IRUtils.BYTE_BUFFER_CLASS.lookupMethod("allocateDirect", int.class))
                                                 .insn(ib.insert(JavaOps.IADD
                                                                 .insn(rawSz,
                                                                         ib.insert(JavaOps.IMUL
@@ -203,6 +192,11 @@ public class ByteBufferMemoryConvention extends DelegatingExporter implements Me
                 .copyFrom(effect));
     }
 
+    private static Var position(IRBuilder ib, Var buffer, Var to) {
+        if (CommonOps.quickCheckConstant(to, 0)) return buffer;
+        return ib.insert(JavaOps.INVOKE.create(BUFFER_POSITION).insn(buffer, to), "positioned");
+    }
+
     @Override
     public void emitMemInit(IRBuilder ib, Effect effect, Var data) {
         Iterator<Var> iter = effect.insn().args().iterator();
@@ -211,40 +205,16 @@ public class ByteBufferMemoryConvention extends DelegatingExporter implements Me
         Var length = iter.next();
 
         Var mem = buffer.get(ib);
-        JClass.JavaMethod sliceMethod = new JClass.JavaMethod(
-                IRUtils.BYTE_BUFFER_CLASS,
-                "slice",
-                "()Ljava/nio/ByteBuffer;",
-                JClass.JavaMethod.Kind.VIRTUAL
-        );
-        JClass.JavaMethod positionMethod = new JClass.JavaMethod(
-                IRUtils.BUFFER_CLASS,
-                "position",
-                "(I)Ljava/nio/Buffer;",
-                JClass.JavaMethod.Kind.VIRTUAL
-        );
-        JClass.JavaMethod limitMethod = new JClass.JavaMethod(
-                IRUtils.BUFFER_CLASS,
-                "limit",
-                "(I)Ljava/nio/Buffer;",
-                JClass.JavaMethod.Kind.VIRTUAL
-        );
-        JClass.JavaMethod putMethod = new JClass.JavaMethod(
-                IRUtils.BYTE_BUFFER_CLASS,
-                "put",
-                "(Ljava/nio/ByteBuffer;)Ljava/nio/ByteBuffer;",
-                JClass.JavaMethod.Kind.VIRTUAL
-        );
 
-        mem = ib.insert(JavaOps.INVOKE.create(sliceMethod).insn(mem), "sliced");
-        ib.insert(JavaOps.INVOKE.create(positionMethod).insn(mem, dstIdx), "_positioned");
+        mem = ib.insert(JavaOps.INVOKE.create(BUFFER_SLICE).insn(mem), "sliced");
+        position(ib, mem, dstIdx);
 
-        data = ib.insert(JavaOps.INVOKE.create(sliceMethod).insn(data), "sliced");
-        ib.insert(JavaOps.INVOKE.create(positionMethod).insn(data, srcIdx), "_positioned");
+        data = ib.insert(JavaOps.INVOKE.create(BUFFER_SLICE).insn(data), "sliced");
+        Var toLimit = position(ib, data, srcIdx);
         Var limit = ib.insert(JavaOps.IADD.insn(srcIdx, length), "limit");
-        ib.insert(JavaOps.INVOKE.create(limitMethod).insn(data, limit), "_limited");
+        ib.insert(JavaOps.INVOKE.create(BUFFER_LIMIT).insn(toLimit, limit), "_limited");
 
-        ib.insert(JavaOps.INVOKE.create(putMethod).insn(mem, data), "mem");
+        ib.insert(JavaOps.INVOKE.create(BUFFER_PUT_BUF).insn(mem, data), "mem");
     }
 
     @SuppressWarnings({"DuplicatedCode", "CommentedOutCode"})
@@ -274,12 +244,12 @@ public class ByteBufferMemoryConvention extends DelegatingExporter implements Me
             // t.slice().position(dstA).put(o.slice().position(srcA).limit(lenI));
             Var target = otherBuf.get(ib);
             target = ib.insert(JavaOps.INVOKE.create(BUFFER_SLICE).insn(target), "sliced");
-            target = ib.insert(JavaOps.INVOKE.create(BUFFER_POSITION).insn(target, dstAddr), "positioned");
+            position(ib, target, dstAddr);
             Var src = buffer.get(ib);
             src = ib.insert(JavaOps.INVOKE.create(BUFFER_SLICE).insn(src), "sliced");
-            src = ib.insert(JavaOps.INVOKE.create(BUFFER_POSITION).insn(src, srcAddr), "positioned");
+            Var positioned = position(ib, src, srcAddr);
             Var limit = ib.insert(JavaOps.IADD.insn(srcAddr, len), "limit");
-            src = ib.insert(JavaOps.INVOKE.create(BUFFER_LIMIT).insn(src, limit), "limited");
+            ib.insert(JavaOps.INVOKE.create(BUFFER_LIMIT).insn(positioned, limit), "limited");
             ib.insert(JavaOps.INVOKE.create(BUFFER_PUT_BUF).insn(target, src), "put");
         } else {
             MemoryConvention.super.emitMemCopy(ib, effect, dst);

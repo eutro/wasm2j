@@ -29,26 +29,46 @@ import static io.github.eutro.jwasm.Opcodes.I32;
 import static io.github.eutro.wasm2j.ops.JavaOps.JumpType.IFEQ;
 import static io.github.eutro.wasm2j.ops.JavaOps.JumpType.IF_ICMPLE;
 
+/**
+ * A set of utilities for working with Wasm2j's IR.
+ */
 public class IRUtils {
-    public static final JClass BYTE_BUFFER_CLASS = new JClass(Type.getInternalName(ByteBuffer.class));
-    public static final JClass BUFFER_CLASS = new JClass(Type.getInternalName(Buffer.class));
-    public static final JClass METHOD_HANDLE_CLASS = new JClass(Type.getInternalName(MethodHandle.class));
-    public static final JClass MTY_CLASS = new JClass(Type.getInternalName(MethodType.class));
-    public static final JClass.JavaMethod MTY_METHOD_TYPE = new JClass.JavaMethod(
-            MTY_CLASS,
+    /**
+     * The empty {@link JClass} of {@link ByteBuffer}.
+     */
+    public static final JClass BYTE_BUFFER_CLASS = JClass.emptyFromJava(ByteBuffer.class);
+    /**
+     * The empty {@link JClass} of {@link Buffer}.
+     */
+    public static final JClass BUFFER_CLASS = JClass.emptyFromJava(Buffer.class);
+    /**
+     * The empty {@link JClass} of {@link MethodHandle}.
+     */
+    public static final JClass METHOD_HANDLE_CLASS = JClass.emptyFromJava(MethodHandle.class);
+    public static final JClass MTY_CLASS = JClass.emptyFromJava(MethodType.class);
+
+    public static final JClass.JavaMethod MTY_METHOD_TYPE = MTY_CLASS.lookupMethod(
             "methodType",
-            Type.getMethodType(
-                    Type.getType(MethodType.class),
-                    Type.getType(Class.class),
-                    Type.getType(Class[].class)
-            ).getDescriptor(),
-            JClass.JavaMethod.Kind.STATIC
-    );
+            Class.class,
+            Class[].class);
+
     public static final int MAX_USHORT = (1 << 16) - 1;
+    public static final JClass BASE64_CLASS = JClass.emptyFromJava(Base64.class);
+    public static final JClass BASE64_DECODER_CLASS = JClass.emptyFromJava(Base64.Decoder.class);
 
     public static Var getThis(IRBuilder ib) {
         return ib.insert(JavaOps.THIS.insn(), "this");
     }
+
+    private static final Insn VOID_TYPE = JavaOps.GET_FIELD.create(JClass.JavaField.fromJava(Void.class, "TYPE")).insn();
+    private static final Insn BOOLEAN_TYPE = JavaOps.GET_FIELD.create(JClass.JavaField.fromJava(Boolean.class, "TYPE")).insn();
+    private static final Insn CHAR_TYPE = JavaOps.GET_FIELD.create(JClass.JavaField.fromJava(Character.class, "TYPE")).insn();
+    private static final Insn BYTE_TYPE = JavaOps.GET_FIELD.create(JClass.JavaField.fromJava(Byte.class, "TYPE")).insn();
+    private static final Insn SHORT_TYPE = JavaOps.GET_FIELD.create(JClass.JavaField.fromJava(Short.class, "TYPE")).insn();
+    private static final Insn INT_TYPE = JavaOps.GET_FIELD.create(JClass.JavaField.fromJava(Integer.class, "TYPE")).insn();
+    private static final Insn FLOAT_TYPE = JavaOps.GET_FIELD.create(JClass.JavaField.fromJava(Float.class, "TYPE")).insn();
+    private static final Insn LONG_TYPE = JavaOps.GET_FIELD.create(JClass.JavaField.fromJava(Long.class, "TYPE")).insn();
+    private static final Insn DOUBLE_TYPE = JavaOps.GET_FIELD.create(JClass.JavaField.fromJava(Double.class, "TYPE")).insn();
 
     public static Insn loadClass(Type ty) {
         switch (ty.getSort()) {
@@ -56,28 +76,21 @@ public class IRUtils {
             case Type.ARRAY:
                 return CommonOps.constant(ty);
             default: {
-                Class<?> boxedTy;
                 switch (ty.getSort()) {
                     // @formatter:off
-                    case Type.VOID: boxedTy = Void.class; break;
-                    case Type.BOOLEAN: boxedTy = Boolean.class; break;
-                    case Type.CHAR: boxedTy = Character.class; break;
-                    case Type.BYTE: boxedTy = Byte.class; break;
-                    case Type.SHORT: boxedTy = Short.class; break;
-                    case Type.INT: boxedTy = Integer.class; break;
-                    case Type.FLOAT: boxedTy = Float.class; break;
-                    case Type.LONG: boxedTy = Long.class; break;
-                    case Type.DOUBLE: boxedTy = Double.class; break;
+                    case Type.VOID: return VOID_TYPE;
+                    case Type.BOOLEAN: return BOOLEAN_TYPE;
+                    case Type.CHAR: return CHAR_TYPE;
+                    case Type.BYTE: return BYTE_TYPE;
+                    case Type.SHORT: return SHORT_TYPE;
+                    case Type.INT: return INT_TYPE;
+                    case Type.FLOAT: return FLOAT_TYPE;
+                    case Type.LONG: return LONG_TYPE;
+                    case Type.DOUBLE: return DOUBLE_TYPE;
                     // @formatter:on
                     default:
                         throw new IllegalArgumentException();
                 }
-                return JavaOps.GET_FIELD.create(new JClass.JavaField(
-                        new JClass(Type.getInternalName(boxedTy)),
-                        "TYPE",
-                        Type.getDescriptor(Class.class),
-                        true
-                )).insn();
             }
         }
     }
@@ -159,18 +172,8 @@ public class IRUtils {
         // is always big endian
         ByteBuffer buf = ByteBuffer.wrap(data.init);
 
-        JClass.JavaMethod putShort = new JClass.JavaMethod(
-                BYTE_BUFFER_CLASS,
-                "putShort",
-                "(S)Ljava/nio/ByteBuffer;",
-                JClass.JavaMethod.Kind.VIRTUAL
-        );
-        JClass.JavaMethod putByte = new JClass.JavaMethod(
-                BYTE_BUFFER_CLASS,
-                "put",
-                "(B)Ljava/nio/ByteBuffer;",
-                JClass.JavaMethod.Kind.VIRTUAL
-        );
+        JClass.JavaMethod putShort = BYTE_BUFFER_CLASS.lookupMethod("putShort", short.class);
+        JClass.JavaMethod putByte = BYTE_BUFFER_CLASS.lookupMethod("put", byte.class);
 
         while (buf.remaining() >= Short.BYTES) {
             dataV = ib.insert(JavaOps.INVOKE.create(putShort)
@@ -202,8 +205,8 @@ public class IRUtils {
         Var len = ib.insert(CommonOps.constant(data.init.length), "len");
 
         Var decoded;
-        JClass.JavaMethod getDecoder = JClass.JavaMethod.fromJava(Base64.class, "getDecoder");
-        JClass.JavaMethod decode = JClass.JavaMethod.fromJava(Base64.Decoder.class, "decode", String.class);
+        JClass.JavaMethod getDecoder = BASE64_CLASS.lookupMethod("getDecoder");
+        JClass.JavaMethod decode = BASE64_DECODER_CLASS.lookupMethod("decode", String.class);
         Var decoder = ib.insert(JavaOps.INVOKE.create(getDecoder).insn(), "decoder");
         if (srcString.length() > MAX_USHORT) {
             int strLen = srcString.length();
@@ -225,18 +228,18 @@ public class IRUtils {
              */
             String baosName = "java/io/ByteArrayOutputStream";
             Var baos = ib.insert(JavaOps.insns(
-                    new TypeInsnNode(Opcodes.NEW, baosName),
-                    new InsnNode(Opcodes.DUP_X1),
-                    new InsnNode(Opcodes.SWAP),
-                    new MethodInsnNode(Opcodes.INVOKESPECIAL, baosName, "<init>", "(I)V"))
+                            new TypeInsnNode(Opcodes.NEW, baosName),
+                            new InsnNode(Opcodes.DUP_X1),
+                            new InsnNode(Opcodes.SWAP),
+                            new MethodInsnNode(Opcodes.INVOKESPECIAL, baosName, "<init>", "(I)V"))
                     .insn(len), "baos");
-            JClass.JavaMethod osWrite = JClass.JavaMethod.fromJava(OutputStream.class, "write", byte[].class);
+            JClass.JavaMethod osWrite = JClass.emptyFromJava(OutputStream.class).lookupMethod("write", byte[].class);
             for (String str : subStrings) {
                 Var constStr = ib.insert(CommonOps.constant(str), "str");
                 Var part = ib.insert(JavaOps.INVOKE.create(decode).insn(decoder, constStr), "decodedPart");
                 ib.insert(JavaOps.INVOKE.create(osWrite).insn(baos, part).assignTo());
             }
-            JClass.JavaMethod baosToArray = JClass.JavaMethod.fromJava(ByteArrayOutputStream.class, "toByteArray");
+            JClass.JavaMethod baosToArray = JClass.emptyFromJava(ByteArrayOutputStream.class).lookupMethod("toByteArray");
             decoded = ib.insert(JavaOps.INVOKE.create(baosToArray).insn(baos), "decoded");
         } else {
             // byte[] data = Base64.getDecoder().decode(srcString);
@@ -244,11 +247,9 @@ public class IRUtils {
             decoded = ib.insert(JavaOps.INVOKE.create(decode).insn(decoder, constString), "decoded");
         }
 
-        JClass.JavaMethod putBytes = new JClass.JavaMethod(
-                BYTE_BUFFER_CLASS,
+        JClass.JavaMethod putBytes = BYTE_BUFFER_CLASS.lookupMethod(
                 "put",
-                "([BII)Ljava/nio/ByteBuffer;",
-                JClass.JavaMethod.Kind.VIRTUAL
+                byte[].class, int.class, int.class
         );
 
         {
@@ -291,11 +292,8 @@ public class IRUtils {
                     "offset");
             // offset.attachExt(JavaExts.TYPE, Type.INT_TYPE);
             Var limit = ib.insert(JavaOps.ISUB.insn(len, offset), "limit");
-            Var read = ib.insert(JavaOps.INVOKE.create(JClass.JavaMethod.fromJava(
-                                    InputStream.class,
-                                    "read",
-                                    byte[].class, int.class, int.class
-                            ))
+            Var read = ib.insert(JavaOps.INVOKE.create(JClass.emptyFromJava(InputStream.class)
+                                    .lookupMethod("read", byte[].class, int.class, int.class))
                             .insn(gis, decoded, offset, limit),
                     "read");
             ib.insert(JavaOps.IADD.insn(offset, read).assignTo(offsetOut));

@@ -1,17 +1,18 @@
 package io.github.eutro.wasm2j.ssa;
 
 import io.github.eutro.wasm2j.ext.ExtHolder;
+import io.github.eutro.wasm2j.util.Pair;
+import org.jetbrains.annotations.Contract;
 import org.objectweb.asm.Handle;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
 
+import java.lang.ref.SoftReference;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Locale;
+import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class JClass extends ExtHolder {
     public String name; // internal name
@@ -28,16 +29,10 @@ public class JClass extends ExtHolder {
         this(name, Opcodes.ACC_PUBLIC | Opcodes.ACC_SUPER);
     }
 
-    public static JClass fromJava(Class<?> clazz) {
+    @Contract(pure = true)
+    public static JClass emptyFromJava(Class<?> clazz) {
         JClass jClass = new JClass(Type.getInternalName(clazz));
-        for (Method method : clazz.getMethods()) {
-            if (method.isSynthetic()) continue;
-            jClass.methods.add(JavaMethod.fromJava(jClass, method));
-        }
-        for (Field field : clazz.getFields()) {
-            if (field.isSynthetic()) continue;
-            jClass.fields.add(JavaField.fromJava(jClass, field));
-        }
+        jClass.access = clazz.getModifiers();
         return jClass;
     }
 
@@ -52,6 +47,23 @@ public class JClass extends ExtHolder {
 
     public interface Handlable {
         Handle getHandle();
+    }
+
+    private SoftReference<Map<Pair<String, List<Class<?>>>, JavaMethod>> methodCache = new SoftReference<>(null);
+    public JavaMethod lookupMethod(String name, Class<?>... parameterTypes) {
+        Map<Pair<String, List<Class<?>>>, JavaMethod> cache = methodCache.get();
+        if (cache == null) {
+            methodCache = new SoftReference<>(cache = new ConcurrentHashMap<>());
+        }
+        return cache.computeIfAbsent(Pair.of(name, Arrays.asList(parameterTypes)), $ -> {
+            try {
+                Class<?> clazz = Class.forName(this.name.replace('/', '.'));
+                Method method = clazz.getMethod(name, parameterTypes);
+                return JavaMethod.fromJava(this, method);
+            } catch (ReflectiveOperationException e) {
+                throw new IllegalArgumentException(e);
+            }
+        });
     }
 
     public static class JavaMethod extends ExtHolder implements Handlable {
@@ -69,7 +81,7 @@ public class JClass extends ExtHolder {
             this.kind = kind;
         }
 
-        public static JavaMethod fromJava(JClass owner, Method method) {
+        static JavaMethod fromJava(JClass owner, Method method) {
             return new JavaMethod(
                     owner,
                     method.getName(),
@@ -77,15 +89,6 @@ public class JClass extends ExtHolder {
                     Modifier.isStatic(method.getModifiers()) ? Kind.STATIC :
                             Modifier.isInterface(owner.access) ? Kind.INTERFACE : Kind.VIRTUAL
             );
-        }
-
-        public static JavaMethod fromJava(Class<?> owner, String name, Class<?>... parameterTypes) {
-            try {
-                return fromJava(new JClass(Type.getInternalName(owner), owner.getModifiers()),
-                        owner.getMethod(name, parameterTypes));
-            } catch (NoSuchMethodException e) {
-                throw new RuntimeException(e);
-            }
         }
 
         public List<Type> getParamTys() {

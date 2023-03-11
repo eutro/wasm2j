@@ -15,8 +15,10 @@ import org.objectweb.asm.tree.TypeInsnNode;
 import java.util.Arrays;
 
 public class ArrayTableConvention extends DelegatingExporter implements TableConvention {
-    private static final JClass.JavaMethod SYSTEM_ARRAYCOPY = JClass.JavaMethod
-            .fromJava(System.class, "arraycopy", Object.class, int.class, Object.class, int.class, int.class);
+    private static final JClass SYSTEM = JClass.emptyFromJava(System.class);
+    private static final JClass.JavaMethod SYSTEM_ARRAYCOPY = SYSTEM.lookupMethod("arraycopy",
+            Object.class, int.class, Object.class, int.class, int.class);
+    private static final JClass ARRAYS_CLASS = JClass.emptyFromJava(Arrays.class);
     private final ValueGetterSetter table;
     private final Type componentType;
     private final Integer max;
@@ -110,7 +112,7 @@ public class ArrayTableConvention extends DelegatingExporter implements TableCon
 
         Var newTbl = ib.insert(JavaOps.insns(new TypeInsnNode(Opcodes.CHECKCAST, "[" + componentType.getDescriptor()))
                 .insn(ib.insert(JavaOps.INVOKE
-                                .create(JClass.JavaMethod.fromJava(Arrays.class, "copyOf", Object[].class, int.class))
+                                .create(ARRAYS_CLASS.lookupMethod("copyOf", Object[].class, int.class))
                                 .insn(tbl, newSz),
                         "newTblRaw")),
                 "newTbl");
@@ -120,7 +122,7 @@ public class ArrayTableConvention extends DelegatingExporter implements TableCon
         ib.insertCtrl(JavaOps.BR_COND.create(JavaOps.JumpType.IFNULL).insn(fillWith).jumpsTo(k, fillBlock));
         ib.setBlock(fillBlock);
         ib.insert(JavaOps.INVOKE
-                .create(JClass.JavaMethod.fromJava(Arrays.class, "fill", Object[].class, int.class, int.class, Object.class))
+                .create(ARRAYS_CLASS.lookupMethod("fill", Object[].class, int.class, int.class, Object.class))
                 .insn(newTbl, sz, newSz, fillWith)
                 .assignTo());
         ib.insertCtrl(Control.br(k));

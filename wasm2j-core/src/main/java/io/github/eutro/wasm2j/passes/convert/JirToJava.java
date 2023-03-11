@@ -35,7 +35,7 @@ public class JirToJava implements IRPass<JClass, ClassNode> {
                 Opcodes.ACC_SUPER | Opcodes.ACC_PUBLIC,
                 jClass.name,
                 null,
-                Type.getInternalName(Object.class),
+                "java/lang/Object",
                 null
         );
 

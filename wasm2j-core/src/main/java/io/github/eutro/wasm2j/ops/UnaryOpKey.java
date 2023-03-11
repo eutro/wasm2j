@@ -1,5 +1,7 @@
 package io.github.eutro.wasm2j.ops;
 
+import org.jetbrains.annotations.Nullable;
+
 import java.util.Objects;
 import java.util.Optional;
 import java.util.function.Function;
@@ -36,14 +38,25 @@ public class UnaryOpKey<T> extends OpKey {
         }
     }
 
-    public Optional<UnaryOp> check(Op val) {
+    public UnaryOp checkNullable(Op val) {
         if (val.key == this) {
             @SuppressWarnings("unchecked")
             UnaryOp ret = (UnaryOp) val;
-            return Optional.of(ret);
+            return ret;
         } else {
-            return Optional.empty();
+            return null;
         }
+    }
+
+    @Nullable
+    public T argNullable(Op val) {
+        UnaryOp op = checkNullable(val);
+        if (op == null) return null;
+        return op.arg;
+    }
+
+    public Optional<UnaryOp> check(Op val) {
+        return Optional.ofNullable(checkNullable(val));
     }
 
     public UnaryOp cast(Op val) {
