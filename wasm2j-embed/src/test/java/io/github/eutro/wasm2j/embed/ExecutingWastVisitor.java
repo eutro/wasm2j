@@ -13,6 +13,7 @@ import org.jetbrains.annotations.Nullable;
 import java.lang.reflect.Array;
 import java.util.*;
 import java.util.function.BiConsumer;
+import java.util.function.Consumer;
 
 import static org.junit.jupiter.api.AssertionFailureBuilder.assertionFailure;
 import static org.junit.jupiter.api.Assertions.*;
@@ -29,10 +30,6 @@ public class ExecutingWastVisitor extends WastVisitor {
     public ExecutingWastVisitor(WebAssembly wasm) {
         this.wasm = wasm;
         store = wasm.storeInit();
-    }
-
-    public ExecutingWastVisitor() {
-        this(new WebAssembly());
     }
 
     Instance getInst(@Nullable String name) {
@@ -70,12 +67,12 @@ public class ExecutingWastVisitor extends WastVisitor {
                 case "memory":
                     return new Memory.ByteBufferMemory(1, 2);
                 case "print":
-                    return ExternVal.func(() -> System.out.println());
+                    return ExternVal.func(Runnable.class, System.out::println);
                 case "print_i32":
                 case "print_i64":
                 case "print_f32":
                 case "print_f64":
-                    return ExternVal.func((Object x) -> System.out.println(x));
+                    return ExternVal.func(Consumer.class, System.out::println);
                 case "print_i32_f32":
                 case "print_f64_f64":
                     return ExternVal.func(BiConsumer.class, (x, y) -> System.out.printf("%s %s", x, y));

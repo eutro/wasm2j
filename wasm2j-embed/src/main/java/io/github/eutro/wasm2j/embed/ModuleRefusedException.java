@@ -6,6 +6,11 @@ package io.github.eutro.wasm2j.embed;
  * This might happen when a method is too large, for example.
  */
 public class ModuleRefusedException extends RuntimeException {
+    /**
+     * Construct a {@link ModuleRefusedException} with the given cause.
+     *
+     * @param cause The cause of the refusal.
+     */
     public ModuleRefusedException(Throwable cause) {
         super(cause);
     }

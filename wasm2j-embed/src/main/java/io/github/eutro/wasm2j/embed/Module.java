@@ -19,6 +19,9 @@ import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
+/**
+ * A parsed WebAssembly module.
+ */
 public class Module {
     private final ModuleNode node;
     private boolean validated = false;
@@ -27,6 +30,12 @@ public class Module {
         this.node = node;
     }
 
+    /**
+     * Decode a binary module from a byte array.
+     *
+     * @param bytes The byte array.
+     * @return The decoded module
+     */
     @Embedding("module_decode")
     public static Module decode(byte[] bytes) {
         ModuleNode node = new ModuleNode();
@@ -34,6 +43,12 @@ public class Module {
         return new Module(node);
     }
 
+    /**
+     * Parse a text module from a string.
+     *
+     * @param source The source string.
+     * @return The parsed module.
+     */
     @Embedding("module_parse")
     public static Module parse(String source) {
         List<Object> objs = WatReader.readAll(source);
@@ -42,6 +57,14 @@ public class Module {
         return new Module(node);
     }
 
+    /**
+     * Create a module from a JWasm module node.
+     * <p>
+     * The module node will be copied, to prevent exterior mutation.
+     *
+     * @param node The module node.
+     * @return The new module.
+     */
     public static Module fromNode(ModuleNode node) {
         // protect from mutation, since that could break validation
         ModuleNode copiedNode = new ModuleNode();
@@ -53,6 +76,11 @@ public class Module {
         return node;
     }
 
+    /**
+     * Validate the module, throwing an exception if the module is invalid.
+     * <p>
+     * This is idempotent, and will not run validation again if the module has already been validated.
+     */
     @Embedding("module_validate")
     public void validate() {
         if (!validated) {
@@ -61,6 +89,15 @@ public class Module {
         }
     }
 
+    /**
+     * Instantiate the module in the given store with the provided values for imports.
+     * <p>
+     * The imports must be in the same order as those returned for {@link #imports()}.
+     *
+     * @param store   The store.
+     * @param imports The supplied imports.
+     * @return The instantiated module.
+     */
     @Embedding("module_instantiate")
     public Instance instantiate(Store store, ExternVal[] imports) {
         validate();
@@ -107,6 +144,13 @@ public class Module {
         return (Instance) inst;
     }
 
+    /**
+     * Instantiate the module in the given store with the provided function for looking up imports.
+     *
+     * @param store   The store.
+     * @param imports The import resolving function.
+     * @return The instantiated module.
+     */
     public Instance instantiate(Store store, BiFunction<String, String, ExternVal> imports) {
         List<Import> myImports = imports();
         ExternVal[] importList = new ExternVal[myImports.size()];
@@ -117,16 +161,29 @@ public class Module {
         return instantiate(store, importList);
     }
 
+    /**
+     * Instantiate the module in the given store with the provided function for looking up modules to import from.
+     *
+     * @param store   The store.
+     * @param modules The function for looking up module instances.
+     * @return The instantiated module.
+     */
     public Instance instantiate(Store store, Function<String, Instance> modules) {
         return instantiate(store, (module, name) -> {
             Instance instance = modules.apply(module);
             if (instance == null) throw new RuntimeException(String.format("Module '%s' not provided", module));
             ExternVal value = instance.getExport(name);
-            if (value == null) throw new RuntimeException(String.format("Module '%s' does not provide anything named '%s'", module, name));
+            if (value == null)
+                throw new RuntimeException(String.format("Module '%s' does not provide anything named '%s'", module, name));
             return value;
         });
     }
 
+    /**
+     * Get the imports that this module requires.
+     *
+     * @return The list of imports.
+     */
     @Embedding("module_imports")
     public List<Import> imports() {
         validate();
@@ -142,6 +199,11 @@ public class Module {
         return ims;
     }
 
+    /**
+     * Get the exports that this module supplies.
+     *
+     * @return The list of exports.
+     */
     @Embedding("module_exports")
     public List<Export> exports() {
         validate();

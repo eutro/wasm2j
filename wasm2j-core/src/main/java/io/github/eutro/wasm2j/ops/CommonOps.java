@@ -37,6 +37,8 @@ public class CommonOps {
      * Effect: returns the argument corresponding to its predecessor
      * <p>
      * Must precede any other (non-phi) effect instructions within its basic block.
+     * <p>
+     * This instruction is essential for SSA form, where variables cannot be reassigned.
      */
     public static final UnaryOpKey<List<BasicBlock>> PHI = new UnaryOpKey<>("phi", bbs ->
             bbs.stream().map(BasicBlock::toTargetString).collect(Collectors.joining(" ")));
@@ -85,7 +87,7 @@ public class CommonOps {
      * {@link #CONST} instruction with the value {@code k}.
      *
      * @param var The variable.
-     * @param k The constant.
+     * @param k   The constant.
      * @return The above.
      */
     public static boolean quickCheckConstant(Var var, @NotNull Object k) {

@@ -18,36 +18,96 @@ import java.util.Map;
 import static io.github.eutro.jwasm.Opcodes.PAGE_SIZE;
 import static org.objectweb.asm.Opcodes.H_INVOKESTATIC;
 
+/**
+ * A memory extern.
+ */
 public interface Memory extends ExternVal {
+    /**
+     * Something that has a WebAssembly single-byte opcode.
+     */
     interface HasOpcode {
+        /**
+         * Get the single-byte opcode of this.
+         *
+         * @return The opcode.
+         */
         byte opcode();
-
-        int ordinal();
     }
 
+    /**
+     * A type of load instruction.
+     */
     enum LoadMode implements HasOpcode {
+        /**
+         * Read 4 bytes, interpret as a little-endian integer.
+         */
         I32_LOAD(Opcodes.I32_LOAD),
+        /**
+         * Read 8 bytes, interpret as a little-endian long.
+         */
         I64_LOAD(Opcodes.I64_LOAD),
+        /**
+         * Read 4 bytes, interpret as a little-endian float.
+         */
         F32_LOAD(Opcodes.F32_LOAD),
+        /**
+         * Read 8 bytes, interpret as a little-endian double.
+         */
         F64_LOAD(Opcodes.F64_LOAD),
+        /**
+         * Read 1 byte, interpret as an integer and sign extend to a 4 byte integer.
+         */
         I32_LOAD8_S(Opcodes.I32_LOAD8_S),
+        /**
+         * Read 1 byte, interpret as an integer and zero extend to a 4 byte integer.
+         */
         I32_LOAD8_U(Opcodes.I32_LOAD8_U),
+        /**
+         * Read 2 bytes, interpret as a little-endian integer and sign extend to a 4 byte integer.
+         */
         I32_LOAD16_S(Opcodes.I32_LOAD16_S),
+        /**
+         * Read 2 bytes, interpret as a little-endian integer and zero extend to a 4 byte integer.
+         */
         I32_LOAD16_U(Opcodes.I32_LOAD16_U),
+        /**
+         * Read 1 byte, interpret as an integer and sign extend to an 8 byte long.
+         */
         I64_LOAD8_S(Opcodes.I64_LOAD8_S),
+        /**
+         * Read 1 byte, interpret as an integer and zero extend to an 8 byte long.
+         */
         I64_LOAD8_U(Opcodes.I64_LOAD8_U),
+        /**
+         * Read 2 bytes, interpret as a little-endian integer and sign extend to an 8 byte long.
+         */
         I64_LOAD16_S(Opcodes.I64_LOAD16_S),
+        /**
+         * Read 2 bytes, interpret as a little-endian integer and zero extend to an 8 byte long.
+         */
         I64_LOAD16_U(Opcodes.I64_LOAD16_U),
+        /**
+         * Read 4 bytes, interpret as a little-endian integer and sign extend to an 8 byte long.
+         */
         I64_LOAD32_S(Opcodes.I64_LOAD32_S),
+        /**
+         * Read 4 bytes, interpret as a little-endian integer and zero extend to an 8 byte long.
+         */
         I64_LOAD32_U(Opcodes.I64_LOAD32_U),
         ;
 
-        public final byte opcode;
+        private final byte opcode;
 
         LoadMode(byte opcode) {
             this.opcode = opcode;
         }
 
+        /**
+         * Get the load mode of a specific opcode.
+         *
+         * @param opcode The opcode.
+         * @return The mode.
+         */
         public static LoadMode fromOpcode(byte opcode) {
             switch (opcode) {
                 // @formatter:off
@@ -77,24 +137,60 @@ public interface Memory extends ExternVal {
         }
     }
 
+    /**
+     * A type of store instruction.
+     */
     enum StoreMode implements HasOpcode {
+        /**
+         * Store an integer as 4 little-endian bytes.
+         */
         I32_STORE(Opcodes.I32_STORE),
+        /**
+         * Store a long as 8 little-endian bytes.
+         */
         I64_STORE(Opcodes.I64_STORE),
+        /**
+         * Store a float as 4 little-endian bytes.
+         */
         F32_STORE(Opcodes.F32_STORE),
+        /**
+         * Store a double as 8 little-endian bytes.
+         */
         F64_STORE(Opcodes.F64_STORE),
+        /**
+         * Store the least-significant byte of an integer.
+         */
         I32_STORE8(Opcodes.I32_STORE8),
+        /**
+         * Store the least-significant 2 bytes in little-endian order of an integer.
+         */
         I32_STORE16(Opcodes.I32_STORE16),
+        /**
+         * Store the least-significant byte of a long.
+         */
         I64_STORE8(Opcodes.I64_STORE8),
+        /**
+         * Store the least-significant 2 bytes in little-endian order of a long.
+         */
         I64_STORE16(Opcodes.I64_STORE16),
+        /**
+         * Store the least-significant 4 bytes in little-endian order of a long.
+         */
         I64_STORE32(Opcodes.I64_STORE32),
         ;
 
-        public final byte opcode;
+        private final byte opcode;
 
         StoreMode(byte opcode) {
             this.opcode = opcode;
         }
 
+        /**
+         * Get the store mode of a specific opcode.
+         *
+         * @param opcode The opcode.
+         * @return The mode.
+         */
         public static StoreMode fromOpcode(byte opcode) {
             switch (opcode) {
                 // @formatter:off
@@ -119,20 +215,59 @@ public interface Memory extends ExternVal {
         }
     }
 
+    /**
+     * Get a method handle which loads with the specific mode.
+     * <p>
+     * The handle should accept one integer argument: the memory address; it should return the appropriate type
+     * according to the mode.
+     *
+     * @param mode The mode.
+     * @return The handle.
+     */
     @GeneratedAccess
     MethodHandle loadHandle(LoadMode mode);
 
+    /**
+     * Get a method handle which stores with the specific mode.
+     * <p>
+     * The handle should accept an integer argument: the memory address, and the value, dependent upon the mode;
+     * it should return void.
+     *
+     * @param mode The mode.
+     * @return The handle.
+     */
     @GeneratedAccess
     MethodHandle storeHandle(StoreMode mode);
 
+    /**
+     * Get the size of the memory, in pages.
+     *
+     * @return The size.
+     * @see Opcodes#PAGE_SIZE
+     */
     @Embedding("mem_size")
     @GeneratedAccess
     int size();
 
+    /**
+     * Grow the memory by a number of pages, filling new pages with 0. May fail, in which
+     * case -1 should be returned.
+     *
+     * @param growByPages The number of pages to grow by, interpreted as an unsigned integer.
+     * @return The old size, or -1 if the memory was not grown.
+     */
     @Embedding("mem_grow")
     @GeneratedAccess
     int grow(int growByPages);
 
+    /**
+     * Initialise the memory with the given data.
+     *
+     * @param dstIdx The destination address in this memory.
+     * @param srcIdx The start address in {@code buf}.
+     * @param len    The number of bytes to copy.
+     * @param buf    The buffer of data.
+     */
     @GeneratedAccess
     void init(int dstIdx, int srcIdx, int len, ByteBuffer buf);
 
@@ -140,6 +275,14 @@ public interface Memory extends ExternVal {
     @Override
     ExternType.@NotNull Mem getType();
 
+    /**
+     * Read a byte at the given address.
+     * <p>
+     * Using {@link #loadHandle(LoadMode)} should be preferred.
+     *
+     * @param addr The address to read.
+     * @return The byte read.
+     */
     @Embedding("mem_read")
     default byte read(int addr) {
         try {
@@ -149,6 +292,14 @@ public interface Memory extends ExternVal {
         }
     }
 
+    /**
+     * Write a byte to the given address.
+     * <p>
+     * Using {@link #storeHandle(StoreMode)} should be preferred.
+     *
+     * @param addr  The address to read.
+     * @param value The byte to write.
+     */
     @Embedding("mem_write")
     default void write(int addr, byte value) {
         try {
@@ -158,6 +309,9 @@ public interface Memory extends ExternVal {
         }
     }
 
+    /**
+     * A memory which delegates its calls to the provided method handles.
+     */
     class HandleMemory implements Memory {
         private final @Nullable Integer max;
         private final MethodHandle
@@ -183,6 +337,17 @@ public interface Memory extends ExternVal {
             this.init = init;
         }
 
+        /**
+         * Create a handle memory with the given maximum and handles.
+         *
+         * @param max         The maximum number of pages, or null if unbounded.
+         * @param loadHandle  The {@link #storeHandle(StoreMode)} implementation.
+         * @param storeHandle The {@link #storeHandle(StoreMode)} implementation.
+         * @param size        The {@link #size()} implementation.
+         * @param grow        The {@link #grow(int)} implementation.
+         * @param init        The {@link #init(int, int, int, ByteBuffer)} implementation.
+         * @return The new memory.
+         */
         @GeneratedAccess
         public static HandleMemory create(
                 @Nullable Integer max,
@@ -246,7 +411,13 @@ public interface Memory extends ExternVal {
         }
     }
 
+    /**
+     * Bootstrap methods for memory load and store {@code invokedynamic} instructions.
+     */
     class Bootstrap {
+        /**
+         * An ASM {@link Handle} to {@link #bootstrapMemoryInsn(MethodHandles.Lookup, String, MethodType, int)}.
+         */
         public static final Handle BOOTSTRAP_HANDLE;
         private static final MethodHandle LOAD_INIT;
         private static final MethodHandle STORE_INIT;
@@ -276,6 +447,15 @@ public interface Memory extends ExternVal {
             }
         }
 
+        /**
+         * The bootstrap method for memory instructions.
+         *
+         * @param ignoredCaller The caller, ignored.
+         * @param invokedName The name specified in the {@code invokedynamic} instruction.
+         * @param invokedType The type specified in the instruction.
+         * @param modeOrdinal The ordinal of the load or store mode.
+         * @return The call site.
+         */
         public static CallSite bootstrapMemoryInsn(
                 MethodHandles.Lookup ignoredCaller,
                 String invokedName,
@@ -319,6 +499,9 @@ public interface Memory extends ExternVal {
         }
     }
 
+    /**
+     * A memory implemented using a {@link ByteBuffer}.
+     */
     class ByteBufferMemory implements Memory {
         private static final EnumMap<WasmOps.DerefType.ExtType, MethodHandle> EXT_HANDLES =
                 new EnumMap<>(WasmOps.DerefType.ExtType.class);
@@ -413,12 +596,23 @@ public interface Memory extends ExternVal {
         private ByteBuffer buf;
         private final @Nullable Integer max;
 
+        /**
+         * Create a new byte buffer with the given limits.
+         *
+         * @param min The minimum number of pages.
+         * @param max The maximum number of pages, or null if unbounded.
+         */
         public ByteBufferMemory(int min, @Nullable Integer max) {
             this.max = max;
             this.buf = ByteBuffer.allocateDirect(min * PAGE_SIZE)
                     .order(ByteOrder.LITTLE_ENDIAN);
         }
 
+        /**
+         * Create a new byte buffer with the given type.
+         *
+         * @param type The type.
+         */
         @Embedding("mem_alloc")
         public ByteBufferMemory(ExternType.Mem type) {
             this(type.limits.min, type.limits.max);
@@ -426,7 +620,7 @@ public interface Memory extends ExternVal {
 
         @Override
         public MethodHandle loadHandle(LoadMode mode) {
-            WasmOps.DerefType dTy = WasmOps.DerefType.fromOpcode(mode.opcode);
+            WasmOps.DerefType dTy = WasmOps.DerefType.fromOpcode(mode.opcode());
             MethodHandle handle = MethodHandles.collectArguments(LOAD_HANDLES.get(dTy.load),
                     0, GET_BUF.bindTo(this));
             MethodHandle ext = EXT_HANDLES.get(dTy.ext);

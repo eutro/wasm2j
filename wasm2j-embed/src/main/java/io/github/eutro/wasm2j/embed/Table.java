@@ -41,8 +41,9 @@ public interface Table extends ExternVal {
     }
 
     @Embedding("table_type")
+    @NotNull
     @Override
-    ExternType.@NotNull Table getType();
+    ExternType.Table getType();
 
     abstract class AbstractArrayTable implements Table {
         protected final int min;
@@ -102,8 +103,9 @@ public interface Table extends ExternVal {
             return sz;
         }
 
+        @NotNull
         @Override
-        public ExternType.@NotNull Table getType() {
+        public ExternType.Table getType() {
             return new ExternType.Table(
                     new ExternType.Limits(size(), max),
                     componentType
@@ -122,7 +124,7 @@ public interface Table extends ExternVal {
 
         @Embedding("table_alloc")
         public ArrayTable(ExternType.Table type) {
-            this(type.limits.min, type.limits.max, type.refType);
+            this(type.limits.min, type.limits.max, type.componentType);
         }
 
         @Override
@@ -202,11 +204,12 @@ public interface Table extends ExternVal {
             }
         }
 
+        @NotNull
         @Override
-        public ExternType.@NotNull Table getType() {
+        public ExternType.Table getType() {
             return new ExternType.Table(
                     new ExternType.Limits(size(), type.limits.max),
-                    type.refType
+                    type.componentType
             );
         }
     }

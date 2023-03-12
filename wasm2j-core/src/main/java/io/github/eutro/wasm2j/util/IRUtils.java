@@ -85,39 +85,39 @@ public class IRUtils {
     /**
      * {@code void.class}
      */
-    private static final Insn VOID_TYPE = JavaOps.GET_FIELD.create(JClass.JavaField.fromJava(Void.class, "TYPE")).insn();
+    private static final Op VOID_TYPE = JavaOps.GET_FIELD.create(JClass.JavaField.fromJava(Void.class, "TYPE"));
     /**
      * {@code boolean.class}
      */
-    private static final Insn BOOLEAN_TYPE = JavaOps.GET_FIELD.create(JClass.JavaField.fromJava(Boolean.class, "TYPE")).insn();
+    private static final Op BOOLEAN_TYPE = JavaOps.GET_FIELD.create(JClass.JavaField.fromJava(Boolean.class, "TYPE"));
     /**
      * {@code char.class}
      */
-    private static final Insn CHAR_TYPE = JavaOps.GET_FIELD.create(JClass.JavaField.fromJava(Character.class, "TYPE")).insn();
+    private static final Op CHAR_TYPE = JavaOps.GET_FIELD.create(JClass.JavaField.fromJava(Character.class, "TYPE"));
     /**
      * {@code byte.class}
      */
-    private static final Insn BYTE_TYPE = JavaOps.GET_FIELD.create(JClass.JavaField.fromJava(Byte.class, "TYPE")).insn();
+    private static final Op BYTE_TYPE = JavaOps.GET_FIELD.create(JClass.JavaField.fromJava(Byte.class, "TYPE"));
     /**
      * {@code short.class}
      */
-    private static final Insn SHORT_TYPE = JavaOps.GET_FIELD.create(JClass.JavaField.fromJava(Short.class, "TYPE")).insn();
+    private static final Op SHORT_TYPE = JavaOps.GET_FIELD.create(JClass.JavaField.fromJava(Short.class, "TYPE"));
     /**
      * {@code int.class}
      */
-    private static final Insn INT_TYPE = JavaOps.GET_FIELD.create(JClass.JavaField.fromJava(Integer.class, "TYPE")).insn();
+    private static final Op INT_TYPE = JavaOps.GET_FIELD.create(JClass.JavaField.fromJava(Integer.class, "TYPE"));
     /**
      * {@code float.class}
      */
-    private static final Insn FLOAT_TYPE = JavaOps.GET_FIELD.create(JClass.JavaField.fromJava(Float.class, "TYPE")).insn();
+    private static final Op FLOAT_TYPE = JavaOps.GET_FIELD.create(JClass.JavaField.fromJava(Float.class, "TYPE"));
     /**
      * {@code long.class}
      */
-    private static final Insn LONG_TYPE = JavaOps.GET_FIELD.create(JClass.JavaField.fromJava(Long.class, "TYPE")).insn();
+    private static final Op LONG_TYPE = JavaOps.GET_FIELD.create(JClass.JavaField.fromJava(Long.class, "TYPE"));
     /**
      * {@code double.class}
      */
-    private static final Insn DOUBLE_TYPE = JavaOps.GET_FIELD.create(JClass.JavaField.fromJava(Double.class, "TYPE")).insn();
+    private static final Op DOUBLE_TYPE = JavaOps.GET_FIELD.create(JClass.JavaField.fromJava(Double.class, "TYPE"));
 
     /**
      * Get the instruction for loading the class described by the given type.
@@ -133,15 +133,15 @@ public class IRUtils {
             default: {
                 switch (ty.getSort()) {
                     // @formatter:off
-                    case Type.VOID: return VOID_TYPE;
-                    case Type.BOOLEAN: return BOOLEAN_TYPE;
-                    case Type.CHAR: return CHAR_TYPE;
-                    case Type.BYTE: return BYTE_TYPE;
-                    case Type.SHORT: return SHORT_TYPE;
-                    case Type.INT: return INT_TYPE;
-                    case Type.FLOAT: return FLOAT_TYPE;
-                    case Type.LONG: return LONG_TYPE;
-                    case Type.DOUBLE: return DOUBLE_TYPE;
+                    case Type.VOID: return VOID_TYPE.insn();
+                    case Type.BOOLEAN: return BOOLEAN_TYPE.insn();
+                    case Type.CHAR: return CHAR_TYPE.insn();
+                    case Type.BYTE: return BYTE_TYPE.insn();
+                    case Type.SHORT: return SHORT_TYPE.insn();
+                    case Type.INT: return INT_TYPE.insn();
+                    case Type.FLOAT: return FLOAT_TYPE.insn();
+                    case Type.LONG: return LONG_TYPE.insn();
+                    case Type.DOUBLE: return DOUBLE_TYPE.insn();
                     // @formatter:on
                     default:
                         throw new IllegalArgumentException();

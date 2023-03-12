@@ -64,7 +64,7 @@ public class BasicCallingConvention implements CallingConvention {
             case V128:
                 return Type.getType(ByteBuffer.class);
             default:
-                throw new IllegalArgumentException("Not a type");
+                throw new IllegalArgumentException(String.format("Not a type: 0x%02x", type));
         }
     }
 

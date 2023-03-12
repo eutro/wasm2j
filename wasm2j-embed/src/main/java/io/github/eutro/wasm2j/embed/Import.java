@@ -2,10 +2,30 @@ package io.github.eutro.wasm2j.embed;
 
 import io.github.eutro.wasm2j.support.ExternType;
 
+/**
+ * An import of a module.
+ */
 public class Import {
-    public final String module, name;
+    /**
+     * The name of the module to import from.
+     */
+    public final String module;
+    /**
+     * The name of the import.
+     */
+    public final String name;
+    /**
+     * The type of the import.
+     */
     public final ExternType type;
 
+    /**
+     * Construct a new import with the given module name, name, and type.
+     *
+     * @param module The module name.
+     * @param name   The import name.
+     * @param type   The type.
+     */
     public Import(String module, String name, ExternType type) {
         this.module = module;
         this.name = name;

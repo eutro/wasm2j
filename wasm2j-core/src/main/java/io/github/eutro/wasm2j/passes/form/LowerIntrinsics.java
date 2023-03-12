@@ -13,12 +13,19 @@ import java.util.*;
 
 import static io.github.eutro.wasm2j.ext.CommonExts.takeNull;
 
+/**
+ * A pass which lowers {@link JavaOps#INTRINSIC intrinsics},
+ * either by inlining their code, or attaching them as a method
+ * to the class.
+ */
 public class LowerIntrinsics extends LowerCommon {
-
+    /**
+     * An instance of this pass.
+     */
     public static final LowerIntrinsics INSTANCE = new LowerIntrinsics();
 
     @Override
-    protected boolean lowerEffect(IRBuilder ib, Effect effect) {
+    boolean lowerEffect(IRBuilder ib, Effect effect) {
         Insn insn = effect.insn();
         Op op = insn.op;
         if (op.key == JavaOps.INTRINSIC) {
@@ -29,7 +36,7 @@ public class LowerIntrinsics extends LowerCommon {
         return false;
     }
 
-    public static Insn emitIntrinsic(IRBuilder ib, IntrinsicImpl intr, List<Var> args) {
+    private static Insn emitIntrinsic(IRBuilder ib, IntrinsicImpl intr, List<Var> args) {
         foldConstant:
         if (intr.eval != null) {
             for (Var arg : args) {

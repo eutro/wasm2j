@@ -10,7 +10,6 @@ import io.github.eutro.wasm2j.passes.Passes;
 import io.github.eutro.wasm2j.passes.convert.JavaToJir;
 import io.github.eutro.wasm2j.passes.convert.JirToJava;
 import io.github.eutro.wasm2j.passes.form.SSAify;
-import io.github.eutro.wasm2j.passes.misc.JoinPass;
 import io.github.eutro.wasm2j.ssa.Function;
 import io.github.eutro.wasm2j.ssa.JClass;
 import io.github.eutro.wasm2j.ssa.display.SSADisplay;
@@ -50,28 +49,21 @@ public class IntrinsicsTest {
 
     @Test
     void testIntrinsicsRoundTrip() throws IOException {
-        IRPass<MethodNode, ClassNode> pass =
-                new JoinPass<>(
-                        JavaToJir.INSTANCE
-                                .then(SSAify.INSTANCE)
-                                .then(Passes.SSA_OPTS)
-                                .then(Passes.JAVA_PREEMIT),
-                        mn -> {
-                            JClass clazz = new JClass("intrinsics/" + mn.name);
-                            clazz.methods.add(new JClass.JavaMethod(
-                                    clazz,
-                                    mn.name,
-                                    mn.desc,
-                                    Opcodes.ACC_PUBLIC | Opcodes.ACC_STATIC
-                            ));
-                            return clazz;
-                        },
-                        (function, clazz) -> {
-                            clazz.methods.get(0).attachExt(JavaExts.METHOD_IMPL, Lazy.lazy(() -> function));
-                            return clazz;
-                        }
-                )
-                        .then(JirToJava.INSTANCE);
+        IRPass<MethodNode, ClassNode> pass = mn -> {
+            JClass clazz = new JClass("intrinsics/" + mn.name);
+            clazz.methods.add(new JClass.JavaMethod(
+                    clazz,
+                    mn.name,
+                    mn.desc,
+                    Opcodes.ACC_PUBLIC | Opcodes.ACC_STATIC
+            ));
+            clazz.methods.get(0).attachExt(JavaExts.METHOD_IMPL, Lazy.lazy(() ->
+                    JavaToJir.INSTANCE
+                            .then(SSAify.INSTANCE)
+                            .then(Passes.SSA_OPTS)
+                            .then(Passes.JAVA_PREEMIT).run(mn)));
+            return JirToJava.INSTANCE.run(clazz);
+        };
         for (IntrinsicImpl intr : JavaIntrinsics.INTRINSICS.getValues()) {
             ClassNode node = pass.run(intr.method);
             ClassWriter cw = new ClassWriter(ClassWriter.COMPUTE_MAXS);

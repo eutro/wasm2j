@@ -5,7 +5,7 @@ import io.github.eutro.wasm2j.intrinsics.Intrinsic;
 import static io.github.eutro.jwasm.Opcodes.*;
 
 /**
- * The Java implementations of WebAssembly primitives.
+ * Java implementations of certain WebAssembly primitives.
  */
 @SuppressWarnings("DuplicatedCode")
 public final class Operators {

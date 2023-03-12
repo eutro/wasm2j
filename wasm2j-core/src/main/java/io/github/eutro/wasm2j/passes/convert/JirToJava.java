@@ -20,12 +20,34 @@ import org.objectweb.asm.tree.*;
 import java.lang.reflect.Modifier;
 import java.util.*;
 
+/**
+ * A pass which converts Java IR to Java bytecode.
+ * <p>
+ * This is the pass that will {@link Lazy#get() force} all the functions in the class
+ * and compile them to bytecode one at a time. This is done so that only a few functions
+ * have to be in-memory at once, limiting the memory footprint of the conversion.
+ * <p>
+ * {@link CommonOps#PHI Phi} nodes must be lowered, and registers should be allocated.
+ * As such, the input IR to this pass should not be in SSA form.
+ */
 public class JirToJava implements IRPass<JClass, ClassNode> {
-    public static final Ext<Integer> LOCAL_EXT = Ext.create(Integer.class, "LOCAL_EXT");
-    public static final Ext<Label> LABEL_EXT = Ext.create(Label.class, "LABEL_EXT");
-    public static final Ext<BasicBlock> NEXT_BLOCK_EXT = Ext.create(BasicBlock.class, "NEXT_BLOCK_EXT");
-
+    /**
+     * An instance of this pass.
+     */
     public static JirToJava INSTANCE = new JirToJava();
+
+    /**
+     * Attached to {@link Var}s. The index of their Java local.
+     */
+    private static final Ext<Integer> LOCAL_EXT = Ext.create(Integer.class, "LOCAL_EXT");
+    /**
+     * Attached to {@link BasicBlock}s. The label at the start of the block.
+     */
+    private static final Ext<Label> LABEL_EXT = Ext.create(Label.class, "LABEL_EXT");
+    /**
+     * Attached to {@link BasicBlock}s. The block whose code will be emitted directly after it.
+     */
+    private static final Ext<BasicBlock> NEXT_BLOCK_EXT = Ext.create(BasicBlock.class, "NEXT_BLOCK_EXT");
 
     @Override
     public ClassNode run(JClass jClass) {
@@ -70,7 +92,7 @@ public class JirToJava implements IRPass<JClass, ClassNode> {
 
             Optional<MethodNode> maybeNative = method.getExt(JavaExts.METHOD_NATIVE_IMPL);
             MethodNode mn = new MethodNode(
-                    method.getAccess(),
+                    method.access,
                     method.name,
                     method.getDescriptor(),
                     null,
@@ -91,7 +113,7 @@ public class JirToJava implements IRPass<JClass, ClassNode> {
                     } catch (RuntimeException e) {
                         throw new RuntimeException("error generating code for method " + method.name, e);
                     }
-                } else if (Modifier.isAbstract(method.getAccess())) {
+                } else if (Modifier.isAbstract(method.access)) {
                     throw new RuntimeException("method impl missing for non-abstract function");
                 }
             }
@@ -358,8 +380,8 @@ public class JirToJava implements IRPass<JClass, ClassNode> {
         FX_CONVERTERS.put(JavaOps.ARRAY_SET, (jb, fx) ->
                 jb.arrayStore(fx.insn().args().get(0).getExtOrThrow(JavaExts.TYPE).getElementType()));
         FX_CONVERTERS.put(JavaOps.HANDLE_OF, (jb, fx) -> {
-            JClass.Handlable handlable = JavaOps.HANDLE_OF.cast(fx.insn().op).arg;
-            jb.push(handlable.getHandle());
+            JClass.Handleable handleable = JavaOps.HANDLE_OF.cast(fx.insn().op).arg;
+            jb.push(handleable.getHandle());
         });
     }
 

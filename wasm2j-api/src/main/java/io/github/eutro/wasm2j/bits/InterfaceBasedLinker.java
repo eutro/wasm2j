@@ -5,9 +5,7 @@ import io.github.eutro.jwasm.tree.ExportNode;
 import io.github.eutro.jwasm.tree.ModuleNode;
 import io.github.eutro.wasm2j.ModuleCompilation;
 import io.github.eutro.wasm2j.conf.Getters;
-import io.github.eutro.wasm2j.conf.api.ConstructorCallback;
-import io.github.eutro.wasm2j.conf.api.ExportableConvention;
-import io.github.eutro.wasm2j.conf.api.FunctionConvention;
+import io.github.eutro.wasm2j.conf.api.*;
 import io.github.eutro.wasm2j.conf.impl.*;
 import io.github.eutro.wasm2j.events.EmitClassEvent;
 import io.github.eutro.wasm2j.events.EventSupplier;
@@ -16,13 +14,16 @@ import io.github.eutro.wasm2j.events.RunModuleCompilationEvent;
 import io.github.eutro.wasm2j.ext.JavaExts;
 import io.github.eutro.wasm2j.ops.CommonOps;
 import io.github.eutro.wasm2j.ops.JavaOps;
+import io.github.eutro.wasm2j.ops.WasmOps;
 import io.github.eutro.wasm2j.ssa.Module;
 import io.github.eutro.wasm2j.ssa.*;
 import io.github.eutro.wasm2j.support.ExternType;
 import io.github.eutro.wasm2j.support.NameSupplier;
+import io.github.eutro.wasm2j.support.ValType;
 import io.github.eutro.wasm2j.util.IRUtils;
 import io.github.eutro.wasm2j.util.ValueGetter;
 import io.github.eutro.wasm2j.util.ValueGetterSetter;
+import io.github.eutro.wasm2j.util.ValueSetter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.objectweb.asm.Opcodes;
@@ -168,7 +169,7 @@ public class InterfaceBasedLinker<T extends EventSupplier<? super RunModuleCompi
                         switch (ty.getKind()) {
                             case TABLE: {
                                 ExternType.Table tTy = (ExternType.Table) ty;
-                                valTy = Type.getType("[" + tTy.refType.getAsmType().getDescriptor());
+                                valTy = Type.getType("[" + tTy.componentType.getAsmType().getDescriptor());
                                 isMut = true;
                                 break;
                             }
@@ -280,6 +281,42 @@ public class InterfaceBasedLinker<T extends EventSupplier<? super RunModuleCompi
         return exporter(target, map);
     }
 
+    ExportableConvention exporter(Type type, ValueGetter getter, ValueSetter setter) {
+        return (node, module, jClass) -> {
+            JClass.JavaMethod getMethod = new JClass.JavaMethod(
+                    jClass,
+                    names.fieldName("get", node.name),
+                    Type.getMethodDescriptor(type),
+                    Modifier.PUBLIC
+            );
+            jClass.methods.add(getMethod);
+            JClass.JavaMethod setMethod = new JClass.JavaMethod(
+                    jClass,
+                    names.fieldName("set", node.name),
+                    Type.getMethodDescriptor(Type.VOID_TYPE, type),
+                    Modifier.PUBLIC
+            );
+            jClass.methods.add(setMethod);
+            getMethod.attachExt(JavaExts.METHOD_IMPL, lazy(() -> {
+                Function func = new Function();
+                func.attachExt(JavaExts.FUNCTION_METHOD, getMethod);
+                IRBuilder ib = new IRBuilder(func, func.newBb());
+                Var got = getter.get(ib);
+                ib.insertCtrl(CommonOps.RETURN.insn(got).jumpsTo());
+                return func;
+            }));
+            setMethod.attachExt(JavaExts.METHOD_IMPL, lazy(() -> {
+                Function func = new Function();
+                func.attachExt(JavaExts.FUNCTION_METHOD, setMethod);
+                IRBuilder ib = new IRBuilder(func, func.newBb());
+                Var newValue = ib.insert(CommonOps.ARG.create(0).insn(), "arg");
+                setter.set(ib, newValue);
+                ib.insertCtrl(CommonOps.RETURN.insn().jumpsTo());
+                return func;
+            }));
+        };
+    }
+
     interface GetterSetterCb<T> {
         T call(ValueGetterSetter target, JClass.JavaMethod getter, JClass.JavaMethod setter);
     }
@@ -375,11 +412,54 @@ public class InterfaceBasedLinker<T extends EventSupplier<? super RunModuleCompi
                             new FunctionConvention.Delegating(functionConvention) {
                                 @Override
                                 public void export(ExportNode node, Module module, JClass jClass) {
+                                    super.export(node, module, jClass);
                                     ValueGetter target = functionConvention
                                             .getExtOrThrow(InstanceFunctionConvention.CONVENTION_TARGET);
                                     JClass.JavaMethod method = functionConvention
                                             .getExtOrThrow(InstanceFunctionConvention.CONVENTION_METHOD);
                                     exporter(target, method).export(node, module, jClass);
+                                }
+                            })
+                    .setModifyGlobalConvention((globalConvention, globalNode, index) ->
+                            new GlobalConvention.Delegating(globalConvention) {
+                                @Override
+                                public void export(ExportNode node, Module module, JClass jClass) {
+                                    super.export(node, module, jClass);
+                                    exporter(
+                                            ValType.fromOpcode(globalNode.type.type).getAsmType(),
+                                            ib -> {
+                                                Var ret = ib.func.newVar("ret");
+                                                emitGlobalRef(ib, WasmOps.GLOBAL_REF
+                                                        .create(index)
+                                                        .insn()
+                                                        .assignTo(ret));
+                                                return ret;
+                                            },
+                                            (ib, val) -> emitGlobalStore(ib, WasmOps.GLOBAL_SET
+                                                    .create(index)
+                                                    .insn(val)
+                                                    .assignTo())
+                                    ).export(node, module, jClass);
+                                }
+                            })
+                    .setModifyMemConvention((memoryConvention, memoryNode, index) ->
+                            new MemoryConvention.Delegating(memoryConvention) {
+                                @Override
+                                public void export(ExportNode node, Module module, JClass jClass) {
+                                    super.export(node, module, jClass);
+                                    ValueGetterSetter byteBuf = getExtOrThrow(ByteBufferMemoryConvention.MEMORY_BYTE_BUFFER);
+                                    exporter(Type.getType(ByteBuffer.class), byteBuf, byteBuf)
+                                            .export(node, module, jClass);
+                                }
+                            })
+                    .setModifyTableConvention((tableConvention, tableNode, index) ->
+                            new TableConvention.Delegating(tableConvention) {
+                                @Override
+                                public void export(ExportNode node, Module module, JClass jClass) {
+                                    super.export(node, module, jClass);
+                                    ValueGetterSetter array = getExtOrThrow(ArrayTableConvention.TABLE_ARRAY);
+                                    exporter(ValType.fromOpcode(tableNode.type).getAsmType(), array, array)
+                                            .export(node, module, jClass);
                                 }
                             })
                     .setFunctionImports((module, importNode, jClass, idx) ->
@@ -428,7 +508,7 @@ public class InterfaceBasedLinker<T extends EventSupplier<? super RunModuleCompi
                             lookupItf(importedModules, importNode, (modIdx, itf) -> {
                                 ExternType.Table ty = (ExternType.Table) ExternType
                                         .fromImport(importNode, compilation.node);
-                                Type componentType = ty.refType.getAsmType();
+                                Type componentType = ty.componentType.getAsmType();
                                 return importGetterSetter(
                                         importNode,
                                         fields.get(modIdx),

@@ -52,5 +52,5 @@ abstract class LowerCommon implements InPlaceIRPass<Function> {
         ms.graphChanged();
     }
 
-    protected abstract boolean lowerEffect(IRBuilder ib, Effect effect);
+    abstract boolean lowerEffect(IRBuilder ib, Effect effect);
 }

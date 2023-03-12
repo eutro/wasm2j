@@ -768,7 +768,7 @@ public class WasmConvertPass {
 
                             for (int i = 0; i < values.length; i++) {
                                 Memory.LoadMode loadMode = values[i];
-                                WasmOps.DerefType derefTy = WasmOps.DerefType.fromOpcode(loadMode.opcode);
+                                WasmOps.DerefType derefTy = WasmOps.DerefType.fromOpcode(loadMode.opcode());
                                 ValueGetter handle = effectHandle(
                                         "mem" + idx + "$get$" + loadMode.toString().toLowerCase(Locale.ROOT),
                                         jClass,

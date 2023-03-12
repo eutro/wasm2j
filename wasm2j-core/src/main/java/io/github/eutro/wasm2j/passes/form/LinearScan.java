@@ -4,6 +4,7 @@ import io.github.eutro.wasm2j.ext.CommonExts;
 import io.github.eutro.wasm2j.ext.Ext;
 import io.github.eutro.wasm2j.ext.JavaExts;
 import io.github.eutro.wasm2j.ext.MetadataState;
+import io.github.eutro.wasm2j.ops.CommonOps;
 import io.github.eutro.wasm2j.ops.JavaOps;
 import io.github.eutro.wasm2j.passes.InPlaceIRPass;
 import io.github.eutro.wasm2j.ssa.*;
@@ -12,9 +13,18 @@ import org.objectweb.asm.Type;
 
 import java.util.*;
 
+/**
+ * A pass which allocates registers using a linear scan algorithm.
+ * <p>
+ * The input IR should have {@link CommonOps#PHI phi} nodes lowered
+ * (so not in SSA form). The output IR will also not be in SSA form.
+ */
 public class LinearScan implements InPlaceIRPass<Function> {
-
+    /**
+     * An instance of this pass.
+     */
     public static final LinearScan INSTANCE = new LinearScan();
+
     private static final Ext<Integer> IC_EXT = Ext.create(Integer.class, "IC_EXT");
     private static final Ext<Boolean> DROP = Ext.create(Boolean.class, "DROP");
     private static final Ext<Integer> LAST_LIVE_BLOCK = Ext.create(Integer.class, "LAST_LIVE_BLOCK");

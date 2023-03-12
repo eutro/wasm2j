@@ -2,6 +2,7 @@ package io.github.eutro.wasm2j.conf.impl;
 
 import io.github.eutro.wasm2j.conf.api.ExportableConvention;
 import io.github.eutro.wasm2j.conf.api.TableConvention;
+import io.github.eutro.wasm2j.ext.Ext;
 import io.github.eutro.wasm2j.ops.CommonOps;
 import io.github.eutro.wasm2j.ops.JavaOps;
 import io.github.eutro.wasm2j.ssa.*;
@@ -18,6 +19,13 @@ import java.util.Arrays;
  * An {@link TableConvention} that has a Java array as its underlying representation.
  */
 public class ArrayTableConvention extends DelegatingExporter implements TableConvention {
+    /**
+     * An ext that provides access to the underlying array.
+     * <p>
+     * For use with optimising {@link #emitTableCopy(IRBuilder, Effect, TableConvention)}.
+     */
+    public static final Ext<ValueGetterSetter> TABLE_ARRAY = Ext.create(ValueGetterSetter.class, "TABLE_ARRAY");
+
     private static final JClass SYSTEM = JClass.emptyFromJava(System.class);
     private static final JClass.JavaMethod SYSTEM_ARRAYCOPY = SYSTEM.lookupMethod("arraycopy",
             Object.class, int.class, Object.class, int.class, int.class);

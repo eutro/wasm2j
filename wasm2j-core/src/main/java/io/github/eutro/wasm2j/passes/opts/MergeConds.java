@@ -12,8 +12,19 @@ import java.util.List;
 import java.util.ListIterator;
 import java.util.Optional;
 
+/**
+ * A pass which merges {@link JavaOps#BOOL_SELECT} instructions
+ * with {@link JavaOps#BR_COND} and {@link JavaOps#SELECT} instructions.
+ * <p>
+ * These cases are common because of the way Java jump instructions differ
+ * from WebAssembly jumps. The former includes the test in the jump,
+ * whereas the latter has a separate instruction for performing the test,
+ * followed by the jump
+ */
 public class MergeConds implements InPlaceIRPass<Function> {
-
+    /**
+     * An instance of this pass.
+     */
     public static final MergeConds INSTANCE = new MergeConds();
 
     interface Cont {

@@ -5,6 +5,7 @@ import io.github.eutro.wasm2j.conf.api.MemoryConvention;
 import io.github.eutro.wasm2j.ext.Ext;
 import io.github.eutro.wasm2j.ops.CommonOps;
 import io.github.eutro.wasm2j.ops.JavaOps;
+import io.github.eutro.wasm2j.ops.Op;
 import io.github.eutro.wasm2j.ops.WasmOps;
 import io.github.eutro.wasm2j.ssa.*;
 import io.github.eutro.wasm2j.util.IRUtils;
@@ -62,6 +63,11 @@ public class ByteBufferMemoryConvention extends DelegatingExporter implements Me
      * {@link ByteBuffer#put(ByteBuffer)}
      */
     public static final JClass.JavaMethod BUFFER_PUT_BUF = IRUtils.BYTE_BUFFER_CLASS.lookupMethod("put", ByteBuffer.class);
+    /**
+     * Get {@link ByteOrder#LITTLE_ENDIAN}
+     */
+    private static final Op BYTE_ORDER_LE = JavaOps.GET_FIELD
+            .create(JClass.JavaField.fromJava(ByteOrder.class, "LITTLE_ENDIAN"));
 
     private final ValueGetterSetter buffer;
     private final @Nullable Integer max;
@@ -200,10 +206,7 @@ public class ByteBufferMemoryConvention extends DelegatingExporter implements Me
                                                                                 "byRaw")),
                                                         "newSzRaw")),
                                         "newBuf"),
-                                ib.insert(JavaOps.GET_FIELD
-                                                .create(JClass.JavaField.fromJava(ByteOrder.class, "LITTLE_ENDIAN"))
-                                                .insn(),
-                                        "order")),
+                                ib.insert(BYTE_ORDER_LE.insn(), "order")),
                 "newBufLE");
         ib.insert(JavaOps.INVOKE
                         .create(BUFFER_PUT_BUF)

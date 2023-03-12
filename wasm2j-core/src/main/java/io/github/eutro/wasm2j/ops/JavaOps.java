@@ -1,7 +1,7 @@
 package io.github.eutro.wasm2j.ops;
 
 import io.github.eutro.wasm2j.ext.CommonExts;
-import io.github.eutro.wasm2j.ssa.JClass.Handlable;
+import io.github.eutro.wasm2j.ssa.JClass.Handleable;
 import io.github.eutro.wasm2j.ssa.JClass.JavaField;
 import io.github.eutro.wasm2j.ssa.JClass.JavaMethod;
 import io.github.eutro.wasm2j.intrinsics.IntrinsicImpl;
@@ -65,7 +65,7 @@ public class JavaOps {
     /**
      * Effect: returns a {@link MethodHandle method handle} to the given method or field getter/setter.
      */
-    public static final UnaryOpKey<Handlable> HANDLE_OF = new UnaryOpKey<>("handle_of");
+    public static final UnaryOpKey<Handleable> HANDLE_OF = new UnaryOpKey<>("handle_of");
     /**
      * Effect: invokes the given method.
      */
@@ -273,16 +273,40 @@ public class JavaOps {
         }
     }
 
+    /**
+     * Effect: integer addition (marked as pure)
+     */
     public static final Op IADD = markPure(insns(new InsnNode(Opcodes.IADD)));
+    /**
+     * Effect: integer subtraction (marked as pure)
+     */
     public static final Op ISUB = markPure(insns(new InsnNode(Opcodes.ISUB)));
+    /**
+     * Effect: long addition (marked as pure)
+     */
     public static final Op LADD = markPure(insns(new InsnNode(Opcodes.LADD)));
+    /**
+     * Effect: integer multiplication (marked as pure)
+     */
     public static final Op IMUL = markPure(insns(new InsnNode(Opcodes.IMUL)));
+    /**
+     * Effect: sign-extending integer to long conversion (marked as pure)
+     */
     public static final Op I2L = markPure(insns(new InsnNode(Opcodes.I2L)));
+    /**
+     * Effect: zero-extending integer to long conversion (marked as pure)
+     */
     public static final Op I2L_U;
+    /**
+     * Effect: unsigned integer division (not pure)
+     */
     public static final Op IDIV_U;
 
-    public static final Op L2I_EXACT = markPure(INVOKE
-            .create(JClass.emptyFromJava(Math.class).lookupMethod("toIntExact", long.class)));
+    /**
+     * Effect: long to integer conversion, trapping on failure
+     */
+    public static final Op L2I_EXACT = INVOKE
+            .create(JClass.emptyFromJava(Math.class).lookupMethod("toIntExact", long.class));
 
     static {
         JClass integerClass = JClass.emptyFromJava(Integer.class);

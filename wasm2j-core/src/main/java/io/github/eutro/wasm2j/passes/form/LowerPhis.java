@@ -13,7 +13,17 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.ListIterator;
 
+/**
+ * A pass which lowers {@link CommonOps#PHI phi} nodes into
+ * assignments targeting the same variables.
+ * <p>
+ * The input should be in SSA form, but the output will not.
+ * This is usually the first step in leaving SSA form.
+ */
 public class LowerPhis implements InPlaceIRPass<Function> {
+    /**
+     * An instance of this pass.
+     */
     public static final LowerPhis INSTANCE = new LowerPhis();
 
     @Override
