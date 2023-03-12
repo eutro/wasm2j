@@ -1,12 +1,15 @@
 package io.github.eutro.wasm2j.test;
 
-import io.github.eutro.wasm2j.intrinsics.ImplClassBytes;
-import io.github.eutro.wasm2j.ops.CommonOps;
-import io.github.eutro.wasm2j.passes.IRPass;
-import io.github.eutro.wasm2j.passes.convert.JavaToJir;
-import io.github.eutro.wasm2j.passes.form.SSAify;
-import io.github.eutro.wasm2j.ssa.*;
-import io.github.eutro.wasm2j.ssa.display.SSADisplay;
+import io.github.eutro.wasm2j.core.intrinsics.ImplClassBytes;
+import io.github.eutro.wasm2j.core.ops.CommonOps;
+import io.github.eutro.wasm2j.core.passes.IRPass;
+import io.github.eutro.wasm2j.core.passes.convert.JavaToJir;
+import io.github.eutro.wasm2j.core.passes.form.SSAify;
+import io.github.eutro.wasm2j.core.ssa.Function;
+import io.github.eutro.wasm2j.core.ssa.IRBuilder;
+import io.github.eutro.wasm2j.core.ssa.Inliner;
+import io.github.eutro.wasm2j.core.ssa.Var;
+import io.github.eutro.wasm2j.core.ssa.display.SSADisplay;
 import org.junit.jupiter.api.Test;
 import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.Opcodes;

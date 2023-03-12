@@ -2,11 +2,13 @@ package io.github.eutro.wasm2j;
 
 import io.github.eutro.jwasm.ByteInputStream;
 import io.github.eutro.jwasm.test.ModuleTestBase;
-import io.github.eutro.wasm2j.bits.InterfaceBasedLinker;
-import io.github.eutro.wasm2j.events.EmitClassEvent;
-import io.github.eutro.wasm2j.support.CaseStyle;
-import io.github.eutro.wasm2j.support.NameMangler;
-import io.github.eutro.wasm2j.support.NameSupplier;
+import io.github.eutro.wasm2j.api.ModuleCompilation;
+import io.github.eutro.wasm2j.api.WasmCompiler;
+import io.github.eutro.wasm2j.api.bits.InterfaceBasedLinker;
+import io.github.eutro.wasm2j.api.events.EmitClassEvent;
+import io.github.eutro.wasm2j.api.support.CaseStyle;
+import io.github.eutro.wasm2j.api.support.NameMangler;
+import io.github.eutro.wasm2j.api.support.NameSupplier;
 import org.junit.jupiter.api.Test;
 import org.objectweb.asm.ClassWriter;
 import org.objectweb.asm.util.CheckClassAdapter;
@@ -17,7 +19,7 @@ import java.io.InputStream;
 import java.io.UncheckedIOException;
 import java.nio.file.Files;
 
-import static io.github.eutro.wasm2j.support.NameMangler.IllegalTokenPolicy.MANGLE_BIJECTIVE;
+import static io.github.eutro.wasm2j.api.support.NameMangler.IllegalTokenPolicy.MANGLE_BIJECTIVE;
 
 public class InterfaceLinkingTest {
 

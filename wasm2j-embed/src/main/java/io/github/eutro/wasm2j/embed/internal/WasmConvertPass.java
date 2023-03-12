@@ -1,28 +1,28 @@
 package io.github.eutro.wasm2j.embed.internal;
 
 import io.github.eutro.jwasm.tree.*;
-import io.github.eutro.wasm2j.WasmCompiler;
-import io.github.eutro.wasm2j.conf.Getters;
-import io.github.eutro.wasm2j.conf.api.*;
-import io.github.eutro.wasm2j.conf.impl.BasicCallingConvention;
-import io.github.eutro.wasm2j.conf.impl.InstanceFunctionConvention;
+import io.github.eutro.wasm2j.api.WasmCompiler;
+import io.github.eutro.wasm2j.api.events.JirPassesEvent;
+import io.github.eutro.wasm2j.api.events.ModifyConventionsEvent;
+import io.github.eutro.wasm2j.api.support.ExternType;
+import io.github.eutro.wasm2j.api.support.NameMangler;
+import io.github.eutro.wasm2j.core.conf.Getters;
+import io.github.eutro.wasm2j.core.conf.api.*;
+import io.github.eutro.wasm2j.core.conf.impl.BasicCallingConvention;
+import io.github.eutro.wasm2j.core.conf.impl.InstanceFunctionConvention;
+import io.github.eutro.wasm2j.core.ext.Ext;
+import io.github.eutro.wasm2j.core.ext.JavaExts;
+import io.github.eutro.wasm2j.core.ext.WasmExts;
+import io.github.eutro.wasm2j.core.ops.*;
+import io.github.eutro.wasm2j.core.passes.IRPass;
+import io.github.eutro.wasm2j.core.passes.convert.Handlify;
+import io.github.eutro.wasm2j.core.ssa.Module;
+import io.github.eutro.wasm2j.core.ssa.*;
+import io.github.eutro.wasm2j.core.util.IRUtils;
+import io.github.eutro.wasm2j.core.util.Pair;
+import io.github.eutro.wasm2j.core.util.ValueGetter;
+import io.github.eutro.wasm2j.core.util.ValueGetterSetter;
 import io.github.eutro.wasm2j.embed.*;
-import io.github.eutro.wasm2j.events.JirPassesEvent;
-import io.github.eutro.wasm2j.events.ModifyConventionsEvent;
-import io.github.eutro.wasm2j.ext.Ext;
-import io.github.eutro.wasm2j.ext.JavaExts;
-import io.github.eutro.wasm2j.ext.WasmExts;
-import io.github.eutro.wasm2j.ops.*;
-import io.github.eutro.wasm2j.passes.IRPass;
-import io.github.eutro.wasm2j.passes.convert.Handlify;
-import io.github.eutro.wasm2j.ssa.Module;
-import io.github.eutro.wasm2j.ssa.*;
-import io.github.eutro.wasm2j.support.ExternType;
-import io.github.eutro.wasm2j.support.NameMangler;
-import io.github.eutro.wasm2j.util.IRUtils;
-import io.github.eutro.wasm2j.util.Pair;
-import io.github.eutro.wasm2j.util.ValueGetter;
-import io.github.eutro.wasm2j.util.ValueGetterSetter;
 import org.jetbrains.annotations.NotNull;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
@@ -38,7 +38,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.BiConsumer;
 
 import static io.github.eutro.jwasm.Opcodes.MUT_CONST;
-import static io.github.eutro.wasm2j.util.Lazy.lazy;
+import static io.github.eutro.wasm2j.core.util.Lazy.lazy;
 
 public class WasmConvertPass {
     private static final Ext<Map<String, ValueGetter>> EXPORTS_EXT = Ext.create(Map.class, "EXPORTS_EXT");

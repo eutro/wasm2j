@@ -8,7 +8,7 @@ import io.github.eutro.jwasm.tree.ExportNode;
 import io.github.eutro.jwasm.tree.ExportsNode;
 import io.github.eutro.jwasm.tree.ModuleNode;
 import io.github.eutro.jwasm.tree.analysis.ModuleValidator;
-import io.github.eutro.wasm2j.support.ExternType;
+import io.github.eutro.wasm2j.api.support.ExternType;
 import org.objectweb.asm.Type;
 import org.objectweb.asm.tree.ClassNode;
 

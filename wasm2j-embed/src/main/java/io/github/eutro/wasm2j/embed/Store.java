@@ -3,7 +3,7 @@ package io.github.eutro.wasm2j.embed;
 import io.github.eutro.jwasm.tree.ModuleNode;
 import io.github.eutro.wasm2j.embed.internal.Utils;
 import io.github.eutro.wasm2j.embed.internal.WasmConvertPass;
-import io.github.eutro.wasm2j.passes.IRPass;
+import io.github.eutro.wasm2j.core.passes.IRPass;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.objectweb.asm.ClassWriter;

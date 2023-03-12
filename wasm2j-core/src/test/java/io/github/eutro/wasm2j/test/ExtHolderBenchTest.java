@@ -1,7 +1,7 @@
 package io.github.eutro.wasm2j.test;
 
-import io.github.eutro.wasm2j.ext.Ext;
-import io.github.eutro.wasm2j.ext.ExtHolder;
+import io.github.eutro.wasm2j.core.ext.Ext;
+import io.github.eutro.wasm2j.core.ext.ExtHolder;
 import org.junit.jupiter.api.Test;
 
 import java.util.*;

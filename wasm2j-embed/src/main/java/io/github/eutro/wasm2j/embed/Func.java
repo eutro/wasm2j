@@ -1,9 +1,9 @@
 package io.github.eutro.wasm2j.embed;
 
-import io.github.eutro.wasm2j.conf.impl.BasicCallingConvention;
+import io.github.eutro.wasm2j.core.conf.impl.BasicCallingConvention;
 import io.github.eutro.wasm2j.embed.internal.Utils;
-import io.github.eutro.wasm2j.support.ExternType;
-import io.github.eutro.wasm2j.support.ValType;
+import io.github.eutro.wasm2j.api.support.ExternType;
+import io.github.eutro.wasm2j.api.support.ValType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
