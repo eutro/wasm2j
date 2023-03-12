@@ -8,6 +8,10 @@ import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
 
+/**
+ * An effect, encapsulating an {@link Insn instruction}, and the
+ * variables its results are assigned to.
+ */
 public final class Effect extends DelegatingExtHolder {
     // null if empty,
     // Var if unary,
@@ -16,7 +20,7 @@ public final class Effect extends DelegatingExtHolder {
     private Object assignsTo;
     private Insn insn;
 
-    public Effect(List<Var> assignsTo, Insn insn) {
+    Effect(List<Var> assignsTo, Insn insn) {
         this.setAssignsTo(assignsTo);
         this.setInsn(insn);
     }
@@ -45,10 +49,20 @@ public final class Effect extends DelegatingExtHolder {
         return sb.toString();
     }
 
+    /**
+     * Get the list of variables this effect assigns to.
+     *
+     * @return The list.
+     */
     public List<Var> getAssignsTo() {
         return new AssignedTo();
     }
 
+    /**
+     * Set the list of variables this effect assigns to. The list will be copied.
+     *
+     * @param assignsTo The list of variables.
+     */
     public void setAssignsTo(List<Var> assignsTo) {
         switch (assignsTo.size()) {
             case 0:
@@ -75,10 +89,20 @@ public final class Effect extends DelegatingExtHolder {
         var.attachExt(CommonExts.ASSIGNED_AT, this);
     }
 
+    /**
+     * Get the {@link Insn underlying instruction} of this effect instruction.
+     *
+     * @return The instruction.
+     */
     public Insn insn() {
         return insn;
     }
 
+    /**
+     * Set the {@link Insn underlying instruction} of this effect instruction.
+     *
+     * @param insn The instruction.
+     */
     public void setInsn(Insn insn) {
         insn.attachExt(CommonExts.OWNING_EFFECT, this);
         this.insn = insn;

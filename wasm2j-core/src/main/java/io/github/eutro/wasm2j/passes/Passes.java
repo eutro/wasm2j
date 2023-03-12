@@ -8,12 +8,21 @@ import io.github.eutro.wasm2j.passes.misc.ForPass;
 import io.github.eutro.wasm2j.passes.opts.*;
 import io.github.eutro.wasm2j.ssa.Function;
 
+/**
+ * Some pre-composed passes. This should not be considered stable.
+ */
 public class Passes {
+    /**
+     * Simple optimisation passes to run on an SSA-form IR.
+     */
     public static final IRPass<Function, Function> SSA_OPTS =
             PropagateConstants.INSTANCE
                     .then(ForPass.liftInsns(IdentityElimination.INSTANCE).lift())
                     .then(EliminateDeadVars.INSTANCE);
 
+    /**
+     * Passes that must be run before emitting Java bytecode from IR.
+     */
     public static final IRPass<Function, Function> JAVA_PREEMIT =
             LowerIntrinsics.INSTANCE
                     .then(CollapseJumps.INSTANCE)

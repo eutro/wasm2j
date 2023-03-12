@@ -14,8 +14,13 @@ import java.util.LinkedHashSet;
 import java.util.ListIterator;
 import java.util.Set;
 
+/**
+ * Computes the {@link CommonExts#LIVE_DATA} for each block.
+ */
 public class ComputeLiveVars implements InPlaceIRPass<Function> {
-
+    /**
+     * A singleton instance of this pass.
+     */
     public static final ComputeLiveVars INSTANCE = new ComputeLiveVars();
 
     @Override

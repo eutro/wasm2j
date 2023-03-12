@@ -8,8 +8,13 @@ import io.github.eutro.wasm2j.ssa.Function;
 
 import java.util.ArrayList;
 
+/**
+ * Computes {@link CommonExts#PREDS} for each block.
+ */
 public class ComputePreds implements InPlaceIRPass<Function> {
-
+    /**
+     * A singleton instance of this pass.
+     */
     public static final ComputePreds INSTANCE = new ComputePreds();
 
     @Override

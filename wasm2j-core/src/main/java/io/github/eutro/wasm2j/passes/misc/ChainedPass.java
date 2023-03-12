@@ -7,11 +7,24 @@ import java.util.Collections;
 import java.util.List;
 import java.util.ListIterator;
 
+/**
+ * A pass which composes two others, executing the first, and giving its result to the second.
+ *
+ * @param <A> The input type.
+ * @param <B> The intermediate type.
+ * @param <C> The output type.
+ */
 public class ChainedPass<A, B, C> implements IRPass<A, C> {
     private final IRPass<A, B> firstPass;
     private final IRPass<B, C> nextPass;
     private final boolean isInPlace;
 
+    /**
+     * Construct a chained pass.
+     *
+     * @param firstPass The first pass to run.
+     * @param nextPass The next pass to run.
+     */
     public ChainedPass(IRPass<A, B> firstPass, IRPass<B, C> nextPass) {
         this.firstPass = firstPass;
         this.nextPass = nextPass;

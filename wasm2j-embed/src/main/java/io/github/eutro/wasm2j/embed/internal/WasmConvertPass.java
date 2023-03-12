@@ -2,7 +2,6 @@ package io.github.eutro.wasm2j.embed.internal;
 
 import io.github.eutro.jwasm.tree.*;
 import io.github.eutro.wasm2j.WasmCompiler;
-import io.github.eutro.wasm2j.conf.Conventions;
 import io.github.eutro.wasm2j.conf.Getters;
 import io.github.eutro.wasm2j.conf.api.*;
 import io.github.eutro.wasm2j.conf.impl.BasicCallingConvention;
@@ -19,7 +18,11 @@ import io.github.eutro.wasm2j.passes.convert.Handlify;
 import io.github.eutro.wasm2j.ssa.Module;
 import io.github.eutro.wasm2j.ssa.*;
 import io.github.eutro.wasm2j.support.ExternType;
-import io.github.eutro.wasm2j.util.*;
+import io.github.eutro.wasm2j.support.NameMangler;
+import io.github.eutro.wasm2j.util.IRUtils;
+import io.github.eutro.wasm2j.util.Pair;
+import io.github.eutro.wasm2j.util.ValueGetter;
+import io.github.eutro.wasm2j.util.ValueGetterSetter;
 import org.jetbrains.annotations.NotNull;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
@@ -35,7 +38,6 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.BiConsumer;
 
 import static io.github.eutro.jwasm.Opcodes.MUT_CONST;
-import static io.github.eutro.wasm2j.conf.api.ExportableConvention.mangle;
 import static io.github.eutro.wasm2j.util.Lazy.lazy;
 
 public class WasmConvertPass {
@@ -117,10 +119,9 @@ public class WasmConvertPass {
                     jClass,
                     name,
                     desc,
-                    JClass.JavaMethod.Kind.FINAL
+                    Opcodes.ACC_PRIVATE
             );
             jClass.methods.add(method);
-            impl.attachExt(JavaExts.FUNCTION_OWNER, jClass);
             impl.attachExt(JavaExts.FUNCTION_METHOD, method);
             method.attachExt(JavaExts.METHOD_IMPL, lazy(() -> impl));
             return ib -> ib.insert(JavaOps.INVOKE
@@ -147,6 +148,11 @@ public class WasmConvertPass {
         });
     }
 
+    private static String mangle(String name) {
+        return NameMangler.jvmUnqualified(NameMangler.IllegalTokenPolicy.MANGLE_BIJECTIVE)
+                .mangle(name);
+    }
+
     private static FunctionConvention createFunctionImport(Module module, FuncImportNode importNode, JClass jClass, int idx) {
         ModuleNode node = module.getExtOrThrow(WasmExts.MODULE);
         TypeNode type = Objects.requireNonNull(Objects.requireNonNull(node.types).types).get(importNode.type);
@@ -157,18 +163,18 @@ public class WasmConvertPass {
                 Type.getDescriptor(MethodHandle.class),
                 false);
         jClass.fields.add(handleField);
-        handleField.otherAccess |= Opcodes.ACC_FINAL;
-        CallingConvention cc = Conventions.DEFAULT_CC; // FIXME get the correct CC
+        handleField.access |= Opcodes.ACC_FINAL;
+        CallingConvention cc = BasicCallingConvention.INSTANCE; // FIXME get the correct CC
         ValueGetter getHandle = Getters.fieldGetter(Getters.GET_THIS, handleField);
         Type descTy = cc.getDescriptor(type);
         return new InstanceFunctionConvention(
-                ExportableConvention.fieldExporter(handleField),
+                ExportableConvention.noop(),
                 getHandle,
                 new JClass.JavaMethod(
                         IRUtils.METHOD_HANDLE_CLASS,
                         "invokeExact",
                         descTy.getDescriptor(),
-                        JClass.JavaMethod.Kind.VIRTUAL
+                        Opcodes.ACC_PUBLIC
                 ),
                 cc
         ) {
@@ -311,7 +317,6 @@ public class WasmConvertPass {
 
             @Override
             public void export(ExportNode node, Module module, JClass jClass) {
-                ExportableConvention.fieldExporter(field).export(node, module, jClass);
                 getOrMakeExports(jClass).put(node.name, table);
             }
         };
@@ -370,7 +375,6 @@ public class WasmConvertPass {
 
             @Override
             public void export(ExportNode node, Module module, JClass jClass) {
-                ExportableConvention.fieldExporter(field).export(node, module, jClass);
                 getOrMakeExports(jClass).put(node.name, global);
             }
         };
@@ -465,7 +469,6 @@ public class WasmConvertPass {
 
             @Override
             public void export(ExportNode node, Module module, JClass jClass) {
-                ExportableConvention.fieldExporter(field).export(node, module, jClass);
                 getOrMakeExports(jClass).put(node.name, memory);
             }
         };
@@ -480,12 +483,11 @@ public class WasmConvertPass {
                         EV_TYPE,
                         Type.getType(String.class)
                 ),
-                JClass.JavaMethod.Kind.VIRTUAL
+                Opcodes.ACC_PUBLIC
         );
         jClass.methods.add(method);
         method.attachExt(JavaExts.METHOD_IMPL, lazy(() -> {
             Function getExport = new Function();
-            getExport.attachExt(JavaExts.FUNCTION_OWNER, jClass);
             getExport.attachExt(JavaExts.FUNCTION_METHOD, method);
             IRBuilder ib = new IRBuilder(getExport, getExport.newBb());
             jClass.getExt(EXPORTS_EXT).ifPresent(exports -> {
@@ -533,7 +535,7 @@ public class WasmConvertPass {
                         STRING_CLASS,
                         "hashCode",
                         "()I",
-                        JClass.JavaMethod.Kind.VIRTUAL
+                        Opcodes.ACC_PUBLIC
                 )).insn(name), "hash");
                 targets.add(endBlock);
                 ib.insertCtrl(JavaOps.LOOKUPSWITCH

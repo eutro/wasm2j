@@ -9,7 +9,13 @@ import io.github.eutro.wasm2j.ssa.Var;
 
 import java.util.*;
 
+/**
+ * A pass which removes any {@link Effect}s that have no side effects, and whose return values are unused.
+ */
 public class EliminateDeadVars implements InPlaceIRPass<Function> {
+    /**
+     * An instance of this pass.
+     */
     public static final EliminateDeadVars INSTANCE = new EliminateDeadVars();
 
     @Override

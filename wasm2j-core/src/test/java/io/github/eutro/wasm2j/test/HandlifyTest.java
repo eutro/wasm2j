@@ -52,7 +52,8 @@ public class HandlifyTest {
         JClass jClass = new JClass("Handlify");
         JClass.JavaMethod jMethod = new JClass.JavaMethod(
                 jClass, "testMethodHandle", "(I)Ljava/lang/invoke/MethodHandle;",
-                JClass.JavaMethod.Kind.STATIC);
+                Opcodes.ACC_PUBLIC | Opcodes.ACC_STATIC
+        );
         jClass.methods.add(jMethod);
         handlifyFunc.attachExt(JavaExts.FUNCTION_METHOD, jMethod);
         jMethod.attachExt(JavaExts.METHOD_IMPL, Lazy.lazy(() -> handlifyFunc));

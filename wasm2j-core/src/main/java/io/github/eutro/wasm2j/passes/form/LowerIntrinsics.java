@@ -7,6 +7,7 @@ import io.github.eutro.wasm2j.ops.CommonOps;
 import io.github.eutro.wasm2j.ops.JavaOps;
 import io.github.eutro.wasm2j.ops.Op;
 import io.github.eutro.wasm2j.ssa.*;
+import org.objectweb.asm.Opcodes;
 
 import java.util.*;
 
@@ -50,7 +51,7 @@ public class LowerIntrinsics extends LowerCommon {
             return new Inliner(ib)
                     .inline(Objects.requireNonNull(intr.impl), args);
         } else {
-            JClass jClass = ib.func.getExtOrThrow(JavaExts.FUNCTION_OWNER);
+            JClass jClass = ib.func.getExtOrThrow(JavaExts.FUNCTION_METHOD).owner;
             Map<IntrinsicImpl, JClass.JavaMethod> intrinsics = jClass.getExtOrRun(JavaExts.ATTACHED_INTRINSICS, jClass, md -> {
                 // TODO threading?
                 jClass.attachExt(JavaExts.ATTACHED_INTRINSICS, new HashMap<>());
@@ -61,7 +62,7 @@ public class LowerIntrinsics extends LowerCommon {
                         jClass,
                         intr.method.name,
                         intr.method.desc,
-                        JClass.JavaMethod.Kind.STATIC
+                        Opcodes.ACC_PRIVATE | Opcodes.ACC_STATIC
                 );
                 jClass.methods.add(method);
                 method.attachExt(JavaExts.METHOD_NATIVE_IMPL, intr.method);

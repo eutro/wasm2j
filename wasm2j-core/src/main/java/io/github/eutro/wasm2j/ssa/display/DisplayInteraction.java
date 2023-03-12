@@ -9,7 +9,7 @@ import org.w3c.dom.Element;
 import java.util.*;
 import java.util.stream.Collectors;
 
-public class DisplayInteraction implements Interaction {
+class DisplayInteraction implements Interaction {
     public static final DisplayInteraction HIGHLIGHT_PREDS = new DisplayInteraction()
             .styleEdgesOnClick(CommonExts.PREDS::getIn, strokeLine("red"));
     public static final DisplayInteraction HIGHLIGHT_SUCCS = new DisplayInteraction()

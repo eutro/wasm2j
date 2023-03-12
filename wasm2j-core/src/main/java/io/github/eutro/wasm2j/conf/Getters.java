@@ -9,11 +9,25 @@ import io.github.eutro.wasm2j.util.ValueGetter;
 import io.github.eutro.wasm2j.util.ValueGetterSetter;
 import org.jetbrains.annotations.Nullable;
 
+/**
+ * A collection of utilities for constructing {@link ValueGetter}s and {@link ValueGetterSetter}s.
+ */
 public class Getters {
+    /**
+     * A getter that gets {@code this}.
+     */
     public static final ValueGetter GET_THIS = IRUtils::getThis;
 
+    /**
+     * A getter (and setter) that loads (resp. stores) the field on the owner,
+     * which must be null if and only if the field is static.
+     *
+     * @param owner The owner. Null if and only if the field is static.
+     * @param field The field.
+     * @return The getter (and setter).
+     */
     public static ValueGetterSetter fieldGetter(@Nullable ValueGetter owner, JClass.JavaField field) {
-        if (field.isStatic) {
+        if (field.isStatic()) {
             if (owner != null) throw new IllegalArgumentException();
         } else {
             if (owner == null) throw new IllegalArgumentException();
@@ -37,10 +51,14 @@ public class Getters {
         };
     }
 
-    public static ValueGetterSetter staticGetter(JClass.JavaField field) {
-        return fieldGetter(null, field);
-    }
-
+    /**
+     * A getter (and setter) that invokes the respective methods on a target.
+     *
+     * @param target The target to invoke the methods on.
+     * @param getter The getter method.
+     * @param setter The setter method.
+     * @return The getter (and setter).
+     */
     public static ValueGetterSetter methodGetterSetter(
             ValueGetter target,
             JClass.JavaMethod getter,

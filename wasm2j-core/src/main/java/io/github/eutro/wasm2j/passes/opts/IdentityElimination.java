@@ -8,7 +8,13 @@ import io.github.eutro.wasm2j.ssa.Var;
 
 import java.util.ListIterator;
 
+/**
+ * A pass which contracts {@link CommonOps#IDENTITY} instructions.
+ */
 public class IdentityElimination implements InPlaceIRPass<Insn> {
+    /**
+     * An instance of this pass.
+     */
     public static final IdentityElimination INSTANCE = new IdentityElimination();
 
     @Override

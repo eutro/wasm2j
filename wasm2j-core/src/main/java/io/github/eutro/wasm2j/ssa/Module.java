@@ -10,7 +10,13 @@ import org.jetbrains.annotations.Nullable;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
+/**
+ * Represents the IR of a WebAssembly module.
+ */
 public final class Module extends ExtHolder {
+    /**
+     * A map from expression nodes to functions.
+     */
     public final Map<ExprNode, Lazy<Function>> funcMap = new LinkedHashMap<>();
 
     @Override

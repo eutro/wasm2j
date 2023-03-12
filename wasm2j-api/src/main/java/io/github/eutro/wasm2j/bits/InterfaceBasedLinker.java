@@ -4,15 +4,11 @@ import io.github.eutro.jwasm.tree.AbstractImportNode;
 import io.github.eutro.jwasm.tree.ExportNode;
 import io.github.eutro.jwasm.tree.ModuleNode;
 import io.github.eutro.wasm2j.ModuleCompilation;
-import io.github.eutro.wasm2j.conf.Conventions;
 import io.github.eutro.wasm2j.conf.Getters;
 import io.github.eutro.wasm2j.conf.api.ConstructorCallback;
 import io.github.eutro.wasm2j.conf.api.ExportableConvention;
 import io.github.eutro.wasm2j.conf.api.FunctionConvention;
-import io.github.eutro.wasm2j.conf.impl.ArrayTableConvention;
-import io.github.eutro.wasm2j.conf.impl.ByteBufferMemoryConvention;
-import io.github.eutro.wasm2j.conf.impl.GetterSetterGlobalConvention;
-import io.github.eutro.wasm2j.conf.impl.InstanceFunctionConvention;
+import io.github.eutro.wasm2j.conf.impl.*;
 import io.github.eutro.wasm2j.events.EmitClassEvent;
 import io.github.eutro.wasm2j.events.EventSupplier;
 import io.github.eutro.wasm2j.events.ModifyConventionsEvent;
@@ -33,6 +29,7 @@ import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
 import org.objectweb.asm.tree.ClassNode;
 
+import java.lang.reflect.Modifier;
 import java.nio.ByteBuffer;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
@@ -76,6 +73,7 @@ public class InterfaceBasedLinker<T extends EventSupplier<? super RunModuleCompi
         JClass getJClass() {
             if (jClass == null) {
                 jClass = new JClass(getClassName());
+                jClass.access |= Opcodes.ACC_INTERFACE;
             }
             return jClass;
         }
@@ -244,12 +242,11 @@ public class InterfaceBasedLinker<T extends EventSupplier<? super RunModuleCompi
                                 ? names.fieldName(node.name)
                                 : names.fieldName(entry.getKey(), node.name),
                         method.getDescriptor(),
-                        JClass.JavaMethod.Kind.VIRTUAL
+                        Modifier.PUBLIC
                 );
                 jClass.methods.add(jMethod);
                 jMethod.attachExt(JavaExts.METHOD_IMPL, lazy(() -> {
                     Function func = new Function();
-                    func.attachExt(JavaExts.FUNCTION_OWNER, jClass);
                     func.attachExt(JavaExts.FUNCTION_METHOD, jMethod);
                     IRBuilder ib = new IRBuilder(func, func.newBb());
                     List<Var> args = new ArrayList<>();
@@ -298,13 +295,13 @@ public class InterfaceBasedLinker<T extends EventSupplier<? super RunModuleCompi
                 itf.getJClass(),
                 names.fieldName("get", importNode.name),
                 Type.getMethodDescriptor(asmType),
-                JClass.JavaMethod.Kind.INTERFACE
+                Opcodes.ACC_PUBLIC | Opcodes.ACC_ABSTRACT
         );
         JClass.JavaMethod setter = new JClass.JavaMethod(
                 itf.getJClass(),
                 names.fieldName("set", importNode.name),
                 Type.getMethodDescriptor(Type.VOID_TYPE, asmType),
-                JClass.JavaMethod.Kind.INTERFACE
+                Opcodes.ACC_PUBLIC | Opcodes.ACC_ABSTRACT
         );
         return cb.call(target, getter, setter);
     }
@@ -378,9 +375,11 @@ public class InterfaceBasedLinker<T extends EventSupplier<? super RunModuleCompi
                             new FunctionConvention.Delegating(functionConvention) {
                                 @Override
                                 public void export(ExportNode node, Module module, JClass jClass) {
-                                    InstanceFunctionConvention fc = functionConvention
-                                            .getExtOrThrow(InstanceFunctionConvention.FUNCTION_CONVENTION);
-                                    exporter(fc.target, fc.method).export(node, module, jClass);
+                                    ValueGetter target = functionConvention
+                                            .getExtOrThrow(InstanceFunctionConvention.CONVENTION_TARGET);
+                                    JClass.JavaMethod method = functionConvention
+                                            .getExtOrThrow(InstanceFunctionConvention.CONVENTION_METHOD);
+                                    exporter(target, method).export(node, module, jClass);
                                 }
                             })
                     .setFunctionImports((module, importNode, jClass, idx) ->
@@ -390,13 +389,13 @@ public class InterfaceBasedLinker<T extends EventSupplier<? super RunModuleCompi
                                         names.fieldName(importNode.name),
                                         ((ExternType.Func) ExternType.fromImport(importNode, compilation.node))
                                                 .getMethodType().toMethodDescriptorString(),
-                                        JClass.JavaMethod.Kind.INTERFACE
+                                        Opcodes.ACC_PUBLIC | Opcodes.ACC_ABSTRACT
                                 );
                                 return new InstanceFunctionConvention(
                                         exporter(Getters.GET_THIS, method),
                                         Getters.fieldGetter(Getters.GET_THIS, fields.get(modIdx)),
                                         method,
-                                        Conventions.DEFAULT_CC);
+                                        BasicCallingConvention.INSTANCE);
                             }))
                     .setGlobalImports((module, importNode, jClass, idx) ->
                             lookupItf(importedModules, importNode, (modIdx, itf) -> {

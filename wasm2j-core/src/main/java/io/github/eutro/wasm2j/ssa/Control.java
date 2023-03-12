@@ -8,15 +8,28 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
+/**
+ * A control instruction, encapsulating a raw {@link Insn instruction}
+ * and the jump targets.
+ */
 public final class Control extends ExtHolder {
     private Insn insn;
-    public List<BasicBlock> targets;
+    /**
+     * The jump targets of this instruction. The semantics of the order depend on the instruction.
+     */
+    public final List<BasicBlock> targets;
 
-    public Control(Insn insn, List<BasicBlock> targets) {
+    Control(Insn insn, List<BasicBlock> targets) {
         this.setInsn(insn);
         this.targets = targets;
     }
 
+    /**
+     * Construct an unconditional jump to a block.
+     *
+     * @param target The jump target.
+     * @return The jump instruction.
+     */
     public static Control br(BasicBlock target) {
         return CommonOps.BR.insn().jumpsTo(target);
     }
@@ -34,10 +47,20 @@ public final class Control extends ExtHolder {
         return sb.toString();
     }
 
+    /**
+     * Get the {@link Insn underlying instruction} of this control instruction.
+     *
+     * @return The instruction.
+     */
     public Insn insn() {
         return insn;
     }
 
+    /**
+     * Set the {@link Insn underlying instruction} of this control instruction.
+     *
+     * @param insn The instruction.
+     */
     public void setInsn(Insn insn) {
         insn.attachExt(CommonExts.OWNING_CONTROL, this);
         this.insn = insn;

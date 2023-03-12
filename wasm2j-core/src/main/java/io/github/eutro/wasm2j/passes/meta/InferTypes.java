@@ -21,10 +21,23 @@ import java.util.*;
 import static io.github.eutro.wasm2j.passes.meta.InferTypes.FuncType.withArity;
 import static org.objectweb.asm.Opcodes.*;
 
+/**
+ * A pass that infers the types of variables in a function.
+ *
+ * @param <Ty> The type of a type.
+ */
 public abstract class InferTypes<Ty> implements InPlaceIRPass<Function> {
-    protected final Ext<Ty> tyExt;
+    /**
+     * The ext which is attached to variables with their type.
+     */
+    final Ext<Ty> tyExt;
 
-    public InferTypes(Ext<Ty> tyExt) {
+    /**
+     * Construct an {@link InferTypes} with the given ext.
+     *
+     * @param tyExt The type ext.
+     */
+    InferTypes(Ext<Ty> tyExt) {
         this.tyExt = tyExt;
     }
 
@@ -61,7 +74,7 @@ public abstract class InferTypes<Ty> implements InPlaceIRPass<Function> {
         }
     }
 
-    protected abstract Ty[] inferInsn(Insn insn);
+    abstract Ty[] inferInsn(Insn insn);
 
     interface FuncType<Ty> {
         Ty[] inferResult(Ty[] args);
@@ -203,7 +216,13 @@ public abstract class InferTypes<Ty> implements InPlaceIRPass<Function> {
         }
     }
 
+    /**
+     * A pass which infers the Java types of variables in a function.
+     */
     public static class Java extends InferTypes<Type> {
+        /**
+         * The singleton instance of this pass.
+         */
         public static Java INSTANCE = new Java();
 
         private Java() {
@@ -400,7 +419,7 @@ public abstract class InferTypes<Ty> implements InPlaceIRPass<Function> {
                 .put(insn -> {
                             JClass.JavaMethod method = JavaOps.INVOKE.cast(insn.op).arg;
                             {
-                                int expectedArity = method.getParamTys().size() + (method.kind.isStatic() ? 0 : 1);
+                                int expectedArity = method.getParamTys().size() + (method.isStatic() ? 0 : 1);
                                 int actualArity = insn.args().size();
                                 if (expectedArity != actualArity) {
                                     throw new IllegalArgumentException(String.format(
@@ -428,7 +447,8 @@ public abstract class InferTypes<Ty> implements InPlaceIRPass<Function> {
                                 .getExtOrThrow(CommonExts.OWNING_EFFECT)
                                 .getExtOrThrow(CommonExts.OWNING_BLOCK)
                                 .getExtOrThrow(CommonExts.OWNING_FUNCTION)
-                                .getExtOrThrow(JavaExts.FUNCTION_OWNER)
+                                .getExtOrThrow(JavaExts.FUNCTION_METHOD)
+                                .owner
                                 .name)},
                         JavaOps.THIS.key)
 

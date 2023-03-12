@@ -7,11 +7,24 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Set;
 
+/**
+ * A variable, a virtual register.
+ * <p>
+ * May be set more than once, but only if the IR is not in SSA form.
+ */
 public final class Var extends ExtHolder {
-    public String name;
-    public int index;
+    /**
+     * The name of the variable.
+     */
+    public final String name;
+    /**
+     * The index of the variable, to distinguish from
+     * others with the same name in the same function,
+     * if {@link Function#UNIQUE_VAR_NAMES counting is enabled}.
+     */
+    public final int index;
 
-    public Var(String name, int index) {
+    Var(String name, int index) {
         this.name = name;
         this.index = index;
     }
@@ -31,9 +44,11 @@ public final class Var extends ExtHolder {
     public <T> @Nullable T getNullable(Ext<T> ext) {
         if (ext == CommonExts.ASSIGNED_AT) {
             return (T) assignedAt;
-        } if (ext == CommonExts.CONSTANT_VALUE) {
+        }
+        if (ext == CommonExts.CONSTANT_VALUE) {
             return (T) constantValue;
-        } if (ext == CommonExts.USED_AT) {
+        }
+        if (ext == CommonExts.USED_AT) {
             return (T) usedAt;
         }
         return super.getNullable(ext);
@@ -45,10 +60,12 @@ public final class Var extends ExtHolder {
         if (ext == CommonExts.ASSIGNED_AT) {
             assignedAt = (Effect) value;
             return;
-        } if (ext == CommonExts.CONSTANT_VALUE) {
+        }
+        if (ext == CommonExts.CONSTANT_VALUE) {
             constantValue = value;
             return;
-        } if (ext == CommonExts.USED_AT) {
+        }
+        if (ext == CommonExts.USED_AT) {
             usedAt = (Set<Insn>) value;
             return;
         }
@@ -60,10 +77,12 @@ public final class Var extends ExtHolder {
         if (ext == CommonExts.ASSIGNED_AT) {
             assignedAt = null;
             return;
-        } if (ext == CommonExts.CONSTANT_VALUE) {
+        }
+        if (ext == CommonExts.CONSTANT_VALUE) {
             constantValue = null;
             return;
-        } if (ext == CommonExts.USED_AT) {
+        }
+        if (ext == CommonExts.USED_AT) {
             usedAt = null;
             return;
         }

@@ -15,12 +15,17 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 
+/**
+ * Contains the intrinsics implementing most WebAssembly primitive operations.
+ */
 public class JavaIntrinsics {
+    /**
+     * The map from WebAssembly instructions to intrinsic implementations.
+     */
     public static final InsnMap<IntrinsicImpl> INTRINSICS = new InsnMap<>();
 
-    private static final ClassNode IMPL_NODE = new ClassNode();
-
     static {
+        ClassNode IMPL_NODE = new ClassNode();
         ImplClassBytes.getClassReaderFor(Operators.class)
                 .accept(IMPL_NODE, ClassReader.SKIP_DEBUG);
 

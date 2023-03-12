@@ -17,6 +17,7 @@ import org.objectweb.asm.Type;
 import org.objectweb.asm.commons.GeneratorAdapter;
 import org.objectweb.asm.tree.*;
 
+import java.lang.reflect.Modifier;
 import java.util.*;
 
 public class JirToJava implements IRPass<JClass, ClassNode> {
@@ -46,8 +47,7 @@ public class JirToJava implements IRPass<JClass, ClassNode> {
                     field.name += "_";
                 }
                 cn.fields.add(new FieldNode(
-                        (field.isStatic ? Opcodes.ACC_STATIC : 0)
-                                | field.otherAccess,
+                        field.access,
                         field.name,
                         field.descriptor,
                         null,
@@ -70,7 +70,7 @@ public class JirToJava implements IRPass<JClass, ClassNode> {
 
             Optional<MethodNode> maybeNative = method.getExt(JavaExts.METHOD_NATIVE_IMPL);
             MethodNode mn = new MethodNode(
-                    method.kind.access,
+                    method.getAccess(),
                     method.name,
                     method.getDescriptor(),
                     null,
@@ -91,7 +91,7 @@ public class JirToJava implements IRPass<JClass, ClassNode> {
                     } catch (RuntimeException e) {
                         throw new RuntimeException("error generating code for method " + method.name, e);
                     }
-                } else if (method.kind != JClass.JavaMethod.Kind.ABSTRACT) {
+                } else if (Modifier.isAbstract(method.getAccess())) {
                     throw new RuntimeException("method impl missing for non-abstract function");
                 }
             }
@@ -297,10 +297,10 @@ public class JirToJava implements IRPass<JClass, ClassNode> {
             Label elseLabel = jb.newLabel();
             Label endLabel = jb.newLabel();
             jb.visitJumpInsn(jumpType.opcode, elseLabel);
-            jb.push(true);
+            jb.push(false);
             jb.goTo(endLabel);
             jb.mark(elseLabel);
-            jb.push(false);
+            jb.push(true);
             jb.mark(endLabel);
         });
         FX_CONVERTERS.put(CommonOps.PHI, (jb, fx) -> {
@@ -327,7 +327,7 @@ public class JirToJava implements IRPass<JClass, ClassNode> {
             JClass.JavaField field = JavaOps.GET_FIELD.cast(fx.insn().op).arg;
             Type owner = Type.getObjectType(field.owner.name);
             Type type = Type.getType(field.descriptor);
-            if (field.isStatic) {
+            if (field.isStatic()) {
                 jb.getStatic(owner, field.name, type);
             } else {
                 jb.getField(owner, field.name, type);
@@ -337,7 +337,7 @@ public class JirToJava implements IRPass<JClass, ClassNode> {
             JClass.JavaField field = JavaOps.PUT_FIELD.cast(fx.insn().op).arg;
             Type owner = Type.getObjectType(field.owner.name);
             Type type = Type.getType(field.descriptor);
-            if (field.isStatic) {
+            if (field.isStatic()) {
                 jb.putStatic(owner, field.name, type);
             } else {
                 jb.putField(owner, field.name, type);
@@ -346,11 +346,11 @@ public class JirToJava implements IRPass<JClass, ClassNode> {
         FX_CONVERTERS.put(JavaOps.INVOKE, (jb, fx) -> {
             JClass.JavaMethod method = JavaOps.INVOKE.cast(fx.insn().op).arg;
             jb.visitMethodInsn(
-                    method.kind.opcode,
+                    method.getInvokeOpcode(),
                     method.owner.name,
                     method.name,
                     method.getDescriptor(),
-                    method.kind.isInterface()
+                    method.isInterface()
             );
         });
         FX_CONVERTERS.put(JavaOps.ARRAY_GET, (jb, fx) ->

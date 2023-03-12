@@ -7,7 +7,14 @@ import org.jetbrains.annotations.Nullable;
 import java.lang.ref.SoftReference;
 import java.util.*;
 
+/**
+ * A function, encapsulating a list of {@link BasicBlock basic blocks}.
+ */
 public final class Function extends ExtHolder {
+    /**
+     * The list of basic blocks in this function. The first element is the root block,
+     * and must be added when this function is first constructed.
+     */
     public final List<BasicBlock> blocks = new TrackedList<BasicBlock>(new ArrayList<>()) {
         @Override
         protected void onAdded(BasicBlock elt) {
@@ -20,18 +27,32 @@ public final class Function extends ExtHolder {
         }
     }; // [0] is entry
 
+    /**
+     * Whether variable name collisions should be computed. This is useful for debugging,
+     * so variables display differently.
+     */
     public static boolean UNIQUE_VAR_NAMES = System.getenv("WASM2J_UNIQUE_VAR_NAMES") != null;
 
     // if we hold on to them forever we can easily OOM, but we don't really
     // care about names except for debugging, so let the JVM clear it up if it has to
     private SoftReference<Map<String, Integer>> varsRef = UNIQUE_VAR_NAMES ? new SoftReference<>(new HashMap<>()) : null;
 
+    /**
+     * Clear the variable name counters. Only relevant if {@link #UNIQUE_VAR_NAMES} is true.
+     */
     public void clearVarNames() {
         if (UNIQUE_VAR_NAMES) {
             varsRef = new SoftReference<>(new HashMap<>());
         }
     }
 
+    /**
+     * Create a new variable with the given name.
+     *
+     * @param name      The name.
+     * @param indexHint The minimum value of the variable index.
+     * @return The new variable.
+     */
     public Var newVar(String name, int indexHint) {
         if (!UNIQUE_VAR_NAMES) {
             return new Var(name, indexHint);
@@ -52,10 +73,25 @@ public final class Function extends ExtHolder {
         return var;
     }
 
+    /**
+     * Create a new variable with the given name.
+     *
+     * @param name The name.
+     * @return The new variable.
+     */
     public Var newVar(String name) {
         return newVar(name, 0);
     }
 
+    /**
+     * Create a new variable with a formatted name.
+     * <p>
+     * The string will not be formatted if {@link #UNIQUE_VAR_NAMES} is false.
+     *
+     * @param fmt  The format string.
+     * @param args The format arguments.
+     * @return The new variable.
+     */
     public Var newVarFmt(@PrintFormat String fmt, Object... args) {
         if (!UNIQUE_VAR_NAMES) {
             return newVar(fmt);
@@ -63,6 +99,11 @@ public final class Function extends ExtHolder {
         return newVar(String.format(fmt, args));
     }
 
+    /**
+     * Creates a new basic block in this function.
+     *
+     * @return The new basic block.
+     */
     public BasicBlock newBb() {
         BasicBlock bb = new BasicBlock();
         blocks.add(bb);

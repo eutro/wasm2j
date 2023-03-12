@@ -9,7 +9,13 @@ import org.jetbrains.annotations.NotNull;
 import java.util.HashSet;
 import java.util.Set;
 
+/**
+ * Compute the {@link CommonExts#USED_AT uses} of every {@link Var} in a function.
+ */
 public class ComputeUses implements InPlaceIRPass<Function> {
+    /**
+     * A singleton instance of this pass.
+     */
     public static final ComputeUses INSTANCE = new ComputeUses();
 
     @Override

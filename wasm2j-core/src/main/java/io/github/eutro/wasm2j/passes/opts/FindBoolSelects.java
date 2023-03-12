@@ -14,8 +14,14 @@ import io.github.eutro.wasm2j.ssa.Function;
 import java.util.Iterator;
 import java.util.List;
 
+/**
+ * An optimisation pass that tries to find block structures that could be replaced with
+ * {@link JavaOps#BOOL_SELECT} instructions.
+ */
 public class FindBoolSelects implements InPlaceIRPass<Function> {
-
+    /**
+     * An instance of this pass.
+     */
     public static final FindBoolSelects INSTANCE = new FindBoolSelects();
 
     @Override
@@ -62,7 +68,7 @@ public class FindBoolSelects implements InPlaceIRPass<Function> {
             if (!phi.insn().args().contains(ifFInsn.getAssignsTo().get(0))
                     || !phi.insn().args().contains(ifTInsn.getAssignsTo().get(0))) continue;
 
-            phi.setInsn(JavaOps.BOOL_SELECT.create(jTy).copyFrom(jump.insn()));
+            phi.setInsn(JavaOps.BOOL_SELECT.create(jTy.inverse).copyFrom(jump.insn()));
             pred.setControl(Control.br(block));
             changed = true;
         }

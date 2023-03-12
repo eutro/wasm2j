@@ -5,16 +5,34 @@ import io.github.eutro.wasm2j.ops.Op;
 
 import java.util.*;
 
+/**
+ * A class for inlining a {@link Function function} into another.
+ */
 public class Inliner {
     private final HashMap<Var, Var> varMap = new HashMap<>();
     private final HashMap<BasicBlock, BasicBlock> blockMap = new HashMap<>();
     private final Map<BasicBlock, Var[]> returnVars = new HashMap<>();
     private final IRBuilder ib;
 
+    /**
+     * Construct a new inliner in the given instruction builder.
+     *
+     * @param ib The instruction builder.
+     */
     public Inliner(IRBuilder ib) {
         this.ib = ib;
     }
 
+    /**
+     * Inline the function into the instruction builder.
+     * <p>
+     * This must be called once per instruction builder.
+     *
+     * @param func The function to inline.
+     * @param args The arguments to the function.
+     * @return An instruction to retrieve the results of the instruction,
+     * which must still be inserted.
+     */
     public Insn inline(
             Function func,
             List<Var> args

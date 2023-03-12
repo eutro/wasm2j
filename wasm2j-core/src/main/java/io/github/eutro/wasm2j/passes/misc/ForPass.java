@@ -8,11 +8,26 @@ import java.util.AbstractList;
 import java.util.Iterator;
 import java.util.ListIterator;
 
+/**
+ * A pass which lifts passes which operate on smaller IR parts into onese that operate on bigger parts.
+ */
 public class ForPass {
+    /**
+     * Lift a basic block pass to operate on a full function.
+     *
+     * @param pass The basic block pass.
+     * @return The function pass.
+     */
     public static BasicBlocks liftBasicBlocks(IRPass<BasicBlock, BasicBlock> pass) {
         return new BasicBlocks(pass);
     }
 
+    /**
+     * Lift an instruction pass to operate on a full basic block.
+     *
+     * @param pass The instruction pass.
+     * @return The basic block pass.
+     */
     public static Insns liftInsns(IRPass<Insn, Insn> pass) {
         return new Insns(pass);
     }
@@ -47,6 +62,9 @@ public class ForPass {
         }
     }
 
+    /**
+     * A basic block pass lifted to operate on a full function.
+     */
     public static class BasicBlocks extends AbstractForPass<BasicBlock, Function> {
 
         private BasicBlocks(IRPass<BasicBlock, BasicBlock> pass) {
@@ -64,6 +82,9 @@ public class ForPass {
         }
     }
 
+    /**
+     * An instruction pass lifted to operate on a full basic block.
+     */
     public static class Insns extends AbstractForPass<Insn, BasicBlock> {
         private Insns(IRPass<Insn, Insn> pass) {
             super(pass);
@@ -100,6 +121,11 @@ public class ForPass {
             }.listIterator());
         }
 
+        /**
+         * Lift this pass to operate on a full function.
+         *
+         * @return The function pass.
+         */
         public BasicBlocks lift() {
             return liftBasicBlocks(this);
         }
@@ -112,11 +138,11 @@ public class ForPass {
             this.pass = pass;
         }
 
-        protected Iterator<T> getIter(Lifted lifted) {
+        Iterator<T> getIter(Lifted lifted) {
             return getSetableIter(lifted);
         }
 
-        protected abstract SetableIterator<T> getSetableIter(Lifted lifted);
+        abstract SetableIterator<T> getSetableIter(Lifted lifted);
 
         @Override
         public void runInPlace(Lifted lifted) {

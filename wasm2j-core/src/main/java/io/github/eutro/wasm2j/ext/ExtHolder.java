@@ -6,6 +6,9 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Map;
 import java.util.TreeMap;
 
+/**
+ * An implementation of {@link ExtContainer} using a {@link Map}.
+ */
 @SuppressWarnings("CommentedOutCode")
 public class ExtHolder implements ExtContainer {
     @Nullable

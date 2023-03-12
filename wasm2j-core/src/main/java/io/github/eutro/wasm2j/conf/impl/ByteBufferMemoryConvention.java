@@ -16,6 +16,7 @@ import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
 import org.objectweb.asm.tree.InsnNode;
 
+import java.nio.Buffer;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.util.Arrays;
@@ -24,18 +25,54 @@ import java.util.Optional;
 
 import static io.github.eutro.jwasm.Opcodes.PAGE_SIZE;
 
+/**
+ * A {@link MemoryConvention} that has a {@link ByteBuffer} as its underlying representation.
+ */
 public class ByteBufferMemoryConvention extends DelegatingExporter implements MemoryConvention {
+    /**
+     * An ext that provides access to the underlying byte buffer.
+     * <p>
+     * For use with optimising {@link #emitMemCopy(IRBuilder, Effect, MemoryConvention)}.
+     */
     public static final Ext<ValueGetterSetter> MEMORY_BYTE_BUFFER = Ext.create(ValueGetterSetter.class, "MEMORY_BYTE_BUFFER");
+
+    /**
+     * The max number of pages a byte buffer memory can have.
+     */
     public static final int MAX_PAGES = Integer.MAX_VALUE / PAGE_SIZE;
+
+    /**
+     * An empty {@link JClass} of {@link ByteOrder}.
+     */
     public static final JClass BYTE_ORDER_CLASS = JClass.emptyFromJava(ByteOrder.class);
+
+    /**
+     * {@link ByteBuffer#slice()}
+     */
     public static final JClass.JavaMethod BUFFER_SLICE = IRUtils.BYTE_BUFFER_CLASS.lookupMethod("slice");
-    private static final JClass.JavaMethod BUFFER_POSITION = IRUtils.BUFFER_CLASS.lookupMethod("position", int.class);
-    private static final JClass.JavaMethod BUFFER_LIMIT = IRUtils.BUFFER_CLASS.lookupMethod("limit", int.class);
-    private static final JClass.JavaMethod BUFFER_PUT_BUF = IRUtils.BYTE_BUFFER_CLASS.lookupMethod("put", ByteBuffer.class);
+    /**
+     * {@link Buffer#position(int)}
+     */
+    public static final JClass.JavaMethod BUFFER_POSITION = IRUtils.BUFFER_CLASS.lookupMethod("position", int.class);
+    /**
+     * {@link Buffer#limit(int)}
+     */
+    public static final JClass.JavaMethod BUFFER_LIMIT = IRUtils.BUFFER_CLASS.lookupMethod("limit", int.class);
+    /**
+     * {@link ByteBuffer#put(ByteBuffer)}
+     */
+    public static final JClass.JavaMethod BUFFER_PUT_BUF = IRUtils.BYTE_BUFFER_CLASS.lookupMethod("put", ByteBuffer.class);
 
     private final ValueGetterSetter buffer;
     private final @Nullable Integer max;
 
+    /**
+     * Construct a {@link ByteBufferMemoryConvention}.
+     *
+     * @param exporter The exporter.
+     * @param buffer   The getter/setter for the underlying byte buffer.
+     * @param max      The maximum of the memory's type.
+     */
     public ByteBufferMemoryConvention(
             ExportableConvention exporter,
             ValueGetterSetter buffer,
@@ -56,7 +93,7 @@ public class ByteBufferMemoryConvention extends DelegatingExporter implements Me
                 IRUtils.BYTE_BUFFER_CLASS,
                 derefType.load.funcName,
                 derefType.load.desc,
-                JClass.JavaMethod.Kind.VIRTUAL
+                Opcodes.ACC_PUBLIC
         );
         Var ptr = effect.insn().args().get(0);
         Insn loadInsn = JavaOps.INVOKE.create(toInvoke).insn(buffer.get(ib), IRUtils.getAddr(ib, wmArg, ptr));
@@ -215,6 +252,20 @@ public class ByteBufferMemoryConvention extends DelegatingExporter implements Me
         ib.insert(JavaOps.INVOKE.create(BUFFER_LIMIT).insn(toLimit, limit), "_limited");
 
         ib.insert(JavaOps.INVOKE.create(BUFFER_PUT_BUF).insn(mem, data), "mem");
+    }
+
+    @Override
+    public void emitBoundsCheck(IRBuilder ib, int mem, Var bound) {
+        Var szRaw = ib.insert(JavaOps.INVOKE
+                        .create(IRUtils.BUFFER_CLASS.lookupMethod("capacity"))
+                        .insn(buffer.get(ib)),
+                "rawSz");
+        szRaw = ib.insert(JavaOps.I2L.insn(szRaw), "rawSzL");
+        IRUtils.trapWhen(ib, JavaOps.BR_COND.create(JavaOps.JumpType.IFGT)
+                        .insn(ib.insert(JavaOps.insns(new InsnNode(Opcodes.LCMP))
+                                        .insn(bound, szRaw),
+                                "cmp")),
+                "out of bounds memory access");
     }
 
     @SuppressWarnings({"DuplicatedCode", "CommentedOutCode"})

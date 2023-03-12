@@ -13,12 +13,12 @@ import io.github.eutro.wasm2j.passes.form.SSAify;
 import io.github.eutro.wasm2j.passes.misc.JoinPass;
 import io.github.eutro.wasm2j.ssa.Function;
 import io.github.eutro.wasm2j.ssa.JClass;
-import io.github.eutro.wasm2j.ssa.display.DisplayInteraction;
 import io.github.eutro.wasm2j.ssa.display.SSADisplay;
 import io.github.eutro.wasm2j.util.Lazy;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.objectweb.asm.ClassWriter;
+import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.tree.ClassNode;
 import org.objectweb.asm.tree.MethodNode;
 
@@ -42,7 +42,7 @@ public class IntrinsicsTest {
             Function jir = intr.impl;
             if (jir == null) continue;
             SSADisplay.debugDisplayToFile(
-                    SSADisplay.displaySSA(jir, DisplayInteraction.HIGHLIGHT_INTERESTING),
+                    SSADisplay.displaySSA(jir),
                     "build/ssa/intr" + i++ + ".svg"
             );
         }
@@ -62,7 +62,7 @@ public class IntrinsicsTest {
                                     clazz,
                                     mn.name,
                                     mn.desc,
-                                    JClass.JavaMethod.Kind.STATIC
+                                    Opcodes.ACC_PUBLIC | Opcodes.ACC_STATIC
                             ));
                             return clazz;
                         },

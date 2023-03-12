@@ -1,7 +1,7 @@
 package io.github.eutro.wasm2j.conf.api;
 
 import io.github.eutro.jwasm.tree.*;
-import io.github.eutro.wasm2j.conf.Conventions;
+import io.github.eutro.wasm2j.conf.Getters;
 import io.github.eutro.wasm2j.conf.impl.*;
 import io.github.eutro.wasm2j.ext.JavaExts;
 import io.github.eutro.wasm2j.ext.WasmExts;
@@ -32,14 +32,46 @@ import static io.github.eutro.wasm2j.conf.Getters.GET_THIS;
 import static io.github.eutro.wasm2j.conf.Getters.fieldGetter;
 import static io.github.eutro.wasm2j.util.Lazy.lazy;
 
+/**
+ * Creates instances of {@link WirJavaConvention} for compiling the contents of a WebAssembly-IR
+ * {@link Module} into a Java-IR {@link JClass}. Instances should typically be created with
+ * {@link #builder()}.
+ *
+ * @see WirJavaConvention
+ */
 public interface WirJavaConventionFactory {
+    /**
+     * Create a {@link WirJavaConvention} for compiling the given module
+     * into the given class.
+     *
+     * @param module The WebAssembly-IR module (full of functions).
+     * @param jClass The empty Java-IR class.
+     * @return The {@link WirJavaConvention} to use.
+     */
     WirJavaConvention create(Module module, JClass jClass);
 
+    /**
+     * Start a {@link Builder} for creating a (configurable) default {@link WirJavaConventionFactory}.
+     *
+     * @return The new builder.
+     * @see Builder
+     */
+    static Builder builder() {
+        return new Builder();
+    }
+
+    /**
+     * A builder for a (configurable) default {@link WirJavaConventionFactory}.
+     * <p>
+     * The conventions used will generally assume that each local function will be implemented
+     * as a Java method, each local global as a Java field, each local memory as a Java {@link ByteBuffer},
+     * and each local table as a Java array.
+     * <p>
+     * Imports and exports, however, are much more flexible, and are highly configurable through this builder.
+     */
     class Builder {
         private ImportFactory<FuncImportNode, FunctionConvention> functionImports = unsupported("function imports");
-
         private ImportFactory<GlobalImportNode, GlobalConvention> globalImports = unsupported("global imports");
-
         private ImportFactory<MemImportNode, MemoryConvention> memoryImports = unsupported("memory imports");
         private ImportFactory<TableImportNode, TableConvention> tableImports = unsupported("table imports");
         private ConventionModifier<FunctionConvention, Pair<FuncNode, CodeNode>> modifyFuncConvention = ConventionModifier.identity();
@@ -48,7 +80,7 @@ public interface WirJavaConventionFactory {
         private ConventionModifier<MemoryConvention, MemoryNode> modifyMemConvention = ConventionModifier.identity();
         private final List<ConstructorCallback> constructorCallbacks = new ArrayList<>();
 
-        private CallingConvention callingConvention = Conventions.DEFAULT_CC;
+        private CallingConvention callingConvention = BasicCallingConvention.INSTANCE;
         private Supplier<String> nameSupplier = () -> "com/example/FIXME";
 
         private static <Import extends AbstractImportNode, Convention>
@@ -58,61 +90,140 @@ public interface WirJavaConventionFactory {
             };
         }
 
+        /**
+         * Set the behaviour of imported functions. By default, function imports cannot be used.
+         *
+         * @param factory The import factory.
+         * @return This builder, for convenience.
+         */
         public Builder setFunctionImports(ImportFactory<FuncImportNode, FunctionConvention> factory) {
             functionImports = factory;
             return this;
         }
 
+        /**
+         * Set the behaviour of imported globals. By default, global imports cannot be used.
+         *
+         * @param factory The import factory.
+         * @return This builder, for convenience.
+         */
         public Builder setGlobalImports(ImportFactory<GlobalImportNode, GlobalConvention> factory) {
             globalImports = factory;
             return this;
         }
 
+        /**
+         * Set the behaviour of imported memories. By default, memory imports cannot be used.
+         *
+         * @param factory The import factory.
+         * @return This builder, for convenience.
+         */
         public Builder setMemoryImports(ImportFactory<MemImportNode, MemoryConvention> factory) {
             memoryImports = factory;
             return this;
         }
 
+        /**
+         * Set the behaviour of imported tables. By default, table imports cannot be used.
+         *
+         * @param factory The import factory.
+         * @return This builder, for convenience.
+         */
         public Builder setTableImports(ImportFactory<TableImportNode, TableConvention> factory) {
             tableImports = factory;
             return this;
         }
 
+        /**
+         * Set the calling convention of this builder. Currently, only {@link BasicCallingConvention}
+         * is properly supported, and it is already set to that by default.
+         *
+         * @param callingConvention The calling convention.
+         * @return This builder, for convenience.
+         */
         public Builder setCallingConvention(CallingConvention callingConvention) {
             this.callingConvention = callingConvention;
             return this;
         }
 
+        /**
+         * Add a hook to modify the convention for each local function.
+         *
+         * @param modifyFuncConvention The hook to run.
+         * @return This builder, for convenience.
+         */
         public Builder setModifyFuncConvention(ConventionModifier<FunctionConvention, Pair<FuncNode, CodeNode>> modifyFuncConvention) {
             this.modifyFuncConvention = this.modifyFuncConvention.andThen(modifyFuncConvention);
             return this;
         }
 
+        /**
+         * Add a hook to modify the convention for each local table.
+         *
+         * @param modifyTableConvention The hook to run.
+         * @return This builder, for convenience.
+         */
         public Builder setModifyTableConvention(ConventionModifier<TableConvention, TableNode> modifyTableConvention) {
             this.modifyTableConvention = this.modifyTableConvention.andThen(modifyTableConvention);
             return this;
         }
 
+        /**
+         * Add a hook to modify the convention for each local global.
+         *
+         * @param modifyGlobalConvention The hook to run.
+         * @return This builder, for convenience.
+         */
         public Builder setModifyGlobalConvention(ConventionModifier<GlobalConvention, GlobalNode> modifyGlobalConvention) {
             this.modifyGlobalConvention = this.modifyGlobalConvention.andThen(modifyGlobalConvention);
             return this;
         }
 
+        /**
+         * Add a hook to modify the convention for each local memory.
+         *
+         * @param modifyMemConvention The hook to run.
+         * @return This builder, for convenience.
+         */
         public Builder setModifyMemConvention(ConventionModifier<MemoryConvention, MemoryNode> modifyMemConvention) {
             this.modifyMemConvention = this.modifyMemConvention.andThen(modifyMemConvention);
             return this;
         }
 
+        /**
+         * Set the function that generates class names. Class names must be
+         * <a href="https://docs.oracle.com/javase/specs/jvms/se8/html/jvms-4.html#jvms-4.2.1">internal names</a>.
+         * That is, package names should be separated by slashes ({@code /}) and not periods ({@code .}).
+         *
+         * @param nameSupplier The function that supplies names.
+         * @return This builder, for convenience.
+         */
         public Builder setNameSupplier(Supplier<String> nameSupplier) {
             this.nameSupplier = nameSupplier;
             return this;
         }
 
+        /**
+         * Add a callback that should be run to modify the constructor.
+         * <p>
+         * These callbacks are run in order that they were added,
+         * and after those for funcs, globals, tables, and memories.
+         *
+         * @param cb The callback to add.
+         * @return This builder, for convenience.
+         */
         public Builder addConstructorCallback(ConstructorCallback cb) {
             constructorCallbacks.add(cb);
             return this;
         }
 
+        /**
+         * Create the {@link WirJavaConventionFactory} this builder defines.
+         * <p>
+         * Note: this builder must not be reused after.
+         *
+         * @return The convention factory.
+         */
         public WirJavaConventionFactory build() {
             return new Impl();
         }
@@ -219,7 +330,7 @@ public interface WirJavaConventionFactory {
                                     jClass,
                                     "initData" + dataIdx,
                                     "()V",
-                                    JClass.JavaMethod.Kind.FINAL
+                                    Opcodes.ACC_PRIVATE
                             );
                             jClass.fields.add(field);
                             jClass.methods.add(method);
@@ -228,7 +339,6 @@ public interface WirJavaConventionFactory {
 
                             method.attachExt(JavaExts.METHOD_IMPL, lazy(() -> {
                                 Function func = new Function();
-                                func.attachExt(JavaExts.FUNCTION_OWNER, jClass);
                                 func.attachExt(JavaExts.FUNCTION_METHOD, method);
 
                                 IRBuilder dIb = new IRBuilder(func, func.newBb());
@@ -241,7 +351,7 @@ public interface WirJavaConventionFactory {
                                                 .insn(dataV),
                                         "sliced");
 
-                                IRUtils.fillAuto(data, dIb, slicedV);
+                                IRUtils.fillAuto(data.init, dIb, slicedV);
 
                                 dIb.insert(JavaOps.PUT_FIELD.create(field)
                                         .insn(IRUtils.getThis(dIb), dataV)
@@ -278,12 +388,12 @@ public interface WirJavaConventionFactory {
                                     jClass,
                                     "_func" + i++,
                                     getCC().getDescriptor(typeNode).getDescriptor(),
-                                    JClass.JavaMethod.Kind.FINAL
+                                    Opcodes.ACC_PRIVATE
                             );
                             jClass.methods.add(method);
                             funcs.add(modifyFuncConvention
                                     .modify(new InstanceFunctionConvention(
-                                                    ExportableConvention.methodExporter(method),
+                                                    ExportableConvention.noop(),
                                                     GET_THIS,
                                                     method,
                                                     getCC()
@@ -294,7 +404,6 @@ public interface WirJavaConventionFactory {
                             Lazy<Function> impl = funcMap.remove(code.expr);
                             impl.mapInPlace(implFunc -> {
                                 implFunc.attachExt(JavaExts.FUNCTION_METHOD, method);
-                                implFunc.attachExt(JavaExts.FUNCTION_OWNER, jClass);
                                 return convert.run(implFunc);
                             });
                             method.attachExt(JavaExts.METHOD_IMPL, impl);
@@ -312,10 +421,9 @@ public interface WirJavaConventionFactory {
                             );
                             jClass.fields.add(field);
                             globals.add(modifyGlobalConvention
-                                    .modify(new FieldGlobalConvention(
-                                                    ExportableConvention.fieldExporter(field),
-                                                    GET_THIS,
-                                                    field
+                                    .modify(new GetterSetterGlobalConvention(
+                                                    ExportableConvention.noop(),
+                                                    Getters.fieldGetter(GET_THIS, field)
                                             ),
                                             global,
                                             globals.size()));
@@ -335,7 +443,7 @@ public interface WirJavaConventionFactory {
                             jClass.fields.add(field);
                             memories.add(modifyMemConvention
                                     .modify(new ByteBufferMemoryConvention(
-                                                    ExportableConvention.fieldExporter(field),
+                                                    ExportableConvention.noop(),
                                                     fieldGetter(GET_THIS, field),
                                                     memory.limits.max
                                             ),
@@ -358,7 +466,7 @@ public interface WirJavaConventionFactory {
                             jClass.fields.add(field);
                             tables.add(modifyTableConvention
                                     .modify(new ArrayTableConvention(
-                                                    ExportableConvention.fieldExporter(field),
+                                                    ExportableConvention.noop(),
                                                     fieldGetter(GET_THIS, field),
                                                     componentType,
                                                     table.limits.max
@@ -389,19 +497,18 @@ public interface WirJavaConventionFactory {
                             jClass,
                             "<init>",
                             "()V",
-                            JClass.JavaMethod.Kind.VIRTUAL
+                            Opcodes.ACC_PUBLIC
                     );
                     jClass.methods.add(ctorMethod);
                     Function ctorImpl = new Function();
                     ctorImpl.attachExt(JavaExts.FUNCTION_METHOD, ctorMethod);
-                    ctorImpl.attachExt(JavaExts.FUNCTION_OWNER, ctorMethod.owner);
 
                     IRBuilder ib = new IRBuilder(ctorImpl, ctorImpl.newBb());
                     ib.insert(JavaOps.INVOKE.create(new JClass.JavaMethod(
                             new JClass("java/lang/Object"),
                             "<init>",
                             "()V",
-                            JClass.JavaMethod.Kind.FINAL
+                            Opcodes.ACC_PUBLIC
                     )).insn(IRUtils.getThis(ib)).assignTo());
 
                     Stream.of(funcs, globals, tables, memories, constructorCallbacks)
@@ -669,9 +776,5 @@ public interface WirJavaConventionFactory {
                 }
             }
         }
-    }
-
-    static Builder builder() {
-        return new Builder();
     }
 }

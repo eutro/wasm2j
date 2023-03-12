@@ -6,6 +6,10 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * A basic block, encapsulating a list of {@link Effect} instructions,
+ * followed by exactly one {@link Control} instruction at the end.
+ */
 public final class BasicBlock extends ExtHolder {
     private final TrackedList<Effect> effects = new TrackedList<Effect>(new ArrayList<>()) {
         @Override
@@ -19,9 +23,16 @@ public final class BasicBlock extends ExtHolder {
     };
     private Control control;
 
+    /**
+     * Format this block as a jump target, for debugging.
+     *
+     * @return The jump target string.
+     */
     public String toTargetString() {
         return String.format("@%08x", System.identityHashCode(this));
     }
+
+    BasicBlock() {}
 
     @Override
     public String toString() {
@@ -42,22 +53,38 @@ public final class BasicBlock extends ExtHolder {
         return extable;
     }
 
+    /**
+     * Get the list of {@link Effect effects} in this basic block.
+     *
+     * @return The list.
+     */
     public List<Effect> getEffects() {
         return effects;
     }
 
+    /**
+     * Add an {@link Effect effect} to the end of this basic block.
+     *
+     * @param effect The effect to add.
+     */
     public void addEffect(Effect effect) {
         effects.add(registerWithThis(effect));
     }
 
-    public void setEffects(List<Effect> effects) {
-        this.effects.setViewed(effects);
-    }
-
+    /**
+     * Get the control instruction of this block.
+     *
+     * @return The control instruction.
+     */
     public Control getControl() {
         return control;
     }
 
+    /**
+     * Set the control instruction of this block.
+     *
+     * @param control The control instruction.
+     */
     public void setControl(Control control) {
         this.control = registerWithThis(control);
     }

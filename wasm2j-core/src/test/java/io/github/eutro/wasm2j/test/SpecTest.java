@@ -7,7 +7,7 @@ import io.github.eutro.jwasm.sexp.wast.WastVisitor;
 import io.github.eutro.jwasm.test.ModuleTestBase;
 import io.github.eutro.jwasm.tree.ModuleNode;
 import io.github.eutro.jwasm.tree.analysis.ModuleValidator;
-import io.github.eutro.wasm2j.conf.Conventions;
+import io.github.eutro.wasm2j.conf.api.WirJavaConventionFactory;
 import io.github.eutro.wasm2j.ext.JavaExts;
 import io.github.eutro.wasm2j.passes.IRPass;
 import io.github.eutro.wasm2j.passes.Passes;
@@ -32,7 +32,7 @@ import java.util.stream.Stream;
 public class SpecTest {
 
     public static final IRPass<ModuleNode, ClassNode> PASS = WasmToWir.INSTANCE
-            .then(new WirToJir(Conventions.createBuilder()
+            .then(new WirToJir(WirJavaConventionFactory.builder()
                     .setNameSupplier(() -> "dev/eutro/Example")
                     .build()))
             .then(cls -> {

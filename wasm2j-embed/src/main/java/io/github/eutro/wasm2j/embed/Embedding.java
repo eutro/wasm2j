@@ -9,5 +9,10 @@ package io.github.eutro.wasm2j.embed;
  * without Java-specific extensions.
  */
 public @interface Embedding {
+    /**
+     * Returns the name of the function implemented.
+     *
+     * @return The name of the function implemented.
+     */
     String value();
 }

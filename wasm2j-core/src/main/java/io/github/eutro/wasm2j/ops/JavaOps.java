@@ -15,44 +15,114 @@ import org.objectweb.asm.tree.AbstractInsnNode;
 import org.objectweb.asm.tree.InsnList;
 import org.objectweb.asm.tree.InsnNode;
 
+import java.lang.invoke.MethodHandle;
 import java.util.ArrayList;
 import java.util.List;
 
 import static io.github.eutro.wasm2j.ext.CommonExts.*;
 
+/**
+ * A collection of {@link Op}s and {@link OpKey}s that exist only in Java IR.
+ */
 public class JavaOps {
+    /**
+     * Effect: an intrinsic instruction, implemented in Java code.
+     */
     public static final UnaryOpKey<IntrinsicImpl> INTRINSIC = new UnaryOpKey<>("intr");
 
+    /**
+     * Control: an {@link Opcodes#TABLESWITCH} instruction.
+     * With n-1 jump targets, the first n-1 correspond to keys {@code [0, n-1)}. The last
+     * is the default branch.
+     */
     public static final SimpleOpKey TABLESWITCH = new SimpleOpKey("tableswitch");
+    /**
+     * Control: an {@link Opcodes#LOOKUPSWITCH} instruction.
+     * The argument corresponds to each jump target's key, with the last block the
+     * default branch.
+     */
     public static final UnaryOpKey<int[]> LOOKUPSWITCH = new UnaryOpKey<>("lookupswitch");
 
-    // control instruction to introduce a try block, "jumps" to the first target in the case of an exception
+    /**
+     * Control: introduce a try block, "jumps" to the first target in the case of an exception
+     * in its second block.
+     */
     public static final UnaryOpKey<Type> TRY = new UnaryOpKey<>("try");
-    // must be the first instruction in a catch block (since it pops the exn off the stack)
+    /**
+     * Effect: pops the exception from the stack. Must be the first instruction in its block.
+     */
     public static final UnaryOpKey<Type> CATCH = new UnaryOpKey<>("catch");
 
+    /**
+     * Effect: loads the implicit receiver of a method.
+     */
     public static final Op THIS = new SimpleOpKey("this").create();
+    /**
+     * Effect: ignores its argument.
+     */
     public static final Op DROP = new SimpleOpKey("drop").create();
 
+    /**
+     * Effect: returns a {@link MethodHandle method handle} to the given method or field getter/setter.
+     */
     public static final UnaryOpKey<Handlable> HANDLE_OF = new UnaryOpKey<>("handle_of");
+    /**
+     * Effect: invokes the given method.
+     */
     public static final UnaryOpKey<JavaMethod> INVOKE = new UnaryOpKey<>("invoke");
 
+    /**
+     * Effect: get the given field on its argument, or statically with no argument.
+     */
     public static final UnaryOpKey<JavaField> GET_FIELD = new UnaryOpKey<>("get_field");
+    /**
+     * Effect: set the given field on its first argument, or statically with only one argument.
+     */
     public static final UnaryOpKey<JavaField> PUT_FIELD = new UnaryOpKey<>("put_field");
 
+    /**
+     * Control: jump conditionally. The first target is the one taken if the condition holds, the second is the fallthrough.
+     */
     public static final UnaryOpKey<JumpType> BR_COND = new UnaryOpKey<>("br_cond"); /* takenB fallthroughB */
+    /**
+     * Effect: check the third argument, if it is true, returns the first argument, otherwise the second.
+     */
     public static final UnaryOpKey<JumpType> SELECT = new UnaryOpKey<>("select"); /* taken fallthrough cond... */
+    /**
+     * Effect: returns true if the condition holds, false otherwise.
+     */
     public static final UnaryOpKey<JumpType> BOOL_SELECT = new UnaryOpKey<>("bool");
 
+    /**
+     * Effect: get an {@code array}'s {@code n}th element. Arguments in that order.
+     */
     public static final SimpleOpKey ARRAY_GET = new SimpleOpKey("array_get");
+    /**
+     * Effect: set an {@code array}'s {@code n}th element to a {@code value}. Arguments in that order.
+     */
     public static final SimpleOpKey ARRAY_SET = new SimpleOpKey("array_set");
 
+    /**
+     * Effect: an inline sequence of ASM instructions.
+     */
     public static final UnaryOpKey<InsnList> INSNS = new UnaryOpKey<>("insns", Disassembler::disassembleList);
 
+    /**
+     * Construct an {@link #INSNS} operator for the given instruction list.
+     *
+     * @param insns The instruction list.
+     * @return The operator.
+     */
     public static Op insns(InsnList insns) {
         return INSNS.create(insns);
     }
 
+    /**
+     * Construct an {@link #INSNS} operator for the given instructions.
+     *
+     * @param in The instructions.
+     * @return The operator.
+     */
     public static Op insns(AbstractInsnNode... in) {
         InsnList il = new InsnList();
         for (AbstractInsnNode node : in) {
@@ -61,27 +131,88 @@ public class JavaOps {
         return insns(il);
     }
 
+    /**
+     * A conditional jump's type in Java bytecode. Each {@link JumpType} represents a condition,
+     * the jump will be taken if the condition holds.
+     */
     public enum JumpType {
+        /**
+         * Jumps if the argument integer is not zero.
+         */
         IFNE(Opcodes.IFNE, null, 1),
+        /**
+         * Jumps if the argument integer is zero.
+         */
         IFEQ(Opcodes.IFEQ, IFNE, 1),
+        /**
+         * Jumps if the argument integer is less than zero.
+         */
         IFLT(Opcodes.IFLT, null, 1),
+        /**
+         * Jumps if the argument integer is greater than or equal to zero.
+         */
         IFGE(Opcodes.IFGE, IFLT, 1),
+        /**
+         * Jumps if the argument integer is greater than zero.
+         */
         IFGT(Opcodes.IFGT, null, 1),
+        /**
+         * Jumps if the argument integer is less than or equal to zero.
+         */
         IFLE(Opcodes.IFLE, IFGT, 1),
+        /**
+         * Jumps if the argument is null.
+         */
         IFNULL(Opcodes.IFNULL, null, 1),
+        /**
+         * Jumps if the argument is not null.
+         */
         IFNONNULL(Opcodes.IFNONNULL, IFNULL, 1),
+        /**
+         * Jumps if the first argument is equal to the second, which are both integers.
+         */
         IF_ICMPEQ(Opcodes.IF_ICMPEQ, null, 2),
+        /**
+         * Jumps if the first argument is not equal to the second, which are both integers.
+         */
         IF_ICMPNE(Opcodes.IF_ICMPNE, IF_ICMPEQ, 2),
+        /**
+         * Jumps if the first argument is less than the second, which are both integers.
+         */
         IF_ICMPLT(Opcodes.IF_ICMPLT, null, 2),
+        /**
+         * Jumps if the first argument is greater than or equal to the second, which are both integers.
+         */
         IF_ICMPGE(Opcodes.IF_ICMPGE, IF_ICMPLT, 2),
+        /**
+         * Jumps if the first argument is greater than the second, which are both integers.
+         */
         IF_ICMPGT(Opcodes.IF_ICMPGT, null, 2),
+        /**
+         * Jumps if the first argument is less than or equal to the second, which are both integers.
+         */
         IF_ICMPLE(Opcodes.IF_ICMPLE, IF_ICMPGT, 2),
+        /**
+         * Jumps if the first argument is referentially equal to the second, which are both references.
+         */
         IF_ACMPEQ(Opcodes.IF_ACMPEQ, null, 2),
+        /**
+         * Jumps if the first argument is referentially not equal to the second, which are both references.
+         */
         IF_ACMPNE(Opcodes.IF_ACMPNE, IF_ACMPEQ, 2),
         ;
 
+        /**
+         * The Java opcode of the jump instruction.
+         */
         public final int opcode;
+        /**
+         * The inverse of the condition.
+         */
         public JumpType inverse;
+        /**
+         * The number of arguments to the instruction.
+         */
         public final int arity;
 
         JumpType(int opcode, JumpType inverse, int arity) {
@@ -93,6 +224,12 @@ public class JavaOps {
             }
         }
 
+        /**
+         * Get the jump type for a specific Java opcode.
+         *
+         * @param opcode The opcode.
+         * @return The jump type.
+         */
         public static JumpType fromOpcode(int opcode) {
             // @formatter:off
             switch (opcode) {
@@ -117,6 +254,12 @@ public class JavaOps {
             // @formatter:on
         }
 
+        /**
+         * Combine another condition with this one, if possible. This is the XAND of their results.
+         *
+         * @param bool The condition.
+         * @return The combined condition, or null if it was not possible to combine them.
+         */
         @Nullable
         public JumpType combine(JumpType bool) {
             switch (this) {

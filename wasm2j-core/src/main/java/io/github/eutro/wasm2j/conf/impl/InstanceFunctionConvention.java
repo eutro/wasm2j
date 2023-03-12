@@ -13,17 +13,42 @@ import io.github.eutro.wasm2j.ssa.JClass;
 import io.github.eutro.wasm2j.ssa.Var;
 import io.github.eutro.wasm2j.util.IRUtils;
 import io.github.eutro.wasm2j.util.ValueGetter;
+import org.jetbrains.annotations.Nullable;
 import org.objectweb.asm.Type;
 
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * An {@link InstanceFunctionConvention} which implements function calls by invoking
+ * a specific Java method on a Java object.
+ */
 public class InstanceFunctionConvention extends DelegatingExporter implements FunctionConvention {
-    public static final Ext<InstanceFunctionConvention> FUNCTION_CONVENTION = Ext.create(InstanceFunctionConvention.class, "FUNCTION_CONVENTION");
-    public final ValueGetter target;
-    public final JClass.JavaMethod method;
-    public final CallingConvention cc;
+    /**
+     * The object on which the method will be invoked.
+     */
+    public static final Ext<ValueGetter> CONVENTION_TARGET = Ext.create(ValueGetter.class, "CONVENTION_TARGET");
+    /**
+     * The method which will be invoked.
+     */
+    public static final Ext<JClass.JavaMethod> CONVENTION_METHOD = Ext.create(JClass.JavaMethod.class, "CONVENTION_METHOD");
+    /**
+     * The calling convention with which the method will be invoked.
+     */
+    public static final Ext<CallingConvention> CONVENTION_CC = Ext.create(CallingConvention.class, "CONVENTION_CC");
 
+    private final ValueGetter target;
+    private final JClass.JavaMethod method;
+    private final CallingConvention cc;
+
+    /**
+     * Construct a new {@link InstanceFunctionConvention}.
+     *
+     * @param exporter The exporter.
+     * @param target The target to invoke the method on.
+     * @param method The method to invoke.
+     * @param cc The calling convention with which to call the method.
+     */
     public InstanceFunctionConvention(
             ExportableConvention exporter,
             ValueGetter target,
@@ -33,7 +58,6 @@ public class InstanceFunctionConvention extends DelegatingExporter implements Fu
         super(exporter);
         this.target = target;
         this.method = method;
-        attachExt(FUNCTION_CONVENTION, this);
         this.cc = cc;
     }
 
@@ -63,5 +87,30 @@ public class InstanceFunctionConvention extends DelegatingExporter implements Fu
                 .create(IRUtils.METHOD_HANDLE_CLASS.lookupMethod("bindTo", Object.class))
                 .insn(handle, target.get(ib))
                 .copyFrom(effect));
+    }
+
+    @SuppressWarnings("unchecked")
+    @Override
+    public <T> @Nullable T getNullable(Ext<T> ext) {
+        if (ext == CONVENTION_TARGET) return (T) target;
+        if (ext == CONVENTION_METHOD) return (T) method;
+        if (ext == CONVENTION_CC) return (T) cc;
+        return super.getNullable(ext);
+    }
+
+    @Override
+    public <T> void removeExt(Ext<T> ext) {
+        if (ext == CONVENTION_METHOD || ext == CONVENTION_TARGET || ext == CONVENTION_CC) {
+            throw new IllegalArgumentException();
+        }
+        super.removeExt(ext);
+    }
+
+    @Override
+    public <T> void attachExt(Ext<T> ext, T value) {
+        if (ext == CONVENTION_METHOD || ext == CONVENTION_TARGET || ext == CONVENTION_CC) {
+            throw new IllegalArgumentException();
+        }
+        super.attachExt(ext, value);
     }
 }

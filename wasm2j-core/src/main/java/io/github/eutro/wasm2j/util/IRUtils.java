@@ -1,9 +1,9 @@
 package io.github.eutro.wasm2j.util;
 
-import io.github.eutro.jwasm.tree.DataNode;
 import io.github.eutro.wasm2j.conf.impl.BasicCallingConvention;
 import io.github.eutro.wasm2j.ops.*;
 import io.github.eutro.wasm2j.ssa.*;
+import io.github.eutro.wasm2j.ssa.JClass.JavaMethod;
 import org.jetbrains.annotations.Nullable;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
@@ -34,42 +34,97 @@ import static io.github.eutro.wasm2j.ops.JavaOps.JumpType.IF_ICMPLE;
  */
 public class IRUtils {
     /**
-     * The empty {@link JClass} of {@link ByteBuffer}.
+     * An empty {@link JClass} of {@link ByteBuffer}.
      */
     public static final JClass BYTE_BUFFER_CLASS = JClass.emptyFromJava(ByteBuffer.class);
     /**
-     * The empty {@link JClass} of {@link Buffer}.
+     * An empty {@link JClass} of {@link Buffer}.
      */
     public static final JClass BUFFER_CLASS = JClass.emptyFromJava(Buffer.class);
     /**
-     * The empty {@link JClass} of {@link MethodHandle}.
+     * An empty {@link JClass} of {@link MethodHandle}.
      */
     public static final JClass METHOD_HANDLE_CLASS = JClass.emptyFromJava(MethodHandle.class);
+    /**
+     * An empty {@link JClass} of {@link MethodType}.
+     */
     public static final JClass MTY_CLASS = JClass.emptyFromJava(MethodType.class);
 
-    public static final JClass.JavaMethod MTY_METHOD_TYPE = MTY_CLASS.lookupMethod(
+    /**
+     * An empty {@link JClass} of {@link Base64}.
+     */
+    public static final JClass BASE64_CLASS = JClass.emptyFromJava(Base64.class);
+    /**
+     * An empty {@link JClass} of {@link Base64.Decoder}.
+     */
+    public static final JClass BASE64_DECODER_CLASS = JClass.emptyFromJava(Base64.Decoder.class);
+
+    /**
+     * A {@link JavaMethod} of {@link MethodType#methodType(Class, Class[])}.
+     */
+    public static final JavaMethod MTY_METHOD_TYPE = MTY_CLASS.lookupMethod(
             "methodType",
             Class.class,
             Class[].class);
 
+    /**
+     * The maximum value of an unsigned 16-byte integer.
+     */
     public static final int MAX_USHORT = (1 << 16) - 1;
-    public static final JClass BASE64_CLASS = JClass.emptyFromJava(Base64.class);
-    public static final JClass BASE64_DECODER_CLASS = JClass.emptyFromJava(Base64.Decoder.class);
 
+    /**
+     * Insert an instruction to get the implicit Java receiver in an instance method, {@code this}.
+     *
+     * @param ib The instruction builder.
+     * @return The loaded {@code this}.
+     */
     public static Var getThis(IRBuilder ib) {
         return ib.insert(JavaOps.THIS.insn(), "this");
     }
 
+    /**
+     * {@code void.class}
+     */
     private static final Insn VOID_TYPE = JavaOps.GET_FIELD.create(JClass.JavaField.fromJava(Void.class, "TYPE")).insn();
+    /**
+     * {@code boolean.class}
+     */
     private static final Insn BOOLEAN_TYPE = JavaOps.GET_FIELD.create(JClass.JavaField.fromJava(Boolean.class, "TYPE")).insn();
+    /**
+     * {@code char.class}
+     */
     private static final Insn CHAR_TYPE = JavaOps.GET_FIELD.create(JClass.JavaField.fromJava(Character.class, "TYPE")).insn();
+    /**
+     * {@code byte.class}
+     */
     private static final Insn BYTE_TYPE = JavaOps.GET_FIELD.create(JClass.JavaField.fromJava(Byte.class, "TYPE")).insn();
+    /**
+     * {@code short.class}
+     */
     private static final Insn SHORT_TYPE = JavaOps.GET_FIELD.create(JClass.JavaField.fromJava(Short.class, "TYPE")).insn();
+    /**
+     * {@code int.class}
+     */
     private static final Insn INT_TYPE = JavaOps.GET_FIELD.create(JClass.JavaField.fromJava(Integer.class, "TYPE")).insn();
+    /**
+     * {@code float.class}
+     */
     private static final Insn FLOAT_TYPE = JavaOps.GET_FIELD.create(JClass.JavaField.fromJava(Float.class, "TYPE")).insn();
+    /**
+     * {@code long.class}
+     */
     private static final Insn LONG_TYPE = JavaOps.GET_FIELD.create(JClass.JavaField.fromJava(Long.class, "TYPE")).insn();
+    /**
+     * {@code double.class}
+     */
     private static final Insn DOUBLE_TYPE = JavaOps.GET_FIELD.create(JClass.JavaField.fromJava(Double.class, "TYPE")).insn();
 
+    /**
+     * Get the instruction for loading the class described by the given type.
+     *
+     * @param ty The type.
+     * @return The instruction to load the class for {@code ty}.
+     */
     public static Insn loadClass(Type ty) {
         switch (ty.getSort()) {
             case Type.OBJECT:
@@ -95,6 +150,14 @@ public class IRUtils {
         }
     }
 
+    /**
+     * Get the instruction which computes the offset address of an instruction.
+     *
+     * @param ib    The instruction builder.
+     * @param wmArg The argument containing the offset.
+     * @param ptr   The un-offset pointer.
+     * @return The offset pointer.
+     */
     public static Var getAddr(IRBuilder ib, WasmOps.WithMemArg<?> wmArg, Var ptr) {
         return wmArg.offset == 0
                 ? ptr
@@ -106,6 +169,17 @@ public class IRUtils {
         ), "addr");
     }
 
+    /**
+     * Create a loop. This API should not be considered stable.
+     *
+     * @param ib     The instruction builder.
+     * @param toInc  The list of loop variables.
+     * @param invert True if loop variables should be decremented, false if they should be incremented.
+     * @param len    The number of iterations.
+     * @param f      The function creating the loop body, given an array of the loop variables.
+     *               This will include all of {@code toInc} (incremented as appropriate),
+     *               and a single variable which will go from 0 to {@code len}.
+     */
     public static void lenLoop(IRBuilder ib, Var[] toInc, boolean invert, Var len, Consumer<Var[]> f) {
         BasicBlock srcBlock = ib.getBlock();
         BasicBlock condBlock = ib.func.newBb();
@@ -149,6 +223,13 @@ public class IRUtils {
         ib.setBlock(endBlock);
     }
 
+    /**
+     * Emit a boxed integer, possibly null.
+     *
+     * @param ib  The instruction builder.
+     * @param num The integer.
+     * @return The loaded boxed integer.
+     */
     public static Var emitNullableInt(IRBuilder ib, @Nullable Integer num) {
         return num == null
                 ? ib.insert(CommonOps.constant(null), "nil")
@@ -156,24 +237,44 @@ public class IRUtils {
                 I32, Type.getType(Integer.class));
     }
 
+    /**
+     * The threshold above which gzipped-base64 will be used to store datas inline instead.
+     */
     private static final int FILL_DIRECT_MAX = 256;
 
-    public static void fillAuto(DataNode data, IRBuilder ib, Var dataV) {
-        if (data.init.length <= FILL_DIRECT_MAX) {
+    /**
+     * Emit code to fill a byte buffer with static data.
+     *
+     * @param data  The data.
+     * @param ib    The instruction builder.
+     * @param dataV The byte buffer.
+     */
+    public static void fillAuto(byte[] data, IRBuilder ib, Var dataV) {
+        if (data.length <= FILL_DIRECT_MAX) {
             fillWithDirectPuts(data, ib, dataV);
         } else {
             fillWithBase64(data, ib, dataV);
         }
     }
 
-    public static void fillWithDirectPuts(DataNode data, IRBuilder ib, Var dataV) {
+    /**
+     * Emit code to fill a byte buffer with static data using direct
+     * {@link ByteBuffer#put(byte)} and {@link ByteBuffer#putShort(short)} calls.
+     * <p>
+     * This may emit a method too large if the static data is too long.
+     *
+     * @param data  The data.
+     * @param ib    The instruction builder.
+     * @param dataV The byte buffer.
+     */
+    public static void fillWithDirectPuts(byte[] data, IRBuilder ib, Var dataV) {
         // NB: Wasm memory is little endian, but when we write
         // data segments we're calling #slice() first, which
         // is always big endian
-        ByteBuffer buf = ByteBuffer.wrap(data.init);
+        ByteBuffer buf = ByteBuffer.wrap(data);
 
-        JClass.JavaMethod putShort = BYTE_BUFFER_CLASS.lookupMethod("putShort", short.class);
-        JClass.JavaMethod putByte = BYTE_BUFFER_CLASS.lookupMethod("put", byte.class);
+        JavaMethod putShort = BYTE_BUFFER_CLASS.lookupMethod("putShort", short.class);
+        JavaMethod putByte = BYTE_BUFFER_CLASS.lookupMethod("put", byte.class);
 
         while (buf.remaining() >= Short.BYTES) {
             dataV = ib.insert(JavaOps.INVOKE.create(putShort)
@@ -188,9 +289,20 @@ public class IRUtils {
         }
     }
 
+    /**
+     * Emit code to fill a byte buffer with static data using gzipped-base64 strings.
+     * <p>
+     * This will be able to embed more data than {@link #fillWithDirectPuts(byte[], IRBuilder, Var)},
+     * and will split the string to create constants short enough for the constant pool. It still
+     * cannot embed unbounded data, but we can't do much better.
+     *
+     * @param data  The data.
+     * @param ib    The instruction builder.
+     * @param dataV The byte buffer.
+     */
     @SuppressWarnings("CommentedOutCode")
-    public static void fillWithBase64(DataNode data, IRBuilder ib, Var dataV) {
-        byte[] encodedData = data.init;
+    public static void fillWithBase64(byte[] data, IRBuilder ib, Var dataV) {
+        byte[] encodedData = data;
         {
             ByteArrayOutputStream baos = new ByteArrayOutputStream();
             try (GZIPOutputStream gos = new GZIPOutputStream(baos)) {
@@ -202,11 +314,11 @@ public class IRUtils {
         }
         String srcString = Base64.getEncoder().encodeToString(encodedData);
 
-        Var len = ib.insert(CommonOps.constant(data.init.length), "len");
+        Var len = ib.insert(CommonOps.constant(data.length), "len");
 
         Var decoded;
-        JClass.JavaMethod getDecoder = BASE64_CLASS.lookupMethod("getDecoder");
-        JClass.JavaMethod decode = BASE64_DECODER_CLASS.lookupMethod("decode", String.class);
+        JavaMethod getDecoder = BASE64_CLASS.lookupMethod("getDecoder");
+        JavaMethod decode = BASE64_DECODER_CLASS.lookupMethod("decode", String.class);
         Var decoder = ib.insert(JavaOps.INVOKE.create(getDecoder).insn(), "decoder");
         if (srcString.length() > MAX_USHORT) {
             int strLen = srcString.length();
@@ -233,13 +345,13 @@ public class IRUtils {
                             new InsnNode(Opcodes.SWAP),
                             new MethodInsnNode(Opcodes.INVOKESPECIAL, baosName, "<init>", "(I)V"))
                     .insn(len), "baos");
-            JClass.JavaMethod osWrite = JClass.emptyFromJava(OutputStream.class).lookupMethod("write", byte[].class);
+            JavaMethod osWrite = JClass.emptyFromJava(OutputStream.class).lookupMethod("write", byte[].class);
             for (String str : subStrings) {
                 Var constStr = ib.insert(CommonOps.constant(str), "str");
                 Var part = ib.insert(JavaOps.INVOKE.create(decode).insn(decoder, constStr), "decodedPart");
                 ib.insert(JavaOps.INVOKE.create(osWrite).insn(baos, part).assignTo());
             }
-            JClass.JavaMethod baosToArray = JClass.emptyFromJava(ByteArrayOutputStream.class).lookupMethod("toByteArray");
+            JavaMethod baosToArray = JClass.emptyFromJava(ByteArrayOutputStream.class).lookupMethod("toByteArray");
             decoded = ib.insert(JavaOps.INVOKE.create(baosToArray).insn(baos), "decoded");
         } else {
             // byte[] data = Base64.getDecoder().decode(srcString);
@@ -247,7 +359,7 @@ public class IRUtils {
             decoded = ib.insert(JavaOps.INVOKE.create(decode).insn(decoder, constString), "decoded");
         }
 
-        JClass.JavaMethod putBytes = BYTE_BUFFER_CLASS.lookupMethod(
+        JavaMethod putBytes = BYTE_BUFFER_CLASS.lookupMethod(
                 "put",
                 byte[].class, int.class, int.class
         );
@@ -308,9 +420,15 @@ public class IRUtils {
     }
 
     //@formatter:off
+    /** Not stable. */
     public interface StoreOrLoadFn { void call(int index, Var idx, Var val); }
+    /** Not stable. */
     public interface BoundsCheckFn<T> { void call(T t, IRBuilder ib, int index, Var value); }
     //@formatter:on
+
+    /**
+     * Not stable.
+     */
     public static <T> void emitFill(IRBuilder ib,
                                     Effect effect,
                                     UnaryOpKey<Integer> key,
@@ -332,6 +450,9 @@ public class IRUtils {
         IRUtils.lenLoop(ib, new Var[]{idx}, false, len, vars -> store.call(thisIdx, vars[0], value));
     }
 
+    /**
+     * Not stable.
+     */
     @SuppressWarnings("DuplicatedCode")
     public static <T> void emitCopy(IRBuilder ib,
                                     Effect effect,
@@ -371,6 +492,13 @@ public class IRUtils {
         ib.setBlock(endBb);
     }
 
+    /**
+     * Emit code to trap with the given message if a given instruction jumps.
+     *
+     * @param ib The instruction builder.
+     * @param insn The jump instruction.
+     * @param msg The message.
+     */
     public static void trapWhen(IRBuilder ib, Insn insn, String msg) {
         BasicBlock errBb = ib.func.newBb();
         BasicBlock contBb = ib.func.newBb();

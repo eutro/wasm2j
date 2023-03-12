@@ -6,6 +6,7 @@ import io.github.eutro.wasm2j.conf.impl.InstanceFunctionConvention;
 import io.github.eutro.wasm2j.events.EventSupplier;
 import io.github.eutro.wasm2j.events.ModifyConventionsEvent;
 import io.github.eutro.wasm2j.events.RunModuleCompilationEvent;
+import io.github.eutro.wasm2j.ssa.JClass;
 import io.github.eutro.wasm2j.support.NameMangler;
 import org.jetbrains.annotations.Nullable;
 
@@ -43,9 +44,9 @@ public class NameSectionParser<T extends EventSupplier<? super RunModuleCompilat
                         .setModifyFuncConvention((functionConvention, funcNodeCodeNodePair, index) -> {
                             String funcName = section.functionNames.get(index);
                             if (funcName != null) {
-                                InstanceFunctionConvention ifc = functionConvention
-                                        .getExtOrThrow(InstanceFunctionConvention.FUNCTION_CONVENTION);
-                                ifc.method.name = NameMangler
+                                JClass.JavaMethod method = functionConvention
+                                        .getExtOrThrow(InstanceFunctionConvention.CONVENTION_METHOD);
+                                method.name = NameMangler
                                         .jvmUnqualified(NameMangler.IllegalTokenPolicy.MANGLE_BIJECTIVE)
                                         .mangle(funcName);
                             }

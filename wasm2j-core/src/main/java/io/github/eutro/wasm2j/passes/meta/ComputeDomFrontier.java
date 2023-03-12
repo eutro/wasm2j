@@ -9,15 +9,17 @@ import io.github.eutro.wasm2j.ssa.Function;
 import java.util.HashSet;
 import java.util.List;
 
+/**
+ * Computes {@link CommonExts#DOM_FRONTIER} for each block.
+ */
 public class ComputeDomFrontier implements InPlaceIRPass<Function> {
+    /**
+     * A singleton instance of this pass.
+     */
     public static final ComputeDomFrontier INSTANCE = new ComputeDomFrontier();
 
     @Override
-    public void runInPlace(Function function) {
-        computeDomFrontier(function);
-    }
-
-    private static void computeDomFrontier(Function func) {
+    public void runInPlace(Function func) {
         MetadataState ms = func.getExtOrThrow(CommonExts.METADATA_STATE);
         ms.ensureValid(func, MetadataState.DOMS, MetadataState.PREDS);
 

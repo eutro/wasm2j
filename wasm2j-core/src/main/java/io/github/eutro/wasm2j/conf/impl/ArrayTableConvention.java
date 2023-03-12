@@ -14,6 +14,9 @@ import org.objectweb.asm.tree.TypeInsnNode;
 
 import java.util.Arrays;
 
+/**
+ * An {@link TableConvention} that has a Java array as its underlying representation.
+ */
 public class ArrayTableConvention extends DelegatingExporter implements TableConvention {
     private static final JClass SYSTEM = JClass.emptyFromJava(System.class);
     private static final JClass.JavaMethod SYSTEM_ARRAYCOPY = SYSTEM.lookupMethod("arraycopy",
@@ -23,6 +26,14 @@ public class ArrayTableConvention extends DelegatingExporter implements TableCon
     private final Type componentType;
     private final Integer max;
 
+    /**
+     * Construct an {@link ArrayTableConvention}.
+     *
+     * @param exporter      The exporter.
+     * @param table         The getter/setter for the underlying array.
+     * @param componentType The array component type.
+     * @param max           The maximum of the table type.
+     */
     public ArrayTableConvention(
             ExportableConvention exporter,
             ValueGetterSetter table,
@@ -111,10 +122,10 @@ public class ArrayTableConvention extends DelegatingExporter implements TableCon
         ib.setBlock(k);
 
         Var newTbl = ib.insert(JavaOps.insns(new TypeInsnNode(Opcodes.CHECKCAST, "[" + componentType.getDescriptor()))
-                .insn(ib.insert(JavaOps.INVOKE
-                                .create(ARRAYS_CLASS.lookupMethod("copyOf", Object[].class, int.class))
-                                .insn(tbl, newSz),
-                        "newTblRaw")),
+                        .insn(ib.insert(JavaOps.INVOKE
+                                        .create(ARRAYS_CLASS.lookupMethod("copyOf", Object[].class, int.class))
+                                        .insn(tbl, newSz),
+                                "newTblRaw")),
                 "newTbl");
 
         BasicBlock fillBlock = ib.func.newBb();

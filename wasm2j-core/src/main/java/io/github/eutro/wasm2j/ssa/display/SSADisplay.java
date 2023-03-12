@@ -4,8 +4,6 @@ import io.github.eutro.wasm2j.passes.IRPass;
 import io.github.eutro.wasm2j.ssa.BasicBlock;
 import io.github.eutro.wasm2j.ssa.Control;
 import io.github.eutro.wasm2j.ssa.Function;
-import io.github.eutro.wasm2j.ssa.Module;
-import io.github.eutro.wasm2j.util.Lazy;
 import io.github.eutro.wasm2j.util.Pair;
 import org.w3c.dom.DOMImplementation;
 import org.w3c.dom.Document;
@@ -31,11 +29,14 @@ import java.util.List;
 import java.util.*;
 import java.util.stream.Stream;
 
+/**
+ * Utilities for displaying the IR to an SVG document, for debugging purposes.
+ */
 public class SSADisplay {
     private static final int BLOCK_PADDING = 5;
     private static final int INTERBLOCK_PADDING = 25;
     private static final int FONT_SIZE = 25;
-    public static final DOMImplementation DOM_IMPL;
+    private static final DOMImplementation DOM_IMPL;
 
     static {
         try {
@@ -45,11 +46,18 @@ public class SSADisplay {
         }
     }
 
-    public static final String SVG_NS = "http://www.w3.org/2000/svg";
-    public static final int LINE_LIMIT = 300;
+    private static final String SVG_NS = "http://www.w3.org/2000/svg";
+    private static final int LINE_LIMIT = 300;
 
+    /**
+     * Output a document to a file.
+     *
+     * @param img  The document to output.
+     * @param file The file.
+     */
     public static void debugDisplayToFile(Document img, String file) {
         File jFile = new File(file);
+        //noinspection ResultOfMethodCallIgnored
         jFile.getParentFile().mkdirs();
         try (FileWriter writer = new FileWriter(jFile)) {
             TransformerFactory.newInstance()
@@ -65,11 +73,13 @@ public class SSADisplay {
         }
     }
 
+    /**
+     * Display the function to an SVG document.
+     *
+     * @param func The function to display.
+     * @return The SVG document.
+     */
     public static Document displaySSA(Function func) {
-        return displaySSA(func, new DisplayInteraction());
-    }
-
-    public static Document displaySSA(Function func, DisplayInteraction interaction) {
         Document document = createSvg();
         Element rootGroup = document.createElement("g");
         rootGroup.setAttribute("font-family", "monospace");
@@ -77,7 +87,7 @@ public class SSADisplay {
         Element rootElement = (Element) document.getFirstChild();
 
         Element style = document.createElement("style");
-        style.setTextContent(interaction.getCss() + ".block{cursor:pointer;}");
+        style.setTextContent(DisplayInteraction.HIGHLIGHT_INTERESTING.getCss() + ".block{cursor:pointer;}");
         rootElement.appendChild(style);
 
         Element script = document.createElement("script");
@@ -229,7 +239,7 @@ public class SSADisplay {
             }
         }
 
-        interaction.bbHook(bbMap, edgeMap);
+        DisplayInteraction.HIGHLIGHT_INTERESTING.bbHook(bbMap, edgeMap);
 
         return document;
     }
@@ -238,20 +248,13 @@ public class SSADisplay {
         return DOM_IMPL.createDocument(SVG_NS, "svg", null);
     }
 
-    public static IRPass<Module, Module> debugDisplay(String prefix) {
-        return module -> {
-            int i = 0;
-            for (Lazy<Function> func : module.funcMap.values()) {
-                debugDisplayToFile(
-                        displaySSA(func.get(), DisplayInteraction.HIGHLIGHT_INTERESTING),
-                        "build/ssa/" + prefix + i + ".svg"
-                );
-                i++;
-            }
-            return module;
-        };
-    }
-
+    /**
+     * Returns a function pass that displays to the "build/ssa/{prefix}" if the given pass throws an exception.
+     *
+     * @param prefix {@code {prefix}}
+     * @param pass The pass to run.
+     * @return The pass described above.
+     */
     public static IRPass<Function, Function> debugDisplayOnError(String prefix, IRPass<Function, Function> pass) {
         return new IRPass<Function, Function>() {
             @Override
@@ -266,7 +269,7 @@ public class SSADisplay {
                 } catch (Throwable t) {
                     String file = "build/ssa/" + prefix + System.identityHashCode(t) + ".svg";
                     debugDisplayToFile(
-                            displaySSA(func, DisplayInteraction.HIGHLIGHT_INTERESTING),
+                            displaySSA(func),
                             file
                     );
                     t.addSuppressed(new RuntimeException("function written to file: " + new File(file).getAbsolutePath()));
@@ -276,11 +279,11 @@ public class SSADisplay {
         };
     }
 
-    public interface Drawer {
+    interface Drawer {
         Element draw(Document document, float dx, float dy);
     }
 
-    public static class Image {
+    static class Image {
         public final int width, height;
         public final Drawer drawer;
 
@@ -291,7 +294,7 @@ public class SSADisplay {
         }
     }
 
-    public static Image displayBlock(BasicBlock block) {
+    static Image displayBlock(BasicBlock block) {
         String str = block.toString();
         Font mono = getMonoFont();
         FontRenderContext frc = new FontRenderContext(new AffineTransform(), true, false);

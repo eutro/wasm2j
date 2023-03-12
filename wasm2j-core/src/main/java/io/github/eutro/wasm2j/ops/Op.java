@@ -8,6 +8,9 @@ import io.github.eutro.wasm2j.ssa.Var;
 
 import java.util.List;
 
+/**
+ * An operation, encapsulating an {@link OpKey operation key} and any intermediates.
+ */
 public /* virtual */ class Op extends DelegatingExtHolder {
     public OpKey key;
 

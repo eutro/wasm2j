@@ -14,11 +14,17 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+/**
+ * Compute the {@link CommonExts#IDOM} of each basic block.
+ */
 /*
  Thomas Lengauer and Robert Endre Tarjan. A fast algorithm for finding dominators in a flow-graph.
  ACM Transactions on Programming Languages and Systems, 1(1):121-141, July 1979.
 */
 public class ComputeDoms implements InPlaceIRPass<Function> {
+    /**
+     * An instance of this pass.
+     */
     public static final ComputeDoms INSTANCE = new ComputeDoms();
 
     @Override

@@ -23,10 +23,30 @@ import java.util.Optional;
 
 import static io.github.eutro.jwasm.Opcodes.*;
 
+/**
+ * The ubiquitous calling convention.
+ * <p>
+ * Parameters are passed directly, and return values,
+ * if there are more than one, are returned in an array.
+ * <p>
+ * If all return types are the same, the component
+ * of the array type is that type. Otherwise, the component
+ * of the array type is {@link Object}, and all values are boxed.
+ */
 public class BasicCallingConvention implements CallingConvention {
+    /**
+     * A singleton instance of this calling convention.
+     */
+    public static final BasicCallingConvention INSTANCE = new BasicCallingConvention();
 
     private static final JClass NUMBER_CLASS = JClass.emptyFromJava(Number.class);
 
+    /**
+     * Convert from a WebAssembly type to a Java type.
+     *
+     * @param type The WebAssembly type.
+     * @return The Java type.
+     */
     public static Type javaType(byte type) {
         switch (type) {
             case I32:
@@ -48,6 +68,12 @@ public class BasicCallingConvention implements CallingConvention {
         }
     }
 
+    /**
+     * Convert from a WebAssembly type to a non-primitive Java type.
+     *
+     * @param type The WebAssembly type.
+     * @return The Java type.
+     */
     public static Type boxedType(byte type) {
         switch (type) {
             case I32:
@@ -69,6 +95,15 @@ public class BasicCallingConvention implements CallingConvention {
         }
     }
 
+    /**
+     * Convert a WebAssembly value into a Java reference.
+     *
+     * @param ib     The instruction builder.
+     * @param val    The WebAssembly value.
+     * @param fromTy The source WebAssembly type.
+     * @param toTy   The target Java type.
+     * @return The boxed Java value.
+     */
     public static Var maybeBoxed(IRBuilder ib, Var val, byte fromTy, Type toTy) {
         Type unboxedTy = javaType(fromTy);
         if (toTy == unboxedTy) return val;
@@ -82,7 +117,8 @@ public class BasicCallingConvention implements CallingConvention {
                                         new JClass(boxedTy.getInternalName()),
                                         "valueOf",
                                         Type.getMethodType(boxedTy, unboxedTy).getDescriptor(),
-                                        JClass.JavaMethod.Kind.STATIC))
+                                        Opcodes.ACC_PUBLIC | Opcodes.ACC_STATIC
+                                ))
                                 .insn(val),
                         "boxed");
             }
@@ -94,6 +130,15 @@ public class BasicCallingConvention implements CallingConvention {
         }
     }
 
+    /**
+     * Convert a Java reference into a WebAssembly value.
+     *
+     * @param ib     The instruction builder.
+     * @param val    The WebAssembly value.
+     * @param fromTy The source Java type.
+     * @param toTy   The target WebAssembly type.
+     * @return The unboxed WebAssembly value.
+     */
     public static Var unboxed(IRBuilder ib, Var val, Type fromTy, byte toTy) {
         Type unboxedTy = javaType(toTy);
         if (fromTy == unboxedTy) return val;
@@ -112,7 +157,7 @@ public class BasicCallingConvention implements CallingConvention {
                                 NUMBER_CLASS,
                                 methodName,
                                 Type.getMethodType(unboxedTy).getDescriptor(),
-                                JClass.JavaMethod.Kind.VIRTUAL
+                                Opcodes.ACC_PUBLIC
                         ))
                         .insn(ib.insert(JavaOps.insns(new TypeInsnNode(Opcodes.CHECKCAST, NUMBER_CLASS.name))
                                         .insn(val),
@@ -134,6 +179,13 @@ public class BasicCallingConvention implements CallingConvention {
         return methodDesc(tn.params, tn.returns);
     }
 
+    /**
+     * Return the {@link BasicCallingConvention} descriptor of the given WebAssembly function type.
+     *
+     * @param params  The WebAssembly parameter types.
+     * @param returns The WebAssembly return types.
+     * @return The descriptor of the Java method.
+     */
     public static Type methodDesc(byte[] params, byte[] returns) {
         Type[] args = new Type[params.length];
         for (int i = 0; i < params.length; i++) {

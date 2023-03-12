@@ -4,10 +4,13 @@ import io.github.eutro.wasm2j.intrinsics.Intrinsic;
 
 import static io.github.eutro.jwasm.Opcodes.*;
 
+/**
+ * The Java implementations of WebAssembly primitives.
+ */
 @SuppressWarnings("DuplicatedCode")
 public final class Operators {
     private static final double MAX_ULONG = (double) Long.MAX_VALUE * 2d;
-    public static final long MAX_UINT = 0xFFFFFFFFL;
+    private static final long MAX_UINT = 0xFFFFFFFFL;
 
     // @formatter:off
 

@@ -10,7 +10,13 @@ import io.github.eutro.wasm2j.ssa.Function;
 
 import java.util.*;
 
+/**
+ * A pass which collapses empty blocks or simple jumps where they are unnecessary.
+ */
 public class CollapseJumps implements InPlaceIRPass<Function> {
+    /**
+     * A singleton instance of this pass.
+     */
     public static final CollapseJumps INSTANCE = new CollapseJumps();
 
     @Override

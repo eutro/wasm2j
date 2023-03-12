@@ -236,7 +236,7 @@ public class WirToJir implements IRPass<Module, JClass> {
                 jb.insert(CommonOps.constant(value).copyFrom(fx));
             });
             FX_CONVERTERS.put(WasmOps.IS_NULL, (fx, jb, slf) ->
-                    jb.insert(JavaOps.BOOL_SELECT.create(JavaOps.JumpType.IFNONNULL).copyFrom(fx)));
+                    jb.insert(JavaOps.BOOL_SELECT.create(JavaOps.JumpType.IFNULL).copyFrom(fx)));
 
             FX_CONVERTERS.put(WasmOps.SELECT, (fx, jb, slf) ->
                     jb.insert(JavaOps.SELECT.create(JavaOps.JumpType.IFNE)

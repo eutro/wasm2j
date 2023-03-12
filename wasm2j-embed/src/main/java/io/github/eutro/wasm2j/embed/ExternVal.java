@@ -10,6 +10,9 @@ import java.lang.invoke.MethodType;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 
+/**
+ * A value that can be exported from a module instance, or provided as an import.
+ */
 public interface ExternVal {
     @NotNull ExternType getType();
 

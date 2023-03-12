@@ -10,10 +10,23 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
+/**
+ * An instruction, encapsulating an {@link Op operation} and its arguments.
+ */
 public final class Insn extends DelegatingExtHolder implements Iterable<Var> {
+    /**
+     * Whether instruction creations should be tracked.
+     */
     public static boolean TRACK_INSN_CREATIONS = System.getenv("WASM2J_TRACK_INSN_CREATIONS") != null;
 
+    /**
+     * Where this variable was created, for debugging purposes. Only if {@link #TRACK_INSN_CREATIONS}
+     * was true at the time.
+     */
     public Throwable created = TRACK_INSN_CREATIONS ? new Throwable("constructed") : null;
+    /**
+     * The underlying operation.
+     */
     public Op op;
 
     // null if empty,
@@ -22,6 +35,12 @@ public final class Insn extends DelegatingExtHolder implements Iterable<Var> {
     // Micro-optimising the size of this is worth it because there are millions of these.
     private Object args;
 
+    /**
+     * Construct an instruction with the given operator and arguments.
+     *
+     * @param op   The operator.
+     * @param args The arguments.
+     */
     public Insn(Op op, List<Var> args) {
         this.op = op;
         switch (args.size()) {
@@ -37,6 +56,12 @@ public final class Insn extends DelegatingExtHolder implements Iterable<Var> {
         }
     }
 
+    /**
+     * Construct an instruction with the given operator and arguments.
+     *
+     * @param op   The operator.
+     * @param args The arguments.
+     */
     public Insn(Op op, Var... args) {
         this(op, Arrays.asList(args));
     }
@@ -55,24 +80,54 @@ public final class Insn extends DelegatingExtHolder implements Iterable<Var> {
         return sb.toString();
     }
 
+    /**
+     * Create an effect that assigns the result of this instruction.
+     *
+     * @param vars The variables to assign to.
+     * @return The effect.
+     */
     public Effect assignTo(Var... vars) {
-        return new Effect(new ArrayList<>(Arrays.asList(vars)), this);
+        return new Effect(Arrays.asList(vars), this);
     }
 
+    /**
+     * Create an effect that assigns the result of this instruction.
+     *
+     * @param vars The variables to assign to.
+     * @return The effect.
+     */
     public Effect assignTo(List<Var> vars) {
         return new Effect(vars, this);
     }
 
+    /**
+     * Create a control instruction that jumps to the given targets.
+     *
+     * @param targets The jump targets.
+     * @return The control instruction.
+     */
     public Control jumpsTo(BasicBlock... targets) {
         return jumpsTo(Arrays.asList(targets));
     }
 
+    /**
+     * Create a control instruction that jumps to the given targets.
+     *
+     * @param targets The jump targets.
+     * @return The control instruction.
+     */
     public Control jumpsTo(List<BasicBlock> targets) {
         return new Control(this, targets);
     }
 
+    /**
+     * Create a new effect that assigns to the same variables as the given one.
+     *
+     * @param fx The effect to copy from.
+     * @return The new effect.
+     */
     public Effect copyFrom(Effect fx) {
-        return assignTo(new ArrayList<>(fx.getAssignsTo()));
+        return assignTo(fx.getAssignsTo());
     }
 
     // exts
@@ -107,6 +162,11 @@ public final class Insn extends DelegatingExtHolder implements Iterable<Var> {
         super.removeExt(ext);
     }
 
+    /**
+     * Get the arguments to the instruction.
+     *
+     * @return The arguments.
+     */
     public List<Var> args() {
         return new Args();
     }
@@ -121,6 +181,7 @@ public final class Insn extends DelegatingExtHolder implements Iterable<Var> {
 
     private class Args extends AbstractList<Var> implements List<Var> {
         int size;
+
         {
             if (args == null) size = 0;
             else if (args instanceof Var) size = 1;
@@ -159,7 +220,7 @@ public final class Insn extends DelegatingExtHolder implements Iterable<Var> {
                 args = var;
             } else if (args instanceof Var) {
                 Var old = (Var) args;
-                args = new Var[] { old, var };
+                args = new Var[]{old, var};
             } else {
                 Var[] oldArgs = (Var[]) args;
                 Var[] newArgs = Arrays.copyOf(oldArgs, oldArgs.length + 1);

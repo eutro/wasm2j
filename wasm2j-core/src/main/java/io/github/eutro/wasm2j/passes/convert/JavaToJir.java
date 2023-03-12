@@ -1,6 +1,7 @@
 package io.github.eutro.wasm2j.passes.convert;
 
 import io.github.eutro.wasm2j.ext.JavaExts;
+import io.github.eutro.wasm2j.intrinsics.IntrinsicImpl;
 import io.github.eutro.wasm2j.ops.CommonOps;
 import io.github.eutro.wasm2j.ops.JavaOps;
 import io.github.eutro.wasm2j.ops.Op;
@@ -13,7 +14,17 @@ import org.objectweb.asm.tree.*;
 
 import java.util.*;
 
+/**
+ * A pass that converts Java bytecode into an IR function.
+ * <p>
+ * This is only tested on and guaranteed to work for the code which implements intrinsics.
+ *
+ * @see IntrinsicImpl
+ */
 public class JavaToJir implements IRPass<MethodNode, Function> {
+    /**
+     * An instance of this pass.
+     */
     public static final JavaToJir INSTANCE = new JavaToJir();
 
     @Override
@@ -23,7 +34,7 @@ public class JavaToJir implements IRPass<MethodNode, Function> {
                 null,
                 method.name,
                 method.desc,
-                null
+                Opcodes.ACC_PUBLIC | Opcodes.ACC_STATIC
         ));
         new Converter(func).convert(method);
         return func;

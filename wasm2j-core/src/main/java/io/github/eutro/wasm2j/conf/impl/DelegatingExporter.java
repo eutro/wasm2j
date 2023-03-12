@@ -7,9 +7,17 @@ import io.github.eutro.wasm2j.ext.ExtContainer;
 import io.github.eutro.wasm2j.ssa.JClass;
 import io.github.eutro.wasm2j.ssa.Module;
 
+/**
+ * An {@link ExportableConvention} which just delegates to another.
+ */
 public class DelegatingExporter extends DelegatingExtHolder implements ExportableConvention {
     private final ExportableConvention exporter;
 
+    /**
+     * Construct a {@link DelegatingExporter} that delegates to the given exporter.
+     *
+     * @param exporter The exporter.
+     */
     public DelegatingExporter(ExportableConvention exporter) {
         this.exporter = exporter;
     }

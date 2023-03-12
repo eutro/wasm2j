@@ -1,7 +1,6 @@
 package io.github.eutro.wasm2j;
 
 import io.github.eutro.jwasm.tree.ModuleNode;
-import io.github.eutro.wasm2j.conf.Conventions;
 import io.github.eutro.wasm2j.conf.api.WirJavaConventionFactory;
 import io.github.eutro.wasm2j.events.*;
 import io.github.eutro.wasm2j.ext.JavaExts;
@@ -27,7 +26,7 @@ public class ModuleCompilation extends EventSupplier<ModuleCompileEvent> {
     public void run() {
         cc.dispatch(RunModuleCompilationEvent.class, new RunModuleCompilationEvent(this));
         WirJavaConventionFactory conventions = dispatch(ModifyConventionsEvent.class,
-                new ModifyConventionsEvent(Conventions.createBuilder()))
+                new ModifyConventionsEvent(WirJavaConventionFactory.builder()))
                 .conventionBuilder
                 .build();
 

@@ -9,10 +9,21 @@ import io.github.eutro.wasm2j.util.ValueGetter;
 import io.github.eutro.wasm2j.util.ValueGetterSetter;
 import io.github.eutro.wasm2j.util.ValueSetter;
 
+/**
+ * An {@link GlobalConvention} which implements sets and gets by delegating to
+ * {@link ValueGetter} and {@link ValueSetter}s.
+ */
 public class GetterSetterGlobalConvention extends DelegatingExporter implements GlobalConvention {
     private final ValueGetter getter;
     private final ValueSetter setter;
 
+    /**
+     * Create an {@link GetterSetterGlobalConvention} with the given getter and setter.
+     *
+     * @param exporter The exporter.
+     * @param getter The getter.
+     * @param setter The setter. May be null if this global is constant.
+     */
     public GetterSetterGlobalConvention(ExportableConvention exporter,
                                         ValueGetter getter,
                                         ValueSetter setter) {
@@ -21,6 +32,12 @@ public class GetterSetterGlobalConvention extends DelegatingExporter implements 
         this.setter = setter;
     }
 
+    /**
+     * Create an {@link GetterSetterGlobalConvention} with the given getter and setter.
+     *
+     * @param exporter The exporter.
+     * @param getterSetter The getter and the setter.
+     */
     public GetterSetterGlobalConvention(ExportableConvention exporter, ValueGetterSetter getterSetter) {
         this(exporter, getterSetter, getterSetter);
     }

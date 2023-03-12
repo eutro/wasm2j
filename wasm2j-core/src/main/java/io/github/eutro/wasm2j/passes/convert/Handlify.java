@@ -32,14 +32,10 @@ import java.util.*;
  */
 public class Handlify implements IRPass<Function, @Nullable Function> {
     private static final JClass METHOD_HANDLES_CLASS = JClass.emptyFromJava(MethodHandles.class);
-    private static final JClass.JavaMethod MH_CONSTANT = new JClass.JavaMethod(METHOD_HANDLES_CLASS,
-            "constant",
-            "(Ljava/lang/Class;Ljava/lang/Object;)Ljava/lang/invoke/MethodHandle;",
-            JClass.JavaMethod.Kind.STATIC);
-    private static final JClass.JavaMethod MH_IDENTITY = new JClass.JavaMethod(METHOD_HANDLES_CLASS,
-            "identity",
-            "(Ljava/lang/Class;)Ljava/lang/invoke/MethodHandle;",
-            JClass.JavaMethod.Kind.STATIC);
+    private static final JClass.JavaMethod MH_CONSTANT = METHOD_HANDLES_CLASS.lookupMethod("constant",
+            Class.class, Object.class);
+    private static final JClass.JavaMethod MH_IDENTITY = METHOD_HANDLES_CLASS.lookupMethod("identity",
+            Class.class);
     private static final JClass.JavaMethod MH_PERMUTE_ARGUMENTS = METHOD_HANDLES_CLASS.lookupMethod(
             "permuteArguments",
             MethodHandle.class,
@@ -65,10 +61,18 @@ public class Handlify implements IRPass<Function, @Nullable Function> {
 
     private final BitSet keepFree;
 
+    /**
+     * Construct a new {@link Handlify} that will keep no arguments kept free.
+     */
     public Handlify() {
         this(new BitSet());
     }
 
+    /**
+     * Construct a new {@link Handlify} that will keep the {@link BitSet#set(int) set} arguments free.
+     *
+     * @param keepFree Which function arguments should be kept free in the computed handle.
+     */
     public Handlify(BitSet keepFree) {
         this.keepFree = keepFree;
     }
@@ -427,7 +431,7 @@ public class Handlify implements IRPass<Function, @Nullable Function> {
                                 new JClass(Type.getInternalName(boxedClass)),
                                 "valueOf",
                                 Type.getMethodDescriptor(Type.getType(boxedClass), type),
-                                JClass.JavaMethod.Kind.STATIC
+                                Opcodes.ACC_PUBLIC | Opcodes.ACC_STATIC
                         ))
                         .insn(maybePrim),
                 "boxed");
