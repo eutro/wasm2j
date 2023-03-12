@@ -1,7 +1,7 @@
-package io.github.eutro.wasm2j.core.conf.api;
+package io.github.eutro.wasm2j.core.conf.itf;
 
 import io.github.eutro.jwasm.tree.*;
-import io.github.eutro.wasm2j.core.conf.Getters;
+import io.github.eutro.wasm2j.core.util.Getters;
 import io.github.eutro.wasm2j.core.conf.impl.*;
 import io.github.eutro.wasm2j.core.ext.JavaExts;
 import io.github.eutro.wasm2j.core.ext.WasmExts;
@@ -28,8 +28,8 @@ import java.util.function.Supplier;
 import java.util.stream.Stream;
 
 import static io.github.eutro.jwasm.Opcodes.*;
-import static io.github.eutro.wasm2j.core.conf.Getters.GET_THIS;
-import static io.github.eutro.wasm2j.core.conf.Getters.fieldGetter;
+import static io.github.eutro.wasm2j.core.util.Getters.GET_THIS;
+import static io.github.eutro.wasm2j.core.util.Getters.fieldGetter;
 import static io.github.eutro.wasm2j.core.util.Lazy.lazy;
 
 /**

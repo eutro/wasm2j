@@ -1,4 +1,4 @@
-package io.github.eutro.wasm2j.core.conf.api;
+package io.github.eutro.wasm2j.core.conf.itf;
 
 import io.github.eutro.wasm2j.core.ssa.Function;
 import io.github.eutro.wasm2j.core.passes.IRPass;
@@ -12,9 +12,9 @@ import io.github.eutro.wasm2j.core.passes.IRPass;
  * getting, setting, loading, storing, etc. These can be retrieved with the {@code get*}
  * methods of this interface.
  * <p>
- * * A {@link WirJavaConvention} is typically created by a {@link WirJavaConventionFactory}
- * * for compiling a given WebAssembly module, and encapsulates the conventions
- * * of all the imported and local WebAssembly functions, globals, memories, and tables.
+ * A {@link WirJavaConvention} is typically created by a {@link WirJavaConventionFactory}
+ * for compiling a given WebAssembly module, and encapsulates the conventions
+ * of all the imported and local WebAssembly functions, globals, memories, and tables.
  *
  * @see FunctionConvention
  * @see GlobalConvention

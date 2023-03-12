@@ -1,6 +1,6 @@
 package io.github.eutro.wasm2j.embed;
 
-import io.github.eutro.wasm2j.api.support.ExternType;
+import io.github.eutro.wasm2j.api.types.ExternType;
 
 /**
  * An export from a module, which is a name and its type.

@@ -9,6 +9,11 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Consumer;
 
+/**
+ * A class on which events can be listened to and dispatched.
+ *
+ * @param <S> The type of events that can be listened to or dispatched.
+ */
 public class EventSupplier<S> implements EventDispatcher<S> {
     private final Map<Class<?>, Set<Consumer<?>>> listeners = new ConcurrentHashMap<>();
 
@@ -20,6 +25,14 @@ public class EventSupplier<S> implements EventDispatcher<S> {
         ).add(listener);
     }
 
+    /**
+     * Dispatch an event to listeners.
+     *
+     * @param eventClass The exact type of the event.
+     * @param event      The event.
+     * @param <T>        The type of the event.
+     * @return The event.
+     */
     public <T extends S> T dispatch(Class<T> eventClass, T event) {
         @SuppressWarnings("unchecked")
         Set<Consumer<T>> eventListeners = (Set<Consumer<T>>) (Object)

@@ -1,4 +1,4 @@
-package io.github.eutro.wasm2j.core.conf.api;
+package io.github.eutro.wasm2j.core.conf.itf;
 
 import io.github.eutro.wasm2j.core.ssa.IRBuilder;
 import io.github.eutro.wasm2j.core.ssa.Module;

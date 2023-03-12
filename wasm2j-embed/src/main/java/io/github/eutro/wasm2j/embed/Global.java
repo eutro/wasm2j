@@ -1,8 +1,8 @@
 package io.github.eutro.wasm2j.embed;
 
 import io.github.eutro.wasm2j.embed.internal.Utils;
-import io.github.eutro.wasm2j.api.support.ExternType;
-import io.github.eutro.wasm2j.api.support.ValType;
+import io.github.eutro.wasm2j.api.types.ExternType;
+import io.github.eutro.wasm2j.api.types.ValType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 

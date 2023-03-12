@@ -21,7 +21,15 @@ import java.util.*;
 import static io.github.eutro.jwasm.Opcodes.*;
 import static io.github.eutro.wasm2j.core.util.Lazy.lazy;
 
+/**
+ * Converts WebAssembly code to WebAssembly IR.
+ * <p>
+ * The output IR will not be in SSA form.
+ */
 public class WasmToWir implements IRPass<ModuleNode, Module> {
+    /**
+     * An instance of this pass.
+     */
     public static final WasmToWir INSTANCE = new WasmToWir();
 
     @Override

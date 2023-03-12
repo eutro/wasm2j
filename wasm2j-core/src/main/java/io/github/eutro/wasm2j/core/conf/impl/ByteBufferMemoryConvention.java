@@ -1,7 +1,7 @@
 package io.github.eutro.wasm2j.core.conf.impl;
 
-import io.github.eutro.wasm2j.core.conf.api.ExportableConvention;
-import io.github.eutro.wasm2j.core.conf.api.MemoryConvention;
+import io.github.eutro.wasm2j.core.conf.itf.ExportableConvention;
+import io.github.eutro.wasm2j.core.conf.itf.MemoryConvention;
 import io.github.eutro.wasm2j.core.ext.Ext;
 import io.github.eutro.wasm2j.core.ops.CommonOps;
 import io.github.eutro.wasm2j.core.ops.JavaOps;

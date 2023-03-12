@@ -4,15 +4,16 @@ import io.github.eutro.jwasm.tree.AbstractImportNode;
 import io.github.eutro.jwasm.tree.ExportNode;
 import io.github.eutro.jwasm.tree.ModuleNode;
 import io.github.eutro.wasm2j.api.ModuleCompilation;
+import io.github.eutro.wasm2j.api.WasmCompiler;
 import io.github.eutro.wasm2j.api.events.EmitClassEvent;
 import io.github.eutro.wasm2j.api.events.EventSupplier;
 import io.github.eutro.wasm2j.api.events.ModifyConventionsEvent;
 import io.github.eutro.wasm2j.api.events.RunModuleCompilationEvent;
-import io.github.eutro.wasm2j.api.support.ExternType;
+import io.github.eutro.wasm2j.api.types.ExternType;
 import io.github.eutro.wasm2j.api.support.NameSupplier;
-import io.github.eutro.wasm2j.api.support.ValType;
-import io.github.eutro.wasm2j.core.conf.Getters;
-import io.github.eutro.wasm2j.core.conf.api.*;
+import io.github.eutro.wasm2j.api.types.ValType;
+import io.github.eutro.wasm2j.core.util.Getters;
+import io.github.eutro.wasm2j.core.conf.itf.*;
 import io.github.eutro.wasm2j.core.conf.impl.*;
 import io.github.eutro.wasm2j.core.ext.JavaExts;
 import io.github.eutro.wasm2j.core.ops.CommonOps;
@@ -39,11 +40,26 @@ import java.util.stream.Collectors;
 
 import static io.github.eutro.wasm2j.core.util.Lazy.lazy;
 
+/**
+ * A linker for WebAssembly modules that generates Java interfaces for every {@link #register(String, ModuleNode)
+ * registered}, or unregistered but imported, module. Implementations of imported modules are then to be passed
+ * to the constructors of each module that imports it.
+ *
+ * @param <T> The type of compiler this is attached to. Most likely {@link WasmCompiler}.
+ */
 public class InterfaceBasedLinker<T extends EventSupplier<? super RunModuleCompilationEvent>>
         extends EventSupplier<EmitClassEvent>
         implements Bit<T, InterfaceBasedLinker<T>> {
     private final NameSupplier names;
 
+    /**
+     * Construct an interface-based linker with the given supplier for names.
+     * <p>
+     * The name supplier will be used to generate the names of interface classes,
+     * and for the methods in the interfaces.
+     *
+     * @param names The name supplier.
+     */
     public InterfaceBasedLinker(NameSupplier names) {
         this.names = names;
     }
@@ -343,6 +359,19 @@ public class InterfaceBasedLinker<T extends EventSupplier<? super RunModuleCompi
         return cb.call(target, getter, setter);
     }
 
+    /**
+     * Register a module with this linker, generating an interface for its exports.
+     * <p>
+     * This may be called before or after the module is submitted to the compiler,
+     * but must be called before {@link #finish()}.
+     * <p>
+     * Any imports for the module with the given name will resolve to the supplied module.
+     * That is, they will by type checked against the exports provided by the module, rather than
+     * against other importers of the same module.
+     *
+     * @param moduleName The module's name.
+     * @param node       The module node.
+     */
     public void register(String moduleName, ModuleNode node) {
         modules.computeIfAbsent(moduleName, ModuleInterface::new)
                 .addImplementation(node,
@@ -362,6 +391,10 @@ public class InterfaceBasedLinker<T extends EventSupplier<? super RunModuleCompi
         return importedModules;
     }
 
+    /**
+     * Finish linking, generating all interfaces for imported modules,
+     * finishing up compiled modules, and emitting {@link EmitClassEvent}s for each.
+     */
     public void finish() {
         for (ModuleInterface interfacedModule : modules.values()) {
             ClassNode interfaceCode = interfacedModule.generateCode();
@@ -381,6 +414,13 @@ public class InterfaceBasedLinker<T extends EventSupplier<? super RunModuleCompi
         }
     }
 
+    /**
+     * Add this to a compiler, listening to it for {@link RunModuleCompilationEvent}s,
+     * and adding their imported modules to the linked set.
+     *
+     * @param cc The compiler.
+     * @return This.
+     */
     @Override
     public InterfaceBasedLinker<T> addTo(T cc) {
         cc.listen(RunModuleCompilationEvent.class, evt -> {

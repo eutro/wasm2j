@@ -3,7 +3,7 @@ package io.github.eutro.wasm2j.embed;
 import io.github.eutro.jwasm.Opcodes;
 import io.github.eutro.wasm2j.embed.internal.Utils;
 import io.github.eutro.wasm2j.core.ops.WasmOps;
-import io.github.eutro.wasm2j.api.support.ExternType;
+import io.github.eutro.wasm2j.api.types.ExternType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.objectweb.asm.Handle;
@@ -250,11 +250,14 @@ public interface Memory extends ExternVal {
     int size();
 
     /**
-     * Grow the memory by a number of pages, filling new pages with 0. May fail, in which
-     * case -1 should be returned.
+     * Grow the memory by a number of pages, filling new pages with 0.
+     * <p>
+     * This operation is allowed to fail (and must fail if the upper limit is exceeded),
+     * in which case -1 should be returned.
      *
      * @param growByPages The number of pages to grow by, interpreted as an unsigned integer.
      * @return The old size, or -1 if the memory was not grown.
+     * @see Opcodes#PAGE_SIZE
      */
     @Embedding("mem_grow")
     @GeneratedAccess
@@ -278,7 +281,8 @@ public interface Memory extends ExternVal {
     /**
      * Read a byte at the given address.
      * <p>
-     * Using {@link #loadHandle(LoadMode)} should be preferred.
+     * Using {@link #loadHandle(LoadMode)} and storing the handle should be preferred,
+     * since it is quicker and allows for more reading options.
      *
      * @param addr The address to read.
      * @return The byte read.
@@ -295,7 +299,8 @@ public interface Memory extends ExternVal {
     /**
      * Write a byte to the given address.
      * <p>
-     * Using {@link #storeHandle(StoreMode)} should be preferred.
+     * Using {@link #storeHandle(StoreMode)} and storing the handle should be preferred,
+     * since it is quicker and allows for more writing options.
      *
      * @param addr  The address to read.
      * @param value The byte to write.
@@ -307,6 +312,19 @@ public interface Memory extends ExternVal {
         } catch (Throwable t) {
             throw Utils.rethrow(t);
         }
+    }
+
+    /**
+     * Create a new memory with the given type.
+     * <p>
+     * This currently allocates a {@link ByteBufferMemory}.
+     *
+     * @param type The type.
+     * @return The new memory.
+     */
+    @Embedding("mem_alloc")
+    static Memory alloc(ExternType.Mem type) {
+        return new ByteBufferMemory(type);
     }
 
     /**
@@ -451,9 +469,9 @@ public interface Memory extends ExternVal {
          * The bootstrap method for memory instructions.
          *
          * @param ignoredCaller The caller, ignored.
-         * @param invokedName The name specified in the {@code invokedynamic} instruction.
-         * @param invokedType The type specified in the instruction.
-         * @param modeOrdinal The ordinal of the load or store mode.
+         * @param invokedName   The name specified in the {@code invokedynamic} instruction.
+         * @param invokedType   The type specified in the instruction.
+         * @param modeOrdinal   The ordinal of the load or store mode.
          * @return The call site.
          */
         public static CallSite bootstrapMemoryInsn(
@@ -597,7 +615,7 @@ public interface Memory extends ExternVal {
         private final @Nullable Integer max;
 
         /**
-         * Create a new byte buffer with the given limits.
+         * Create a new byte buffer memory with the given limits.
          *
          * @param min The minimum number of pages.
          * @param max The maximum number of pages, or null if unbounded.
@@ -609,11 +627,10 @@ public interface Memory extends ExternVal {
         }
 
         /**
-         * Create a new byte buffer with the given type.
+         * Create a new byte buffer memory with the given type.
          *
          * @param type The type.
          */
-        @Embedding("mem_alloc")
         public ByteBufferMemory(ExternType.Mem type) {
             this(type.limits.min, type.limits.max);
         }

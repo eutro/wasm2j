@@ -21,7 +21,8 @@ public class Passes {
                     .then(EliminateDeadVars.INSTANCE);
 
     /**
-     * Passes that must be run before emitting Java bytecode from IR.
+     * Passes that must be run before emitting Java bytecode from IR,
+     * such as {@link Stackify stackification} and {@link LinearScan register allocation}.
      */
     public static final IRPass<Function, Function> JAVA_PREEMIT =
             LowerIntrinsics.INSTANCE

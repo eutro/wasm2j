@@ -1,4 +1,4 @@
-package io.github.eutro.wasm2j.api.support;
+package io.github.eutro.wasm2j.api.types;
 
 import io.github.eutro.jwasm.Opcodes;
 import org.objectweb.asm.Type;
@@ -25,12 +25,33 @@ import java.util.Locale;
  * </blockquote>
  */
 public enum ValType {
+    /**
+     * A 32-bit integer, represented as a Java int.
+     */
     I32(int.class, Opcodes.I32),
+    /**
+     * A 64-bit integer, represented as a Java long.
+     */
     I64(long.class, Opcodes.I64),
+    /**
+     * A 32-bit floating-point value, represented as a Java float.
+     */
     F32(float.class, Opcodes.F32),
+    /**
+     * A 64-bit floating-point value, represented as a Java double.
+     */
     F64(double.class, Opcodes.F64),
+    /**
+     * A function reference, represented as a Java {@link MethodHandle}.
+     */
     FUNCREF(MethodHandle.class, Opcodes.FUNCREF),
+    /**
+     * An external reference, represented as a Java {@link Object}.
+     */
     EXTERNREF(Object.class, Opcodes.EXTERNREF),
+    /**
+     * A 128-bit vector, represented as a Java {@link ByteBuffer}.
+     */
     V128(ByteBuffer.class, Opcodes.V128),
     ;
 
@@ -42,15 +63,12 @@ public enum ValType {
         this.opcode = opcode;
     }
 
-    public static ValType forClass(Class<?> javaClass) {
-        for (ValType value : values()) {
-            if (value.type == javaClass) {
-                return value;
-            }
-        }
-        return null;
-    }
-
+    /**
+     * Get the {@link ValType} for a given WebAssembly type code, such as {@link Opcodes#I32}.
+     *
+     * @param opcode The opcode.
+     * @return The value type.
+     */
     public static ValType fromOpcode(byte opcode) {
         switch (opcode) {
             case Opcodes.I32:
@@ -72,14 +90,29 @@ public enum ValType {
         }
     }
 
+    /**
+     * Get the Java class for this type.
+     *
+     * @return The Java class.
+     */
     public Class<?> getType() {
         return type;
     }
 
+    /**
+     * Get the ASM type for this type.
+     *
+     * @return The ASM type.
+     */
     public Type getAsmType() {
         return Type.getType(getType());
     }
 
+    /**
+     * Get the opcode byte for this type.
+     *
+     * @return The WebAssembly opcode byte.
+     */
     public byte getOpcode() {
         return opcode;
     }

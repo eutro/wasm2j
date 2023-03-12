@@ -1,13 +1,15 @@
 package io.github.eutro.wasm2j.embed.internal;
 
 import io.github.eutro.jwasm.tree.*;
+import io.github.eutro.wasm2j.api.ModuleCompilation;
 import io.github.eutro.wasm2j.api.WasmCompiler;
+import io.github.eutro.wasm2j.api.events.EmitClassEvent;
 import io.github.eutro.wasm2j.api.events.JirPassesEvent;
 import io.github.eutro.wasm2j.api.events.ModifyConventionsEvent;
-import io.github.eutro.wasm2j.api.support.ExternType;
+import io.github.eutro.wasm2j.api.types.ExternType;
 import io.github.eutro.wasm2j.api.support.NameMangler;
-import io.github.eutro.wasm2j.core.conf.Getters;
-import io.github.eutro.wasm2j.core.conf.api.*;
+import io.github.eutro.wasm2j.core.util.Getters;
+import io.github.eutro.wasm2j.core.conf.itf.*;
 import io.github.eutro.wasm2j.core.conf.impl.BasicCallingConvention;
 import io.github.eutro.wasm2j.core.conf.impl.InstanceFunctionConvention;
 import io.github.eutro.wasm2j.core.ext.Ext;
@@ -34,19 +36,23 @@ import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodType;
 import java.nio.ByteBuffer;
 import java.util.*;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.BiConsumer;
 
 import static io.github.eutro.jwasm.Opcodes.MUT_CONST;
 import static io.github.eutro.wasm2j.core.util.Lazy.lazy;
 
+/**
+ * Provides the {@link #getPass() pass} to compile WebAssembly.
+ */
 public class WasmConvertPass {
     private static final Ext<Map<String, ValueGetter>> EXPORTS_EXT = Ext.create(Map.class, "EXPORTS_EXT");
     private static final Ext<AtomicInteger> IMPORT_COUNTER_EXT = Ext.create(AtomicInteger.class, "IMPORT_COUNTER_EXT");
     private static final JClass.JavaMethod MH_BIND_TO = IRUtils.METHOD_HANDLE_CLASS.lookupMethod("bindTo", Object.class);
-    public static final Type EV_TYPE = Type.getType(ExternVal.class);
-    public static final JClass EV_CLASS = JClass.emptyFromJava(ExternVal.class);
-    public static final JClass.JavaMethod EV_GET_AS_FUNC = EV_CLASS.lookupMethod("getAsHandle", MethodType.class);
+    private static final Type EV_TYPE = Type.getType(ExternVal.class);
+    private static final JClass EV_CLASS = JClass.emptyFromJava(ExternVal.class);
+    private static final JClass.JavaMethod EV_GET_AS_FUNC = EV_CLASS.lookupMethod("getAsHandle", MethodType.class);
     private static final JClass.JavaMethod ENUM_ORDINAL = JClass.emptyFromJava(Enum.class).lookupMethod("ordinal");
     private static final JClass STRING_CLASS = JClass.emptyFromJava(String.class);
     private static final JClass.JavaMethod STRING_EQUALS = STRING_CLASS.lookupMethod("equals", Object.class);
@@ -54,6 +60,11 @@ public class WasmConvertPass {
     private static final JClass GLOBAL_CLASS = JClass.emptyFromJava(Global.class);
     private static final JClass MEMORY_CLASS = JClass.emptyFromJava(Memory.class);
 
+    /**
+     * Get the IR pass for compiling WebAssembly.
+     *
+     * @return The pass.
+     */
     public static IRPass<ModuleNode, ClassNode> getPass() {
         WasmCompiler cc = new WasmCompiler();
 
@@ -72,13 +83,14 @@ public class WasmConvertPass {
                 .setTableImports(WasmConvertPass::createTableImport)
                 .setGlobalImports(WasmConvertPass::createGlobalImport)
                 .setMemoryImports(WasmConvertPass::createMemoryImport));
-
         cc.lift().listen(JirPassesEvent.class, WasmConvertPass::buildExports);
 
-        Queue<ClassNode> classes = cc.outputsAsQueue();
         return node -> {
-            cc.submitNode(node).run();
-            ClassNode ret = classes.poll();
+            ModuleCompilation compilation = cc.submitNode(node);
+            CompletableFuture<ClassNode> classNode = new CompletableFuture<>();
+            compilation.listen(EmitClassEvent.class, ece -> classNode.complete(ece.classNode));
+            compilation.run();
+            ClassNode ret = classNode.getNow(null);
             if (ret == null) {
                 throw new IllegalStateException();
             }
@@ -149,7 +161,7 @@ public class WasmConvertPass {
     }
 
     private static String mangle(String name) {
-        return NameMangler.jvmUnqualified(NameMangler.IllegalTokenPolicy.MANGLE_BIJECTIVE)
+        return NameMangler.jvmUnqualified(NameMangler.IllegalSymbolPolicy.MANGLE_BIJECTIVE)
                 .mangle(name);
     }
 

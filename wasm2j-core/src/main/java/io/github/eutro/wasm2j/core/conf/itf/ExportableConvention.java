@@ -1,4 +1,4 @@
-package io.github.eutro.wasm2j.core.conf.api;
+package io.github.eutro.wasm2j.core.conf.itf;
 
 import io.github.eutro.jwasm.tree.ExportNode;
 import io.github.eutro.wasm2j.core.ssa.Module;

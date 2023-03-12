@@ -9,11 +9,21 @@ import java.io.UncheckedIOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
+/**
+ * A bit which outputs emitted classes to the given directory.
+ *
+ * @param <T> The type on which this listens to events.
+ */
 public class OutputsToDirectory<T extends EventSupplier<? super EmitClassEvent>>
         implements Bit<T, Void> {
 
     private final Path directory;
 
+    /**
+     * Construct a {@link OutputsToDirectory} for outputting to the given directory.
+     *
+     * @param directory The directory to output class files to.
+     */
     public OutputsToDirectory(Path directory) {
         this.directory = directory;
     }

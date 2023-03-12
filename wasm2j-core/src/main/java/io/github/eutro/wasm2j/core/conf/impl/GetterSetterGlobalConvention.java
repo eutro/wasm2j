@@ -1,7 +1,7 @@
 package io.github.eutro.wasm2j.core.conf.impl;
 
-import io.github.eutro.wasm2j.core.conf.api.ExportableConvention;
-import io.github.eutro.wasm2j.core.conf.api.GlobalConvention;
+import io.github.eutro.wasm2j.core.conf.itf.ExportableConvention;
+import io.github.eutro.wasm2j.core.conf.itf.GlobalConvention;
 import io.github.eutro.wasm2j.core.ops.CommonOps;
 import io.github.eutro.wasm2j.core.ssa.Effect;
 import io.github.eutro.wasm2j.core.ssa.IRBuilder;

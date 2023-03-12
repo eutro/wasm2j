@@ -1,8 +1,8 @@
 package io.github.eutro.wasm2j.core.conf.impl;
 
-import io.github.eutro.wasm2j.core.conf.api.CallingConvention;
-import io.github.eutro.wasm2j.core.conf.api.ExportableConvention;
-import io.github.eutro.wasm2j.core.conf.api.FunctionConvention;
+import io.github.eutro.wasm2j.core.conf.itf.CallingConvention;
+import io.github.eutro.wasm2j.core.conf.itf.ExportableConvention;
+import io.github.eutro.wasm2j.core.conf.itf.FunctionConvention;
 import io.github.eutro.wasm2j.core.ssa.IRBuilder;
 import io.github.eutro.wasm2j.core.ext.Ext;
 import io.github.eutro.wasm2j.core.ops.CommonOps;

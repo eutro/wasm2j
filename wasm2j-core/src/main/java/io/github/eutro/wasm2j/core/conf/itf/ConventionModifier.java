@@ -1,4 +1,4 @@
-package io.github.eutro.wasm2j.core.conf.api;
+package io.github.eutro.wasm2j.core.conf.itf;
 
 /**
  * A function which modifies a local convention.

@@ -1,9 +1,9 @@
 package io.github.eutro.wasm2j.core.passes.convert;
 
 import io.github.eutro.jwasm.tree.TypeNode;
-import io.github.eutro.wasm2j.core.conf.api.CallingConvention;
-import io.github.eutro.wasm2j.core.conf.api.WirJavaConvention;
-import io.github.eutro.wasm2j.core.conf.api.WirJavaConventionFactory;
+import io.github.eutro.wasm2j.core.conf.itf.CallingConvention;
+import io.github.eutro.wasm2j.core.conf.itf.WirJavaConvention;
+import io.github.eutro.wasm2j.core.conf.itf.WirJavaConventionFactory;
 import io.github.eutro.wasm2j.core.ext.CommonExts;
 import io.github.eutro.wasm2j.core.ext.MetadataState;
 import io.github.eutro.wasm2j.core.ext.WasmExts;
@@ -23,9 +23,20 @@ import java.util.*;
 
 import static io.github.eutro.jwasm.Opcodes.*;
 
+/**
+ * Converts WebAssembly IR (possibly not in SSA form) into Java IR, according
+ * to a set of {@link WirJavaConvention conventions}.
+ *
+ * @see WirJavaConvention
+ */
 public class WirToJir implements IRPass<Module, JClass> {
     private final WirJavaConventionFactory conventionsFactory;
 
+    /**
+     * Construct an instance of this pass with the given conventions.
+     *
+     * @param conventionsFactory The convention factory.
+     */
     public WirToJir(WirJavaConventionFactory conventionsFactory) {
         this.conventionsFactory = conventionsFactory;
     }

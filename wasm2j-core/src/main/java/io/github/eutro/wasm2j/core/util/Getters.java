@@ -1,12 +1,9 @@
-package io.github.eutro.wasm2j.core.conf;
+package io.github.eutro.wasm2j.core.util;
 
-import io.github.eutro.wasm2j.core.ssa.IRBuilder;
-import io.github.eutro.wasm2j.core.ssa.Var;
-import io.github.eutro.wasm2j.core.util.IRUtils;
-import io.github.eutro.wasm2j.core.util.ValueGetter;
 import io.github.eutro.wasm2j.core.ops.JavaOps;
+import io.github.eutro.wasm2j.core.ssa.IRBuilder;
 import io.github.eutro.wasm2j.core.ssa.JClass;
-import io.github.eutro.wasm2j.core.util.ValueGetterSetter;
+import io.github.eutro.wasm2j.core.ssa.Var;
 import org.jetbrains.annotations.Nullable;
 
 /**

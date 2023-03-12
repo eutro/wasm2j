@@ -13,9 +13,17 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
-import static io.github.eutro.wasm2j.api.support.NameMangler.IllegalTokenPolicy.MANGLE_BIJECTIVE;
+import static io.github.eutro.wasm2j.api.support.NameMangler.IllegalSymbolPolicy.MANGLE_BIJECTIVE;
 
+/**
+ * Command line interface for Wasm2j.
+ */
 public class Cli {
+    /**
+     * The main entry point.
+     *
+     * @param args Program arguments.
+     */
     public static void main(String[] args) {
         List<String> paths = new ArrayList<>();
         boolean setOutput = false;
@@ -62,7 +70,7 @@ public class Cli {
         WasmCompiler cc = new WasmCompiler();
         FormatDetector fd = cc.add(FormatDetector.BIT);
         cc.add(new NameSectionParser<>());
-        CaseStyle.Detect sourceStyle = new CaseStyle.Detect(CaseStyle.LOWER_SNAKE);
+        CaseStyle sourceStyle = CaseStyle.detect(CaseStyle.LOWER_SNAKE);
         InterfaceBasedLinker<WasmCompiler> linker = cc.add(new InterfaceBasedLinker<>(NameSupplier.createSimple(
                 pkgName,
                 NameMangler.javaIdent(MANGLE_BIJECTIVE),

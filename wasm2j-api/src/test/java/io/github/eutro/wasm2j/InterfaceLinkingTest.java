@@ -19,7 +19,7 @@ import java.io.InputStream;
 import java.io.UncheckedIOException;
 import java.nio.file.Files;
 
-import static io.github.eutro.wasm2j.api.support.NameMangler.IllegalTokenPolicy.MANGLE_BIJECTIVE;
+import static io.github.eutro.wasm2j.api.support.NameMangler.IllegalSymbolPolicy.MANGLE_BIJECTIVE;
 
 public class InterfaceLinkingTest {
 

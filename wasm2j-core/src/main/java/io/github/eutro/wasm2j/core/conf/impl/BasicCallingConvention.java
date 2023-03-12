@@ -1,7 +1,7 @@
 package io.github.eutro.wasm2j.core.conf.impl;
 
 import io.github.eutro.jwasm.tree.TypeNode;
-import io.github.eutro.wasm2j.core.conf.api.CallingConvention;
+import io.github.eutro.wasm2j.core.conf.itf.CallingConvention;
 import io.github.eutro.wasm2j.core.ops.CommonOps;
 import io.github.eutro.wasm2j.core.ssa.IRBuilder;
 import io.github.eutro.wasm2j.core.ssa.Var;

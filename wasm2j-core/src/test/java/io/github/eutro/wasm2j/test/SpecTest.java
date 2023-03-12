@@ -7,7 +7,7 @@ import io.github.eutro.jwasm.sexp.wast.WastVisitor;
 import io.github.eutro.jwasm.test.ModuleTestBase;
 import io.github.eutro.jwasm.tree.ModuleNode;
 import io.github.eutro.jwasm.tree.analysis.ModuleValidator;
-import io.github.eutro.wasm2j.core.conf.api.WirJavaConventionFactory;
+import io.github.eutro.wasm2j.core.conf.itf.WirJavaConventionFactory;
 import io.github.eutro.wasm2j.core.ext.JavaExts;
 import io.github.eutro.wasm2j.core.passes.IRPass;
 import io.github.eutro.wasm2j.core.passes.Passes;

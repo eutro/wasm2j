@@ -15,6 +15,13 @@ import java.util.List;
 import java.util.SortedMap;
 import java.util.TreeMap;
 
+/**
+ * A bit which parses the name section of a module, and
+ * renames the Java methods to match the names given in the section.
+ *
+ * @param <T> The type of compiler this can be attached to.
+ * @see NameSection
+ */
 public class NameSectionParser<T extends EventSupplier<? super RunModuleCompilationEvent>>
         implements Bit<T, Void> {
     @Override
@@ -47,7 +54,7 @@ public class NameSectionParser<T extends EventSupplier<? super RunModuleCompilat
                                 JClass.JavaMethod method = functionConvention
                                         .getExtOrThrow(InstanceFunctionConvention.CONVENTION_METHOD);
                                 method.name = NameMangler
-                                        .jvmUnqualified(NameMangler.IllegalTokenPolicy.MANGLE_BIJECTIVE)
+                                        .jvmUnqualified(NameMangler.IllegalSymbolPolicy.MANGLE_BIJECTIVE)
                                         .mangle(funcName);
                             }
                             return functionConvention;
@@ -57,11 +64,32 @@ public class NameSectionParser<T extends EventSupplier<? super RunModuleCompilat
         return null;
     }
 
+    /**
+     * A representation of the
+     * <a href="https://webassembly.github.io/spec/core/appendix/custom.html#name-section">name section</a>
+     * of a WebAssembly module.
+     */
     public static class NameSection {
+        /**
+         * The module name.
+         */
         public final @Nullable String moduleName;
+        /**
+         * The function name map.
+         */
         public final @Nullable SortedMap<Integer, String> functionNames;
+        /**
+         * The local indirect name map.
+         */
         public final @Nullable SortedMap<Integer, SortedMap<Integer, String>> localNames;
 
+        /**
+         * Read the name section from a given input stream.
+         *
+         * @param bis The stream.
+         * @param <E> The type of exception the stream throws.
+         * @throws E If reading the stream fails.
+         */
         public <E extends Exception> NameSection(ByteInputStream<E> bis) throws E {
             int id = bis.get();
             if (id == -1) {
@@ -130,6 +158,14 @@ public class NameSectionParser<T extends EventSupplier<? super RunModuleCompilat
             return map;
         }
 
+        /**
+         * Read the name section from a given input stream.
+         *
+         * @param bis The stream.
+         * @param <E> The type of exception the stream throws.
+         * @return The parsed name section.
+         * @throws E If reading the stream fails.
+         */
         public static <E extends Exception> NameSection parse(ByteInputStream<E> bis) throws E {
             return new NameSection(bis);
         }

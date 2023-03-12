@@ -45,16 +45,32 @@ public final class Store {
     private Store() {
     }
 
+    /**
+     * Create a new empty store.
+     *
+     * @return The new store.
+     */
     @Embedding("store_init")
     public static Store init() {
         return new Store();
     }
 
+    /**
+     * Force this store to use a {@link ClassLoader} to define classes, rather than
+     * {@code defineHiddenClasses} of {@link MethodHandles.Lookup} in newer Java versions.
+     */
     public void forceClassLoaderDefiner() {
         if (definer instanceof StoreClassLoader) return;
         definer = new StoreClassLoader();
     }
 
+    /**
+     * Set the file to which class bytes are dumped by this store, for debugging purposes.
+     * <p>
+     * The default (or when {@code null} is passed to this method) is to not dump class output.
+     *
+     * @param debugOutput The directory to dump output to.
+     */
     public void setDebugOutput(@Nullable File debugOutput) {
         this.debugOutput = debugOutput;
     }

@@ -1,4 +1,4 @@
-package io.github.eutro.wasm2j.api.support;
+package io.github.eutro.wasm2j.api.types;
 
 import io.github.eutro.jwasm.Opcodes;
 import io.github.eutro.jwasm.sexp.Unparser;
@@ -588,6 +588,16 @@ public interface ExternType {
             return Objects.hash(min, max);
         }
 
+        /**
+         * Whether these limits are assignable from (are a supertype of) the other.
+         * <p>
+         * See
+         * <a href="https://webassembly.github.io/spec/core/valid/types.html#import-subtyping">import subtyping</a>
+         * in the specification.
+         *
+         * @param other The other limits.
+         * @return Whether these limits match (are a supertype of) other.
+         */
         public boolean assignableFrom(Limits other) {
             return Integer.compareUnsigned(other.min, min) >= 0
                     && (max == null
@@ -656,13 +666,36 @@ public interface ExternType {
         }
     }
 
+    /**
+     * The kind of extern: func, table, memory, or global.
+     */
     enum Kind {
+        /**
+         * A function.
+         */
         FUNC,
+        /**
+         * A table.
+         */
         TABLE,
+        /**
+         * A memory.
+         */
         MEM,
+        /**
+         * A global.
+         */
         GLOBAL,
         ;
 
+        /**
+         * Get the kind of extern from a one-byte tag.
+         *
+         * @param id The tag.
+         * @return The extern kind.
+         * @see AbstractImportNode#importType()
+         * @see ExportNode#type
+         */
         public static Kind fromByte(byte id) {
             switch (id) {
                 case Opcodes.IMPORTS_FUNC:

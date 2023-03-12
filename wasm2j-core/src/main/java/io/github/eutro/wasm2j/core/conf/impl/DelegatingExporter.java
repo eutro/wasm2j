@@ -1,7 +1,7 @@
 package io.github.eutro.wasm2j.core.conf.impl;
 
 import io.github.eutro.jwasm.tree.ExportNode;
-import io.github.eutro.wasm2j.core.conf.api.ExportableConvention;
+import io.github.eutro.wasm2j.core.conf.itf.ExportableConvention;
 import io.github.eutro.wasm2j.core.ssa.Module;
 import io.github.eutro.wasm2j.core.ext.DelegatingExtHolder;
 import io.github.eutro.wasm2j.core.ext.ExtContainer;

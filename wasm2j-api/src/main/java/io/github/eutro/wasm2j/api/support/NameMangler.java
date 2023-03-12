@@ -4,23 +4,71 @@ import java.util.*;
 import java.util.function.IntPredicate;
 
 // TODO test
+
+/**
+ * A class for mangling names, converting (possibly invalid) tokens to new tokens
+ * that <i>are</i> valid, according to a set of rules.
+ */
 public interface NameMangler {
+    /**
+     * The characters banned in a
+     * <a href="https://docs.oracle.com/javase/specs/jvms/se8/html/jvms-4.html#jvms-4.2.2">JVM unqualified name</a>.
+     */
     String JVM_BANNED_CHARS = ".;[/<>";
+    /**
+     * The token used when the input token is empty.
+     */
     String EMPTY_TOKEN = "_EMPTY_";
 
-    static NameMangler jvmUnqualified(IllegalTokenPolicy policy) {
+    /**
+     * A name mangler which outputs valid JVM unqualified names.
+     *
+     * @param policy The policy for handling illegal characters.
+     * @return The name mangler.
+     */
+    static NameMangler jvmUnqualified(IllegalSymbolPolicy policy) {
         return new BanChars(JVM_BANNED_CHARS, policy);
     }
-    static NameMangler javaIdent(IllegalTokenPolicy policy) {
+
+    /**
+     * A name mangler which outputs valid Java identifiers.
+     *
+     * @param policy The policy for handling illegal characters.
+     * @return The name mangler.
+     */
+    static NameMangler javaIdent(IllegalSymbolPolicy policy) {
         return new JavaIdent(policy);
     }
 
+    /**
+     * Mangle a string, so it becomes a valid name according to the rules of this mangler.
+     *
+     * @param name The name to mangle
+     * @return The mangled string.
+     */
     String mangle(String name);
 
-    enum IllegalTokenPolicy {
+    /**
+     * A policy for how illegal characters should be handled.
+     */
+    enum IllegalSymbolPolicy {
+        /**
+         * Illegal characters should be omitted.
+         */
         OMIT,
+        /**
+         * Illegal characters should be mangled to their "_O%o_" formatting.
+         */
         MANGLE,
+        /**
+         * Illegal characters should be mangled, but in a human-readable way where
+         * possible.
+         */
         MANGLE_SENSIBLE,
+        /**
+         * Illegal characters should be mangled, with a human-readable mangling where
+         * possible, and no two distinct strings should mangle to the same thing.
+         */
         MANGLE_BIJECTIVE,
         ;
 
@@ -29,6 +77,10 @@ public interface NameMangler {
                 return c == '_';
             }
             return false;
+        }
+
+        boolean check(IntPredicate pred, int c) {
+            return pred.test(c) && !shouldConvertAnyway(c);
         }
 
         void convert(Formatter into, int c) {
@@ -86,15 +138,20 @@ public interface NameMangler {
         }
     }
 
-    static boolean check(int c, IllegalTokenPolicy policy, IntPredicate pred) {
-        return pred.test(c) && !policy.shouldConvertAnyway(c);
-    }
-
+    /**
+     * A name mangler that forbids a certain set of characters.
+     */
     class BanChars implements NameMangler {
         private final BitSet FORBIDDEN = new BitSet();
-        private final IllegalTokenPolicy policy;
+        private final IllegalSymbolPolicy policy;
 
-        public BanChars(String forbidden, IllegalTokenPolicy policy) {
+        /**
+         * Construct a character-banning name mangler that forbids the given characters.
+         *
+         * @param forbidden The forbidden characters.
+         * @param policy    The policy for handling illegal characters.
+         */
+        public BanChars(String forbidden, IllegalSymbolPolicy policy) {
             this.policy = policy;
             for (char c : forbidden.toCharArray()) {
                 FORBIDDEN.set(c);
@@ -105,13 +162,14 @@ public interface NameMangler {
             return !FORBIDDEN.get(c);
         }
 
+        @Override
         public String mangle(String str) {
             if (str.isEmpty()) return EMPTY_TOKEN;
             IntPredicate pred = this::isAllowed;
             notOk:
             {
                 for (int i = 0; i < str.length(); i = str.offsetByCodePoints(i, 1)) {
-                    if (!check(str.codePointAt(i), policy, pred)) break notOk;
+                    if (!policy.check(pred, str.codePointAt(i))) break notOk;
                 }
                 return str;
             }
@@ -119,7 +177,7 @@ public interface NameMangler {
             Formatter fmt = new Formatter(sb, Locale.ROOT);
             for (int i = 0; i < str.length(); i = str.offsetByCodePoints(i, 1)) {
                 int c = str.codePointAt(i);
-                if (check(c, policy, pred)) {
+                if (policy.check(pred, c)) {
                     sb.appendCodePoint(c);
                 } else {
                     policy.convert(fmt, c);
@@ -130,9 +188,13 @@ public interface NameMangler {
         }
     }
 
+    /**
+     * A mangler which outputs valid Java identifiers.
+     */
     class JavaIdent implements NameMangler {
-        private final IllegalTokenPolicy policy;
+        private final IllegalSymbolPolicy policy;
 
+        // https://docs.oracle.com/javase/specs/jls/se19/html/jls-3.html#jls-3.9
         private static final Set<String> JAVA_RESERVED = new HashSet<>(Arrays.asList(
                 "abstract", "continue", "for", "new", "switch",
                 "assert", "default", "if", "package", "synchronized",
@@ -145,26 +207,32 @@ public interface NameMangler {
                 "class", "finally", "long", "strictfp", "volatile",
                 "const", "float", "native", "super", "while", "_",
 
-                // not included: exports, opens, requires
+                // not included: contextual keywords
 
                 "true", "false", "null"
         ));
 
-        public JavaIdent(IllegalTokenPolicy policy) {
+        /**
+         * Construct a Java identifier mangler.
+         *
+         * @param policy The policy for handling illegal characters.
+         */
+        public JavaIdent(IllegalSymbolPolicy policy) {
             this.policy = policy;
         }
 
+        @Override
         public String mangle(String str) {
             if (str.isEmpty()) return EMPTY_TOKEN;
             if (JAVA_RESERVED.contains(str)) return "_" + str;
             notOk:
             {
                 int i = 0;
-                if (!check(str.codePointAt(i), policy, Character::isJavaIdentifierStart)) break notOk;
+                if (!policy.check(Character::isJavaIdentifierStart, str.codePointAt(i))) break notOk;
                 for (i = str.offsetByCodePoints(i, 1);
                      i < str.length();
                      i = str.offsetByCodePoints(i, 1)) {
-                    if (!check(str.codePointAt(i), policy, Character::isJavaIdentifierPart)) break notOk;
+                    if (!policy.check(Character::isJavaIdentifierPart, str.codePointAt(i))) break notOk;
                 }
                 return str;
             }
@@ -173,14 +241,14 @@ public interface NameMangler {
             int idx = 0;
             while (sb.length() == 0 && idx < str.length()) {
                 int c = str.codePointAt(idx);
-                if (check(c, policy, Character::isJavaIdentifierStart)) break;
+                if (policy.check(Character::isJavaIdentifierStart, c)) break;
                 policy.convert(fmt, c);
                 idx = str.offsetByCodePoints(idx, 1);
             }
             while (idx < str.length()) {
                 int c = str.codePointAt(idx);
                 idx = str.offsetByCodePoints(idx, 1);
-                if (check(c, policy, Character::isJavaIdentifierPart)) {
+                if (policy.check(Character::isJavaIdentifierPart, c)) {
                     sb.appendCodePoint(c);
                 } else {
                     policy.convert(fmt, c);
