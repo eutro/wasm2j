@@ -1,0 +1,17 @@
+io.github.eutro.wasm2j.core.conf.impl
+io.github.eutro.wasm2j.core.conf.itf
+io.github.eutro.wasm2j.core.ext
+io.github.eutro.wasm2j.core.intrinsics
+io.github.eutro.wasm2j.core.intrinsics.impls
+io.github.eutro.wasm2j.core.ops
+io.github.eutro.wasm2j.core.passes
+io.github.eutro.wasm2j.core.passes.convert
+io.github.eutro.wasm2j.core.passes.form
+io.github.eutro.wasm2j.core.passes.meta
+io.github.eutro.wasm2j.core.passes.misc
+io.github.eutro.wasm2j.core.passes.opts
+io.github.eutro.wasm2j.core.ssa
+io.github.eutro.wasm2j.core.ssa.display
+io.github.eutro.wasm2j.core.util
+io.github.eutro.wasm2j.embed
+io.github.eutro.wasm2j.embed.internal
