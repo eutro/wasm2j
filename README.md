@@ -1,8 +1,13 @@
-# wasm2j
+# Wasm2j
 
 A WebAssembly to Java bytecode compiler.
 
-Work in progress™ but getting there.
+JavaDocs can be found [here](https://eutro.github.io/wasm2j/index.html).
+Depends on [JWasm](https://github.com/eutro/jwasm). 
 
-Uses [jwasm](https://github.com/eutro/jwasm), so you'll have to pull
-that in somehow if you want to use this.
+## Progress
+
+- [x] Pass the non-SIMD [test suite](https://github.com/WebAssembly/testsuite/).
+- [ ] Pass the entire test suite (i.e. implement SIMD).
+- [ ] Compile and execute [my Advent of Code 2019 solutions](https://github.com/eutro/aoc2019) correctly.
+- [ ] Implement WASI?
