@@ -68,6 +68,10 @@ loadScripts(document, 'script');</script>
 <dd>
 <div class="block">The access modifiers of the method.</div>
 </dd>
+<dt><a href="io/github/eutro/wasm2j/api/WasmCompiler.html#add(io.github.eutro.wasm2j.api.bits.Bit)" class="member-name-link">add(Bit&lt;? super WasmCompiler, T&gt;)</a> - Method in class io.github.eutro.wasm2j.api.<a href="io/github/eutro/wasm2j/api/WasmCompiler.html" title="class in io.github.eutro.wasm2j.api">WasmCompiler</a></dt>
+<dd>
+<div class="block">Add a <a href="io/github/eutro/wasm2j/api/bits/Bit.html" title="interface in io.github.eutro.wasm2j.api.bits"><code>bit</code></a> to this compiler.</div>
+</dd>
 <dt><a href="io/github/eutro/wasm2j/core/conf/itf/WirJavaConventionFactory.Builder.html#addConstructorCallback(io.github.eutro.wasm2j.core.conf.itf.ConstructorCallback)" class="member-name-link">addConstructorCallback(ConstructorCallback)</a> - Method in class io.github.eutro.wasm2j.core.conf.itf.<a href="io/github/eutro/wasm2j/core/conf/itf/WirJavaConventionFactory.Builder.html" title="class in io.github.eutro.wasm2j.core.conf.itf">WirJavaConventionFactory.Builder</a></dt>
 <dd>
 <div class="block">Add a callback that should be run to modify the constructor.</div>
@@ -76,6 +80,19 @@ loadScripts(document, 'script');</script>
 <dd>
 <div class="block">Add an <a href="io/github/eutro/wasm2j/core/ssa/Effect.html" title="class in io.github.eutro.wasm2j.core.ssa"><code>effect</code></a> to the end of this basic block.</div>
 </dd>
+<dt><a href="io/github/eutro/wasm2j/api/bits/Bit.html#addTo(Onto)" class="member-name-link">addTo(Onto)</a> - Method in interface io.github.eutro.wasm2j.api.bits.<a href="io/github/eutro/wasm2j/api/bits/Bit.html" title="interface in io.github.eutro.wasm2j.api.bits">Bit</a></dt>
+<dd>
+<div class="block">Attach this to <code>cc</code>.</div>
+</dd>
+<dt><a href="io/github/eutro/wasm2j/api/bits/InterfaceBasedLinker.html#addTo(T)" class="member-name-link">addTo(T)</a> - Method in class io.github.eutro.wasm2j.api.bits.<a href="io/github/eutro/wasm2j/api/bits/InterfaceBasedLinker.html" title="class in io.github.eutro.wasm2j.api.bits">InterfaceBasedLinker</a></dt>
+<dd>
+<div class="block">Add this to a compiler, listening to it for <a href="io/github/eutro/wasm2j/api/events/RunModuleCompilationEvent.html" title="class in io.github.eutro.wasm2j.api.events"><code>RunModuleCompilationEvent</code></a>s,
+ and adding their imported modules to the linked set.</div>
+</dd>
+<dt><a href="io/github/eutro/wasm2j/api/bits/NameSectionParser.html#addTo(T)" class="member-name-link">addTo(T)</a> - Method in class io.github.eutro.wasm2j.api.bits.<a href="io/github/eutro/wasm2j/api/bits/NameSectionParser.html" title="class in io.github.eutro.wasm2j.api.bits">NameSectionParser</a></dt>
+<dd>&nbsp;</dd>
+<dt><a href="io/github/eutro/wasm2j/api/bits/OutputsToDirectory.html#addTo(T)" class="member-name-link">addTo(T)</a> - Method in class io.github.eutro.wasm2j.api.bits.<a href="io/github/eutro/wasm2j/api/bits/OutputsToDirectory.html" title="class in io.github.eutro.wasm2j.api.bits">OutputsToDirectory</a></dt>
+<dd>&nbsp;</dd>
 <dt><a href="io/github/eutro/wasm2j/embed/Memory.html#alloc(io.github.eutro.wasm2j.api.types.ExternType.Mem)" class="member-name-link">alloc(ExternType.Mem)</a> - Static method in interface io.github.eutro.wasm2j.embed.<a href="io/github/eutro/wasm2j/embed/Memory.html" title="interface in io.github.eutro.wasm2j.embed">Memory</a></dt>
 <dd>
 <div class="block">Create a new memory with the given type.</div>
@@ -141,6 +158,25 @@ loadScripts(document, 'script');</script>
 <dd>
 <div class="block">Construct an <a href="io/github/eutro/wasm2j/core/conf/impl/ArrayTableConvention.html" title="class in io.github.eutro.wasm2j.core.conf.impl"><code>ArrayTableConvention</code></a>.</div>
 </dd>
+<dt><a href="io/github/eutro/wasm2j/api/types/ExternType.html#assignableFrom(io.github.eutro.wasm2j.api.types.ExternType)" class="member-name-link">assignableFrom(ExternType)</a> - Method in interface io.github.eutro.wasm2j.api.types.<a href="io/github/eutro/wasm2j/api/types/ExternType.html" title="interface in io.github.eutro.wasm2j.api.types">ExternType</a></dt>
+<dd>
+<div class="block">Return whether this type is assignable from (is a supertype of) the other, by
+ <a href="https://webassembly.github.io/spec/core/valid/types.html#import-subtyping">import subtyping</a>.</div>
+</dd>
+<dt><a href="io/github/eutro/wasm2j/api/types/ExternType.Func.html#assignableFrom(io.github.eutro.wasm2j.api.types.ExternType)" class="member-name-link">assignableFrom(ExternType)</a> - Method in class io.github.eutro.wasm2j.api.types.<a href="io/github/eutro/wasm2j/api/types/ExternType.Func.html" title="class in io.github.eutro.wasm2j.api.types">ExternType.Func</a></dt>
+<dd>&nbsp;</dd>
+<dt><a href="io/github/eutro/wasm2j/api/types/ExternType.Global.html#assignableFrom(io.github.eutro.wasm2j.api.types.ExternType)" class="member-name-link">assignableFrom(ExternType)</a> - Method in class io.github.eutro.wasm2j.api.types.<a href="io/github/eutro/wasm2j/api/types/ExternType.Global.html" title="class in io.github.eutro.wasm2j.api.types">ExternType.Global</a></dt>
+<dd>&nbsp;</dd>
+<dt><a href="io/github/eutro/wasm2j/api/types/ExternType.Mem.html#assignableFrom(io.github.eutro.wasm2j.api.types.ExternType)" class="member-name-link">assignableFrom(ExternType)</a> - Method in class io.github.eutro.wasm2j.api.types.<a href="io/github/eutro/wasm2j/api/types/ExternType.Mem.html" title="class in io.github.eutro.wasm2j.api.types">ExternType.Mem</a></dt>
+<dd>&nbsp;</dd>
+<dt><a href="io/github/eutro/wasm2j/api/types/ExternType.Table.html#assignableFrom(io.github.eutro.wasm2j.api.types.ExternType)" class="member-name-link">assignableFrom(ExternType)</a> - Method in class io.github.eutro.wasm2j.api.types.<a href="io/github/eutro/wasm2j/api/types/ExternType.Table.html" title="class in io.github.eutro.wasm2j.api.types">ExternType.Table</a></dt>
+<dd>&nbsp;</dd>
+<dt><a href="io/github/eutro/wasm2j/api/types/ExternType.Top.html#assignableFrom(io.github.eutro.wasm2j.api.types.ExternType)" class="member-name-link">assignableFrom(ExternType)</a> - Method in class io.github.eutro.wasm2j.api.types.<a href="io/github/eutro/wasm2j/api/types/ExternType.Top.html" title="class in io.github.eutro.wasm2j.api.types">ExternType.Top</a></dt>
+<dd>&nbsp;</dd>
+<dt><a href="io/github/eutro/wasm2j/api/types/ExternType.Limits.html#assignableFrom(io.github.eutro.wasm2j.api.types.ExternType.Limits)" class="member-name-link">assignableFrom(ExternType.Limits)</a> - Method in class io.github.eutro.wasm2j.api.types.<a href="io/github/eutro/wasm2j/api/types/ExternType.Limits.html" title="class in io.github.eutro.wasm2j.api.types">ExternType.Limits</a></dt>
+<dd>
+<div class="block">Whether these limits are assignable from (are a supertype of) the other.</div>
+</dd>
 <dt><a href="io/github/eutro/wasm2j/core/ext/CommonExts.html#ASSIGNED_AT" class="member-name-link">ASSIGNED_AT</a> - Static variable in class io.github.eutro.wasm2j.core.ext.<a href="io/github/eutro/wasm2j/core/ext/CommonExts.html" title="class in io.github.eutro.wasm2j.core.ext">CommonExts</a></dt>
 <dd>
 <div class="block">Attached to a <a href="io/github/eutro/wasm2j/core/ssa/Var.html" title="class in io.github.eutro.wasm2j.core.ssa"><code>Var</code></a>.</div>
@@ -182,6 +218,10 @@ loadScripts(document, 'script');</script>
 </dl>
 <h2 class="title" id="I:B">B</h2>
 <dl class="index">
+<dt><a href="io/github/eutro/wasm2j/api/support/NameMangler.BanChars.html#%3Cinit%3E(java.lang.String,io.github.eutro.wasm2j.api.support.NameMangler.IllegalSymbolPolicy)" class="member-name-link">BanChars(String, NameMangler.IllegalSymbolPolicy)</a> - Constructor for class io.github.eutro.wasm2j.api.support.<a href="io/github/eutro/wasm2j/api/support/NameMangler.BanChars.html" title="class in io.github.eutro.wasm2j.api.support">NameMangler.BanChars</a></dt>
+<dd>
+<div class="block">Construct a character-banning name mangler that forbids the given characters.</div>
+</dd>
 <dt><a href="io/github/eutro/wasm2j/core/util/IRUtils.html#BASE64_CLASS" class="member-name-link">BASE64_CLASS</a> - Static variable in class io.github.eutro.wasm2j.core.util.<a href="io/github/eutro/wasm2j/core/util/IRUtils.html" title="class in io.github.eutro.wasm2j.core.util">IRUtils</a></dt>
 <dd>
 <div class="block">An empty <a href="io/github/eutro/wasm2j/core/ssa/JClass.html" title="class in io.github.eutro.wasm2j.core.ssa"><code>JClass</code></a> of <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/Base64.html" title="class or interface in java.util" class="external-link"><code>Base64</code></a>.</div>
@@ -203,6 +243,19 @@ loadScripts(document, 'script');</script>
 <dd>&nbsp;</dd>
 <dt><a href="io/github/eutro/wasm2j/core/passes/convert/WasmToWir.ConvertState.CtrlFrame.html#bb" class="member-name-link">bb</a> - Variable in class io.github.eutro.wasm2j.core.passes.convert.<a href="io/github/eutro/wasm2j/core/passes/convert/WasmToWir.ConvertState.CtrlFrame.html" title="class in io.github.eutro.wasm2j.core.passes.convert">WasmToWir.ConvertState.CtrlFrame</a></dt>
 <dd>&nbsp;</dd>
+<dt><a href="io/github/eutro/wasm2j/api/bits/FormatDetector.Format.html#BINARY" class="member-name-link">BINARY</a> - Enum constant in enum class io.github.eutro.wasm2j.api.bits.<a href="io/github/eutro/wasm2j/api/bits/FormatDetector.Format.html" title="enum class in io.github.eutro.wasm2j.api.bits">FormatDetector.Format</a></dt>
+<dd>
+<div class="block">The WebAssembly
+ <a href="https://webassembly.github.io/spec/core/binary/index.html">binary format</a>.</div>
+</dd>
+<dt><a href="io/github/eutro/wasm2j/api/bits/Bit.html" class="type-name-link" title="interface in io.github.eutro.wasm2j.api.bits">Bit</a>&lt;<a href="io/github/eutro/wasm2j/api/bits/Bit.html" title="type parameter in Bit">Onto</a>,<wbr><a href="io/github/eutro/wasm2j/api/bits/Bit.html" title="type parameter in Bit">Ret</a>&gt; - Interface in <a href="io/github/eutro/wasm2j/api/bits/package-summary.html">io.github.eutro.wasm2j.api.bits</a></dt>
+<dd>
+<div class="block">An extension that can be attached onto something.</div>
+</dd>
+<dt><a href="io/github/eutro/wasm2j/api/bits/FormatDetector.html#BIT" class="member-name-link">BIT</a> - Static variable in class io.github.eutro.wasm2j.api.bits.<a href="io/github/eutro/wasm2j/api/bits/FormatDetector.html" title="class in io.github.eutro.wasm2j.api.bits">FormatDetector</a></dt>
+<dd>
+<div class="block">A <a href="io/github/eutro/wasm2j/api/bits/Bit.html" title="interface in io.github.eutro.wasm2j.api.bits"><code>Bit</code></a> which can be attached to a compiler.</div>
+</dd>
 <dt><a href="io/github/eutro/wasm2j/core/ssa/Function.html#blocks" class="member-name-link">blocks</a> - Variable in class io.github.eutro.wasm2j.core.ssa.<a href="io/github/eutro/wasm2j/core/ssa/Function.html" title="class in io.github.eutro.wasm2j.core.ssa">Function</a></dt>
 <dd>
 <div class="block">The list of basic blocks in this function.</div>
@@ -344,6 +397,40 @@ loadScripts(document, 'script');</script>
 </dd>
 <dt><a href="io/github/eutro/wasm2j/core/ops/WasmOps.CallType.html#%3Cinit%3E(int,io.github.eutro.jwasm.tree.TypeNode)" class="member-name-link">CallType(int, TypeNode)</a> - Constructor for class io.github.eutro.wasm2j.core.ops.<a href="io/github/eutro/wasm2j/core/ops/WasmOps.CallType.html" title="class in io.github.eutro.wasm2j.core.ops">WasmOps.CallType</a></dt>
 <dd>&nbsp;</dd>
+<dt><a href="io/github/eutro/wasm2j/api/support/CaseStyle.CamelLike.html#%3Cinit%3E(io.github.eutro.wasm2j.api.support.CaseStyle.Capitalisation)" class="member-name-link">CamelLike(CaseStyle.Capitalisation)</a> - Constructor for class io.github.eutro.wasm2j.api.support.<a href="io/github/eutro/wasm2j/api/support/CaseStyle.CamelLike.html" title="class in io.github.eutro.wasm2j.api.support">CaseStyle.CamelLike</a></dt>
+<dd>
+<div class="block">Construct a <a href="io/github/eutro/wasm2j/api/support/CaseStyle.CamelLike.html" title="class in io.github.eutro.wasm2j.api.support"><code>CaseStyle.CamelLike</code></a> case style with the given case for the first word.</div>
+</dd>
+<dt><a href="io/github/eutro/wasm2j/api/events/CancellableEvent.html#cancel()" class="member-name-link">cancel()</a> - Method in interface io.github.eutro.wasm2j.api.events.<a href="io/github/eutro/wasm2j/api/events/CancellableEvent.html" title="interface in io.github.eutro.wasm2j.api.events">CancellableEvent</a></dt>
+<dd>
+<div class="block">Cancel the event.</div>
+</dd>
+<dt><a href="io/github/eutro/wasm2j/api/events/EmitClassEvent.html#cancel()" class="member-name-link">cancel()</a> - Method in class io.github.eutro.wasm2j.api.events.<a href="io/github/eutro/wasm2j/api/events/EmitClassEvent.html" title="class in io.github.eutro.wasm2j.api.events">EmitClassEvent</a></dt>
+<dd>&nbsp;</dd>
+<dt><a href="io/github/eutro/wasm2j/api/events/CancellableEvent.html" class="type-name-link" title="interface in io.github.eutro.wasm2j.api.events">CancellableEvent</a> - Interface in <a href="io/github/eutro/wasm2j/api/events/package-summary.html">io.github.eutro.wasm2j.api.events</a></dt>
+<dd>
+<div class="block">An event that can be cancelled, preventing other listeners from receiving it.</div>
+</dd>
+<dt><a href="io/github/eutro/wasm2j/api/support/CaseStyle.html" class="type-name-link" title="interface in io.github.eutro.wasm2j.api.support">CaseStyle</a> - Interface in <a href="io/github/eutro/wasm2j/api/support/package-summary.html">io.github.eutro.wasm2j.api.support</a></dt>
+<dd>
+<div class="block">A style of capitalising words for a token.</div>
+</dd>
+<dt><a href="io/github/eutro/wasm2j/api/support/CaseStyle.CamelLike.html" class="type-name-link" title="class in io.github.eutro.wasm2j.api.support">CaseStyle.CamelLike</a> - Class in <a href="io/github/eutro/wasm2j/api/support/package-summary.html">io.github.eutro.wasm2j.api.support</a></dt>
+<dd>
+<div class="block">A case style like lowerCamelCase.</div>
+</dd>
+<dt><a href="io/github/eutro/wasm2j/api/support/CaseStyle.Capitalisation.html" class="type-name-link" title="enum class in io.github.eutro.wasm2j.api.support">CaseStyle.Capitalisation</a> - Enum Class in <a href="io/github/eutro/wasm2j/api/support/package-summary.html">io.github.eutro.wasm2j.api.support</a></dt>
+<dd>
+<div class="block">A capitalisation style for a single word.</div>
+</dd>
+<dt><a href="io/github/eutro/wasm2j/api/support/CaseStyle.Detect.html" class="type-name-link" title="class in io.github.eutro.wasm2j.api.support">CaseStyle.Detect</a> - Class in <a href="io/github/eutro/wasm2j/api/support/package-summary.html">io.github.eutro.wasm2j.api.support</a></dt>
+<dd>
+<div class="block">A case-style that attempts to detect the style of an input token.</div>
+</dd>
+<dt><a href="io/github/eutro/wasm2j/api/support/CaseStyle.SnakeLike.html" class="type-name-link" title="class in io.github.eutro.wasm2j.api.support">CaseStyle.SnakeLike</a> - Class in <a href="io/github/eutro/wasm2j/api/support/package-summary.html">io.github.eutro.wasm2j.api.support</a></dt>
+<dd>
+<div class="block">A case style like snake_case.</div>
+</dd>
 <dt><a href="io/github/eutro/wasm2j/core/ops/UnaryOpKey.html#cast(io.github.eutro.wasm2j.core.ops.Op)" class="member-name-link">cast(Op)</a> - Method in class io.github.eutro.wasm2j.core.ops.<a href="io/github/eutro/wasm2j/core/ops/UnaryOpKey.html" title="class in io.github.eutro.wasm2j.core.ops">UnaryOpKey</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="io/github/eutro/wasm2j/core/ops/JavaOps.html#CATCH" class="member-name-link">CATCH</a> - Static variable in class io.github.eutro.wasm2j.core.ops.<a href="io/github/eutro/wasm2j/core/ops/JavaOps.html" title="class in io.github.eutro.wasm2j.core.ops">JavaOps</a></dt>
@@ -371,10 +458,28 @@ loadScripts(document, 'script');</script>
 <dd>&nbsp;</dd>
 <dt><a href="io/github/eutro/wasm2j/core/ops/UnaryOpKey.html#checkNullable(io.github.eutro.wasm2j.core.ops.Op)" class="member-name-link">checkNullable(Op)</a> - Method in class io.github.eutro.wasm2j.core.ops.<a href="io/github/eutro/wasm2j/core/ops/UnaryOpKey.html" title="class in io.github.eutro.wasm2j.core.ops">UnaryOpKey</a></dt>
 <dd>&nbsp;</dd>
+<dt><a href="io/github/eutro/wasm2j/api/support/NameSupplier.html#className(java.lang.String)" class="member-name-link">className(String)</a> - Method in interface io.github.eutro.wasm2j.api.support.<a href="io/github/eutro/wasm2j/api/support/NameSupplier.html" title="interface in io.github.eutro.wasm2j.api.support">NameSupplier</a></dt>
+<dd>
+<div class="block">Get the
+ <a href="https://docs.oracle.com/javase/specs/jvms/se8/html/jvms-4.html#jvms-4.2.1">internal name</a>
+ for a WebAssembly module name.</div>
+</dd>
+<dt><a href="io/github/eutro/wasm2j/api/support/NameSupplier.SimpleNameSupplier.html#className(java.lang.String)" class="member-name-link">className(String)</a> - Method in class io.github.eutro.wasm2j.api.support.<a href="io/github/eutro/wasm2j/api/support/NameSupplier.SimpleNameSupplier.html" title="class in io.github.eutro.wasm2j.api.support">NameSupplier.SimpleNameSupplier</a></dt>
+<dd>&nbsp;</dd>
+<dt><a href="io/github/eutro/wasm2j/api/events/EmitClassEvent.html#classNode" class="member-name-link">classNode</a> - Variable in class io.github.eutro.wasm2j.api.events.<a href="io/github/eutro/wasm2j/api/events/EmitClassEvent.html" title="class in io.github.eutro.wasm2j.api.events">EmitClassEvent</a></dt>
+<dd>
+<div class="block">The class to be emitted.</div>
+</dd>
 <dt><a href="io/github/eutro/wasm2j/core/ssa/Function.html#clearVarNames()" class="member-name-link">clearVarNames()</a> - Method in class io.github.eutro.wasm2j.core.ssa.<a href="io/github/eutro/wasm2j/core/ssa/Function.html" title="class in io.github.eutro.wasm2j.core.ssa">Function</a></dt>
 <dd>
 <div class="block">Clear the variable name counters.</div>
 </dd>
+<dt><a href="io/github/eutro/wasm2j/api/Cli.html" class="type-name-link" title="class in io.github.eutro.wasm2j.api">Cli</a> - Class in <a href="io/github/eutro/wasm2j/api/package-summary.html">io.github.eutro.wasm2j.api</a></dt>
+<dd>
+<div class="block">Command line interface for Wasm2j.</div>
+</dd>
+<dt><a href="io/github/eutro/wasm2j/api/Cli.html#%3Cinit%3E()" class="member-name-link">Cli()</a> - Constructor for class io.github.eutro.wasm2j.api.<a href="io/github/eutro/wasm2j/api/Cli.html" title="class in io.github.eutro.wasm2j.api">Cli</a></dt>
+<dd>&nbsp;</dd>
 <dt><a href="io/github/eutro/wasm2j/core/passes/opts/CollapseJumps.html" class="type-name-link" title="class in io.github.eutro.wasm2j.core.passes.opts">CollapseJumps</a> - Class in <a href="io/github/eutro/wasm2j/core/passes/opts/package-summary.html">io.github.eutro.wasm2j.core.passes.opts</a></dt>
 <dd>
 <div class="block">A pass which collapses empty blocks or simple jumps where they are unnecessary.</div>
@@ -403,6 +508,18 @@ loadScripts(document, 'script');</script>
 <dd>&nbsp;</dd>
 <dt><a href="io/github/eutro/wasm2j/core/ext/Ext.html#compareTo(io.github.eutro.wasm2j.core.ext.Ext)" class="member-name-link">compareTo(Ext&lt;?&gt;)</a> - Method in class io.github.eutro.wasm2j.core.ext.<a href="io/github/eutro/wasm2j/core/ext/Ext.html" title="class in io.github.eutro.wasm2j.core.ext">Ext</a></dt>
 <dd>&nbsp;</dd>
+<dt><a href="io/github/eutro/wasm2j/api/events/RunModuleCompilationEvent.html#compilation" class="member-name-link">compilation</a> - Variable in class io.github.eutro.wasm2j.api.events.<a href="io/github/eutro/wasm2j/api/events/RunModuleCompilationEvent.html" title="class in io.github.eutro.wasm2j.api.events">RunModuleCompilationEvent</a></dt>
+<dd>
+<div class="block">The module compilation.</div>
+</dd>
+<dt><a href="io/github/eutro/wasm2j/api/events/CompilerEvent.html" class="type-name-link" title="interface in io.github.eutro.wasm2j.api.events">CompilerEvent</a> - Interface in <a href="io/github/eutro/wasm2j/api/events/package-summary.html">io.github.eutro.wasm2j.api.events</a></dt>
+<dd>
+<div class="block">An event dispatched on <a href="io/github/eutro/wasm2j/api/WasmCompiler.html" title="class in io.github.eutro.wasm2j.api"><code>WasmCompiler</code></a>.</div>
+</dd>
+<dt><a href="io/github/eutro/wasm2j/api/types/ExternType.Table.html#componentType" class="member-name-link">componentType</a> - Variable in class io.github.eutro.wasm2j.api.types.<a href="io/github/eutro/wasm2j/api/types/ExternType.Table.html" title="class in io.github.eutro.wasm2j.api.types">ExternType.Table</a></dt>
+<dd>
+<div class="block">The type of elements of the table.</div>
+</dd>
 <dt><a href="io/github/eutro/wasm2j/embed/Table.AbstractArrayTable.html#componentType" class="member-name-link">componentType</a> - Variable in class io.github.eutro.wasm2j.embed.<a href="io/github/eutro/wasm2j/embed/Table.AbstractArrayTable.html" title="class in io.github.eutro.wasm2j.embed">Table.AbstractArrayTable</a></dt>
 <dd>
 <div class="block">The component type of the table.</div>
@@ -436,6 +553,16 @@ loadScripts(document, 'script');</script>
 <div class="block">Compute the <a href="io/github/eutro/wasm2j/core/ext/CommonExts.html#USED_AT"><code>uses</code></a> of every <a href="io/github/eutro/wasm2j/core/ssa/Var.html" title="class in io.github.eutro.wasm2j.core.ssa"><code>Var</code></a> in a function.</div>
 </dd>
 <dt><a href="io/github/eutro/wasm2j/core/passes/meta/ComputeUses.html#%3Cinit%3E()" class="member-name-link">ComputeUses()</a> - Constructor for class io.github.eutro.wasm2j.core.passes.meta.<a href="io/github/eutro/wasm2j/core/passes/meta/ComputeUses.html" title="class in io.github.eutro.wasm2j.core.passes.meta">ComputeUses</a></dt>
+<dd>&nbsp;</dd>
+<dt><a href="io/github/eutro/wasm2j/api/support/CaseStyle.CamelLike.html#concatenate(java.lang.String%5B%5D)" class="member-name-link">concatenate(String[])</a> - Method in class io.github.eutro.wasm2j.api.support.<a href="io/github/eutro/wasm2j/api/support/CaseStyle.CamelLike.html" title="class in io.github.eutro.wasm2j.api.support">CaseStyle.CamelLike</a></dt>
+<dd>&nbsp;</dd>
+<dt><a href="io/github/eutro/wasm2j/api/support/CaseStyle.html#concatenate(java.lang.String%5B%5D)" class="member-name-link">concatenate(String[])</a> - Method in interface io.github.eutro.wasm2j.api.support.<a href="io/github/eutro/wasm2j/api/support/CaseStyle.html" title="interface in io.github.eutro.wasm2j.api.support">CaseStyle</a></dt>
+<dd>
+<div class="block">Concatenate words into a token according to the rules of this case style.</div>
+</dd>
+<dt><a href="io/github/eutro/wasm2j/api/support/CaseStyle.Detect.html#concatenate(java.lang.String%5B%5D)" class="member-name-link">concatenate(String[])</a> - Method in class io.github.eutro.wasm2j.api.support.<a href="io/github/eutro/wasm2j/api/support/CaseStyle.Detect.html" title="class in io.github.eutro.wasm2j.api.support">CaseStyle.Detect</a></dt>
+<dd>&nbsp;</dd>
+<dt><a href="io/github/eutro/wasm2j/api/support/CaseStyle.SnakeLike.html#concatenate(java.lang.String%5B%5D)" class="member-name-link">concatenate(String[])</a> - Method in class io.github.eutro.wasm2j.api.support.<a href="io/github/eutro/wasm2j/api/support/CaseStyle.SnakeLike.html" title="class in io.github.eutro.wasm2j.api.support">CaseStyle.SnakeLike</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="io/github/eutro/wasm2j/core/ops/CommonOps.html#CONST" class="member-name-link">CONST</a> - Static variable in class io.github.eutro.wasm2j.core.ops.<a href="io/github/eutro/wasm2j/core/ops/CommonOps.html" title="class in io.github.eutro.wasm2j.core.ops">CommonOps</a></dt>
 <dd>
@@ -484,6 +611,10 @@ loadScripts(document, 'script');</script>
 <dd>
 <div class="block">The object on which the method will be invoked.</div>
 </dd>
+<dt><a href="io/github/eutro/wasm2j/api/events/ModifyConventionsEvent.html#conventionBuilder" class="member-name-link">conventionBuilder</a> - Variable in class io.github.eutro.wasm2j.api.events.<a href="io/github/eutro/wasm2j/api/events/ModifyConventionsEvent.html" title="class in io.github.eutro.wasm2j.api.events">ModifyConventionsEvent</a></dt>
+<dd>
+<div class="block">The convention builder.</div>
+</dd>
 <dt><a href="io/github/eutro/wasm2j/core/conf/itf/ConventionModifier.html" class="type-name-link" title="interface in io.github.eutro.wasm2j.core.conf.itf">ConventionModifier</a>&lt;<a href="io/github/eutro/wasm2j/core/conf/itf/ConventionModifier.html" title="type parameter in ConventionModifier">Convention</a>,<wbr><a href="io/github/eutro/wasm2j/core/conf/itf/ConventionModifier.html" title="type parameter in ConventionModifier">Node</a>&gt; - Interface in <a href="io/github/eutro/wasm2j/core/conf/itf/package-summary.html">io.github.eutro.wasm2j.core.conf.itf</a></dt>
 <dd>
 <div class="block">A function which modifies a local convention.</div>
@@ -496,6 +627,14 @@ loadScripts(document, 'script');</script>
 </dd>
 <dt><a href="io/github/eutro/wasm2j/core/passes/convert/WasmToWir.ConvertState.html#%3Cinit%3E(io.github.eutro.jwasm.tree.TypeNode%5B%5D,io.github.eutro.jwasm.tree.FuncNode%5B%5D,int,byte%5B%5D,int)" class="member-name-link">ConvertState(TypeNode[], FuncNode[], int, byte[], int)</a> - Constructor for class io.github.eutro.wasm2j.core.passes.convert.<a href="io/github/eutro/wasm2j/core/passes/convert/WasmToWir.ConvertState.html" title="class in io.github.eutro.wasm2j.core.passes.convert">WasmToWir.ConvertState</a></dt>
 <dd>&nbsp;</dd>
+<dt><a href="io/github/eutro/wasm2j/api/support/CaseStyle.html#convertTo(io.github.eutro.wasm2j.api.support.CaseStyle,java.lang.String,java.lang.String)" class="member-name-link">convertTo(CaseStyle, String, String)</a> - Method in interface io.github.eutro.wasm2j.api.support.<a href="io/github/eutro/wasm2j/api/support/CaseStyle.html" title="interface in io.github.eutro.wasm2j.api.support">CaseStyle</a></dt>
+<dd>
+<div class="block">Convert a token from this case style to another, optionally adding a prefix word.</div>
+</dd>
+<dt><a href="io/github/eutro/wasm2j/api/support/CaseStyle.html#convertTo(io.github.eutro.wasm2j.api.support.CaseStyle,java.lang.String)" class="member-name-link">convertTo(CaseStyle, String)</a> - Method in interface io.github.eutro.wasm2j.api.support.<a href="io/github/eutro/wasm2j/api/support/CaseStyle.html" title="interface in io.github.eutro.wasm2j.api.support">CaseStyle</a></dt>
+<dd>
+<div class="block">Convert a token from this case style to another.</div>
+</dd>
 <dt><a href="io/github/eutro/wasm2j/core/ops/Op.html#copyFrom(io.github.eutro.wasm2j.core.ssa.Effect)" class="member-name-link">copyFrom(Effect)</a> - Method in class io.github.eutro.wasm2j.core.ops.<a href="io/github/eutro/wasm2j/core/ops/Op.html" title="class in io.github.eutro.wasm2j.core.ops">Op</a></dt>
 <dd>
 <div class="block">Construct an effect with this as its operation, by copying the arguments
@@ -521,6 +660,10 @@ loadScripts(document, 'script');</script>
 <dt><a href="io/github/eutro/wasm2j/embed/Global.HandleGlobal.html#create(byte,java.lang.invoke.MethodHandle,java.lang.invoke.MethodHandle)" class="member-name-link">create(byte, MethodHandle, MethodHandle)</a> - Static method in class io.github.eutro.wasm2j.embed.<a href="io/github/eutro/wasm2j/embed/Global.HandleGlobal.html" title="class in io.github.eutro.wasm2j.embed">Global.HandleGlobal</a></dt>
 <dd>
 <div class="block">Calls <a href="io/github/eutro/wasm2j/embed/Global.HandleGlobal.html#%3Cinit%3E(io.github.eutro.wasm2j.api.types.ValType,java.lang.invoke.MethodHandle,java.lang.invoke.MethodHandle)"><code>HandleGlobal(ValType, MethodHandle, MethodHandle)</code></a>.</div>
+</dd>
+<dt><a href="io/github/eutro/wasm2j/api/types/ExternType.Table.html#create(int,java.lang.Integer,byte)" class="member-name-link">create(int, Integer, byte)</a> - Static method in class io.github.eutro.wasm2j.api.types.<a href="io/github/eutro/wasm2j/api/types/ExternType.Table.html" title="class in io.github.eutro.wasm2j.api.types">ExternType.Table</a></dt>
+<dd>
+<div class="block">Create a table with the given limits and type.</div>
 </dd>
 <dt><a href="io/github/eutro/wasm2j/embed/Memory.HandleMemory.html#create(java.lang.Integer,java.lang.invoke.MethodHandle,java.lang.invoke.MethodHandle,java.lang.invoke.MethodHandle,java.lang.invoke.MethodHandle,java.lang.invoke.MethodHandle)" class="member-name-link">create(Integer, MethodHandle, MethodHandle, MethodHandle, MethodHandle, MethodHandle)</a> - Static method in class io.github.eutro.wasm2j.embed.<a href="io/github/eutro/wasm2j/embed/Memory.HandleMemory.html" title="class in io.github.eutro.wasm2j.embed">Memory.HandleMemory</a></dt>
 <dd>
@@ -555,6 +698,18 @@ loadScripts(document, 'script');</script>
 <dd>
 <div class="block">Resolve an implementation of the given import, or throw an exception
  if it does not exist.</div>
+</dd>
+<dt><a href="io/github/eutro/wasm2j/api/support/NameSupplier.html#createSimple(java.lang.String,io.github.eutro.wasm2j.api.support.NameMangler,io.github.eutro.wasm2j.api.support.CaseStyle,io.github.eutro.wasm2j.api.support.CaseStyle,io.github.eutro.wasm2j.api.support.CaseStyle,io.github.eutro.wasm2j.api.support.CaseStyle)" class="member-name-link">createSimple(String, NameMangler, CaseStyle, CaseStyle, CaseStyle, CaseStyle)</a> - Static method in interface io.github.eutro.wasm2j.api.support.<a href="io/github/eutro/wasm2j/api/support/NameSupplier.html" title="interface in io.github.eutro.wasm2j.api.support">NameSupplier</a></dt>
+<dd>
+<div class="block">Create a simple name supplier, which will return class names in the given package,
+ with names mangled according to the name mangler, and cases converted according
+ to the styles provided.</div>
+</dd>
+<dt><a href="io/github/eutro/wasm2j/api/support/NameSupplier.html#createSimple(java.lang.String,io.github.eutro.wasm2j.api.support.NameMangler,java.util.function.Function,java.util.function.BiFunction)" class="member-name-link">createSimple(String, NameMangler, Function&lt;String, String&gt;, BiFunction&lt;String, String, String&gt;)</a> - Static method in interface io.github.eutro.wasm2j.api.support.<a href="io/github/eutro/wasm2j/api/support/NameSupplier.html" title="interface in io.github.eutro.wasm2j.api.support">NameSupplier</a></dt>
+<dd>
+<div class="block">Create a simple name supplier, which will return class names in the given package,
+ with names mangled according to the name mangler, and module/field names converted
+ with the given functions.</div>
 </dd>
 <dt><a href="io/github/eutro/wasm2j/core/passes/convert/WasmToWir.ConvertState.CtrlFrame.html#%3Cinit%3E()" class="member-name-link">CtrlFrame()</a> - Constructor for class io.github.eutro.wasm2j.core.passes.convert.<a href="io/github/eutro/wasm2j/core/passes/convert/WasmToWir.ConvertState.CtrlFrame.html" title="class in io.github.eutro.wasm2j.core.passes.convert">WasmToWir.ConvertState.CtrlFrame</a></dt>
 <dd>&nbsp;</dd>
@@ -640,6 +795,15 @@ loadScripts(document, 'script');</script>
  <a href="https://docs.oracle.com/javase/specs/jvms/se8/html/jvms-4.html#jvms-4.3.2">descriptor</a>
  of the field.</div>
 </dd>
+<dt><a href="io/github/eutro/wasm2j/api/support/CaseStyle.html#detect(io.github.eutro.wasm2j.api.support.CaseStyle)" class="member-name-link">detect(CaseStyle)</a> - Static method in interface io.github.eutro.wasm2j.api.support.<a href="io/github/eutro/wasm2j/api/support/CaseStyle.html" title="interface in io.github.eutro.wasm2j.api.support">CaseStyle</a></dt>
+<dd>
+<div class="block">Create a case style that will, when converting from this style to another,
+ try to guess what case style the token uses.</div>
+</dd>
+<dt><a href="io/github/eutro/wasm2j/api/bits/FormatDetector.Format.html#detect(java.nio.ByteBuffer)" class="member-name-link">detect(ByteBuffer)</a> - Static method in enum class io.github.eutro.wasm2j.api.bits.<a href="io/github/eutro/wasm2j/api/bits/FormatDetector.Format.html" title="enum class in io.github.eutro.wasm2j.api.bits">FormatDetector.Format</a></dt>
+<dd>
+<div class="block">Try to detect the format of the bytes in a buffer.</div>
+</dd>
 <dt><a href="io/github/eutro/wasm2j/core/util/Disassembler.html#disassembleInsn(java.lang.StringBuilder,org.objectweb.asm.tree.AbstractInsnNode)" class="member-name-link">disassembleInsn(StringBuilder, AbstractInsnNode)</a> - Static method in class io.github.eutro.wasm2j.core.util.<a href="io/github/eutro/wasm2j/core/util/Disassembler.html" title="class in io.github.eutro.wasm2j.core.util">Disassembler</a></dt>
 <dd>
 <div class="block">Disassemble a single Java instruction into a <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/StringBuilder.html" title="class or interface in java.lang" class="external-link"><code>StringBuilder</code></a>.</div>
@@ -658,6 +822,10 @@ loadScripts(document, 'script');</script>
 </dd>
 <dt><a href="io/github/eutro/wasm2j/core/util/Disassembler.html#%3Cinit%3E()" class="member-name-link">Disassembler()</a> - Constructor for class io.github.eutro.wasm2j.core.util.<a href="io/github/eutro/wasm2j/core/util/Disassembler.html" title="class in io.github.eutro.wasm2j.core.util">Disassembler</a></dt>
 <dd>&nbsp;</dd>
+<dt><a href="io/github/eutro/wasm2j/api/events/EventSupplier.html#dispatch(java.lang.Class,T)" class="member-name-link">dispatch(Class&lt;T&gt;, T)</a> - Method in class io.github.eutro.wasm2j.api.events.<a href="io/github/eutro/wasm2j/api/events/EventSupplier.html" title="class in io.github.eutro.wasm2j.api.events">EventSupplier</a></dt>
+<dd>
+<div class="block">Dispatch an event to listeners.</div>
+</dd>
 <dt><a href="io/github/eutro/wasm2j/core/ssa/display/SSADisplay.html#displaySSA(io.github.eutro.wasm2j.core.ssa.Function)" class="member-name-link">displaySSA(Function)</a> - Static method in class io.github.eutro.wasm2j.core.ssa.display.<a href="io/github/eutro/wasm2j/core/ssa/display/SSADisplay.html" title="class in io.github.eutro.wasm2j.core.ssa.display">SSADisplay</a></dt>
 <dd>
 <div class="block">Display the function to an SVG document.</div>
@@ -737,6 +905,14 @@ loadScripts(document, 'script');</script>
 <dt><a href="io/github/eutro/wasm2j/core/conf/itf/CallingConvention.html#emitCallIndirect(io.github.eutro.wasm2j.core.ssa.IRBuilder,io.github.eutro.wasm2j.core.ssa.Effect)" class="member-name-link">emitCallIndirect(IRBuilder, Effect)</a> - Method in interface io.github.eutro.wasm2j.core.conf.itf.<a href="io/github/eutro/wasm2j/core/conf/itf/CallingConvention.html" title="interface in io.github.eutro.wasm2j.core.conf.itf">CallingConvention</a></dt>
 <dd>
 <div class="block">Emit code to call a function reference.</div>
+</dd>
+<dt><a href="io/github/eutro/wasm2j/api/events/EmitClassEvent.html" class="type-name-link" title="class in io.github.eutro.wasm2j.api.events">EmitClassEvent</a> - Class in <a href="io/github/eutro/wasm2j/api/events/package-summary.html">io.github.eutro.wasm2j.api.events</a></dt>
+<dd>
+<div class="block">Fired when a class should be emitted.</div>
+</dd>
+<dt><a href="io/github/eutro/wasm2j/api/events/EmitClassEvent.html#%3Cinit%3E(org.objectweb.asm.tree.ClassNode)" class="member-name-link">EmitClassEvent(ClassNode)</a> - Constructor for class io.github.eutro.wasm2j.api.events.<a href="io/github/eutro/wasm2j/api/events/EmitClassEvent.html" title="class in io.github.eutro.wasm2j.api.events">EmitClassEvent</a></dt>
+<dd>
+<div class="block">Construct a new class emit event.</div>
 </dd>
 <dt><a href="io/github/eutro/wasm2j/core/util/IRUtils.html#emitCopy(io.github.eutro.wasm2j.core.ssa.IRBuilder,io.github.eutro.wasm2j.core.ssa.Effect,io.github.eutro.wasm2j.core.ops.UnaryOpKey,io.github.eutro.wasm2j.core.util.IRUtils.StoreOrLoadFn,io.github.eutro.wasm2j.core.util.IRUtils.StoreOrLoadFn,T,T,io.github.eutro.wasm2j.core.util.IRUtils.BoundsCheckFn)" class="member-name-link">emitCopy(IRBuilder, Effect, UnaryOpKey&lt;Pair&lt;Integer, Integer&gt;&gt;, IRUtils.StoreOrLoadFn, IRUtils.StoreOrLoadFn, T, T, IRUtils.BoundsCheckFn&lt;T&gt;)</a> - Static method in class io.github.eutro.wasm2j.core.util.<a href="io/github/eutro/wasm2j/core/util/IRUtils.html" title="class in io.github.eutro.wasm2j.core.util">IRUtils</a></dt>
 <dd>
@@ -895,15 +1071,33 @@ loadScripts(document, 'script');</script>
 <dd>
 <div class="block">Emit code for a WebAssembly <code>table.set</code> instruction.</div>
 </dd>
+<dt><a href="io/github/eutro/wasm2j/api/support/NameMangler.html#EMPTY_TOKEN" class="member-name-link">EMPTY_TOKEN</a> - Static variable in interface io.github.eutro.wasm2j.api.support.<a href="io/github/eutro/wasm2j/api/support/NameMangler.html" title="interface in io.github.eutro.wasm2j.api.support">NameMangler</a></dt>
+<dd>
+<div class="block">The token used when the input token is empty.</div>
+</dd>
 <dt><a href="io/github/eutro/wasm2j/core/ssa/JClass.html#emptyFromJava(java.lang.Class)" class="member-name-link">emptyFromJava(Class&lt;?&gt;)</a> - Static method in class io.github.eutro.wasm2j.core.ssa.<a href="io/github/eutro/wasm2j/core/ssa/JClass.html" title="class in io.github.eutro.wasm2j.core.ssa">JClass</a></dt>
 <dd>
 <div class="block">Create an empty Java class with the same name and access modifiers as
  a class in the current JVM.</div>
 </dd>
+<dt><a href="io/github/eutro/wasm2j/api/types/ExternType.Func.html#encode(io.github.eutro.jwasm.tree.TypeNode)" class="member-name-link">encode(TypeNode)</a> - Static method in class io.github.eutro.wasm2j.api.types.<a href="io/github/eutro/wasm2j/api/types/ExternType.Func.html" title="class in io.github.eutro.wasm2j.api.types">ExternType.Func</a></dt>
+<dd>
+<div class="block">Encode a function type as a string.</div>
+</dd>
 <dt><a href="io/github/eutro/wasm2j/core/ext/MetadataState.html#ensureValid(T,io.github.eutro.wasm2j.core.ext.MetadataState.ComputableMetaKind,io.github.eutro.wasm2j.core.ext.MetadataState.ComputableMetaKind...)" class="member-name-link">ensureValid(T, MetadataState.ComputableMetaKind&lt;T&gt;, MetadataState.ComputableMetaKind&lt;T&gt;...)</a> - Method in class io.github.eutro.wasm2j.core.ext.<a href="io/github/eutro/wasm2j/core/ext/MetadataState.html" title="class in io.github.eutro.wasm2j.core.ext">MetadataState</a></dt>
 <dd>
 <div class="block">Check whether the given metadata are valid, and compute it if it is not.</div>
 </dd>
+<dt><a href="io/github/eutro/wasm2j/api/types/ExternType.Func.html#equals(java.lang.Object)" class="member-name-link">equals(Object)</a> - Method in class io.github.eutro.wasm2j.api.types.<a href="io/github/eutro/wasm2j/api/types/ExternType.Func.html" title="class in io.github.eutro.wasm2j.api.types">ExternType.Func</a></dt>
+<dd>&nbsp;</dd>
+<dt><a href="io/github/eutro/wasm2j/api/types/ExternType.Global.html#equals(java.lang.Object)" class="member-name-link">equals(Object)</a> - Method in class io.github.eutro.wasm2j.api.types.<a href="io/github/eutro/wasm2j/api/types/ExternType.Global.html" title="class in io.github.eutro.wasm2j.api.types">ExternType.Global</a></dt>
+<dd>&nbsp;</dd>
+<dt><a href="io/github/eutro/wasm2j/api/types/ExternType.Limits.html#equals(java.lang.Object)" class="member-name-link">equals(Object)</a> - Method in class io.github.eutro.wasm2j.api.types.<a href="io/github/eutro/wasm2j/api/types/ExternType.Limits.html" title="class in io.github.eutro.wasm2j.api.types">ExternType.Limits</a></dt>
+<dd>&nbsp;</dd>
+<dt><a href="io/github/eutro/wasm2j/api/types/ExternType.Mem.html#equals(java.lang.Object)" class="member-name-link">equals(Object)</a> - Method in class io.github.eutro.wasm2j.api.types.<a href="io/github/eutro/wasm2j/api/types/ExternType.Mem.html" title="class in io.github.eutro.wasm2j.api.types">ExternType.Mem</a></dt>
+<dd>&nbsp;</dd>
+<dt><a href="io/github/eutro/wasm2j/api/types/ExternType.Table.html#equals(java.lang.Object)" class="member-name-link">equals(Object)</a> - Method in class io.github.eutro.wasm2j.api.types.<a href="io/github/eutro/wasm2j/api/types/ExternType.Table.html" title="class in io.github.eutro.wasm2j.api.types">ExternType.Table</a></dt>
+<dd>&nbsp;</dd>
 <dt><a href="io/github/eutro/wasm2j/core/ext/MetadataState.MetaKind.html#equals(java.lang.Object)" class="member-name-link">equals(Object)</a> - Method in class io.github.eutro.wasm2j.core.ext.<a href="io/github/eutro/wasm2j/core/ext/MetadataState.MetaKind.html" title="class in io.github.eutro.wasm2j.core.ext">MetadataState.MetaKind</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="io/github/eutro/wasm2j/core/util/Pair.html#equals(java.lang.Object)" class="member-name-link">equals(Object)</a> - Method in class io.github.eutro.wasm2j.core.util.<a href="io/github/eutro/wasm2j/core/util/Pair.html" title="class in io.github.eutro.wasm2j.core.util">Pair</a></dt>
@@ -912,6 +1106,16 @@ loadScripts(document, 'script');</script>
 <dd>
 <div class="block">A method handle that can be invoked to evaluate the intrinsic at compile time.</div>
 </dd>
+<dt><a href="io/github/eutro/wasm2j/api/events/EventDispatcher.html" class="type-name-link" title="interface in io.github.eutro.wasm2j.api.events">EventDispatcher</a>&lt;<a href="io/github/eutro/wasm2j/api/events/EventDispatcher.html" title="type parameter in EventDispatcher">S</a>&gt; - Interface in <a href="io/github/eutro/wasm2j/api/events/package-summary.html">io.github.eutro.wasm2j.api.events</a></dt>
+<dd>
+<div class="block">A class on which events can be listened to.</div>
+</dd>
+<dt><a href="io/github/eutro/wasm2j/api/events/EventSupplier.html" class="type-name-link" title="class in io.github.eutro.wasm2j.api.events">EventSupplier</a>&lt;<a href="io/github/eutro/wasm2j/api/events/EventSupplier.html" title="type parameter in EventSupplier">S</a>&gt; - Class in <a href="io/github/eutro/wasm2j/api/events/package-summary.html">io.github.eutro.wasm2j.api.events</a></dt>
+<dd>
+<div class="block">A class on which events can be listened to and dispatched.</div>
+</dd>
+<dt><a href="io/github/eutro/wasm2j/api/events/EventSupplier.html#%3Cinit%3E()" class="member-name-link">EventSupplier()</a> - Constructor for class io.github.eutro.wasm2j.api.events.<a href="io/github/eutro/wasm2j/api/events/EventSupplier.html" title="class in io.github.eutro.wasm2j.api.events">EventSupplier</a></dt>
+<dd>&nbsp;</dd>
 <dt><a href="io/github/eutro/wasm2j/core/passes/convert/WasmToWir.ConvertState.html#expand(io.github.eutro.jwasm.BlockType)" class="member-name-link">expand(BlockType)</a> - Method in class io.github.eutro.wasm2j.core.passes.convert.<a href="io/github/eutro/wasm2j/core/passes/convert/WasmToWir.ConvertState.html" title="class in io.github.eutro.wasm2j.core.passes.convert">WasmToWir.ConvertState</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="io/github/eutro/wasm2j/core/conf/impl/DelegatingExporter.html#export(io.github.eutro.jwasm.tree.ExportNode,io.github.eutro.wasm2j.core.ssa.Module,io.github.eutro.wasm2j.core.ssa.JClass)" class="member-name-link">export(ExportNode, Module, JClass)</a> - Method in class io.github.eutro.wasm2j.core.conf.impl.<a href="io/github/eutro/wasm2j/core/conf/impl/DelegatingExporter.html" title="class in io.github.eutro.wasm2j.core.conf.impl">DelegatingExporter</a></dt>
@@ -949,6 +1153,42 @@ loadScripts(document, 'script');</script>
 <dd>
 <div class="block">A container for <a href="io/github/eutro/wasm2j/core/ext/Ext.html" title="class in io.github.eutro.wasm2j.core.ext"><code>Ext</code></a>s.</div>
 </dd>
+<dt><a href="io/github/eutro/wasm2j/api/types/ValType.html#EXTERNREF" class="member-name-link">EXTERNREF</a> - Enum constant in enum class io.github.eutro.wasm2j.api.types.<a href="io/github/eutro/wasm2j/api/types/ValType.html" title="enum class in io.github.eutro.wasm2j.api.types">ValType</a></dt>
+<dd>
+<div class="block">An external reference, represented as a Java <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link"><code>Object</code></a>.</div>
+</dd>
+<dt><a href="io/github/eutro/wasm2j/api/types/ExternType.html" class="type-name-link" title="interface in io.github.eutro.wasm2j.api.types">ExternType</a> - Interface in <a href="io/github/eutro/wasm2j/api/types/package-summary.html">io.github.eutro.wasm2j.api.types</a></dt>
+<dd>
+<div class="block">The type of a WebAssembly extern.</div>
+</dd>
+<dt><a href="io/github/eutro/wasm2j/api/types/ExternType.Func.html" class="type-name-link" title="class in io.github.eutro.wasm2j.api.types">ExternType.Func</a> - Class in <a href="io/github/eutro/wasm2j/api/types/package-summary.html">io.github.eutro.wasm2j.api.types</a></dt>
+<dd>
+<div class="block">A function type, consisting of parameter and result types.</div>
+</dd>
+<dt><a href="io/github/eutro/wasm2j/api/types/ExternType.Global.html" class="type-name-link" title="class in io.github.eutro.wasm2j.api.types">ExternType.Global</a> - Class in <a href="io/github/eutro/wasm2j/api/types/package-summary.html">io.github.eutro.wasm2j.api.types</a></dt>
+<dd>
+<div class="block">A global type, consisting of a mutability and a value type.</div>
+</dd>
+<dt><a href="io/github/eutro/wasm2j/api/types/ExternType.Kind.html" class="type-name-link" title="enum class in io.github.eutro.wasm2j.api.types">ExternType.Kind</a> - Enum Class in <a href="io/github/eutro/wasm2j/api/types/package-summary.html">io.github.eutro.wasm2j.api.types</a></dt>
+<dd>
+<div class="block">The kind of extern: func, table, memory, or global.</div>
+</dd>
+<dt><a href="io/github/eutro/wasm2j/api/types/ExternType.Limits.html" class="type-name-link" title="class in io.github.eutro.wasm2j.api.types">ExternType.Limits</a> - Class in <a href="io/github/eutro/wasm2j/api/types/package-summary.html">io.github.eutro.wasm2j.api.types</a></dt>
+<dd>
+<div class="block">A set of limits, a minimum and (possibly) a maximum.</div>
+</dd>
+<dt><a href="io/github/eutro/wasm2j/api/types/ExternType.Mem.html" class="type-name-link" title="class in io.github.eutro.wasm2j.api.types">ExternType.Mem</a> - Class in <a href="io/github/eutro/wasm2j/api/types/package-summary.html">io.github.eutro.wasm2j.api.types</a></dt>
+<dd>
+<div class="block">A memory type, consisting of limits.</div>
+</dd>
+<dt><a href="io/github/eutro/wasm2j/api/types/ExternType.Table.html" class="type-name-link" title="class in io.github.eutro.wasm2j.api.types">ExternType.Table</a> - Class in <a href="io/github/eutro/wasm2j/api/types/package-summary.html">io.github.eutro.wasm2j.api.types</a></dt>
+<dd>
+<div class="block">A table type, consisting of limits and a component type.</div>
+</dd>
+<dt><a href="io/github/eutro/wasm2j/api/types/ExternType.Top.html" class="type-name-link" title="class in io.github.eutro.wasm2j.api.types">ExternType.Top</a> - Class in <a href="io/github/eutro/wasm2j/api/types/package-summary.html">io.github.eutro.wasm2j.api.types</a></dt>
+<dd>
+<div class="block">The top type.</div>
+</dd>
 <dt><a href="io/github/eutro/wasm2j/embed/ExternVal.html" class="type-name-link" title="interface in io.github.eutro.wasm2j.embed">ExternVal</a> - Interface in <a href="io/github/eutro/wasm2j/embed/package-summary.html">io.github.eutro.wasm2j.embed</a></dt>
 <dd>
 <div class="block">An extern, a value that can be exported from a module instance, or provided as an import.</div>
@@ -965,6 +1205,10 @@ loadScripts(document, 'script');</script>
 <dt><a href="io/github/eutro/wasm2j/core/util/F.html" class="type-name-link" title="interface in io.github.eutro.wasm2j.core.util">F</a>&lt;<a href="io/github/eutro/wasm2j/core/util/F.html" title="type parameter in F">A</a>,<wbr><a href="io/github/eutro/wasm2j/core/util/F.html" title="type parameter in F">B</a>&gt; - Interface in <a href="io/github/eutro/wasm2j/core/util/package-summary.html">io.github.eutro.wasm2j.core.util</a></dt>
 <dd>
 <div class="block">A simple unary function.</div>
+</dd>
+<dt><a href="io/github/eutro/wasm2j/api/types/ValType.html#F32" class="member-name-link">F32</a> - Enum constant in enum class io.github.eutro.wasm2j.api.types.<a href="io/github/eutro/wasm2j/api/types/ValType.html" title="enum class in io.github.eutro.wasm2j.api.types">ValType</a></dt>
+<dd>
+<div class="block">A 32-bit floating-point value, represented as a Java float.</div>
 </dd>
 <dt><a href="io/github/eutro/wasm2j/core/ops/WasmOps.DerefType.LoadType.html#F32" class="member-name-link">F32</a> - Enum constant in enum class io.github.eutro.wasm2j.core.ops.<a href="io/github/eutro/wasm2j/core/ops/WasmOps.DerefType.LoadType.html" title="enum class in io.github.eutro.wasm2j.core.ops">WasmOps.DerefType.LoadType</a></dt>
 <dd>&nbsp;</dd>
@@ -1030,6 +1274,10 @@ loadScripts(document, 'script');</script>
 <dd>&nbsp;</dd>
 <dt><a href="io/github/eutro/wasm2j/core/intrinsics/impls/Operators.html#f32Trunc(float)" class="member-name-link">f32Trunc(float)</a> - Static method in class io.github.eutro.wasm2j.core.intrinsics.impls.<a href="io/github/eutro/wasm2j/core/intrinsics/impls/Operators.html" title="class in io.github.eutro.wasm2j.core.intrinsics.impls">Operators</a></dt>
 <dd>&nbsp;</dd>
+<dt><a href="io/github/eutro/wasm2j/api/types/ValType.html#F64" class="member-name-link">F64</a> - Enum constant in enum class io.github.eutro.wasm2j.api.types.<a href="io/github/eutro/wasm2j/api/types/ValType.html" title="enum class in io.github.eutro.wasm2j.api.types">ValType</a></dt>
+<dd>
+<div class="block">A 64-bit floating-point value, represented as a Java double.</div>
+</dd>
 <dt><a href="io/github/eutro/wasm2j/core/ops/WasmOps.DerefType.LoadType.html#F64" class="member-name-link">F64</a> - Enum constant in enum class io.github.eutro.wasm2j.core.ops.<a href="io/github/eutro/wasm2j/core/ops/WasmOps.DerefType.LoadType.html" title="enum class in io.github.eutro.wasm2j.core.ops">WasmOps.DerefType.LoadType</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="io/github/eutro/wasm2j/core/ops/WasmOps.StoreType.html#F64" class="member-name-link">F64</a> - Enum constant in enum class io.github.eutro.wasm2j.core.ops.<a href="io/github/eutro/wasm2j/core/ops/WasmOps.StoreType.html" title="enum class in io.github.eutro.wasm2j.core.ops">WasmOps.StoreType</a></dt>
@@ -1098,6 +1346,23 @@ loadScripts(document, 'script');</script>
 <dd>
 <div class="block">A getter (and setter) that loads (resp.</div>
 </dd>
+<dt><a href="io/github/eutro/wasm2j/api/support/NameSupplier.html#fieldName(java.lang.String)" class="member-name-link">fieldName(String)</a> - Method in interface io.github.eutro.wasm2j.api.support.<a href="io/github/eutro/wasm2j/api/support/NameSupplier.html" title="interface in io.github.eutro.wasm2j.api.support">NameSupplier</a></dt>
+<dd>
+<div class="block">Get the
+ <a href="https://docs.oracle.com/javase/specs/jvms/se8/html/jvms-4.html#jvms-4.2.2">JVM unqualified name</a>
+ for an imported or exported field of a WebAssembly module.</div>
+</dd>
+<dt><a href="io/github/eutro/wasm2j/api/support/NameSupplier.SimpleNameSupplier.html#fieldName(java.lang.String)" class="member-name-link">fieldName(String)</a> - Method in class io.github.eutro.wasm2j.api.support.<a href="io/github/eutro/wasm2j/api/support/NameSupplier.SimpleNameSupplier.html" title="class in io.github.eutro.wasm2j.api.support">NameSupplier.SimpleNameSupplier</a></dt>
+<dd>&nbsp;</dd>
+<dt><a href="io/github/eutro/wasm2j/api/support/NameSupplier.html#fieldName(java.lang.String,java.lang.String)" class="member-name-link">fieldName(String, String)</a> - Method in interface io.github.eutro.wasm2j.api.support.<a href="io/github/eutro/wasm2j/api/support/NameSupplier.html" title="interface in io.github.eutro.wasm2j.api.support">NameSupplier</a></dt>
+<dd>
+<div class="block">Get the
+ <a href="https://docs.oracle.com/javase/specs/jvms/se8/html/jvms-4.html#jvms-4.2.2">JVM unqualified name</a>
+ for an imported or exported field of a WebAssembly module,
+ prefixed with a word.</div>
+</dd>
+<dt><a href="io/github/eutro/wasm2j/api/support/NameSupplier.SimpleNameSupplier.html#fieldName(java.lang.String,java.lang.String)" class="member-name-link">fieldName(String, String)</a> - Method in class io.github.eutro.wasm2j.api.support.<a href="io/github/eutro/wasm2j/api/support/NameSupplier.SimpleNameSupplier.html" title="class in io.github.eutro.wasm2j.api.support">NameSupplier.SimpleNameSupplier</a></dt>
+<dd>&nbsp;</dd>
 <dt><a href="io/github/eutro/wasm2j/core/ssa/JClass.html#fields" class="member-name-link">fields</a> - Variable in class io.github.eutro.wasm2j.core.ssa.<a href="io/github/eutro/wasm2j/core/ssa/JClass.html" title="class in io.github.eutro.wasm2j.core.ssa">JClass</a></dt>
 <dd>
 <div class="block">The list of fields in the class.</div>
@@ -1126,12 +1391,29 @@ loadScripts(document, 'script');</script>
 </dd>
 <dt><a href="io/github/eutro/wasm2j/core/passes/opts/FindBoolSelects.html#%3Cinit%3E()" class="member-name-link">FindBoolSelects()</a> - Constructor for class io.github.eutro.wasm2j.core.passes.opts.<a href="io/github/eutro/wasm2j/core/passes/opts/FindBoolSelects.html" title="class in io.github.eutro.wasm2j.core.passes.opts">FindBoolSelects</a></dt>
 <dd>&nbsp;</dd>
+<dt><a href="io/github/eutro/wasm2j/api/bits/InterfaceBasedLinker.html#finish()" class="member-name-link">finish()</a> - Method in class io.github.eutro.wasm2j.api.bits.<a href="io/github/eutro/wasm2j/api/bits/InterfaceBasedLinker.html" title="class in io.github.eutro.wasm2j.api.bits">InterfaceBasedLinker</a></dt>
+<dd>
+<div class="block">Finish linking, generating all interfaces for imported modules,
+ finishing up compiled modules, and emitting <a href="io/github/eutro/wasm2j/api/events/EmitClassEvent.html" title="class in io.github.eutro.wasm2j.api.events"><code>EmitClassEvent</code></a>s for each.</div>
+</dd>
 <dt><a href="io/github/eutro/wasm2j/core/passes/convert/WasmToWir.ConvertState.CtrlFrame.html#firstBb" class="member-name-link">firstBb</a> - Variable in class io.github.eutro.wasm2j.core.passes.convert.<a href="io/github/eutro/wasm2j/core/passes/convert/WasmToWir.ConvertState.CtrlFrame.html" title="class in io.github.eutro.wasm2j.core.passes.convert">WasmToWir.ConvertState.CtrlFrame</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="io/github/eutro/wasm2j/embed/Store.html#forceClassLoaderDefiner()" class="member-name-link">forceClassLoaderDefiner()</a> - Method in class io.github.eutro.wasm2j.embed.<a href="io/github/eutro/wasm2j/embed/Store.html" title="class in io.github.eutro.wasm2j.embed">Store</a></dt>
 <dd>
 <div class="block">Force this store to use a <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/ClassLoader.html" title="class or interface in java.lang" class="external-link"><code>ClassLoader</code></a> to define classes, rather than
  <code>defineHiddenClasses</code> of <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/invoke/MethodHandles.Lookup.html" title="class or interface in java.lang.invoke" class="external-link"><code>MethodHandles.Lookup</code></a> in newer Java versions.</div>
+</dd>
+<dt><a href="io/github/eutro/wasm2j/api/bits/FormatDetector.html" class="type-name-link" title="class in io.github.eutro.wasm2j.api.bits">FormatDetector</a> - Class in <a href="io/github/eutro/wasm2j/api/bits/package-summary.html">io.github.eutro.wasm2j.api.bits</a></dt>
+<dd>
+<div class="block">A class for detecting the format of a WebAssembly file (text or binary).</div>
+</dd>
+<dt><a href="io/github/eutro/wasm2j/api/bits/FormatDetector.html#%3Cinit%3E(io.github.eutro.wasm2j.api.WasmCompiler)" class="member-name-link">FormatDetector(WasmCompiler)</a> - Constructor for class io.github.eutro.wasm2j.api.bits.<a href="io/github/eutro/wasm2j/api/bits/FormatDetector.html" title="class in io.github.eutro.wasm2j.api.bits">FormatDetector</a></dt>
+<dd>
+<div class="block">Construct a format detector which will submit files to the given compiler.</div>
+</dd>
+<dt><a href="io/github/eutro/wasm2j/api/bits/FormatDetector.Format.html" class="type-name-link" title="enum class in io.github.eutro.wasm2j.api.bits">FormatDetector.Format</a> - Enum Class in <a href="io/github/eutro/wasm2j/api/bits/package-summary.html">io.github.eutro.wasm2j.api.bits</a></dt>
+<dd>
+<div class="block">The format of a WebAssembly file, either text, binary, or unknown.</div>
 </dd>
 <dt><a href="io/github/eutro/wasm2j/core/passes/misc/ForPass.html" class="type-name-link" title="class in io.github.eutro.wasm2j.core.passes.misc">ForPass</a> - Class in <a href="io/github/eutro/wasm2j/core/passes/misc/package-summary.html">io.github.eutro.wasm2j.core.passes.misc</a></dt>
 <dd>
@@ -1147,6 +1429,14 @@ loadScripts(document, 'script');</script>
 <dd>
 <div class="block">An instruction pass lifted to operate on a full basic block.</div>
 </dd>
+<dt><a href="io/github/eutro/wasm2j/api/types/ExternType.Kind.html#fromByte(byte)" class="member-name-link">fromByte(byte)</a> - Static method in enum class io.github.eutro.wasm2j.api.types.<a href="io/github/eutro/wasm2j/api/types/ExternType.Kind.html" title="enum class in io.github.eutro.wasm2j.api.types">ExternType.Kind</a></dt>
+<dd>
+<div class="block">Get the kind of extern from a one-byte tag.</div>
+</dd>
+<dt><a href="io/github/eutro/wasm2j/api/types/ExternType.html#fromImport(io.github.eutro.jwasm.tree.AbstractImportNode,io.github.eutro.jwasm.tree.ModuleNode)" class="member-name-link">fromImport(AbstractImportNode, ModuleNode)</a> - Static method in interface io.github.eutro.wasm2j.api.types.<a href="io/github/eutro/wasm2j/api/types/ExternType.html" title="interface in io.github.eutro.wasm2j.api.types">ExternType</a></dt>
+<dd>
+<div class="block">Get the type of an import.</div>
+</dd>
 <dt><a href="io/github/eutro/wasm2j/core/ssa/JClass.JavaField.html#fromJava(java.lang.Class,java.lang.String)" class="member-name-link">fromJava(Class&lt;?&gt;, String)</a> - Static method in class io.github.eutro.wasm2j.core.ssa.<a href="io/github/eutro/wasm2j/core/ssa/JClass.JavaField.html" title="class in io.github.eutro.wasm2j.core.ssa">JClass.JavaField</a></dt>
 <dd>
 <div class="block">Look up a field in a class by <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/reflect/package-summary.html" class="external-link"><code>reflection</code></a>.</div>
@@ -1154,6 +1444,10 @@ loadScripts(document, 'script');</script>
 <dt><a href="io/github/eutro/wasm2j/embed/Module.html#fromNode(io.github.eutro.jwasm.tree.ModuleNode)" class="member-name-link">fromNode(ModuleNode)</a> - Static method in class io.github.eutro.wasm2j.embed.<a href="io/github/eutro/wasm2j/embed/Module.html" title="class in io.github.eutro.wasm2j.embed">Module</a></dt>
 <dd>
 <div class="block">Create a module from a JWasm module node.</div>
+</dd>
+<dt><a href="io/github/eutro/wasm2j/api/types/ValType.html#fromOpcode(byte)" class="member-name-link">fromOpcode(byte)</a> - Static method in enum class io.github.eutro.wasm2j.api.types.<a href="io/github/eutro/wasm2j/api/types/ValType.html" title="enum class in io.github.eutro.wasm2j.api.types">ValType</a></dt>
+<dd>
+<div class="block">Get the <a href="io/github/eutro/wasm2j/api/types/ValType.html" title="enum class in io.github.eutro.wasm2j.api.types"><code>ValType</code></a> for a given WebAssembly type code, such as <a href="https://eutro.github.io/jwasm/io/github/eutro/jwasm/Opcodes.html#I32" title="class or interface in io.github.eutro.jwasm" class="external-link"><code>Opcodes.I32</code></a>.</div>
 </dd>
 <dt><a href="io/github/eutro/wasm2j/core/ops/WasmOps.DerefType.html#fromOpcode(byte)" class="member-name-link">fromOpcode(byte)</a> - Static method in class io.github.eutro.wasm2j.core.ops.<a href="io/github/eutro/wasm2j/core/ops/WasmOps.DerefType.html" title="class in io.github.eutro.wasm2j.core.ops">WasmOps.DerefType</a></dt>
 <dd>&nbsp;</dd>
@@ -1191,6 +1485,18 @@ loadScripts(document, 'script');</script>
 <dd>
 <div class="block">A function extern.</div>
 </dd>
+<dt><a href="io/github/eutro/wasm2j/api/types/ExternType.Func.html#%3Cinit%3E(byte%5B%5D,byte%5B%5D)" class="member-name-link">Func(byte[], byte[])</a> - Constructor for class io.github.eutro.wasm2j.api.types.<a href="io/github/eutro/wasm2j/api/types/ExternType.Func.html" title="class in io.github.eutro.wasm2j.api.types">ExternType.Func</a></dt>
+<dd>
+<div class="block">Construct a function type with the given parameter and result types.</div>
+</dd>
+<dt><a href="io/github/eutro/wasm2j/api/types/ExternType.Func.html#%3Cinit%3E(java.lang.invoke.MethodType)" class="member-name-link">Func(MethodType)</a> - Constructor for class io.github.eutro.wasm2j.api.types.<a href="io/github/eutro/wasm2j/api/types/ExternType.Func.html" title="class in io.github.eutro.wasm2j.api.types">ExternType.Func</a></dt>
+<dd>
+<div class="block">Construct a function type with no specific parameter and result types.</div>
+</dd>
+<dt><a href="io/github/eutro/wasm2j/api/types/ExternType.Kind.html#FUNC" class="member-name-link">FUNC</a> - Enum constant in enum class io.github.eutro.wasm2j.api.types.<a href="io/github/eutro/wasm2j/api/types/ExternType.Kind.html" title="enum class in io.github.eutro.wasm2j.api.types">ExternType.Kind</a></dt>
+<dd>
+<div class="block">A function.</div>
+</dd>
 <dt><a href="io/github/eutro/wasm2j/core/ext/WasmExts.html#FUNC_MAP" class="member-name-link">FUNC_MAP</a> - Static variable in class io.github.eutro.wasm2j.core.ext.<a href="io/github/eutro/wasm2j/core/ext/WasmExts.html" title="class in io.github.eutro.wasm2j.core.ext">WasmExts</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="io/github/eutro/wasm2j/core/ops/WasmOps.html#FUNC_REF" class="member-name-link">FUNC_REF</a> - Static variable in class io.github.eutro.wasm2j.core.ops.<a href="io/github/eutro/wasm2j/core/ops/WasmOps.html" title="class in io.github.eutro.wasm2j.core.ops">WasmOps</a></dt>
@@ -1213,6 +1519,10 @@ loadScripts(document, 'script');</script>
 </dd>
 <dt><a href="io/github/eutro/wasm2j/core/ops/WasmOps.DerefType.LoadType.html#funcName" class="member-name-link">funcName</a> - Variable in enum class io.github.eutro.wasm2j.core.ops.<a href="io/github/eutro/wasm2j/core/ops/WasmOps.DerefType.LoadType.html" title="enum class in io.github.eutro.wasm2j.core.ops">WasmOps.DerefType.LoadType</a></dt>
 <dd>&nbsp;</dd>
+<dt><a href="io/github/eutro/wasm2j/api/types/ValType.html#FUNCREF" class="member-name-link">FUNCREF</a> - Enum constant in enum class io.github.eutro.wasm2j.api.types.<a href="io/github/eutro/wasm2j/api/types/ValType.html" title="enum class in io.github.eutro.wasm2j.api.types">ValType</a></dt>
+<dd>
+<div class="block">A function reference, represented as a Java <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/invoke/MethodHandle.html" title="class or interface in java.lang.invoke" class="external-link"><code>MethodHandle</code></a>.</div>
+</dd>
 <dt><a href="io/github/eutro/wasm2j/core/ssa/Function.html" class="type-name-link" title="class in io.github.eutro.wasm2j.core.ssa">Function</a> - Class in <a href="io/github/eutro/wasm2j/core/ssa/package-summary.html">io.github.eutro.wasm2j.core.ssa</a></dt>
 <dd>
 <div class="block">A function, encapsulating a list of <a href="io/github/eutro/wasm2j/core/ssa/BasicBlock.html" title="class in io.github.eutro.wasm2j.core.ssa"><code>basic blocks</code></a>.</div>
@@ -1231,6 +1541,10 @@ loadScripts(document, 'script');</script>
 <dt><a href="io/github/eutro/wasm2j/core/conf/itf/FunctionConvention.Delegating.html" class="type-name-link" title="class in io.github.eutro.wasm2j.core.conf.itf">FunctionConvention.Delegating</a> - Class in <a href="io/github/eutro/wasm2j/core/conf/itf/package-summary.html">io.github.eutro.wasm2j.core.conf.itf</a></dt>
 <dd>
 <div class="block">A <a href="io/github/eutro/wasm2j/core/conf/itf/FunctionConvention.html" title="interface in io.github.eutro.wasm2j.core.conf.itf"><code>FunctionConvention</code></a> which delegates all calls to another.</div>
+</dd>
+<dt><a href="io/github/eutro/wasm2j/api/bits/NameSectionParser.NameSection.html#functionNames" class="member-name-link">functionNames</a> - Variable in class io.github.eutro.wasm2j.api.bits.<a href="io/github/eutro/wasm2j/api/bits/NameSectionParser.NameSection.html" title="class in io.github.eutro.wasm2j.api.bits">NameSectionParser.NameSection</a></dt>
+<dd>
+<div class="block">The function name map.</div>
 </dd>
 <dt><a href="io/github/eutro/wasm2j/embed/WebAssembly.html#funcType(io.github.eutro.wasm2j.embed.Store,io.github.eutro.wasm2j.embed.Func)" class="member-name-link">funcType(Store, Func)</a> - Method in class io.github.eutro.wasm2j.embed.<a href="io/github/eutro/wasm2j/embed/WebAssembly.html" title="class in io.github.eutro.wasm2j.embed">WebAssembly</a></dt>
 <dd>
@@ -1312,6 +1626,10 @@ loadScripts(document, 'script');</script>
 <dt><a href="io/github/eutro/wasm2j/embed/ExternVal.html#getAsMemory()" class="member-name-link">getAsMemory()</a> - Method in interface io.github.eutro.wasm2j.embed.<a href="io/github/eutro/wasm2j/embed/ExternVal.html" title="interface in io.github.eutro.wasm2j.embed">ExternVal</a></dt>
 <dd>
 <div class="block">Get this as a memory, or throw an exception.</div>
+</dd>
+<dt><a href="io/github/eutro/wasm2j/api/types/ValType.html#getAsmType()" class="member-name-link">getAsmType()</a> - Method in enum class io.github.eutro.wasm2j.api.types.<a href="io/github/eutro/wasm2j/api/types/ValType.html" title="enum class in io.github.eutro.wasm2j.api.types">ValType</a></dt>
+<dd>
+<div class="block">Get the ASM type for this type.</div>
 </dd>
 <dt><a href="io/github/eutro/wasm2j/core/ssa/Effect.html#getAssignsTo()" class="member-name-link">getAssignsTo()</a> - Method in class io.github.eutro.wasm2j.core.ssa.<a href="io/github/eutro/wasm2j/core/ssa/Effect.html" title="class in io.github.eutro.wasm2j.core.ssa">Effect</a></dt>
 <dd>
@@ -1420,9 +1738,47 @@ loadScripts(document, 'script');</script>
 </dd>
 <dt><a href="io/github/eutro/wasm2j/core/passes/misc/ForPass.BasicBlocks.html#getIter(io.github.eutro.wasm2j.core.ssa.Function)" class="member-name-link">getIter(Function)</a> - Method in class io.github.eutro.wasm2j.core.passes.misc.<a href="io/github/eutro/wasm2j/core/passes/misc/ForPass.BasicBlocks.html" title="class in io.github.eutro.wasm2j.core.passes.misc">ForPass.BasicBlocks</a></dt>
 <dd>&nbsp;</dd>
+<dt><a href="io/github/eutro/wasm2j/api/types/ExternType.Func.html#getKind()" class="member-name-link">getKind()</a> - Method in class io.github.eutro.wasm2j.api.types.<a href="io/github/eutro/wasm2j/api/types/ExternType.Func.html" title="class in io.github.eutro.wasm2j.api.types">ExternType.Func</a></dt>
+<dd>
+<div class="block">Get the kind of type this is (func, global, memory, table),
+ or null if it is the <a href="io/github/eutro/wasm2j/api/types/ExternType.Top.html" title="class in io.github.eutro.wasm2j.api.types"><code>ExternType.Top</code></a> type.</div>
+</dd>
+<dt><a href="io/github/eutro/wasm2j/api/types/ExternType.html#getKind()" class="member-name-link">getKind()</a> - Method in interface io.github.eutro.wasm2j.api.types.<a href="io/github/eutro/wasm2j/api/types/ExternType.html" title="interface in io.github.eutro.wasm2j.api.types">ExternType</a></dt>
+<dd>
+<div class="block">Get the kind of type this is (func, global, memory, table),
+ or null if it is the <a href="io/github/eutro/wasm2j/api/types/ExternType.Top.html" title="class in io.github.eutro.wasm2j.api.types"><code>ExternType.Top</code></a> type.</div>
+</dd>
+<dt><a href="io/github/eutro/wasm2j/api/types/ExternType.Global.html#getKind()" class="member-name-link">getKind()</a> - Method in class io.github.eutro.wasm2j.api.types.<a href="io/github/eutro/wasm2j/api/types/ExternType.Global.html" title="class in io.github.eutro.wasm2j.api.types">ExternType.Global</a></dt>
+<dd>
+<div class="block">Get the kind of type this is (func, global, memory, table),
+ or null if it is the <a href="io/github/eutro/wasm2j/api/types/ExternType.Top.html" title="class in io.github.eutro.wasm2j.api.types"><code>ExternType.Top</code></a> type.</div>
+</dd>
+<dt><a href="io/github/eutro/wasm2j/api/types/ExternType.Mem.html#getKind()" class="member-name-link">getKind()</a> - Method in class io.github.eutro.wasm2j.api.types.<a href="io/github/eutro/wasm2j/api/types/ExternType.Mem.html" title="class in io.github.eutro.wasm2j.api.types">ExternType.Mem</a></dt>
+<dd>
+<div class="block">Get the kind of type this is (func, global, memory, table),
+ or null if it is the <a href="io/github/eutro/wasm2j/api/types/ExternType.Top.html" title="class in io.github.eutro.wasm2j.api.types"><code>ExternType.Top</code></a> type.</div>
+</dd>
+<dt><a href="io/github/eutro/wasm2j/api/types/ExternType.Table.html#getKind()" class="member-name-link">getKind()</a> - Method in class io.github.eutro.wasm2j.api.types.<a href="io/github/eutro/wasm2j/api/types/ExternType.Table.html" title="class in io.github.eutro.wasm2j.api.types">ExternType.Table</a></dt>
+<dd>
+<div class="block">Get the kind of type this is (func, global, memory, table),
+ or null if it is the <a href="io/github/eutro/wasm2j/api/types/ExternType.Top.html" title="class in io.github.eutro.wasm2j.api.types"><code>ExternType.Top</code></a> type.</div>
+</dd>
+<dt><a href="io/github/eutro/wasm2j/api/types/ExternType.Top.html#getKind()" class="member-name-link">getKind()</a> - Method in class io.github.eutro.wasm2j.api.types.<a href="io/github/eutro/wasm2j/api/types/ExternType.Top.html" title="class in io.github.eutro.wasm2j.api.types">ExternType.Top</a></dt>
+<dd>
+<div class="block">Get the kind of type this is (func, global, memory, table),
+ or null if it is the <a href="io/github/eutro/wasm2j/api/types/ExternType.Top.html" title="class in io.github.eutro.wasm2j.api.types"><code>ExternType.Top</code></a> type.</div>
+</dd>
+<dt><a href="io/github/eutro/wasm2j/api/types/ExternType.html#getLocal(io.github.eutro.jwasm.tree.ModuleNode,io.github.eutro.wasm2j.api.types.ExternType.Kind,int)" class="member-name-link">getLocal(ModuleNode, ExternType.Kind, int)</a> - Static method in interface io.github.eutro.wasm2j.api.types.<a href="io/github/eutro/wasm2j/api/types/ExternType.html" title="interface in io.github.eutro.wasm2j.api.types">ExternType</a></dt>
+<dd>
+<div class="block">Get the type of the <code>index</code>th local entity (func, global, memory, table) in the WebAssembly module.</div>
+</dd>
 <dt><a href="io/github/eutro/wasm2j/core/conf/itf/WirJavaConvention.html#getMemory(int)" class="member-name-link">getMemory(int)</a> - Method in interface io.github.eutro.wasm2j.core.conf.itf.<a href="io/github/eutro/wasm2j/core/conf/itf/WirJavaConvention.html" title="interface in io.github.eutro.wasm2j.core.conf.itf">WirJavaConvention</a></dt>
 <dd>
 <div class="block">Get the convention of the memory at the given index in the module.</div>
+</dd>
+<dt><a href="io/github/eutro/wasm2j/api/types/ExternType.Func.html#getMethodType()" class="member-name-link">getMethodType()</a> - Method in class io.github.eutro.wasm2j.api.types.<a href="io/github/eutro/wasm2j/api/types/ExternType.Func.html" title="class in io.github.eutro.wasm2j.api.types">ExternType.Func</a></dt>
+<dd>
+<div class="block">Get the Java method type of the function type, for casting.</div>
 </dd>
 <dt><a href="io/github/eutro/wasm2j/core/util/Disassembler.html#getMnemonic(int)" class="member-name-link">getMnemonic(int)</a> - Static method in class io.github.eutro.wasm2j.core.util.<a href="io/github/eutro/wasm2j/core/util/Disassembler.html" title="class in io.github.eutro.wasm2j.core.util">Disassembler</a></dt>
 <dd>
@@ -1452,6 +1808,10 @@ loadScripts(document, 'script');</script>
 <dd>&nbsp;</dd>
 <dt><a href="io/github/eutro/wasm2j/core/ssa/Var.html#getNullable(io.github.eutro.wasm2j.core.ext.Ext)" class="member-name-link">getNullable(Ext&lt;T&gt;)</a> - Method in class io.github.eutro.wasm2j.core.ssa.<a href="io/github/eutro/wasm2j/core/ssa/Var.html" title="class in io.github.eutro.wasm2j.core.ssa">Var</a></dt>
 <dd>&nbsp;</dd>
+<dt><a href="io/github/eutro/wasm2j/api/types/ValType.html#getOpcode()" class="member-name-link">getOpcode()</a> - Method in enum class io.github.eutro.wasm2j.api.types.<a href="io/github/eutro/wasm2j/api/types/ValType.html" title="enum class in io.github.eutro.wasm2j.api.types">ValType</a></dt>
+<dd>
+<div class="block">Get the opcode byte for this type.</div>
+</dd>
 <dt><a href="io/github/eutro/wasm2j/core/ops/WasmOps.DerefType.html#getOpcode()" class="member-name-link">getOpcode()</a> - Method in class io.github.eutro.wasm2j.core.ops.<a href="io/github/eutro/wasm2j/core/ops/WasmOps.DerefType.html" title="class in io.github.eutro.wasm2j.core.ops">WasmOps.DerefType</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="io/github/eutro/wasm2j/core/ops/WasmOps.StoreType.html#getOpcode()" class="member-name-link">getOpcode()</a> - Method in enum class io.github.eutro.wasm2j.core.ops.<a href="io/github/eutro/wasm2j/core/ops/WasmOps.StoreType.html" title="enum class in io.github.eutro.wasm2j.core.ops">WasmOps.StoreType</a></dt>
@@ -1502,6 +1862,10 @@ loadScripts(document, 'script');</script>
 <dt><a href="io/github/eutro/wasm2j/core/util/IRUtils.html#getThis(io.github.eutro.wasm2j.core.ssa.IRBuilder)" class="member-name-link">getThis(IRBuilder)</a> - Static method in class io.github.eutro.wasm2j.core.util.<a href="io/github/eutro/wasm2j/core/util/IRUtils.html" title="class in io.github.eutro.wasm2j.core.util">IRUtils</a></dt>
 <dd>
 <div class="block">Insert an instruction to get the implicit Java receiver in an instance method, <code>this</code>.</div>
+</dd>
+<dt><a href="io/github/eutro/wasm2j/api/types/ValType.html#getType()" class="member-name-link">getType()</a> - Method in enum class io.github.eutro.wasm2j.api.types.<a href="io/github/eutro/wasm2j/api/types/ValType.html" title="enum class in io.github.eutro.wasm2j.api.types">ValType</a></dt>
+<dd>
+<div class="block">Get the Java class for this type.</div>
 </dd>
 <dt><a href="io/github/eutro/wasm2j/core/ext/Ext.html#getType()" class="member-name-link">getType()</a> - Method in class io.github.eutro.wasm2j.core.ext.<a href="io/github/eutro/wasm2j/core/ext/Ext.html" title="class in io.github.eutro.wasm2j.core.ext">Ext</a></dt>
 <dd>
@@ -1560,6 +1924,14 @@ loadScripts(document, 'script');</script>
 <dt><a href="io/github/eutro/wasm2j/embed/Global.html" class="type-name-link" title="interface in io.github.eutro.wasm2j.embed">Global</a> - Interface in <a href="io/github/eutro/wasm2j/embed/package-summary.html">io.github.eutro.wasm2j.embed</a></dt>
 <dd>
 <div class="block">A global extern.</div>
+</dd>
+<dt><a href="io/github/eutro/wasm2j/api/types/ExternType.Global.html#%3Cinit%3E(boolean,io.github.eutro.wasm2j.api.types.ValType)" class="member-name-link">Global(boolean, ValType)</a> - Constructor for class io.github.eutro.wasm2j.api.types.<a href="io/github/eutro/wasm2j/api/types/ExternType.Global.html" title="class in io.github.eutro.wasm2j.api.types">ExternType.Global</a></dt>
+<dd>
+<div class="block">Construct a global type with the given mutability and value type.</div>
+</dd>
+<dt><a href="io/github/eutro/wasm2j/api/types/ExternType.Kind.html#GLOBAL" class="member-name-link">GLOBAL</a> - Enum constant in enum class io.github.eutro.wasm2j.api.types.<a href="io/github/eutro/wasm2j/api/types/ExternType.Kind.html" title="enum class in io.github.eutro.wasm2j.api.types">ExternType.Kind</a></dt>
+<dd>
+<div class="block">A global.</div>
 </dd>
 <dt><a href="io/github/eutro/wasm2j/core/ops/WasmOps.html#GLOBAL_REF" class="member-name-link">GLOBAL_REF</a> - Static variable in class io.github.eutro.wasm2j.core.ops.<a href="io/github/eutro/wasm2j/core/ops/WasmOps.html" title="class in io.github.eutro.wasm2j.core.ops">WasmOps</a></dt>
 <dd>&nbsp;</dd>
@@ -1668,6 +2040,16 @@ loadScripts(document, 'script');</script>
 <dd>
 <div class="block">Construct a new <a href="io/github/eutro/wasm2j/core/passes/convert/Handlify.html" title="class in io.github.eutro.wasm2j.core.passes.convert"><code>Handlify</code></a> that will keep the <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/BitSet.html#set(int)" title="class or interface in java.util" class="external-link"><code>set</code></a> arguments free.</div>
 </dd>
+<dt><a href="io/github/eutro/wasm2j/api/types/ExternType.Func.html#hashCode()" class="member-name-link">hashCode()</a> - Method in class io.github.eutro.wasm2j.api.types.<a href="io/github/eutro/wasm2j/api/types/ExternType.Func.html" title="class in io.github.eutro.wasm2j.api.types">ExternType.Func</a></dt>
+<dd>&nbsp;</dd>
+<dt><a href="io/github/eutro/wasm2j/api/types/ExternType.Global.html#hashCode()" class="member-name-link">hashCode()</a> - Method in class io.github.eutro.wasm2j.api.types.<a href="io/github/eutro/wasm2j/api/types/ExternType.Global.html" title="class in io.github.eutro.wasm2j.api.types">ExternType.Global</a></dt>
+<dd>&nbsp;</dd>
+<dt><a href="io/github/eutro/wasm2j/api/types/ExternType.Limits.html#hashCode()" class="member-name-link">hashCode()</a> - Method in class io.github.eutro.wasm2j.api.types.<a href="io/github/eutro/wasm2j/api/types/ExternType.Limits.html" title="class in io.github.eutro.wasm2j.api.types">ExternType.Limits</a></dt>
+<dd>&nbsp;</dd>
+<dt><a href="io/github/eutro/wasm2j/api/types/ExternType.Mem.html#hashCode()" class="member-name-link">hashCode()</a> - Method in class io.github.eutro.wasm2j.api.types.<a href="io/github/eutro/wasm2j/api/types/ExternType.Mem.html" title="class in io.github.eutro.wasm2j.api.types">ExternType.Mem</a></dt>
+<dd>&nbsp;</dd>
+<dt><a href="io/github/eutro/wasm2j/api/types/ExternType.Table.html#hashCode()" class="member-name-link">hashCode()</a> - Method in class io.github.eutro.wasm2j.api.types.<a href="io/github/eutro/wasm2j/api/types/ExternType.Table.html" title="class in io.github.eutro.wasm2j.api.types">ExternType.Table</a></dt>
+<dd>&nbsp;</dd>
 <dt><a href="io/github/eutro/wasm2j/core/ext/Ext.html#hashCode()" class="member-name-link">hashCode()</a> - Method in class io.github.eutro.wasm2j.core.ext.<a href="io/github/eutro/wasm2j/core/ext/Ext.html" title="class in io.github.eutro.wasm2j.core.ext">Ext</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="io/github/eutro/wasm2j/core/ext/MetadataState.MetaKind.html#hashCode()" class="member-name-link">hashCode()</a> - Method in class io.github.eutro.wasm2j.core.ext.<a href="io/github/eutro/wasm2j/core/ext/MetadataState.MetaKind.html" title="class in io.github.eutro.wasm2j.core.ext">MetadataState.MetaKind</a></dt>
@@ -1692,6 +2074,10 @@ loadScripts(document, 'script');</script>
 <dt><a href="io/github/eutro/wasm2j/core/ops/JavaOps.html#I2L_U" class="member-name-link">I2L_U</a> - Static variable in class io.github.eutro.wasm2j.core.ops.<a href="io/github/eutro/wasm2j/core/ops/JavaOps.html" title="class in io.github.eutro.wasm2j.core.ops">JavaOps</a></dt>
 <dd>
 <div class="block">Effect: zero-extending integer to long conversion (marked as pure)</div>
+</dd>
+<dt><a href="io/github/eutro/wasm2j/api/types/ValType.html#I32" class="member-name-link">I32</a> - Enum constant in enum class io.github.eutro.wasm2j.api.types.<a href="io/github/eutro/wasm2j/api/types/ValType.html" title="enum class in io.github.eutro.wasm2j.api.types">ValType</a></dt>
+<dd>
+<div class="block">A 32-bit integer, represented as a Java int.</div>
 </dd>
 <dt><a href="io/github/eutro/wasm2j/core/ops/WasmOps.DerefType.LoadType.html#I32" class="member-name-link">I32</a> - Enum constant in enum class io.github.eutro.wasm2j.core.ops.<a href="io/github/eutro/wasm2j/core/ops/WasmOps.DerefType.LoadType.html" title="enum class in io.github.eutro.wasm2j.core.ops">WasmOps.DerefType.LoadType</a></dt>
 <dd>&nbsp;</dd>
@@ -1815,6 +2201,10 @@ loadScripts(document, 'script');</script>
 <dd>&nbsp;</dd>
 <dt><a href="io/github/eutro/wasm2j/core/intrinsics/impls/Operators.html#i32Xor(int,int)" class="member-name-link">i32Xor(int, int)</a> - Static method in class io.github.eutro.wasm2j.core.intrinsics.impls.<a href="io/github/eutro/wasm2j/core/intrinsics/impls/Operators.html" title="class in io.github.eutro.wasm2j.core.intrinsics.impls">Operators</a></dt>
 <dd>&nbsp;</dd>
+<dt><a href="io/github/eutro/wasm2j/api/types/ValType.html#I64" class="member-name-link">I64</a> - Enum constant in enum class io.github.eutro.wasm2j.api.types.<a href="io/github/eutro/wasm2j/api/types/ValType.html" title="enum class in io.github.eutro.wasm2j.api.types">ValType</a></dt>
+<dd>
+<div class="block">A 64-bit integer, represented as a Java long.</div>
+</dd>
 <dt><a href="io/github/eutro/wasm2j/core/ops/WasmOps.DerefType.LoadType.html#I64" class="member-name-link">I64</a> - Enum constant in enum class io.github.eutro.wasm2j.core.ops.<a href="io/github/eutro/wasm2j/core/ops/WasmOps.DerefType.LoadType.html" title="enum class in io.github.eutro.wasm2j.core.ops">WasmOps.DerefType.LoadType</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="io/github/eutro/wasm2j/core/ops/WasmOps.StoreType.html#I64" class="member-name-link">I64</a> - Enum constant in enum class io.github.eutro.wasm2j.core.ops.<a href="io/github/eutro/wasm2j/core/ops/WasmOps.StoreType.html" title="enum class in io.github.eutro.wasm2j.core.ops">WasmOps.StoreType</a></dt>
@@ -2207,6 +2597,10 @@ loadScripts(document, 'script');</script>
 <dd>
 <div class="block">An instance of a module, from which exports can be retrieved.</div>
 </dd>
+<dt><a href="io/github/eutro/wasm2j/api/types/ExternType.Top.html#INSTANCE" class="member-name-link">INSTANCE</a> - Static variable in class io.github.eutro.wasm2j.api.types.<a href="io/github/eutro/wasm2j/api/types/ExternType.Top.html" title="class in io.github.eutro.wasm2j.api.types">ExternType.Top</a></dt>
+<dd>
+<div class="block">The singleton instance of the top type.</div>
+</dd>
 <dt><a href="io/github/eutro/wasm2j/core/conf/impl/BasicCallingConvention.html#INSTANCE" class="member-name-link">INSTANCE</a> - Static variable in class io.github.eutro.wasm2j.core.conf.impl.<a href="io/github/eutro/wasm2j/core/conf/impl/BasicCallingConvention.html" title="class in io.github.eutro.wasm2j.core.conf.impl">BasicCallingConvention</a></dt>
 <dd>
 <div class="block">A singleton instance of this calling convention.</div>
@@ -2326,6 +2720,38 @@ loadScripts(document, 'script');</script>
 </dd>
 <dt><a href="io/github/eutro/wasm2j/core/util/Instructions.html#%3Cinit%3E()" class="member-name-link">Instructions()</a> - Constructor for class io.github.eutro.wasm2j.core.util.<a href="io/github/eutro/wasm2j/core/util/Instructions.html" title="class in io.github.eutro.wasm2j.core.util">Instructions</a></dt>
 <dd>&nbsp;</dd>
+<dt><a href="io/github/eutro/wasm2j/api/bits/InterfaceBasedLinker.html" class="type-name-link" title="class in io.github.eutro.wasm2j.api.bits">InterfaceBasedLinker</a>&lt;<a href="io/github/eutro/wasm2j/api/bits/InterfaceBasedLinker.html" title="type parameter in InterfaceBasedLinker">T</a> extends <a href="io/github/eutro/wasm2j/api/events/EventSupplier.html" title="class in io.github.eutro.wasm2j.api.events">EventSupplier</a>&lt;? super <a href="io/github/eutro/wasm2j/api/events/RunModuleCompilationEvent.html" title="class in io.github.eutro.wasm2j.api.events">RunModuleCompilationEvent</a>&gt;&gt; - Class in <a href="io/github/eutro/wasm2j/api/bits/package-summary.html">io.github.eutro.wasm2j.api.bits</a></dt>
+<dd>
+<div class="block">A linker for WebAssembly modules that generates Java interfaces for every <a href="io/github/eutro/wasm2j/api/bits/InterfaceBasedLinker.html#register(java.lang.String,io.github.eutro.jwasm.tree.ModuleNode)"><code>registered</code></a>, or unregistered but imported, module.</div>
+</dd>
+<dt><a href="io/github/eutro/wasm2j/api/bits/InterfaceBasedLinker.html#%3Cinit%3E(io.github.eutro.wasm2j.api.support.NameSupplier)" class="member-name-link">InterfaceBasedLinker(NameSupplier)</a> - Constructor for class io.github.eutro.wasm2j.api.bits.<a href="io/github/eutro/wasm2j/api/bits/InterfaceBasedLinker.html" title="class in io.github.eutro.wasm2j.api.bits">InterfaceBasedLinker</a></dt>
+<dd>
+<div class="block">Construct an interface-based linker with the given supplier for names.</div>
+</dd>
+<dt><a href="io/github/eutro/wasm2j/api/types/ExternType.html#intersect(io.github.eutro.wasm2j.api.types.ExternType,io.github.eutro.wasm2j.api.types.ExternType)" class="member-name-link">intersect(ExternType, ExternType)</a> - Static method in interface io.github.eutro.wasm2j.api.types.<a href="io/github/eutro/wasm2j/api/types/ExternType.html" title="interface in io.github.eutro.wasm2j.api.types">ExternType</a></dt>
+<dd>
+<div class="block">Returns the <a href="io/github/eutro/wasm2j/api/types/ExternType.html#intersection(io.github.eutro.wasm2j.api.types.ExternType)"><code>ExternType.intersection(ExternType)</code></a> of the two types,
+ returning null (bottom) if either argument is null.</div>
+</dd>
+<dt><a href="io/github/eutro/wasm2j/api/types/ExternType.Func.html#intersection(io.github.eutro.wasm2j.api.types.ExternType)" class="member-name-link">intersection(ExternType)</a> - Method in class io.github.eutro.wasm2j.api.types.<a href="io/github/eutro/wasm2j/api/types/ExternType.Func.html" title="class in io.github.eutro.wasm2j.api.types">ExternType.Func</a></dt>
+<dd>&nbsp;</dd>
+<dt><a href="io/github/eutro/wasm2j/api/types/ExternType.Global.html#intersection(io.github.eutro.wasm2j.api.types.ExternType)" class="member-name-link">intersection(ExternType)</a> - Method in class io.github.eutro.wasm2j.api.types.<a href="io/github/eutro/wasm2j/api/types/ExternType.Global.html" title="class in io.github.eutro.wasm2j.api.types">ExternType.Global</a></dt>
+<dd>&nbsp;</dd>
+<dt><a href="io/github/eutro/wasm2j/api/types/ExternType.html#intersection(io.github.eutro.wasm2j.api.types.ExternType)" class="member-name-link">intersection(ExternType)</a> - Method in interface io.github.eutro.wasm2j.api.types.<a href="io/github/eutro/wasm2j/api/types/ExternType.html" title="interface in io.github.eutro.wasm2j.api.types">ExternType</a></dt>
+<dd>
+<div class="block">Returns the most general type which is the subtype of both this and the other,
+ or <code>null</code> (representing the bottom type) if no such actual type exists.</div>
+</dd>
+<dt><a href="io/github/eutro/wasm2j/api/types/ExternType.Mem.html#intersection(io.github.eutro.wasm2j.api.types.ExternType)" class="member-name-link">intersection(ExternType)</a> - Method in class io.github.eutro.wasm2j.api.types.<a href="io/github/eutro/wasm2j/api/types/ExternType.Mem.html" title="class in io.github.eutro.wasm2j.api.types">ExternType.Mem</a></dt>
+<dd>&nbsp;</dd>
+<dt><a href="io/github/eutro/wasm2j/api/types/ExternType.Table.html#intersection(io.github.eutro.wasm2j.api.types.ExternType)" class="member-name-link">intersection(ExternType)</a> - Method in class io.github.eutro.wasm2j.api.types.<a href="io/github/eutro/wasm2j/api/types/ExternType.Table.html" title="class in io.github.eutro.wasm2j.api.types">ExternType.Table</a></dt>
+<dd>&nbsp;</dd>
+<dt><a href="io/github/eutro/wasm2j/api/types/ExternType.Top.html#intersection(io.github.eutro.wasm2j.api.types.ExternType)" class="member-name-link">intersection(ExternType)</a> - Method in class io.github.eutro.wasm2j.api.types.<a href="io/github/eutro/wasm2j/api/types/ExternType.Top.html" title="class in io.github.eutro.wasm2j.api.types">ExternType.Top</a></dt>
+<dd>&nbsp;</dd>
+<dt><a href="io/github/eutro/wasm2j/api/types/ExternType.Limits.html#intersection(io.github.eutro.wasm2j.api.types.ExternType.Limits)" class="member-name-link">intersection(ExternType.Limits)</a> - Method in class io.github.eutro.wasm2j.api.types.<a href="io/github/eutro/wasm2j/api/types/ExternType.Limits.html" title="class in io.github.eutro.wasm2j.api.types">ExternType.Limits</a></dt>
+<dd>
+<div class="block">The intersection of these limits with another, or null if they are disjoint.</div>
+</dd>
 <dt><a href="io/github/eutro/wasm2j/core/ops/WasmOps.OperatorType.html#intOp" class="member-name-link">intOp</a> - Variable in class io.github.eutro.wasm2j.core.ops.<a href="io/github/eutro/wasm2j/core/ops/WasmOps.OperatorType.html" title="class in io.github.eutro.wasm2j.core.ops">WasmOps.OperatorType</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="io/github/eutro/wasm2j/core/intrinsics/Intrinsic.html" class="type-name-link" title="annotation interface in io.github.eutro.wasm2j.core.intrinsics">Intrinsic</a> - Annotation Interface in <a href="io/github/eutro/wasm2j/core/intrinsics/package-summary.html">io.github.eutro.wasm2j.core.intrinsics</a></dt>
@@ -2367,6 +2793,26 @@ loadScripts(document, 'script');</script>
 <dt><a href="io/github/eutro/wasm2j/core/ops/JavaOps.html#INVOKE" class="member-name-link">INVOKE</a> - Static variable in class io.github.eutro.wasm2j.core.ops.<a href="io/github/eutro/wasm2j/core/ops/JavaOps.html" title="class in io.github.eutro.wasm2j.core.ops">JavaOps</a></dt>
 <dd>
 <div class="block">Effect: invokes the given method.</div>
+</dd>
+<dt><a href="io/github/eutro/wasm2j/api/package-summary.html">io.github.eutro.wasm2j.api</a> - package io.github.eutro.wasm2j.api</dt>
+<dd>
+<div class="block">A configurable API over the less stable and lower-level core Wasm2j API.</div>
+</dd>
+<dt><a href="io/github/eutro/wasm2j/api/bits/package-summary.html">io.github.eutro.wasm2j.api.bits</a> - package io.github.eutro.wasm2j.api.bits</dt>
+<dd>
+<div class="block">Bits for extending and configuring the compiler.</div>
+</dd>
+<dt><a href="io/github/eutro/wasm2j/api/events/package-summary.html">io.github.eutro.wasm2j.api.events</a> - package io.github.eutro.wasm2j.api.events</dt>
+<dd>
+<div class="block">Events that occur during a compilation.</div>
+</dd>
+<dt><a href="io/github/eutro/wasm2j/api/support/package-summary.html">io.github.eutro.wasm2j.api.support</a> - package io.github.eutro.wasm2j.api.support</dt>
+<dd>
+<div class="block">Miscellaneous utilities.</div>
+</dd>
+<dt><a href="io/github/eutro/wasm2j/api/types/package-summary.html">io.github.eutro.wasm2j.api.types</a> - package io.github.eutro.wasm2j.api.types</dt>
+<dd>
+<div class="block">WebAssembly value and extern types.</div>
 </dd>
 <dt><a href="io/github/eutro/wasm2j/core/conf/impl/package-summary.html">io.github.eutro.wasm2j.core.conf.impl</a> - package io.github.eutro.wasm2j.core.conf.impl</dt>
 <dd>
@@ -2485,6 +2931,12 @@ loadScripts(document, 'script');</script>
 <dd>
 <div class="block">Attached to an <a href="io/github/eutro/wasm2j/core/ssa/Insn.html" title="class in io.github.eutro.wasm2j.core.ssa"><code>Insn</code></a>, <a href="io/github/eutro/wasm2j/core/ops/Op.html" title="class in io.github.eutro.wasm2j.core.ops"><code>Op</code></a> or <a href="io/github/eutro/wasm2j/core/ops/OpKey.html" title="class in io.github.eutro.wasm2j.core.ops"><code>OpKey</code></a>.</div>
 </dd>
+<dt><a href="io/github/eutro/wasm2j/api/events/CancellableEvent.html#isCancelled()" class="member-name-link">isCancelled()</a> - Method in interface io.github.eutro.wasm2j.api.events.<a href="io/github/eutro/wasm2j/api/events/CancellableEvent.html" title="interface in io.github.eutro.wasm2j.api.events">CancellableEvent</a></dt>
+<dd>
+<div class="block">Get whether the event has been cancelled.</div>
+</dd>
+<dt><a href="io/github/eutro/wasm2j/api/events/EmitClassEvent.html#isCancelled()" class="member-name-link">isCancelled()</a> - Method in class io.github.eutro.wasm2j.api.events.<a href="io/github/eutro/wasm2j/api/events/EmitClassEvent.html" title="class in io.github.eutro.wasm2j.api.events">EmitClassEvent</a></dt>
+<dd>&nbsp;</dd>
 <dt><a href="io/github/eutro/wasm2j/core/passes/InPlaceIRPass.html#isInPlace()" class="member-name-link">isInPlace()</a> - Method in interface io.github.eutro.wasm2j.core.passes.<a href="io/github/eutro/wasm2j/core/passes/InPlaceIRPass.html" title="interface in io.github.eutro.wasm2j.core.passes">InPlaceIRPass</a></dt>
 <dd>
 <div class="block">Get whether this pass is in-place.</div>
@@ -2498,6 +2950,10 @@ loadScripts(document, 'script');</script>
 <dt><a href="io/github/eutro/wasm2j/core/ssa/JClass.JavaMethod.html#isInterface()" class="member-name-link">isInterface()</a> - Method in class io.github.eutro.wasm2j.core.ssa.<a href="io/github/eutro/wasm2j/core/ssa/JClass.JavaMethod.html" title="class in io.github.eutro.wasm2j.core.ssa">JClass.JavaMethod</a></dt>
 <dd>
 <div class="block">Get whether the owner of this method is an interface.</div>
+</dd>
+<dt><a href="io/github/eutro/wasm2j/api/types/ExternType.Global.html#isMut" class="member-name-link">isMut</a> - Variable in class io.github.eutro.wasm2j.api.types.<a href="io/github/eutro/wasm2j/api/types/ExternType.Global.html" title="class in io.github.eutro.wasm2j.api.types">ExternType.Global</a></dt>
+<dd>
+<div class="block">The mutability of the global, whether it can be assigned to.</div>
 </dd>
 <dt><a href="io/github/eutro/wasm2j/core/ssa/JClass.JavaMethod.html#isSpecial()" class="member-name-link">isSpecial()</a> - Method in class io.github.eutro.wasm2j.core.ssa.<a href="io/github/eutro/wasm2j/core/ssa/JClass.JavaMethod.html" title="class in io.github.eutro.wasm2j.core.ssa">JClass.JavaMethod</a></dt>
 <dd>
@@ -2543,6 +2999,14 @@ loadScripts(document, 'script');</script>
 <dd>
 <div class="block">Construct a new field with the given access modifiers.</div>
 </dd>
+<dt><a href="io/github/eutro/wasm2j/api/support/NameMangler.html#javaIdent(io.github.eutro.wasm2j.api.support.NameMangler.IllegalSymbolPolicy)" class="member-name-link">javaIdent(NameMangler.IllegalSymbolPolicy)</a> - Static method in interface io.github.eutro.wasm2j.api.support.<a href="io/github/eutro/wasm2j/api/support/NameMangler.html" title="interface in io.github.eutro.wasm2j.api.support">NameMangler</a></dt>
+<dd>
+<div class="block">A name mangler which outputs valid Java identifiers.</div>
+</dd>
+<dt><a href="io/github/eutro/wasm2j/api/support/NameMangler.JavaIdent.html#%3Cinit%3E(io.github.eutro.wasm2j.api.support.NameMangler.IllegalSymbolPolicy)" class="member-name-link">JavaIdent(NameMangler.IllegalSymbolPolicy)</a> - Constructor for class io.github.eutro.wasm2j.api.support.<a href="io/github/eutro/wasm2j/api/support/NameMangler.JavaIdent.html" title="class in io.github.eutro.wasm2j.api.support">NameMangler.JavaIdent</a></dt>
+<dd>
+<div class="block">Construct a Java identifier mangler.</div>
+</dd>
 <dt><a href="io/github/eutro/wasm2j/core/intrinsics/JavaIntrinsics.html" class="type-name-link" title="class in io.github.eutro.wasm2j.core.intrinsics">JavaIntrinsics</a> - Class in <a href="io/github/eutro/wasm2j/core/intrinsics/package-summary.html">io.github.eutro.wasm2j.core.intrinsics</a></dt>
 <dd>
 <div class="block">Contains the intrinsics implementing most WebAssembly primitive operations.</div>
@@ -2562,6 +3026,14 @@ loadScripts(document, 'script');</script>
 <dt><a href="io/github/eutro/wasm2j/core/ops/JavaOps.JumpType.html" class="type-name-link" title="enum class in io.github.eutro.wasm2j.core.ops">JavaOps.JumpType</a> - Enum Class in <a href="io/github/eutro/wasm2j/core/ops/package-summary.html">io.github.eutro.wasm2j.core.ops</a></dt>
 <dd>
 <div class="block">A conditional jump's type in Java bytecode.</div>
+</dd>
+<dt><a href="io/github/eutro/wasm2j/api/events/JavaPreemitEvent.html" class="type-name-link" title="class in io.github.eutro.wasm2j.api.events">JavaPreemitEvent</a> - Class in <a href="io/github/eutro/wasm2j/api/events/package-summary.html">io.github.eutro.wasm2j.api.events</a></dt>
+<dd>
+<div class="block">Fired just before the Java IR is converted to Java bytecode.</div>
+</dd>
+<dt><a href="io/github/eutro/wasm2j/api/events/JavaPreemitEvent.html#%3Cinit%3E(io.github.eutro.wasm2j.core.ssa.JClass)" class="member-name-link">JavaPreemitEvent(JClass)</a> - Constructor for class io.github.eutro.wasm2j.api.events.<a href="io/github/eutro/wasm2j/api/events/JavaPreemitEvent.html" title="class in io.github.eutro.wasm2j.api.events">JavaPreemitEvent</a></dt>
+<dd>
+<div class="block">Construct a new Java pre-emit event with the given IR.</div>
 </dd>
 <dt><a href="io/github/eutro/wasm2j/core/passes/convert/JavaToJir.html" class="type-name-link" title="class in io.github.eutro.wasm2j.core.passes.convert">JavaToJir</a> - Class in <a href="io/github/eutro/wasm2j/core/passes/convert/package-summary.html">io.github.eutro.wasm2j.core.passes.convert</a></dt>
 <dd>
@@ -2597,6 +3069,23 @@ loadScripts(document, 'script');</script>
 <dd>
 <div class="block">A method in a <a href="io/github/eutro/wasm2j/core/ssa/JClass.html" title="class in io.github.eutro.wasm2j.core.ssa"><code>Java class</code></a>.</div>
 </dd>
+<dt><a href="io/github/eutro/wasm2j/api/events/JavaPreemitEvent.html#jir" class="member-name-link">jir</a> - Variable in class io.github.eutro.wasm2j.api.events.<a href="io/github/eutro/wasm2j/api/events/JavaPreemitEvent.html" title="class in io.github.eutro.wasm2j.api.events">JavaPreemitEvent</a></dt>
+<dd>
+<div class="block">The Java IR being compiled.</div>
+</dd>
+<dt><a href="io/github/eutro/wasm2j/api/events/JirPassesEvent.html#jir" class="member-name-link">jir</a> - Variable in class io.github.eutro.wasm2j.api.events.<a href="io/github/eutro/wasm2j/api/events/JirPassesEvent.html" title="class in io.github.eutro.wasm2j.api.events">JirPassesEvent</a></dt>
+<dd>
+<div class="block">The Java IR.</div>
+</dd>
+<dt><a href="io/github/eutro/wasm2j/api/events/JirPassesEvent.html" class="type-name-link" title="class in io.github.eutro.wasm2j.api.events">JirPassesEvent</a> - Class in <a href="io/github/eutro/wasm2j/api/events/package-summary.html">io.github.eutro.wasm2j.api.events</a></dt>
+<dd>
+<div class="block">Fired immediately after the conversion from WebAssembly IR to
+ Java IR.</div>
+</dd>
+<dt><a href="io/github/eutro/wasm2j/api/events/JirPassesEvent.html#%3Cinit%3E(io.github.eutro.wasm2j.core.ssa.JClass)" class="member-name-link">JirPassesEvent(JClass)</a> - Constructor for class io.github.eutro.wasm2j.api.events.<a href="io/github/eutro/wasm2j/api/events/JirPassesEvent.html" title="class in io.github.eutro.wasm2j.api.events">JirPassesEvent</a></dt>
+<dd>
+<div class="block">Construct a new Java IR passes event with the given IR.</div>
+</dd>
 <dt><a href="io/github/eutro/wasm2j/core/passes/convert/JirToJava.html" class="type-name-link" title="class in io.github.eutro.wasm2j.core.passes.convert">JirToJava</a> - Class in <a href="io/github/eutro/wasm2j/core/passes/convert/package-summary.html">io.github.eutro.wasm2j.core.passes.convert</a></dt>
 <dd>
 <div class="block">A pass which converts Java IR to Java bytecode.</div>
@@ -2614,6 +3103,15 @@ loadScripts(document, 'script');</script>
 <dt><a href="io/github/eutro/wasm2j/core/ssa/Insn.html#jumpsTo(java.util.List)" class="member-name-link">jumpsTo(List&lt;BasicBlock&gt;)</a> - Method in class io.github.eutro.wasm2j.core.ssa.<a href="io/github/eutro/wasm2j/core/ssa/Insn.html" title="class in io.github.eutro.wasm2j.core.ssa">Insn</a></dt>
 <dd>
 <div class="block">Create a control instruction that jumps to the given targets.</div>
+</dd>
+<dt><a href="io/github/eutro/wasm2j/api/support/NameMangler.html#JVM_BANNED_CHARS" class="member-name-link">JVM_BANNED_CHARS</a> - Static variable in interface io.github.eutro.wasm2j.api.support.<a href="io/github/eutro/wasm2j/api/support/NameMangler.html" title="interface in io.github.eutro.wasm2j.api.support">NameMangler</a></dt>
+<dd>
+<div class="block">The characters banned in a
+ <a href="https://docs.oracle.com/javase/specs/jvms/se8/html/jvms-4.html#jvms-4.2.2">JVM unqualified name</a>.</div>
+</dd>
+<dt><a href="io/github/eutro/wasm2j/api/support/NameMangler.html#jvmUnqualified(io.github.eutro.wasm2j.api.support.NameMangler.IllegalSymbolPolicy)" class="member-name-link">jvmUnqualified(NameMangler.IllegalSymbolPolicy)</a> - Static method in interface io.github.eutro.wasm2j.api.support.<a href="io/github/eutro/wasm2j/api/support/NameMangler.html" title="interface in io.github.eutro.wasm2j.api.support">NameMangler</a></dt>
+<dd>
+<div class="block">A name mangler which outputs valid JVM unqualified names.</div>
 </dd>
 </dl>
 <h2 class="title" id="I:K">K</h2>
@@ -2657,6 +3155,11 @@ loadScripts(document, 'script');</script>
 <dd>
 <div class="block">Create a loop.</div>
 </dd>
+<dt><a href="io/github/eutro/wasm2j/api/WasmCompiler.html#lift()" class="member-name-link">lift()</a> - Method in class io.github.eutro.wasm2j.api.<a href="io/github/eutro/wasm2j/api/WasmCompiler.html" title="class in io.github.eutro.wasm2j.api">WasmCompiler</a></dt>
+<dd>
+<div class="block">Get an event dispatcher that allows for listening to the events
+ for every compilation that goes through this compiler.</div>
+</dd>
 <dt><a href="io/github/eutro/wasm2j/core/passes/misc/ForPass.Insns.html#lift()" class="member-name-link">lift()</a> - Method in class io.github.eutro.wasm2j.core.passes.misc.<a href="io/github/eutro/wasm2j/core/passes/misc/ForPass.Insns.html" title="class in io.github.eutro.wasm2j.core.passes.misc">ForPass.Insns</a></dt>
 <dd>
 <div class="block">Lift this pass to operate on a full function.</div>
@@ -2669,11 +3172,33 @@ loadScripts(document, 'script');</script>
 <dd>
 <div class="block">Lift an instruction pass to operate on a full basic block.</div>
 </dd>
+<dt><a href="io/github/eutro/wasm2j/api/types/ExternType.Mem.html#limits" class="member-name-link">limits</a> - Variable in class io.github.eutro.wasm2j.api.types.<a href="io/github/eutro/wasm2j/api/types/ExternType.Mem.html" title="class in io.github.eutro.wasm2j.api.types">ExternType.Mem</a></dt>
+<dd>
+<div class="block">The limits of the memory, in pages.</div>
+</dd>
+<dt><a href="io/github/eutro/wasm2j/api/types/ExternType.Table.html#limits" class="member-name-link">limits</a> - Variable in class io.github.eutro.wasm2j.api.types.<a href="io/github/eutro/wasm2j/api/types/ExternType.Table.html" title="class in io.github.eutro.wasm2j.api.types">ExternType.Table</a></dt>
+<dd>
+<div class="block">The limits of the table.</div>
+</dd>
+<dt><a href="io/github/eutro/wasm2j/api/types/ExternType.Limits.html#%3Cinit%3E(int,java.lang.Integer)" class="member-name-link">Limits(int, Integer)</a> - Constructor for class io.github.eutro.wasm2j.api.types.<a href="io/github/eutro/wasm2j/api/types/ExternType.Limits.html" title="class in io.github.eutro.wasm2j.api.types">ExternType.Limits</a></dt>
+<dd>
+<div class="block">Construct a set of limits with the given minimum and maximum.</div>
+</dd>
+<dt><a href="io/github/eutro/wasm2j/api/types/ExternType.Limits.html#%3Cinit%3E(io.github.eutro.jwasm.Limits)" class="member-name-link">Limits(Limits)</a> - Constructor for class io.github.eutro.wasm2j.api.types.<a href="io/github/eutro/wasm2j/api/types/ExternType.Limits.html" title="class in io.github.eutro.wasm2j.api.types">ExternType.Limits</a></dt>
+<dd>
+<div class="block">Construct a set of limits from JWasm limits, representing the same thing.</div>
+</dd>
 <dt><a href="io/github/eutro/wasm2j/core/passes/form/LinearScan.html" class="type-name-link" title="class in io.github.eutro.wasm2j.core.passes.form">LinearScan</a> - Class in <a href="io/github/eutro/wasm2j/core/passes/form/package-summary.html">io.github.eutro.wasm2j.core.passes.form</a></dt>
 <dd>
 <div class="block">A pass which allocates registers using a linear scan algorithm.</div>
 </dd>
 <dt><a href="io/github/eutro/wasm2j/core/passes/form/LinearScan.html#%3Cinit%3E()" class="member-name-link">LinearScan()</a> - Constructor for class io.github.eutro.wasm2j.core.passes.form.<a href="io/github/eutro/wasm2j/core/passes/form/LinearScan.html" title="class in io.github.eutro.wasm2j.core.passes.form">LinearScan</a></dt>
+<dd>&nbsp;</dd>
+<dt><a href="io/github/eutro/wasm2j/api/events/EventDispatcher.html#listen(java.lang.Class,java.util.function.Consumer)" class="member-name-link">listen(Class&lt;T&gt;, Consumer&lt;T&gt;)</a> - Method in interface io.github.eutro.wasm2j.api.events.<a href="io/github/eutro/wasm2j/api/events/EventDispatcher.html" title="interface in io.github.eutro.wasm2j.api.events">EventDispatcher</a></dt>
+<dd>
+<div class="block">Listen to the given event type.</div>
+</dd>
+<dt><a href="io/github/eutro/wasm2j/api/events/EventSupplier.html#listen(java.lang.Class,java.util.function.Consumer)" class="member-name-link">listen(Class&lt;T&gt;, Consumer&lt;T&gt;)</a> - Method in class io.github.eutro.wasm2j.api.events.<a href="io/github/eutro/wasm2j/api/events/EventSupplier.html" title="class in io.github.eutro.wasm2j.api.events">EventSupplier</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="io/github/eutro/wasm2j/core/ext/CommonExts.html#LIVE_DATA" class="member-name-link">LIVE_DATA</a> - Static variable in class io.github.eutro.wasm2j.core.ext.<a href="io/github/eutro/wasm2j/core/ext/CommonExts.html" title="class in io.github.eutro.wasm2j.core.ext">CommonExts</a></dt>
 <dd>
@@ -2709,6 +3234,10 @@ loadScripts(document, 'script');</script>
 </dd>
 <dt><a href="io/github/eutro/wasm2j/core/passes/convert/WasmToWir.ConvertState.html#localC" class="member-name-link">localC</a> - Variable in class io.github.eutro.wasm2j.core.passes.convert.<a href="io/github/eutro/wasm2j/core/passes/convert/WasmToWir.ConvertState.html" title="class in io.github.eutro.wasm2j.core.passes.convert">WasmToWir.ConvertState</a></dt>
 <dd>&nbsp;</dd>
+<dt><a href="io/github/eutro/wasm2j/api/bits/NameSectionParser.NameSection.html#localNames" class="member-name-link">localNames</a> - Variable in class io.github.eutro.wasm2j.api.bits.<a href="io/github/eutro/wasm2j/api/bits/NameSectionParser.NameSection.html" title="class in io.github.eutro.wasm2j.api.bits">NameSectionParser.NameSection</a></dt>
+<dd>
+<div class="block">The local indirect name map.</div>
+</dd>
 <dt><a href="io/github/eutro/wasm2j/core/passes/convert/WasmToWir.ConvertState.html#locals" class="member-name-link">locals</a> - Variable in class io.github.eutro.wasm2j.core.passes.convert.<a href="io/github/eutro/wasm2j/core/passes/convert/WasmToWir.ConvertState.html" title="class in io.github.eutro.wasm2j.core.passes.convert">WasmToWir.ConvertState</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="io/github/eutro/wasm2j/core/passes/convert/WasmToWir.ConvertState.html#localTypes" class="member-name-link">localTypes</a> - Variable in class io.github.eutro.wasm2j.core.passes.convert.<a href="io/github/eutro/wasm2j/core/passes/convert/WasmToWir.ConvertState.html" title="class in io.github.eutro.wasm2j.core.passes.convert">WasmToWir.ConvertState</a></dt>
@@ -2721,6 +3250,22 @@ loadScripts(document, 'script');</script>
 <dt><a href="io/github/eutro/wasm2j/core/ops/JavaOps.html#LOOKUPSWITCH" class="member-name-link">LOOKUPSWITCH</a> - Static variable in class io.github.eutro.wasm2j.core.ops.<a href="io/github/eutro/wasm2j/core/ops/JavaOps.html" title="class in io.github.eutro.wasm2j.core.ops">JavaOps</a></dt>
 <dd>
 <div class="block">Control: an <a href="https://asm.ow2.io/javadoc/org/objectweb/asm/Opcodes.html#LOOKUPSWITCH" title="class or interface in org.objectweb.asm" class="external-link"><code>Opcodes.LOOKUPSWITCH</code></a> instruction.</div>
+</dd>
+<dt><a href="io/github/eutro/wasm2j/api/support/CaseStyle.html#LOWER_CAMEL" class="member-name-link">LOWER_CAMEL</a> - Static variable in interface io.github.eutro.wasm2j.api.support.<a href="io/github/eutro/wasm2j/api/support/CaseStyle.html" title="interface in io.github.eutro.wasm2j.api.support">CaseStyle</a></dt>
+<dd>
+<div class="block">lowerCamelCase</div>
+</dd>
+<dt><a href="io/github/eutro/wasm2j/api/support/CaseStyle.Capitalisation.html#LOWER_CASE" class="member-name-link">LOWER_CASE</a> - Enum constant in enum class io.github.eutro.wasm2j.api.support.<a href="io/github/eutro/wasm2j/api/support/CaseStyle.Capitalisation.html" title="enum class in io.github.eutro.wasm2j.api.support">CaseStyle.Capitalisation</a></dt>
+<dd>
+<div class="block">All letters lower case.</div>
+</dd>
+<dt><a href="io/github/eutro/wasm2j/api/support/CaseStyle.html#LOWER_KEBAB" class="member-name-link">LOWER_KEBAB</a> - Static variable in interface io.github.eutro.wasm2j.api.support.<a href="io/github/eutro/wasm2j/api/support/CaseStyle.html" title="interface in io.github.eutro.wasm2j.api.support">CaseStyle</a></dt>
+<dd>
+<div class="block">lower-kebab-case</div>
+</dd>
+<dt><a href="io/github/eutro/wasm2j/api/support/CaseStyle.html#LOWER_SNAKE" class="member-name-link">LOWER_SNAKE</a> - Static variable in interface io.github.eutro.wasm2j.api.support.<a href="io/github/eutro/wasm2j/api/support/CaseStyle.html" title="interface in io.github.eutro.wasm2j.api.support">CaseStyle</a></dt>
+<dd>
+<div class="block">lower_snake_case</div>
 </dd>
 <dt><a href="io/github/eutro/wasm2j/core/passes/form/LowerIntrinsics.html" class="type-name-link" title="class in io.github.eutro.wasm2j.core.passes.form">LowerIntrinsics</a> - Class in <a href="io/github/eutro/wasm2j/core/passes/form/package-summary.html">io.github.eutro.wasm2j.core.passes.form</a></dt>
 <dd>
@@ -2740,6 +3285,32 @@ loadScripts(document, 'script');</script>
 </dl>
 <h2 class="title" id="I:M">M</h2>
 <dl class="index">
+<dt><a href="io/github/eutro/wasm2j/api/Cli.html#main(java.lang.String%5B%5D)" class="member-name-link">main(String[])</a> - Static method in class io.github.eutro.wasm2j.api.<a href="io/github/eutro/wasm2j/api/Cli.html" title="class in io.github.eutro.wasm2j.api">Cli</a></dt>
+<dd>
+<div class="block">The main entry point.</div>
+</dd>
+<dt><a href="io/github/eutro/wasm2j/api/support/NameMangler.BanChars.html#mangle(java.lang.String)" class="member-name-link">mangle(String)</a> - Method in class io.github.eutro.wasm2j.api.support.<a href="io/github/eutro/wasm2j/api/support/NameMangler.BanChars.html" title="class in io.github.eutro.wasm2j.api.support">NameMangler.BanChars</a></dt>
+<dd>&nbsp;</dd>
+<dt><a href="io/github/eutro/wasm2j/api/support/NameMangler.JavaIdent.html#mangle(java.lang.String)" class="member-name-link">mangle(String)</a> - Method in class io.github.eutro.wasm2j.api.support.<a href="io/github/eutro/wasm2j/api/support/NameMangler.JavaIdent.html" title="class in io.github.eutro.wasm2j.api.support">NameMangler.JavaIdent</a></dt>
+<dd>&nbsp;</dd>
+<dt><a href="io/github/eutro/wasm2j/api/support/NameMangler.html#mangle(java.lang.String)" class="member-name-link">mangle(String)</a> - Method in interface io.github.eutro.wasm2j.api.support.<a href="io/github/eutro/wasm2j/api/support/NameMangler.html" title="interface in io.github.eutro.wasm2j.api.support">NameMangler</a></dt>
+<dd>
+<div class="block">Mangle a string, so it becomes a valid name according to the rules of this mangler.</div>
+</dd>
+<dt><a href="io/github/eutro/wasm2j/api/support/NameMangler.IllegalSymbolPolicy.html#MANGLE" class="member-name-link">MANGLE</a> - Enum constant in enum class io.github.eutro.wasm2j.api.support.<a href="io/github/eutro/wasm2j/api/support/NameMangler.IllegalSymbolPolicy.html" title="enum class in io.github.eutro.wasm2j.api.support">NameMangler.IllegalSymbolPolicy</a></dt>
+<dd>
+<div class="block">Illegal characters should be mangled to their "_O%o_" formatting.</div>
+</dd>
+<dt><a href="io/github/eutro/wasm2j/api/support/NameMangler.IllegalSymbolPolicy.html#MANGLE_BIJECTIVE" class="member-name-link">MANGLE_BIJECTIVE</a> - Enum constant in enum class io.github.eutro.wasm2j.api.support.<a href="io/github/eutro/wasm2j/api/support/NameMangler.IllegalSymbolPolicy.html" title="enum class in io.github.eutro.wasm2j.api.support">NameMangler.IllegalSymbolPolicy</a></dt>
+<dd>
+<div class="block">Illegal characters should be mangled, with a human-readable mangling where
+ possible, and no two distinct strings should mangle to the same thing.</div>
+</dd>
+<dt><a href="io/github/eutro/wasm2j/api/support/NameMangler.IllegalSymbolPolicy.html#MANGLE_SENSIBLE" class="member-name-link">MANGLE_SENSIBLE</a> - Enum constant in enum class io.github.eutro.wasm2j.api.support.<a href="io/github/eutro/wasm2j/api/support/NameMangler.IllegalSymbolPolicy.html" title="enum class in io.github.eutro.wasm2j.api.support">NameMangler.IllegalSymbolPolicy</a></dt>
+<dd>
+<div class="block">Illegal characters should be mangled, but in a human-readable way where
+ possible.</div>
+</dd>
 <dt><a href="io/github/eutro/wasm2j/core/util/Lazy.html#mapInPlace(java.util.function.UnaryOperator)" class="member-name-link">mapInPlace(UnaryOperator&lt;T&gt;)</a> - Method in class io.github.eutro.wasm2j.core.util.<a href="io/github/eutro/wasm2j/core/util/Lazy.html" title="class in io.github.eutro.wasm2j.core.util">Lazy</a></dt>
 <dd>
 <div class="block">Apply the function to the value when it is next retrieved.</div>
@@ -2751,6 +3322,10 @@ loadScripts(document, 'script');</script>
 <dt><a href="io/github/eutro/wasm2j/embed/ExternVal.html#matchesType(io.github.eutro.wasm2j.api.types.ExternType,io.github.eutro.wasm2j.api.types.ExternType.Kind)" class="member-name-link">matchesType(ExternType, ExternType.Kind)</a> - Method in interface io.github.eutro.wasm2j.embed.<a href="io/github/eutro/wasm2j/embed/ExternVal.html" title="interface in io.github.eutro.wasm2j.embed">ExternVal</a></dt>
 <dd>
 <div class="block">Check whether this extern matches the given expected type.</div>
+</dd>
+<dt><a href="io/github/eutro/wasm2j/api/types/ExternType.Limits.html#max" class="member-name-link">max</a> - Variable in class io.github.eutro.wasm2j.api.types.<a href="io/github/eutro/wasm2j/api/types/ExternType.Limits.html" title="class in io.github.eutro.wasm2j.api.types">ExternType.Limits</a></dt>
+<dd>
+<div class="block">The maximum value, or null if unbounded.</div>
 </dd>
 <dt><a href="io/github/eutro/wasm2j/embed/Table.AbstractArrayTable.html#max" class="member-name-link">max</a> - Variable in class io.github.eutro.wasm2j.embed.<a href="io/github/eutro/wasm2j/embed/Table.AbstractArrayTable.html" title="class in io.github.eutro.wasm2j.embed">Table.AbstractArrayTable</a></dt>
 <dd>
@@ -2767,6 +3342,14 @@ loadScripts(document, 'script');</script>
 <dt><a href="io/github/eutro/wasm2j/core/conf/impl/BasicCallingConvention.html#maybeBoxed(io.github.eutro.wasm2j.core.ssa.IRBuilder,io.github.eutro.wasm2j.core.ssa.Var,byte,org.objectweb.asm.Type)" class="member-name-link">maybeBoxed(IRBuilder, Var, byte, Type)</a> - Static method in class io.github.eutro.wasm2j.core.conf.impl.<a href="io/github/eutro/wasm2j/core/conf/impl/BasicCallingConvention.html" title="class in io.github.eutro.wasm2j.core.conf.impl">BasicCallingConvention</a></dt>
 <dd>
 <div class="block">Convert a WebAssembly value into a Java reference.</div>
+</dd>
+<dt><a href="io/github/eutro/wasm2j/api/types/ExternType.Mem.html#%3Cinit%3E(io.github.eutro.wasm2j.api.types.ExternType.Limits)" class="member-name-link">Mem(ExternType.Limits)</a> - Constructor for class io.github.eutro.wasm2j.api.types.<a href="io/github/eutro/wasm2j/api/types/ExternType.Mem.html" title="class in io.github.eutro.wasm2j.api.types">ExternType.Mem</a></dt>
+<dd>
+<div class="block">Construct a memory type with the given limits.</div>
+</dd>
+<dt><a href="io/github/eutro/wasm2j/api/types/ExternType.Kind.html#MEM" class="member-name-link">MEM</a> - Enum constant in enum class io.github.eutro.wasm2j.api.types.<a href="io/github/eutro/wasm2j/api/types/ExternType.Kind.html" title="enum class in io.github.eutro.wasm2j.api.types">ExternType.Kind</a></dt>
+<dd>
+<div class="block">A memory.</div>
 </dd>
 <dt><a href="io/github/eutro/wasm2j/core/ops/WasmOps.html#MEM_COPY" class="member-name-link">MEM_COPY</a> - Static variable in class io.github.eutro.wasm2j.core.ops.<a href="io/github/eutro/wasm2j/core/ops/WasmOps.html" title="class in io.github.eutro.wasm2j.core.ops">WasmOps</a></dt>
 <dd>&nbsp;</dd>
@@ -2902,6 +3485,10 @@ loadScripts(document, 'script');</script>
 <dd>
 <div class="block">The list of methods in the class.</div>
 </dd>
+<dt><a href="io/github/eutro/wasm2j/api/types/ExternType.Limits.html#min" class="member-name-link">min</a> - Variable in class io.github.eutro.wasm2j.api.types.<a href="io/github/eutro/wasm2j/api/types/ExternType.Limits.html" title="class in io.github.eutro.wasm2j.api.types">ExternType.Limits</a></dt>
+<dd>
+<div class="block">The minimum value.</div>
+</dd>
 <dt><a href="io/github/eutro/wasm2j/embed/Table.AbstractArrayTable.html#min" class="member-name-link">min</a> - Variable in class io.github.eutro.wasm2j.embed.<a href="io/github/eutro/wasm2j/embed/Table.AbstractArrayTable.html" title="class in io.github.eutro.wasm2j.embed">Table.AbstractArrayTable</a></dt>
 <dd>
 <div class="block">The minimum number of elements in the table.</div>
@@ -2929,6 +3516,15 @@ loadScripts(document, 'script');</script>
 <dd>&nbsp;</dd>
 <dt><a href="io/github/eutro/wasm2j/core/conf/itf/TableConvention.Delegating.html#modifyConstructor(io.github.eutro.wasm2j.core.ssa.IRBuilder,io.github.eutro.wasm2j.core.ssa.JClass.JavaMethod,io.github.eutro.wasm2j.core.ssa.Module,io.github.eutro.wasm2j.core.ssa.JClass)" class="member-name-link">modifyConstructor(IRBuilder, JClass.JavaMethod, Module, JClass)</a> - Method in class io.github.eutro.wasm2j.core.conf.itf.<a href="io/github/eutro/wasm2j/core/conf/itf/TableConvention.Delegating.html" title="class in io.github.eutro.wasm2j.core.conf.itf">TableConvention.Delegating</a></dt>
 <dd>&nbsp;</dd>
+<dt><a href="io/github/eutro/wasm2j/api/events/ModifyConventionsEvent.html" class="type-name-link" title="class in io.github.eutro.wasm2j.api.events">ModifyConventionsEvent</a> - Class in <a href="io/github/eutro/wasm2j/api/events/package-summary.html">io.github.eutro.wasm2j.api.events</a></dt>
+<dd>
+<div class="block">An event fired when constructing the <a href="io/github/eutro/wasm2j/core/conf/itf/WirJavaConventionFactory.html" title="interface in io.github.eutro.wasm2j.core.conf.itf"><code>Java conventions</code></a> of a
+ module compilation.</div>
+</dd>
+<dt><a href="io/github/eutro/wasm2j/api/events/ModifyConventionsEvent.html#%3Cinit%3E(io.github.eutro.wasm2j.core.conf.itf.WirJavaConventionFactory.Builder)" class="member-name-link">ModifyConventionsEvent(WirJavaConventionFactory.Builder)</a> - Constructor for class io.github.eutro.wasm2j.api.events.<a href="io/github/eutro/wasm2j/api/events/ModifyConventionsEvent.html" title="class in io.github.eutro.wasm2j.api.events">ModifyConventionsEvent</a></dt>
+<dd>
+<div class="block">Construct a new modify-conventions event with the given convention builder.</div>
+</dd>
 <dt><a href="io/github/eutro/wasm2j/embed/Import.html#module" class="member-name-link">module</a> - Variable in class io.github.eutro.wasm2j.embed.<a href="io/github/eutro/wasm2j/embed/Import.html" title="class in io.github.eutro.wasm2j.embed">Import</a></dt>
 <dd>
 <div class="block">The name of the module to import from.</div>
@@ -2945,6 +3541,14 @@ loadScripts(document, 'script');</script>
 <dd>&nbsp;</dd>
 <dt><a href="io/github/eutro/wasm2j/core/ext/WasmExts.html#MODULE" class="member-name-link">MODULE</a> - Static variable in class io.github.eutro.wasm2j.core.ext.<a href="io/github/eutro/wasm2j/core/ext/WasmExts.html" title="class in io.github.eutro.wasm2j.core.ext">WasmExts</a></dt>
 <dd>&nbsp;</dd>
+<dt><a href="io/github/eutro/wasm2j/api/ModuleCompilation.html" class="type-name-link" title="class in io.github.eutro.wasm2j.api">ModuleCompilation</a> - Class in <a href="io/github/eutro/wasm2j/api/package-summary.html">io.github.eutro.wasm2j.api</a></dt>
+<dd>
+<div class="block">Represents the compilation of a single (already parsed and validated) WebAssembly module.</div>
+</dd>
+<dt><a href="io/github/eutro/wasm2j/api/events/ModuleCompileEvent.html" class="type-name-link" title="interface in io.github.eutro.wasm2j.api.events">ModuleCompileEvent</a> - Interface in <a href="io/github/eutro/wasm2j/api/events/package-summary.html">io.github.eutro.wasm2j.api.events</a></dt>
+<dd>
+<div class="block">An event fired during the compilation of a single module.</div>
+</dd>
 <dt><a href="io/github/eutro/wasm2j/embed/WebAssembly.html#moduleDecode(byte%5B%5D)" class="member-name-link">moduleDecode(byte[])</a> - Method in class io.github.eutro.wasm2j.embed.<a href="io/github/eutro/wasm2j/embed/WebAssembly.html" title="class in io.github.eutro.wasm2j.embed">WebAssembly</a></dt>
 <dd>
 <div class="block">Decode a binary module from a byte array.</div>
@@ -2964,6 +3568,10 @@ loadScripts(document, 'script');</script>
 <dt><a href="io/github/eutro/wasm2j/embed/WebAssembly.html#moduleInstantiate(io.github.eutro.wasm2j.embed.Store,io.github.eutro.wasm2j.embed.Module,io.github.eutro.wasm2j.embed.ExternVal%5B%5D)" class="member-name-link">moduleInstantiate(Store, Module, ExternVal[])</a> - Method in class io.github.eutro.wasm2j.embed.<a href="io/github/eutro/wasm2j/embed/WebAssembly.html" title="class in io.github.eutro.wasm2j.embed">WebAssembly</a></dt>
 <dd>
 <div class="block">Instantiate the module in the given store with the provided values for imports.</div>
+</dd>
+<dt><a href="io/github/eutro/wasm2j/api/bits/NameSectionParser.NameSection.html#moduleName" class="member-name-link">moduleName</a> - Variable in class io.github.eutro.wasm2j.api.bits.<a href="io/github/eutro/wasm2j/api/bits/NameSectionParser.NameSection.html" title="class in io.github.eutro.wasm2j.api.bits">NameSectionParser.NameSection</a></dt>
+<dd>
+<div class="block">The module name.</div>
 </dd>
 <dt><a href="io/github/eutro/wasm2j/embed/WebAssembly.html#moduleParse(java.lang.String)" class="member-name-link">moduleParse(String)</a> - Method in class io.github.eutro.wasm2j.embed.<a href="io/github/eutro/wasm2j/embed/WebAssembly.html" title="class in io.github.eutro.wasm2j.embed">WebAssembly</a></dt>
 <dd>
@@ -3018,6 +3626,48 @@ loadScripts(document, 'script');</script>
 <dd>
 <div class="block">The name of the import.</div>
 </dd>
+<dt><a href="io/github/eutro/wasm2j/api/support/NameMangler.html" class="type-name-link" title="interface in io.github.eutro.wasm2j.api.support">NameMangler</a> - Interface in <a href="io/github/eutro/wasm2j/api/support/package-summary.html">io.github.eutro.wasm2j.api.support</a></dt>
+<dd>
+<div class="block">A class for mangling names, converting (possibly invalid) tokens to new tokens
+ that <i>are</i> valid, according to a set of rules.</div>
+</dd>
+<dt><a href="io/github/eutro/wasm2j/api/support/NameMangler.BanChars.html" class="type-name-link" title="class in io.github.eutro.wasm2j.api.support">NameMangler.BanChars</a> - Class in <a href="io/github/eutro/wasm2j/api/support/package-summary.html">io.github.eutro.wasm2j.api.support</a></dt>
+<dd>
+<div class="block">A name mangler that forbids a certain set of characters.</div>
+</dd>
+<dt><a href="io/github/eutro/wasm2j/api/support/NameMangler.IllegalSymbolPolicy.html" class="type-name-link" title="enum class in io.github.eutro.wasm2j.api.support">NameMangler.IllegalSymbolPolicy</a> - Enum Class in <a href="io/github/eutro/wasm2j/api/support/package-summary.html">io.github.eutro.wasm2j.api.support</a></dt>
+<dd>
+<div class="block">A policy for how illegal characters should be handled.</div>
+</dd>
+<dt><a href="io/github/eutro/wasm2j/api/support/NameMangler.JavaIdent.html" class="type-name-link" title="class in io.github.eutro.wasm2j.api.support">NameMangler.JavaIdent</a> - Class in <a href="io/github/eutro/wasm2j/api/support/package-summary.html">io.github.eutro.wasm2j.api.support</a></dt>
+<dd>
+<div class="block">A mangler which outputs valid Java identifiers.</div>
+</dd>
+<dt><a href="io/github/eutro/wasm2j/api/bits/NameSectionParser.NameSection.html#%3Cinit%3E(io.github.eutro.jwasm.ByteInputStream)" class="member-name-link">NameSection(ByteInputStream&lt;E&gt;)</a> - Constructor for class io.github.eutro.wasm2j.api.bits.<a href="io/github/eutro/wasm2j/api/bits/NameSectionParser.NameSection.html" title="class in io.github.eutro.wasm2j.api.bits">NameSectionParser.NameSection</a></dt>
+<dd>
+<div class="block">Read the name section from a given input stream.</div>
+</dd>
+<dt><a href="io/github/eutro/wasm2j/api/bits/NameSectionParser.html" class="type-name-link" title="class in io.github.eutro.wasm2j.api.bits">NameSectionParser</a>&lt;<a href="io/github/eutro/wasm2j/api/bits/NameSectionParser.html" title="type parameter in NameSectionParser">T</a> extends <a href="io/github/eutro/wasm2j/api/events/EventSupplier.html" title="class in io.github.eutro.wasm2j.api.events">EventSupplier</a>&lt;? super <a href="io/github/eutro/wasm2j/api/events/RunModuleCompilationEvent.html" title="class in io.github.eutro.wasm2j.api.events">RunModuleCompilationEvent</a>&gt;&gt; - Class in <a href="io/github/eutro/wasm2j/api/bits/package-summary.html">io.github.eutro.wasm2j.api.bits</a></dt>
+<dd>
+<div class="block">A bit which parses the name section of a module, and
+ renames the Java methods to match the names given in the section.</div>
+</dd>
+<dt><a href="io/github/eutro/wasm2j/api/bits/NameSectionParser.html#%3Cinit%3E()" class="member-name-link">NameSectionParser()</a> - Constructor for class io.github.eutro.wasm2j.api.bits.<a href="io/github/eutro/wasm2j/api/bits/NameSectionParser.html" title="class in io.github.eutro.wasm2j.api.bits">NameSectionParser</a></dt>
+<dd>&nbsp;</dd>
+<dt><a href="io/github/eutro/wasm2j/api/bits/NameSectionParser.NameSection.html" class="type-name-link" title="class in io.github.eutro.wasm2j.api.bits">NameSectionParser.NameSection</a> - Class in <a href="io/github/eutro/wasm2j/api/bits/package-summary.html">io.github.eutro.wasm2j.api.bits</a></dt>
+<dd>
+<div class="block">A representation of the
+ <a href="https://webassembly.github.io/spec/core/appendix/custom.html#name-section">name section</a>
+ of a WebAssembly module.</div>
+</dd>
+<dt><a href="io/github/eutro/wasm2j/api/support/NameSupplier.html" class="type-name-link" title="interface in io.github.eutro.wasm2j.api.support">NameSupplier</a> - Interface in <a href="io/github/eutro/wasm2j/api/support/package-summary.html">io.github.eutro.wasm2j.api.support</a></dt>
+<dd>
+<div class="block">An interface for supplying translations of WebAssembly names into appropriate Java names.</div>
+</dd>
+<dt><a href="io/github/eutro/wasm2j/api/support/NameSupplier.SimpleNameSupplier.html" class="type-name-link" title="class in io.github.eutro.wasm2j.api.support">NameSupplier.SimpleNameSupplier</a> - Class in <a href="io/github/eutro/wasm2j/api/support/package-summary.html">io.github.eutro.wasm2j.api.support</a></dt>
+<dd>
+<div class="block">A simple name supplier.</div>
+</dd>
 <dt><a href="io/github/eutro/wasm2j/core/passes/convert/WasmToWir.ConvertState.html#newBb()" class="member-name-link">newBb()</a> - Method in class io.github.eutro.wasm2j.core.passes.convert.<a href="io/github/eutro/wasm2j/core/passes/convert/WasmToWir.ConvertState.html" title="class in io.github.eutro.wasm2j.core.passes.convert">WasmToWir.ConvertState</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="io/github/eutro/wasm2j/core/ssa/Function.html#newBb()" class="member-name-link">newBb()</a> - Method in class io.github.eutro.wasm2j.core.ssa.<a href="io/github/eutro/wasm2j/core/ssa/Function.html" title="class in io.github.eutro.wasm2j.core.ssa">Function</a></dt>
@@ -3038,6 +3688,10 @@ loadScripts(document, 'script');</script>
 </dd>
 <dt><a href="io/github/eutro/wasm2j/core/passes/opts/Stackify.NodeIterator.html#next()" class="member-name-link">next()</a> - Method in class io.github.eutro.wasm2j.core.passes.opts.<a href="io/github/eutro/wasm2j/core/passes/opts/Stackify.NodeIterator.html" title="class in io.github.eutro.wasm2j.core.passes.opts">Stackify.NodeIterator</a></dt>
 <dd>&nbsp;</dd>
+<dt><a href="io/github/eutro/wasm2j/api/ModuleCompilation.html#node" class="member-name-link">node</a> - Variable in class io.github.eutro.wasm2j.api.<a href="io/github/eutro/wasm2j/api/ModuleCompilation.html" title="class in io.github.eutro.wasm2j.api">ModuleCompilation</a></dt>
+<dd>
+<div class="block">The module being compiled.</div>
+</dd>
 <dt><a href="io/github/eutro/wasm2j/core/passes/opts/Stackify.NodeIterator.html#%3Cinit%3E(boolean,io.github.eutro.wasm2j.core.passes.opts.Stackify.Node)" class="member-name-link">NodeIterator(boolean, Stackify.Node&lt;T&gt;)</a> - Constructor for class io.github.eutro.wasm2j.core.passes.opts.<a href="io/github/eutro/wasm2j/core/passes/opts/Stackify.NodeIterator.html" title="class in io.github.eutro.wasm2j.core.passes.opts">Stackify.NodeIterator</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="io/github/eutro/wasm2j/core/ops/WasmOps.DerefType.ExtType.html#NOEXT" class="member-name-link">NOEXT</a> - Enum constant in enum class io.github.eutro.wasm2j.core.ops.<a href="io/github/eutro/wasm2j/core/ops/WasmOps.DerefType.ExtType.html" title="enum class in io.github.eutro.wasm2j.core.ops">WasmOps.DerefType.ExtType</a></dt>
@@ -3046,6 +3700,20 @@ loadScripts(document, 'script');</script>
 <dd>
 <div class="block">Returns an <a href="io/github/eutro/wasm2j/core/conf/itf/ExportableConvention.html" title="interface in io.github.eutro.wasm2j.core.conf.itf"><code>ExportableConvention</code></a> that does nothing.</div>
 </dd>
+<dt><a href="io/github/eutro/wasm2j/api/support/CaseStyle.Capitalisation.html#normalise(java.lang.String)" class="member-name-link">normalise(String)</a> - Method in enum class io.github.eutro.wasm2j.api.support.<a href="io/github/eutro/wasm2j/api/support/CaseStyle.Capitalisation.html" title="enum class in io.github.eutro.wasm2j.api.support">CaseStyle.Capitalisation</a></dt>
+<dd>
+<div class="block">Convert the word to this capitalisation.</div>
+</dd>
+<dt><a href="io/github/eutro/wasm2j/api/support/CaseStyle.CamelLike.html#normaliseWord(java.lang.String,int)" class="member-name-link">normaliseWord(String, int)</a> - Method in class io.github.eutro.wasm2j.api.support.<a href="io/github/eutro/wasm2j/api/support/CaseStyle.CamelLike.html" title="class in io.github.eutro.wasm2j.api.support">CaseStyle.CamelLike</a></dt>
+<dd>&nbsp;</dd>
+<dt><a href="io/github/eutro/wasm2j/api/support/CaseStyle.Detect.html#normaliseWord(java.lang.String,int)" class="member-name-link">normaliseWord(String, int)</a> - Method in class io.github.eutro.wasm2j.api.support.<a href="io/github/eutro/wasm2j/api/support/CaseStyle.Detect.html" title="class in io.github.eutro.wasm2j.api.support">CaseStyle.Detect</a></dt>
+<dd>&nbsp;</dd>
+<dt><a href="io/github/eutro/wasm2j/api/support/CaseStyle.html#normaliseWord(java.lang.String,int)" class="member-name-link">normaliseWord(String, int)</a> - Method in interface io.github.eutro.wasm2j.api.support.<a href="io/github/eutro/wasm2j/api/support/CaseStyle.html" title="interface in io.github.eutro.wasm2j.api.support">CaseStyle</a></dt>
+<dd>
+<div class="block">Normalise the <code>index</code>th word of a token to how it should appear in this case style.</div>
+</dd>
+<dt><a href="io/github/eutro/wasm2j/api/support/CaseStyle.SnakeLike.html#normaliseWord(java.lang.String,int)" class="member-name-link">normaliseWord(String, int)</a> - Method in class io.github.eutro.wasm2j.api.support.<a href="io/github/eutro/wasm2j/api/support/CaseStyle.SnakeLike.html" title="class in io.github.eutro.wasm2j.api.support">CaseStyle.SnakeLike</a></dt>
+<dd>&nbsp;</dd>
 </dl>
 <h2 class="title" id="I:O">O</h2>
 <dl class="index">
@@ -3055,6 +3723,10 @@ loadScripts(document, 'script');</script>
 </dd>
 <dt><a href="io/github/eutro/wasm2j/core/ops/WasmOps.WithMemArg.html#offset" class="member-name-link">offset</a> - Variable in class io.github.eutro.wasm2j.core.ops.<a href="io/github/eutro/wasm2j/core/ops/WasmOps.WithMemArg.html" title="class in io.github.eutro.wasm2j.core.ops">WasmOps.WithMemArg</a></dt>
 <dd>&nbsp;</dd>
+<dt><a href="io/github/eutro/wasm2j/api/support/NameMangler.IllegalSymbolPolicy.html#OMIT" class="member-name-link">OMIT</a> - Enum constant in enum class io.github.eutro.wasm2j.api.support.<a href="io/github/eutro/wasm2j/api/support/NameMangler.IllegalSymbolPolicy.html" title="enum class in io.github.eutro.wasm2j.api.support">NameMangler.IllegalSymbolPolicy</a></dt>
+<dd>
+<div class="block">Illegal characters should be omitted.</div>
+</dd>
 <dt><a href="io/github/eutro/wasm2j/core/ops/WasmOps.OperatorType.html#op" class="member-name-link">op</a> - Variable in class io.github.eutro.wasm2j.core.ops.<a href="io/github/eutro/wasm2j/core/ops/WasmOps.OperatorType.html" title="class in io.github.eutro.wasm2j.core.ops">WasmOps.OperatorType</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="io/github/eutro/wasm2j/core/ssa/Insn.html#op" class="member-name-link">op</a> - Variable in class io.github.eutro.wasm2j.core.ssa.<a href="io/github/eutro/wasm2j/core/ssa/Insn.html" title="class in io.github.eutro.wasm2j.core.ssa">Insn</a></dt>
@@ -3099,6 +3771,14 @@ loadScripts(document, 'script');</script>
 </dd>
 <dt><a href="io/github/eutro/wasm2j/core/ops/OpKey.html#%3Cinit%3E(java.lang.String)" class="member-name-link">OpKey(String)</a> - Constructor for class io.github.eutro.wasm2j.core.ops.<a href="io/github/eutro/wasm2j/core/ops/OpKey.html" title="class in io.github.eutro.wasm2j.core.ops">OpKey</a></dt>
 <dd>&nbsp;</dd>
+<dt><a href="io/github/eutro/wasm2j/api/bits/OutputsToDirectory.html" class="type-name-link" title="class in io.github.eutro.wasm2j.api.bits">OutputsToDirectory</a>&lt;<a href="io/github/eutro/wasm2j/api/bits/OutputsToDirectory.html" title="type parameter in OutputsToDirectory">T</a> extends <a href="io/github/eutro/wasm2j/api/events/EventSupplier.html" title="class in io.github.eutro.wasm2j.api.events">EventSupplier</a>&lt;? super <a href="io/github/eutro/wasm2j/api/events/EmitClassEvent.html" title="class in io.github.eutro.wasm2j.api.events">EmitClassEvent</a>&gt;&gt; - Class in <a href="io/github/eutro/wasm2j/api/bits/package-summary.html">io.github.eutro.wasm2j.api.bits</a></dt>
+<dd>
+<div class="block">A bit which outputs emitted classes to the given directory.</div>
+</dd>
+<dt><a href="io/github/eutro/wasm2j/api/bits/OutputsToDirectory.html#%3Cinit%3E(java.nio.file.Path)" class="member-name-link">OutputsToDirectory(Path)</a> - Constructor for class io.github.eutro.wasm2j.api.bits.<a href="io/github/eutro/wasm2j/api/bits/OutputsToDirectory.html" title="class in io.github.eutro.wasm2j.api.bits">OutputsToDirectory</a></dt>
+<dd>
+<div class="block">Construct a <a href="io/github/eutro/wasm2j/api/bits/OutputsToDirectory.html" title="class in io.github.eutro.wasm2j.api.bits"><code>OutputsToDirectory</code></a> for outputting to the given directory.</div>
+</dd>
 <dt><a href="io/github/eutro/wasm2j/core/ops/WasmOps.DerefType.html#outType" class="member-name-link">outType</a> - Variable in class io.github.eutro.wasm2j.core.ops.<a href="io/github/eutro/wasm2j/core/ops/WasmOps.DerefType.html" title="class in io.github.eutro.wasm2j.core.ops">WasmOps.DerefType</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="io/github/eutro/wasm2j/core/ssa/JClass.JavaField.html#owner" class="member-name-link">owner</a> - Variable in class io.github.eutro.wasm2j.core.ssa.<a href="io/github/eutro/wasm2j/core/ssa/JClass.JavaField.html" title="class in io.github.eutro.wasm2j.core.ssa">JClass.JavaField</a></dt>
@@ -3131,6 +3811,18 @@ loadScripts(document, 'script');</script>
 <dt><a href="io/github/eutro/wasm2j/core/util/Pair.html" class="type-name-link" title="class in io.github.eutro.wasm2j.core.util">Pair</a>&lt;<a href="io/github/eutro/wasm2j/core/util/Pair.html" title="type parameter in Pair">L</a>,<wbr><a href="io/github/eutro/wasm2j/core/util/Pair.html" title="type parameter in Pair">R</a>&gt; - Class in <a href="io/github/eutro/wasm2j/core/util/package-summary.html">io.github.eutro.wasm2j.core.util</a></dt>
 <dd>
 <div class="block">A simple two-tuple, with defined equality and hashing.</div>
+</dd>
+<dt><a href="io/github/eutro/wasm2j/api/types/ExternType.Func.html#params" class="member-name-link">params</a> - Variable in class io.github.eutro.wasm2j.api.types.<a href="io/github/eutro/wasm2j/api/types/ExternType.Func.html" title="class in io.github.eutro.wasm2j.api.types">ExternType.Func</a></dt>
+<dd>
+<div class="block">The parameter types of the function.</div>
+</dd>
+<dt><a href="io/github/eutro/wasm2j/api/bits/NameSectionParser.NameSection.html#parse(io.github.eutro.jwasm.ByteInputStream)" class="member-name-link">parse(ByteInputStream&lt;E&gt;)</a> - Static method in class io.github.eutro.wasm2j.api.bits.<a href="io/github/eutro/wasm2j/api/bits/NameSectionParser.NameSection.html" title="class in io.github.eutro.wasm2j.api.bits">NameSectionParser.NameSection</a></dt>
+<dd>
+<div class="block">Read the name section from a given input stream.</div>
+</dd>
+<dt><a href="io/github/eutro/wasm2j/api/types/ExternType.Func.html#parse(java.lang.String)" class="member-name-link">parse(String)</a> - Static method in class io.github.eutro.wasm2j.api.types.<a href="io/github/eutro/wasm2j/api/types/ExternType.Func.html" title="class in io.github.eutro.wasm2j.api.types">ExternType.Func</a></dt>
+<dd>
+<div class="block">Parse a function type from an <a href="io/github/eutro/wasm2j/api/types/ExternType.Func.html#encode(io.github.eutro.jwasm.tree.TypeNode)"><code>encoded</code></a> string.</div>
 </dd>
 <dt><a href="io/github/eutro/wasm2j/embed/Module.html#parse(java.lang.String)" class="member-name-link">parse(String)</a> - Static method in class io.github.eutro.wasm2j.embed.<a href="io/github/eutro/wasm2j/embed/Module.html" title="class in io.github.eutro.wasm2j.embed">Module</a></dt>
 <dd>
@@ -3256,6 +3948,10 @@ loadScripts(document, 'script');</script>
 <dd>&nbsp;</dd>
 <dt><a href="io/github/eutro/wasm2j/core/passes/convert/WasmToWir.ConvertState.html#refVar(int)" class="member-name-link">refVar(int)</a> - Method in class io.github.eutro.wasm2j.core.passes.convert.<a href="io/github/eutro/wasm2j/core/passes/convert/WasmToWir.ConvertState.html" title="class in io.github.eutro.wasm2j.core.passes.convert">WasmToWir.ConvertState</a></dt>
 <dd>&nbsp;</dd>
+<dt><a href="io/github/eutro/wasm2j/api/bits/InterfaceBasedLinker.html#register(java.lang.String,io.github.eutro.jwasm.tree.ModuleNode)" class="member-name-link">register(String, ModuleNode)</a> - Method in class io.github.eutro.wasm2j.api.bits.<a href="io/github/eutro/wasm2j/api/bits/InterfaceBasedLinker.html" title="class in io.github.eutro.wasm2j.api.bits">InterfaceBasedLinker</a></dt>
+<dd>
+<div class="block">Register a module with this linker, generating an interface for its exports.</div>
+</dd>
 <dt><a href="io/github/eutro/wasm2j/core/conf/impl/InstanceFunctionConvention.html#removeExt(io.github.eutro.wasm2j.core.ext.Ext)" class="member-name-link">removeExt(Ext&lt;T&gt;)</a> - Method in class io.github.eutro.wasm2j.core.conf.impl.<a href="io/github/eutro/wasm2j/core/conf/impl/InstanceFunctionConvention.html" title="class in io.github.eutro.wasm2j.core.conf.impl">InstanceFunctionConvention</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="io/github/eutro/wasm2j/core/ext/ExtContainer.html#removeExt(io.github.eutro.wasm2j.core.ext.Ext)" class="member-name-link">removeExt(Ext&lt;T&gt;)</a> - Method in interface io.github.eutro.wasm2j.core.ext.<a href="io/github/eutro/wasm2j/core/ext/ExtContainer.html" title="interface in io.github.eutro.wasm2j.core.ext">ExtContainer</a></dt>
@@ -3278,6 +3974,10 @@ loadScripts(document, 'script');</script>
 <dd>&nbsp;</dd>
 <dt><a href="io/github/eutro/wasm2j/core/ssa/Var.html#removeExt(io.github.eutro.wasm2j.core.ext.Ext)" class="member-name-link">removeExt(Ext&lt;T&gt;)</a> - Method in class io.github.eutro.wasm2j.core.ssa.<a href="io/github/eutro/wasm2j/core/ssa/Var.html" title="class in io.github.eutro.wasm2j.core.ssa">Var</a></dt>
 <dd>&nbsp;</dd>
+<dt><a href="io/github/eutro/wasm2j/api/types/ExternType.Func.html#results" class="member-name-link">results</a> - Variable in class io.github.eutro.wasm2j.api.types.<a href="io/github/eutro/wasm2j/api/types/ExternType.Func.html" title="class in io.github.eutro.wasm2j.api.types">ExternType.Func</a></dt>
+<dd>
+<div class="block">The result types of the function.</div>
+</dd>
 <dt><a href="io/github/eutro/wasm2j/embed/internal/Utils.html#rethrow(java.lang.Throwable)" class="member-name-link">rethrow(Throwable)</a> - Static method in class io.github.eutro.wasm2j.embed.internal.<a href="io/github/eutro/wasm2j/embed/internal/Utils.html" title="class in io.github.eutro.wasm2j.embed.internal">Utils</a></dt>
 <dd>
 <div class="block">Rethrow the throwable.</div>
@@ -3291,6 +3991,10 @@ loadScripts(document, 'script');</script>
 <dt><a href="io/github/eutro/wasm2j/core/util/Pair.html#right" class="member-name-link">right</a> - Variable in class io.github.eutro.wasm2j.core.util.<a href="io/github/eutro/wasm2j/core/util/Pair.html" title="class in io.github.eutro.wasm2j.core.util">Pair</a></dt>
 <dd>
 <div class="block">The right value.</div>
+</dd>
+<dt><a href="io/github/eutro/wasm2j/api/ModuleCompilation.html#run()" class="member-name-link">run()</a> - Method in class io.github.eutro.wasm2j.api.<a href="io/github/eutro/wasm2j/api/ModuleCompilation.html" title="class in io.github.eutro.wasm2j.api">ModuleCompilation</a></dt>
+<dd>
+<div class="block">Run the compilation.</div>
 </dd>
 <dt><a href="io/github/eutro/wasm2j/core/passes/IRPass.html#run(A)" class="member-name-link">run(A)</a> - Method in interface io.github.eutro.wasm2j.core.passes.<a href="io/github/eutro/wasm2j/core/passes/IRPass.html" title="interface in io.github.eutro.wasm2j.core.passes">IRPass</a></dt>
 <dd>
@@ -3359,6 +4063,14 @@ loadScripts(document, 'script');</script>
 <dt><a href="io/github/eutro/wasm2j/core/passes/InPlaceIRPass.html#runInPlace(T)" class="member-name-link">runInPlace(T)</a> - Method in interface io.github.eutro.wasm2j.core.passes.<a href="io/github/eutro/wasm2j/core/passes/InPlaceIRPass.html" title="interface in io.github.eutro.wasm2j.core.passes">InPlaceIRPass</a></dt>
 <dd>
 <div class="block">Run the pass.</div>
+</dd>
+<dt><a href="io/github/eutro/wasm2j/api/events/RunModuleCompilationEvent.html" class="type-name-link" title="class in io.github.eutro.wasm2j.api.events">RunModuleCompilationEvent</a> - Class in <a href="io/github/eutro/wasm2j/api/events/package-summary.html">io.github.eutro.wasm2j.api.events</a></dt>
+<dd>
+<div class="block">Fired when a module compilation is started.</div>
+</dd>
+<dt><a href="io/github/eutro/wasm2j/api/events/RunModuleCompilationEvent.html#%3Cinit%3E(io.github.eutro.wasm2j.api.ModuleCompilation)" class="member-name-link">RunModuleCompilationEvent(ModuleCompilation)</a> - Constructor for class io.github.eutro.wasm2j.api.events.<a href="io/github/eutro/wasm2j/api/events/RunModuleCompilationEvent.html" title="class in io.github.eutro.wasm2j.api.events">RunModuleCompilationEvent</a></dt>
+<dd>
+<div class="block">Construct a new module compilation event.</div>
 </dd>
 </dl>
 <h2 class="title" id="I:S">S</h2>
@@ -3472,6 +4184,11 @@ loadScripts(document, 'script');</script>
 <dd>
 <div class="block">Set the mutability of this global.</div>
 </dd>
+<dt><a href="io/github/eutro/wasm2j/api/ModuleCompilation.html#setName(java.lang.String)" class="member-name-link">setName(String)</a> - Method in class io.github.eutro.wasm2j.api.<a href="io/github/eutro/wasm2j/api/ModuleCompilation.html" title="class in io.github.eutro.wasm2j.api">ModuleCompilation</a></dt>
+<dd>
+<div class="block">Set the name of the class produced by this compilation, by
+ <a href="io/github/eutro/wasm2j/api/events/ModifyConventionsEvent.html" title="class in io.github.eutro.wasm2j.api.events"><code>modifying the conventions</code></a>.</div>
+</dd>
 <dt><a href="io/github/eutro/wasm2j/core/conf/itf/WirJavaConventionFactory.Builder.html#setNameSupplier(java.util.function.Supplier)" class="member-name-link">setNameSupplier(Supplier&lt;String&gt;)</a> - Method in class io.github.eutro.wasm2j.core.conf.itf.<a href="io/github/eutro/wasm2j/core/conf/itf/WirJavaConventionFactory.Builder.html" title="class in io.github.eutro.wasm2j.core.conf.itf">WirJavaConventionFactory.Builder</a></dt>
 <dd>
 <div class="block">Set the function that generates class names.</div>
@@ -3513,6 +4230,20 @@ loadScripts(document, 'script');</script>
 <dt><a href="io/github/eutro/wasm2j/embed/Table.html#size()" class="member-name-link">size()</a> - Method in interface io.github.eutro.wasm2j.embed.<a href="io/github/eutro/wasm2j/embed/Table.html" title="interface in io.github.eutro.wasm2j.embed">Table</a></dt>
 <dd>
 <div class="block">Get the size of the table.</div>
+</dd>
+<dt><a href="io/github/eutro/wasm2j/api/support/CaseStyle.SnakeLike.html#%3Cinit%3E(java.lang.String,io.github.eutro.wasm2j.api.support.CaseStyle.Capitalisation)" class="member-name-link">SnakeLike(String, CaseStyle.Capitalisation)</a> - Constructor for class io.github.eutro.wasm2j.api.support.<a href="io/github/eutro/wasm2j/api/support/CaseStyle.SnakeLike.html" title="class in io.github.eutro.wasm2j.api.support">CaseStyle.SnakeLike</a></dt>
+<dd>
+<div class="block">Construct a <a href="io/github/eutro/wasm2j/api/support/CaseStyle.SnakeLike.html" title="class in io.github.eutro.wasm2j.api.support"><code>CaseStyle.SnakeLike</code></a> case with the given separator and word capitalisation rule.</div>
+</dd>
+<dt><a href="io/github/eutro/wasm2j/api/support/CaseStyle.CamelLike.html#splitToWords(java.lang.String)" class="member-name-link">splitToWords(String)</a> - Method in class io.github.eutro.wasm2j.api.support.<a href="io/github/eutro/wasm2j/api/support/CaseStyle.CamelLike.html" title="class in io.github.eutro.wasm2j.api.support">CaseStyle.CamelLike</a></dt>
+<dd>&nbsp;</dd>
+<dt><a href="io/github/eutro/wasm2j/api/support/CaseStyle.Detect.html#splitToWords(java.lang.String)" class="member-name-link">splitToWords(String)</a> - Method in class io.github.eutro.wasm2j.api.support.<a href="io/github/eutro/wasm2j/api/support/CaseStyle.Detect.html" title="class in io.github.eutro.wasm2j.api.support">CaseStyle.Detect</a></dt>
+<dd>&nbsp;</dd>
+<dt><a href="io/github/eutro/wasm2j/api/support/CaseStyle.SnakeLike.html#splitToWords(java.lang.String)" class="member-name-link">splitToWords(String)</a> - Method in class io.github.eutro.wasm2j.api.support.<a href="io/github/eutro/wasm2j/api/support/CaseStyle.SnakeLike.html" title="class in io.github.eutro.wasm2j.api.support">CaseStyle.SnakeLike</a></dt>
+<dd>&nbsp;</dd>
+<dt><a href="io/github/eutro/wasm2j/api/support/CaseStyle.html#splitToWords(java.lang.String)" class="member-name-link">splitToWords(String)</a> - Method in interface io.github.eutro.wasm2j.api.support.<a href="io/github/eutro/wasm2j/api/support/CaseStyle.html" title="interface in io.github.eutro.wasm2j.api.support">CaseStyle</a></dt>
+<dd>
+<div class="block">Split the token into words according to this case style.</div>
 </dd>
 <dt><a href="io/github/eutro/wasm2j/core/ext/MetadataState.html#SSA_FORM" class="member-name-link">SSA_FORM</a> - Static variable in class io.github.eutro.wasm2j.core.ext.<a href="io/github/eutro/wasm2j/core/ext/MetadataState.html" title="class in io.github.eutro.wasm2j.core.ext">MetadataState</a></dt>
 <dd>
@@ -3563,12 +4294,52 @@ loadScripts(document, 'script');</script>
 <dd>
 <div class="block">Returns a new empty store.</div>
 </dd>
+<dt><a href="io/github/eutro/wasm2j/api/WasmCompiler.html#submitBinary(io.github.eutro.jwasm.ByteInputStream)" class="member-name-link">submitBinary(ByteInputStream&lt;E&gt;)</a> - Method in class io.github.eutro.wasm2j.api.<a href="io/github/eutro/wasm2j/api/WasmCompiler.html" title="class in io.github.eutro.wasm2j.api">WasmCompiler</a></dt>
+<dd>
+<div class="block">Submit an input stream of a WebAssembly binary for compilation.</div>
+</dd>
+<dt><a href="io/github/eutro/wasm2j/api/WasmCompiler.html#submitBinary(java.io.InputStream)" class="member-name-link">submitBinary(InputStream)</a> - Method in class io.github.eutro.wasm2j.api.<a href="io/github/eutro/wasm2j/api/WasmCompiler.html" title="class in io.github.eutro.wasm2j.api">WasmCompiler</a></dt>
+<dd>
+<div class="block">Submit an input stream of a WebAssembly binary for compilation.</div>
+</dd>
+<dt><a href="io/github/eutro/wasm2j/api/WasmCompiler.html#submitBinary(java.nio.ByteBuffer)" class="member-name-link">submitBinary(ByteBuffer)</a> - Method in class io.github.eutro.wasm2j.api.<a href="io/github/eutro/wasm2j/api/WasmCompiler.html" title="class in io.github.eutro.wasm2j.api">WasmCompiler</a></dt>
+<dd>
+<div class="block">Submit a byte buffer of a WebAssembly binary for compilation.</div>
+</dd>
+<dt><a href="io/github/eutro/wasm2j/api/bits/FormatDetector.html#submitBuf(java.nio.ByteBuffer)" class="member-name-link">submitBuf(ByteBuffer)</a> - Method in class io.github.eutro.wasm2j.api.bits.<a href="io/github/eutro/wasm2j/api/bits/FormatDetector.html" title="class in io.github.eutro.wasm2j.api.bits">FormatDetector</a></dt>
+<dd>
+<div class="block">Submit a byte buffer to the compiler, detecting its type.</div>
+</dd>
+<dt><a href="io/github/eutro/wasm2j/api/bits/FormatDetector.html#submitFile(java.nio.file.Path)" class="member-name-link">submitFile(Path)</a> - Method in class io.github.eutro.wasm2j.api.bits.<a href="io/github/eutro/wasm2j/api/bits/FormatDetector.html" title="class in io.github.eutro.wasm2j.api.bits">FormatDetector</a></dt>
+<dd>
+<div class="block">Submit a file to the compiler, detecting its type.</div>
+</dd>
+<dt><a href="io/github/eutro/wasm2j/api/WasmCompiler.html#submitNode(io.github.eutro.jwasm.tree.ModuleNode)" class="member-name-link">submitNode(ModuleNode)</a> - Method in class io.github.eutro.wasm2j.api.<a href="io/github/eutro/wasm2j/api/WasmCompiler.html" title="class in io.github.eutro.wasm2j.api">WasmCompiler</a></dt>
+<dd>
+<div class="block">Submit an already parsed WebAssembly module for compilation.</div>
+</dd>
+<dt><a href="io/github/eutro/wasm2j/api/WasmCompiler.html#submitText(io.github.eutro.jwasm.ByteInputStream)" class="member-name-link">submitText(ByteInputStream&lt;E&gt;)</a> - Method in class io.github.eutro.wasm2j.api.<a href="io/github/eutro/wasm2j/api/WasmCompiler.html" title="class in io.github.eutro.wasm2j.api">WasmCompiler</a></dt>
+<dd>
+<div class="block">Submit a source input stream of a WebAssembly text file for compilation.</div>
+</dd>
+<dt><a href="io/github/eutro/wasm2j/api/WasmCompiler.html#submitText(java.lang.String)" class="member-name-link">submitText(String)</a> - Method in class io.github.eutro.wasm2j.api.<a href="io/github/eutro/wasm2j/api/WasmCompiler.html" title="class in io.github.eutro.wasm2j.api">WasmCompiler</a></dt>
+<dd>
+<div class="block">Submit a source string of a WebAssembly text file for compilation.</div>
+</dd>
 </dl>
 <h2 class="title" id="I:T">T</h2>
 <dl class="index">
 <dt><a href="io/github/eutro/wasm2j/embed/Table.html" class="type-name-link" title="interface in io.github.eutro.wasm2j.embed">Table</a> - Interface in <a href="io/github/eutro/wasm2j/embed/package-summary.html">io.github.eutro.wasm2j.embed</a></dt>
 <dd>
 <div class="block">A table extern.</div>
+</dd>
+<dt><a href="io/github/eutro/wasm2j/api/types/ExternType.Table.html#%3Cinit%3E(io.github.eutro.wasm2j.api.types.ExternType.Limits,io.github.eutro.wasm2j.api.types.ValType)" class="member-name-link">Table(ExternType.Limits, ValType)</a> - Constructor for class io.github.eutro.wasm2j.api.types.<a href="io/github/eutro/wasm2j/api/types/ExternType.Table.html" title="class in io.github.eutro.wasm2j.api.types">ExternType.Table</a></dt>
+<dd>
+<div class="block">Construct a table with the given limits and component type.</div>
+</dd>
+<dt><a href="io/github/eutro/wasm2j/api/types/ExternType.Kind.html#TABLE" class="member-name-link">TABLE</a> - Enum constant in enum class io.github.eutro.wasm2j.api.types.<a href="io/github/eutro/wasm2j/api/types/ExternType.Kind.html" title="enum class in io.github.eutro.wasm2j.api.types">ExternType.Kind</a></dt>
+<dd>
+<div class="block">A table.</div>
 </dd>
 <dt><a href="io/github/eutro/wasm2j/core/conf/impl/ArrayTableConvention.html#TABLE_ARRAY" class="member-name-link">TABLE_ARRAY</a> - Static variable in class io.github.eutro.wasm2j.core.conf.impl.<a href="io/github/eutro/wasm2j/core/conf/impl/ArrayTableConvention.html" title="class in io.github.eutro.wasm2j.core.conf.impl">ArrayTableConvention</a></dt>
 <dd>
@@ -3645,6 +4416,11 @@ loadScripts(document, 'script');</script>
 <dd>
 <div class="block">The jump targets of this instruction.</div>
 </dd>
+<dt><a href="io/github/eutro/wasm2j/api/bits/FormatDetector.Format.html#TEXT" class="member-name-link">TEXT</a> - Enum constant in enum class io.github.eutro.wasm2j.api.bits.<a href="io/github/eutro/wasm2j/api/bits/FormatDetector.Format.html" title="enum class in io.github.eutro.wasm2j.api.bits">FormatDetector.Format</a></dt>
+<dd>
+<div class="block">The WebAssembly
+ <a href="https://webassembly.github.io/spec/core/text/index.html">text format</a>.</div>
+</dd>
 <dt><a href="io/github/eutro/wasm2j/core/passes/IRPass.html#then(io.github.eutro.wasm2j.core.passes.IRPass)" class="member-name-link">then(IRPass&lt;B, C&gt;)</a> - Method in interface io.github.eutro.wasm2j.core.passes.<a href="io/github/eutro/wasm2j/core/passes/IRPass.html" title="interface in io.github.eutro.wasm2j.core.passes">IRPass</a></dt>
 <dd>
 <div class="block">Compose this pass with another.</div>
@@ -3653,10 +4429,26 @@ loadScripts(document, 'script');</script>
 <dd>
 <div class="block">Effect: loads the implicit receiver of a method.</div>
 </dd>
+<dt><a href="io/github/eutro/wasm2j/api/support/CaseStyle.Capitalisation.html#TITLE_CASE" class="member-name-link">TITLE_CASE</a> - Enum constant in enum class io.github.eutro.wasm2j.api.support.<a href="io/github/eutro/wasm2j/api/support/CaseStyle.Capitalisation.html" title="enum class in io.github.eutro.wasm2j.api.support">CaseStyle.Capitalisation</a></dt>
+<dd>
+<div class="block">The first letter upper case, the rest lower.</div>
+</dd>
 <dt><a href="io/github/eutro/wasm2j/core/util/GraphWalker.Order.html#toList()" class="member-name-link">toList()</a> - Method in interface io.github.eutro.wasm2j.core.util.<a href="io/github/eutro/wasm2j/core/util/GraphWalker.Order.html" title="interface in io.github.eutro.wasm2j.core.util">GraphWalker.Order</a></dt>
 <dd>
 <div class="block">Collect this order to a list.</div>
 </dd>
+<dt><a href="io/github/eutro/wasm2j/api/types/ExternType.Func.html#toString()" class="member-name-link">toString()</a> - Method in class io.github.eutro.wasm2j.api.types.<a href="io/github/eutro/wasm2j/api/types/ExternType.Func.html" title="class in io.github.eutro.wasm2j.api.types">ExternType.Func</a></dt>
+<dd>&nbsp;</dd>
+<dt><a href="io/github/eutro/wasm2j/api/types/ExternType.Global.html#toString()" class="member-name-link">toString()</a> - Method in class io.github.eutro.wasm2j.api.types.<a href="io/github/eutro/wasm2j/api/types/ExternType.Global.html" title="class in io.github.eutro.wasm2j.api.types">ExternType.Global</a></dt>
+<dd>&nbsp;</dd>
+<dt><a href="io/github/eutro/wasm2j/api/types/ExternType.Limits.html#toString()" class="member-name-link">toString()</a> - Method in class io.github.eutro.wasm2j.api.types.<a href="io/github/eutro/wasm2j/api/types/ExternType.Limits.html" title="class in io.github.eutro.wasm2j.api.types">ExternType.Limits</a></dt>
+<dd>&nbsp;</dd>
+<dt><a href="io/github/eutro/wasm2j/api/types/ExternType.Mem.html#toString()" class="member-name-link">toString()</a> - Method in class io.github.eutro.wasm2j.api.types.<a href="io/github/eutro/wasm2j/api/types/ExternType.Mem.html" title="class in io.github.eutro.wasm2j.api.types">ExternType.Mem</a></dt>
+<dd>&nbsp;</dd>
+<dt><a href="io/github/eutro/wasm2j/api/types/ExternType.Table.html#toString()" class="member-name-link">toString()</a> - Method in class io.github.eutro.wasm2j.api.types.<a href="io/github/eutro/wasm2j/api/types/ExternType.Table.html" title="class in io.github.eutro.wasm2j.api.types">ExternType.Table</a></dt>
+<dd>&nbsp;</dd>
+<dt><a href="io/github/eutro/wasm2j/api/types/ValType.html#toString()" class="member-name-link">toString()</a> - Method in enum class io.github.eutro.wasm2j.api.types.<a href="io/github/eutro/wasm2j/api/types/ValType.html" title="enum class in io.github.eutro.wasm2j.api.types">ValType</a></dt>
+<dd>&nbsp;</dd>
 <dt><a href="io/github/eutro/wasm2j/core/ext/Ext.html#toString()" class="member-name-link">toString()</a> - Method in class io.github.eutro.wasm2j.core.ext.<a href="io/github/eutro/wasm2j/core/ext/Ext.html" title="class in io.github.eutro.wasm2j.core.ext">Ext</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="io/github/eutro/wasm2j/core/ext/MetadataState.MetaKind.html#toString()" class="member-name-link">toString()</a> - Method in class io.github.eutro.wasm2j.core.ext.<a href="io/github/eutro/wasm2j/core/ext/MetadataState.MetaKind.html" title="class in io.github.eutro.wasm2j.core.ext">MetadataState.MetaKind</a></dt>
@@ -3718,6 +4510,10 @@ loadScripts(document, 'script');</script>
 <div class="block">Control: introduce a try block, "jumps" to the first target in the case of an exception
  in its second block.</div>
 </dd>
+<dt><a href="io/github/eutro/wasm2j/api/types/ExternType.Global.html#type" class="member-name-link">type</a> - Variable in class io.github.eutro.wasm2j.api.types.<a href="io/github/eutro/wasm2j/api/types/ExternType.Global.html" title="class in io.github.eutro.wasm2j.api.types">ExternType.Global</a></dt>
+<dd>
+<div class="block">The value type of the global.</div>
+</dd>
 <dt><a href="io/github/eutro/wasm2j/core/ops/WasmOps.CallType.html#type" class="member-name-link">type</a> - Variable in class io.github.eutro.wasm2j.core.ops.<a href="io/github/eutro/wasm2j/core/ops/WasmOps.CallType.html" title="class in io.github.eutro.wasm2j.core.ops">WasmOps.CallType</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="io/github/eutro/wasm2j/core/passes/convert/WasmToWir.ConvertState.CtrlFrame.html#type" class="member-name-link">type</a> - Variable in class io.github.eutro.wasm2j.core.passes.convert.<a href="io/github/eutro/wasm2j/core/passes/convert/WasmToWir.ConvertState.CtrlFrame.html" title="class in io.github.eutro.wasm2j.core.passes.convert">WasmToWir.ConvertState.CtrlFrame</a></dt>
@@ -3767,10 +4563,26 @@ loadScripts(document, 'script');</script>
 <dd>
 <div class="block">Whether variable name collisions should be computed.</div>
 </dd>
+<dt><a href="io/github/eutro/wasm2j/api/bits/FormatDetector.Format.html#UNKNOWN" class="member-name-link">UNKNOWN</a> - Enum constant in enum class io.github.eutro.wasm2j.api.bits.<a href="io/github/eutro/wasm2j/api/bits/FormatDetector.Format.html" title="enum class in io.github.eutro.wasm2j.api.bits">FormatDetector.Format</a></dt>
+<dd>
+<div class="block">The format could not be detected.</div>
+</dd>
 <dt><a href="io/github/eutro/wasm2j/core/passes/convert/WasmToWir.ConvertState.CtrlFrame.html#unreachable" class="member-name-link">unreachable</a> - Variable in class io.github.eutro.wasm2j.core.passes.convert.<a href="io/github/eutro/wasm2j/core/passes/convert/WasmToWir.ConvertState.CtrlFrame.html" title="class in io.github.eutro.wasm2j.core.passes.convert">WasmToWir.ConvertState.CtrlFrame</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="io/github/eutro/wasm2j/core/passes/convert/WasmToWir.ConvertState.html#unreachable()" class="member-name-link">unreachable()</a> - Method in class io.github.eutro.wasm2j.core.passes.convert.<a href="io/github/eutro/wasm2j/core/passes/convert/WasmToWir.ConvertState.html" title="class in io.github.eutro.wasm2j.core.passes.convert">WasmToWir.ConvertState</a></dt>
 <dd>&nbsp;</dd>
+<dt><a href="io/github/eutro/wasm2j/api/support/CaseStyle.html#UPPER_CAMEL" class="member-name-link">UPPER_CAMEL</a> - Static variable in interface io.github.eutro.wasm2j.api.support.<a href="io/github/eutro/wasm2j/api/support/CaseStyle.html" title="interface in io.github.eutro.wasm2j.api.support">CaseStyle</a></dt>
+<dd>
+<div class="block">UpperCamelCase</div>
+</dd>
+<dt><a href="io/github/eutro/wasm2j/api/support/CaseStyle.Capitalisation.html#UPPER_CASE" class="member-name-link">UPPER_CASE</a> - Enum constant in enum class io.github.eutro.wasm2j.api.support.<a href="io/github/eutro/wasm2j/api/support/CaseStyle.Capitalisation.html" title="enum class in io.github.eutro.wasm2j.api.support">CaseStyle.Capitalisation</a></dt>
+<dd>
+<div class="block">All letters upper case.</div>
+</dd>
+<dt><a href="io/github/eutro/wasm2j/api/support/CaseStyle.html#UPPER_SNAKE" class="member-name-link">UPPER_SNAKE</a> - Static variable in interface io.github.eutro.wasm2j.api.support.<a href="io/github/eutro/wasm2j/api/support/CaseStyle.html" title="interface in io.github.eutro.wasm2j.api.support">CaseStyle</a></dt>
+<dd>
+<div class="block">UPPER_SNAKE_CASE</div>
+</dd>
 <dt><a href="io/github/eutro/wasm2j/core/ext/CommonExts.html#USED_AT" class="member-name-link">USED_AT</a> - Static variable in class io.github.eutro.wasm2j.core.ext.<a href="io/github/eutro/wasm2j/core/ext/CommonExts.html" title="class in io.github.eutro.wasm2j.core.ext">CommonExts</a></dt>
 <dd>
 <div class="block">Attached to a <a href="io/github/eutro/wasm2j/core/ssa/Var.html" title="class in io.github.eutro.wasm2j.core.ssa"><code>Var</code></a>, computed by <a href="io/github/eutro/wasm2j/core/passes/meta/ComputeUses.html" title="class in io.github.eutro.wasm2j.core.passes.meta"><code>ComputeUses</code></a>.</div>
@@ -3788,6 +4600,10 @@ loadScripts(document, 'script');</script>
 </dl>
 <h2 class="title" id="I:V">V</h2>
 <dl class="index">
+<dt><a href="io/github/eutro/wasm2j/api/types/ValType.html#V128" class="member-name-link">V128</a> - Enum constant in enum class io.github.eutro.wasm2j.api.types.<a href="io/github/eutro/wasm2j/api/types/ValType.html" title="enum class in io.github.eutro.wasm2j.api.types">ValType</a></dt>
+<dd>
+<div class="block">A 128-bit vector, represented as a Java <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/nio/ByteBuffer.html" title="class or interface in java.nio" class="external-link"><code>ByteBuffer</code></a>.</div>
+</dd>
 <dt><a href="io/github/eutro/wasm2j/embed/Module.html#validate()" class="member-name-link">validate()</a> - Method in class io.github.eutro.wasm2j.embed.<a href="io/github/eutro/wasm2j/embed/Module.html" title="class in io.github.eutro.wasm2j.embed">Module</a></dt>
 <dd>
 <div class="block">Validate the module, throwing an exception if the module is invalid.</div>
@@ -3795,6 +4611,10 @@ loadScripts(document, 'script');</script>
 <dt><a href="io/github/eutro/wasm2j/core/ext/MetadataState.html#validate(io.github.eutro.wasm2j.core.ext.MetadataState.MetaKind...)" class="member-name-link">validate(MetadataState.MetaKind...)</a> - Method in class io.github.eutro.wasm2j.core.ext.<a href="io/github/eutro/wasm2j/core/ext/MetadataState.html" title="class in io.github.eutro.wasm2j.core.ext">MetadataState</a></dt>
 <dd>
 <div class="block">Mark the given metadata as valid.</div>
+</dd>
+<dt><a href="io/github/eutro/wasm2j/api/types/ValType.html" class="type-name-link" title="enum class in io.github.eutro.wasm2j.api.types">ValType</a> - Enum Class in <a href="io/github/eutro/wasm2j/api/types/package-summary.html">io.github.eutro.wasm2j.api.types</a></dt>
+<dd>
+<div class="block">An enum that represents a WebAssembly type, and gives its canonical mapping to a Java class.</div>
 </dd>
 <dt><a href="io/github/eutro/wasm2j/core/ops/WasmOps.WithMemArg.html#value" class="member-name-link">value</a> - Variable in class io.github.eutro.wasm2j.core.ops.<a href="io/github/eutro/wasm2j/core/ops/WasmOps.WithMemArg.html" title="class in io.github.eutro.wasm2j.core.ops">WasmOps.WithMemArg</a></dt>
 <dd>&nbsp;</dd>
@@ -3815,6 +4635,26 @@ loadScripts(document, 'script');</script>
 <dt><a href="io/github/eutro/wasm2j/core/util/ValueGetterSetter.html" class="type-name-link" title="interface in io.github.eutro.wasm2j.core.util">ValueGetterSetter</a> - Interface in <a href="io/github/eutro/wasm2j/core/util/package-summary.html">io.github.eutro.wasm2j.core.util</a></dt>
 <dd>
 <div class="block">A value that can be both retrieved and set.</div>
+</dd>
+<dt><a href="io/github/eutro/wasm2j/api/bits/FormatDetector.Format.html#valueOf(java.lang.String)" class="member-name-link">valueOf(String)</a> - Static method in enum class io.github.eutro.wasm2j.api.bits.<a href="io/github/eutro/wasm2j/api/bits/FormatDetector.Format.html" title="enum class in io.github.eutro.wasm2j.api.bits">FormatDetector.Format</a></dt>
+<dd>
+<div class="block">Returns the enum constant of this class with the specified name.</div>
+</dd>
+<dt><a href="io/github/eutro/wasm2j/api/support/CaseStyle.Capitalisation.html#valueOf(java.lang.String)" class="member-name-link">valueOf(String)</a> - Static method in enum class io.github.eutro.wasm2j.api.support.<a href="io/github/eutro/wasm2j/api/support/CaseStyle.Capitalisation.html" title="enum class in io.github.eutro.wasm2j.api.support">CaseStyle.Capitalisation</a></dt>
+<dd>
+<div class="block">Returns the enum constant of this class with the specified name.</div>
+</dd>
+<dt><a href="io/github/eutro/wasm2j/api/support/NameMangler.IllegalSymbolPolicy.html#valueOf(java.lang.String)" class="member-name-link">valueOf(String)</a> - Static method in enum class io.github.eutro.wasm2j.api.support.<a href="io/github/eutro/wasm2j/api/support/NameMangler.IllegalSymbolPolicy.html" title="enum class in io.github.eutro.wasm2j.api.support">NameMangler.IllegalSymbolPolicy</a></dt>
+<dd>
+<div class="block">Returns the enum constant of this class with the specified name.</div>
+</dd>
+<dt><a href="io/github/eutro/wasm2j/api/types/ExternType.Kind.html#valueOf(java.lang.String)" class="member-name-link">valueOf(String)</a> - Static method in enum class io.github.eutro.wasm2j.api.types.<a href="io/github/eutro/wasm2j/api/types/ExternType.Kind.html" title="enum class in io.github.eutro.wasm2j.api.types">ExternType.Kind</a></dt>
+<dd>
+<div class="block">Returns the enum constant of this class with the specified name.</div>
+</dd>
+<dt><a href="io/github/eutro/wasm2j/api/types/ValType.html#valueOf(java.lang.String)" class="member-name-link">valueOf(String)</a> - Static method in enum class io.github.eutro.wasm2j.api.types.<a href="io/github/eutro/wasm2j/api/types/ValType.html" title="enum class in io.github.eutro.wasm2j.api.types">ValType</a></dt>
+<dd>
+<div class="block">Returns the enum constant of this class with the specified name.</div>
 </dd>
 <dt><a href="io/github/eutro/wasm2j/core/ops/JavaOps.JumpType.html#valueOf(java.lang.String)" class="member-name-link">valueOf(String)</a> - Static method in enum class io.github.eutro.wasm2j.core.ops.<a href="io/github/eutro/wasm2j/core/ops/JavaOps.JumpType.html" title="enum class in io.github.eutro.wasm2j.core.ops">JavaOps.JumpType</a></dt>
 <dd>
@@ -3839,6 +4679,31 @@ loadScripts(document, 'script');</script>
 <dt><a href="io/github/eutro/wasm2j/embed/Memory.StoreMode.html#valueOf(java.lang.String)" class="member-name-link">valueOf(String)</a> - Static method in enum class io.github.eutro.wasm2j.embed.<a href="io/github/eutro/wasm2j/embed/Memory.StoreMode.html" title="enum class in io.github.eutro.wasm2j.embed">Memory.StoreMode</a></dt>
 <dd>
 <div class="block">Returns the enum constant of this class with the specified name.</div>
+</dd>
+<dt><a href="io/github/eutro/wasm2j/api/bits/FormatDetector.Format.html#values()" class="member-name-link">values()</a> - Static method in enum class io.github.eutro.wasm2j.api.bits.<a href="io/github/eutro/wasm2j/api/bits/FormatDetector.Format.html" title="enum class in io.github.eutro.wasm2j.api.bits">FormatDetector.Format</a></dt>
+<dd>
+<div class="block">Returns an array containing the constants of this enum class, in
+the order they are declared.</div>
+</dd>
+<dt><a href="io/github/eutro/wasm2j/api/support/CaseStyle.Capitalisation.html#values()" class="member-name-link">values()</a> - Static method in enum class io.github.eutro.wasm2j.api.support.<a href="io/github/eutro/wasm2j/api/support/CaseStyle.Capitalisation.html" title="enum class in io.github.eutro.wasm2j.api.support">CaseStyle.Capitalisation</a></dt>
+<dd>
+<div class="block">Returns an array containing the constants of this enum class, in
+the order they are declared.</div>
+</dd>
+<dt><a href="io/github/eutro/wasm2j/api/support/NameMangler.IllegalSymbolPolicy.html#values()" class="member-name-link">values()</a> - Static method in enum class io.github.eutro.wasm2j.api.support.<a href="io/github/eutro/wasm2j/api/support/NameMangler.IllegalSymbolPolicy.html" title="enum class in io.github.eutro.wasm2j.api.support">NameMangler.IllegalSymbolPolicy</a></dt>
+<dd>
+<div class="block">Returns an array containing the constants of this enum class, in
+the order they are declared.</div>
+</dd>
+<dt><a href="io/github/eutro/wasm2j/api/types/ExternType.Kind.html#values()" class="member-name-link">values()</a> - Static method in enum class io.github.eutro.wasm2j.api.types.<a href="io/github/eutro/wasm2j/api/types/ExternType.Kind.html" title="enum class in io.github.eutro.wasm2j.api.types">ExternType.Kind</a></dt>
+<dd>
+<div class="block">Returns an array containing the constants of this enum class, in
+the order they are declared.</div>
+</dd>
+<dt><a href="io/github/eutro/wasm2j/api/types/ValType.html#values()" class="member-name-link">values()</a> - Static method in enum class io.github.eutro.wasm2j.api.types.<a href="io/github/eutro/wasm2j/api/types/ValType.html" title="enum class in io.github.eutro.wasm2j.api.types">ValType</a></dt>
+<dd>
+<div class="block">Returns an array containing the constants of this enum class, in
+the order they are declared.</div>
 </dd>
 <dt><a href="io/github/eutro/wasm2j/core/ops/JavaOps.JumpType.html#values()" class="member-name-link">values()</a> - Static method in enum class io.github.eutro.wasm2j.core.ops.<a href="io/github/eutro/wasm2j/core/ops/JavaOps.JumpType.html" title="enum class in io.github.eutro.wasm2j.core.ops">JavaOps.JumpType</a></dt>
 <dd>
@@ -3891,6 +4756,12 @@ the order they are declared.</div>
 </dl>
 <h2 class="title" id="I:W">W</h2>
 <dl class="index">
+<dt><a href="io/github/eutro/wasm2j/api/WasmCompiler.html" class="type-name-link" title="class in io.github.eutro.wasm2j.api">WasmCompiler</a> - Class in <a href="io/github/eutro/wasm2j/api/package-summary.html">io.github.eutro.wasm2j.api</a></dt>
+<dd>
+<div class="block">A compiler from WebAssembly to Java bytecode.</div>
+</dd>
+<dt><a href="io/github/eutro/wasm2j/api/WasmCompiler.html#%3Cinit%3E()" class="member-name-link">WasmCompiler()</a> - Constructor for class io.github.eutro.wasm2j.api.<a href="io/github/eutro/wasm2j/api/WasmCompiler.html" title="class in io.github.eutro.wasm2j.api">WasmCompiler</a></dt>
+<dd>&nbsp;</dd>
 <dt><a href="io/github/eutro/wasm2j/embed/internal/WasmConvertPass.html" class="type-name-link" title="class in io.github.eutro.wasm2j.embed.internal">WasmConvertPass</a> - Class in <a href="io/github/eutro/wasm2j/embed/internal/package-summary.html">io.github.eutro.wasm2j.embed.internal</a></dt>
 <dd>
 <div class="block">Provides the <a href="io/github/eutro/wasm2j/embed/internal/WasmConvertPass.html#getPass()"><code>pass</code></a> to compile WebAssembly.</div>
@@ -3941,6 +4812,10 @@ the order they are declared.</div>
 </dd>
 <dt><a href="io/github/eutro/wasm2j/embed/WebAssembly.html#%3Cinit%3E()" class="member-name-link">WebAssembly()</a> - Constructor for class io.github.eutro.wasm2j.embed.<a href="io/github/eutro/wasm2j/embed/WebAssembly.html" title="class in io.github.eutro.wasm2j.embed">WebAssembly</a></dt>
 <dd>&nbsp;</dd>
+<dt><a href="io/github/eutro/wasm2j/api/events/WirPassesEvent.html#wir" class="member-name-link">wir</a> - Variable in class io.github.eutro.wasm2j.api.events.<a href="io/github/eutro/wasm2j/api/events/WirPassesEvent.html" title="class in io.github.eutro.wasm2j.api.events">WirPassesEvent</a></dt>
+<dd>
+<div class="block">The WebAssembly IR.</div>
+</dd>
 <dt><a href="io/github/eutro/wasm2j/core/conf/itf/WirJavaConvention.html" class="type-name-link" title="interface in io.github.eutro.wasm2j.core.conf.itf">WirJavaConvention</a> - Interface in <a href="io/github/eutro/wasm2j/core/conf/itf/package-summary.html">io.github.eutro.wasm2j.core.conf.itf</a></dt>
 <dd>
 <div class="block">Definitions for how certain WebAssembly concepts should be translated into Java.</div>
@@ -3953,6 +4828,14 @@ the order they are declared.</div>
 <dt><a href="io/github/eutro/wasm2j/core/conf/itf/WirJavaConventionFactory.Builder.html" class="type-name-link" title="class in io.github.eutro.wasm2j.core.conf.itf">WirJavaConventionFactory.Builder</a> - Class in <a href="io/github/eutro/wasm2j/core/conf/itf/package-summary.html">io.github.eutro.wasm2j.core.conf.itf</a></dt>
 <dd>
 <div class="block">A builder for a (configurable) default <a href="io/github/eutro/wasm2j/core/conf/itf/WirJavaConventionFactory.html" title="interface in io.github.eutro.wasm2j.core.conf.itf"><code>WirJavaConventionFactory</code></a>.</div>
+</dd>
+<dt><a href="io/github/eutro/wasm2j/api/events/WirPassesEvent.html" class="type-name-link" title="class in io.github.eutro.wasm2j.api.events">WirPassesEvent</a> - Class in <a href="io/github/eutro/wasm2j/api/events/package-summary.html">io.github.eutro.wasm2j.api.events</a></dt>
+<dd>
+<div class="block">An event fired just after the WebAssembly module is compiled to IR for the first time.</div>
+</dd>
+<dt><a href="io/github/eutro/wasm2j/api/events/WirPassesEvent.html#%3Cinit%3E(io.github.eutro.wasm2j.core.ssa.Module)" class="member-name-link">WirPassesEvent(Module)</a> - Constructor for class io.github.eutro.wasm2j.api.events.<a href="io/github/eutro/wasm2j/api/events/WirPassesEvent.html" title="class in io.github.eutro.wasm2j.api.events">WirPassesEvent</a></dt>
+<dd>
+<div class="block">Construct a new WirPassesEvent over the given IR.</div>
 </dd>
 <dt><a href="io/github/eutro/wasm2j/core/passes/convert/WirToJir.html" class="type-name-link" title="class in io.github.eutro.wasm2j.core.passes.convert">WirToJir</a> - Class in <a href="io/github/eutro/wasm2j/core/passes/convert/package-summary.html">io.github.eutro.wasm2j.core.passes.convert</a></dt>
 <dd>

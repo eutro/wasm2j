@@ -1,3 +1,8 @@
+io.github.eutro.wasm2j.api
+io.github.eutro.wasm2j.api.bits
+io.github.eutro.wasm2j.api.events
+io.github.eutro.wasm2j.api.support
+io.github.eutro.wasm2j.api.types
 io.github.eutro.wasm2j.core.conf.impl
 io.github.eutro.wasm2j.core.conf.itf
 io.github.eutro.wasm2j.core.ext

@@ -15,7 +15,11 @@
 <script type="text/javascript" src="script-dir/jquery-ui.min.js"></script>
 </head>
 <body class="package-index-page">
-<script type="text/javascript">var pathtoroot = "./";
+<script type="text/javascript">var evenRowColor = "even-row-color";
+var oddRowColor = "odd-row-color";
+var tableTab = "table-tab";
+var activeTableTab = "active-table-tab";
+var pathtoroot = "./";
 loadScripts(document, 'script');</script>
 <noscript>
 <div>JavaScript is disabled on your browser.</div>
@@ -50,80 +54,102 @@ loadScripts(document, 'script');</script>
 <h1 class="title">wasm2j 0.2.1-SNAPSHOT API</h1>
 </div>
 <div id="all-packages-table">
-<div class="caption"><span>Packages</span></div>
-<div class="summary-table two-column-summary">
+<div class="table-tabs" role="tablist" aria-orientation="horizontal"><button id="all-packages-table-tab0" role="tab" aria-selected="true" aria-controls="all-packages-table.tabpanel" tabindex="0" onkeydown="switchTab(event)" onclick="show('all-packages-table', 'all-packages-table', 2)" class="active-table-tab">All Packages</button><button id="all-packages-table-tab1" role="tab" aria-selected="false" aria-controls="all-packages-table.tabpanel" tabindex="-1" onkeydown="switchTab(event)" onclick="show('all-packages-table', 'all-packages-table-tab1', 2)" class="table-tab">Core</button><button id="all-packages-table-tab2" role="tab" aria-selected="false" aria-controls="all-packages-table.tabpanel" tabindex="-1" onkeydown="switchTab(event)" onclick="show('all-packages-table', 'all-packages-table-tab2', 2)" class="table-tab">API</button><button id="all-packages-table-tab3" role="tab" aria-selected="false" aria-controls="all-packages-table.tabpanel" tabindex="-1" onkeydown="switchTab(event)" onclick="show('all-packages-table', 'all-packages-table-tab3', 2)" class="table-tab">Embedding</button></div>
+<div id="all-packages-table.tabpanel" role="tabpanel">
+<div class="summary-table two-column-summary" aria-labelledby="all-packages-table-tab0">
 <div class="table-header col-first">Package</div>
 <div class="table-header col-last">Description</div>
-<div class="col-first even-row-color all-packages-table all-packages-table-tab1"><a href="io/github/eutro/wasm2j/core/conf/impl/package-summary.html">io.github.eutro.wasm2j.core.conf.impl</a></div>
-<div class="col-last even-row-color all-packages-table all-packages-table-tab1">
+<div class="col-first even-row-color all-packages-table all-packages-table-tab2"><a href="io/github/eutro/wasm2j/api/package-summary.html">io.github.eutro.wasm2j.api</a></div>
+<div class="col-last even-row-color all-packages-table all-packages-table-tab2">
+<div class="block">A configurable API over the less stable and lower-level core Wasm2j API.</div>
+</div>
+<div class="col-first odd-row-color all-packages-table all-packages-table-tab2"><a href="io/github/eutro/wasm2j/api/bits/package-summary.html">io.github.eutro.wasm2j.api.bits</a></div>
+<div class="col-last odd-row-color all-packages-table all-packages-table-tab2">
+<div class="block">Bits for extending and configuring the compiler.</div>
+</div>
+<div class="col-first even-row-color all-packages-table all-packages-table-tab2"><a href="io/github/eutro/wasm2j/api/events/package-summary.html">io.github.eutro.wasm2j.api.events</a></div>
+<div class="col-last even-row-color all-packages-table all-packages-table-tab2">
+<div class="block">Events that occur during a compilation.</div>
+</div>
+<div class="col-first odd-row-color all-packages-table all-packages-table-tab2"><a href="io/github/eutro/wasm2j/api/support/package-summary.html">io.github.eutro.wasm2j.api.support</a></div>
+<div class="col-last odd-row-color all-packages-table all-packages-table-tab2">
+<div class="block">Miscellaneous utilities.</div>
+</div>
+<div class="col-first even-row-color all-packages-table all-packages-table-tab2"><a href="io/github/eutro/wasm2j/api/types/package-summary.html">io.github.eutro.wasm2j.api.types</a></div>
+<div class="col-last even-row-color all-packages-table all-packages-table-tab2">
+<div class="block">WebAssembly value and extern types.</div>
+</div>
+<div class="col-first odd-row-color all-packages-table all-packages-table-tab1"><a href="io/github/eutro/wasm2j/core/conf/impl/package-summary.html">io.github.eutro.wasm2j.core.conf.impl</a></div>
+<div class="col-last odd-row-color all-packages-table all-packages-table-tab1">
 <div class="block">Implementations of configuration interfaces.</div>
 </div>
-<div class="col-first odd-row-color all-packages-table all-packages-table-tab1"><a href="io/github/eutro/wasm2j/core/conf/itf/package-summary.html">io.github.eutro.wasm2j.core.conf.itf</a></div>
-<div class="col-last odd-row-color all-packages-table all-packages-table-tab1">
+<div class="col-first even-row-color all-packages-table all-packages-table-tab1"><a href="io/github/eutro/wasm2j/core/conf/itf/package-summary.html">io.github.eutro.wasm2j.core.conf.itf</a></div>
+<div class="col-last even-row-color all-packages-table all-packages-table-tab1">
 <div class="block">Configuration interfaces.</div>
 </div>
-<div class="col-first even-row-color all-packages-table all-packages-table-tab1"><a href="io/github/eutro/wasm2j/core/ext/package-summary.html">io.github.eutro.wasm2j.core.ext</a></div>
-<div class="col-last even-row-color all-packages-table all-packages-table-tab1">
+<div class="col-first odd-row-color all-packages-table all-packages-table-tab1"><a href="io/github/eutro/wasm2j/core/ext/package-summary.html">io.github.eutro.wasm2j.core.ext</a></div>
+<div class="col-last odd-row-color all-packages-table all-packages-table-tab1">
 <div class="block">The ext API allows for associating arbitrary data with
  instances of <a href="io/github/eutro/wasm2j/core/ext/ExtContainer.html" title="interface in io.github.eutro.wasm2j.core.ext"><code>ExtContainer</code></a>.</div>
 </div>
-<div class="col-first odd-row-color all-packages-table all-packages-table-tab1"><a href="io/github/eutro/wasm2j/core/intrinsics/package-summary.html">io.github.eutro.wasm2j.core.intrinsics</a></div>
-<div class="col-last odd-row-color all-packages-table all-packages-table-tab1">
+<div class="col-first even-row-color all-packages-table all-packages-table-tab1"><a href="io/github/eutro/wasm2j/core/intrinsics/package-summary.html">io.github.eutro.wasm2j.core.intrinsics</a></div>
+<div class="col-last even-row-color all-packages-table all-packages-table-tab1">
 <div class="block">Intrinsics and their implementations.</div>
 </div>
-<div class="col-first even-row-color all-packages-table all-packages-table-tab1"><a href="io/github/eutro/wasm2j/core/intrinsics/impls/package-summary.html">io.github.eutro.wasm2j.core.intrinsics.impls</a></div>
-<div class="col-last even-row-color all-packages-table all-packages-table-tab1">&nbsp;</div>
-<div class="col-first odd-row-color all-packages-table all-packages-table-tab1"><a href="io/github/eutro/wasm2j/core/ops/package-summary.html">io.github.eutro.wasm2j.core.ops</a></div>
-<div class="col-last odd-row-color all-packages-table all-packages-table-tab1">
+<div class="col-first odd-row-color all-packages-table all-packages-table-tab1"><a href="io/github/eutro/wasm2j/core/intrinsics/impls/package-summary.html">io.github.eutro.wasm2j.core.intrinsics.impls</a></div>
+<div class="col-last odd-row-color all-packages-table all-packages-table-tab1">&nbsp;</div>
+<div class="col-first even-row-color all-packages-table all-packages-table-tab1"><a href="io/github/eutro/wasm2j/core/ops/package-summary.html">io.github.eutro.wasm2j.core.ops</a></div>
+<div class="col-last even-row-color all-packages-table all-packages-table-tab1">
 <div class="block">Language specific and language agnostic operations in the IR.</div>
 </div>
-<div class="col-first even-row-color all-packages-table all-packages-table-tab1"><a href="io/github/eutro/wasm2j/core/passes/package-summary.html">io.github.eutro.wasm2j.core.passes</a></div>
-<div class="col-last even-row-color all-packages-table all-packages-table-tab1">
+<div class="col-first odd-row-color all-packages-table all-packages-table-tab1"><a href="io/github/eutro/wasm2j/core/passes/package-summary.html">io.github.eutro.wasm2j.core.passes</a></div>
+<div class="col-last odd-row-color all-packages-table all-packages-table-tab1">
 <div class="block">Passes over the Wasm2j IR.</div>
 </div>
-<div class="col-first odd-row-color all-packages-table all-packages-table-tab1"><a href="io/github/eutro/wasm2j/core/passes/convert/package-summary.html">io.github.eutro.wasm2j.core.passes.convert</a></div>
-<div class="col-last odd-row-color all-packages-table all-packages-table-tab1">
+<div class="col-first even-row-color all-packages-table all-packages-table-tab1"><a href="io/github/eutro/wasm2j/core/passes/convert/package-summary.html">io.github.eutro.wasm2j.core.passes.convert</a></div>
+<div class="col-last even-row-color all-packages-table all-packages-table-tab1">
 <div class="block">Passes that change entirely the structure of the IR from one form to another,
  or convert into/out of the IR.</div>
 </div>
-<div class="col-first even-row-color all-packages-table all-packages-table-tab1"><a href="io/github/eutro/wasm2j/core/passes/form/package-summary.html">io.github.eutro.wasm2j.core.passes.form</a></div>
-<div class="col-last even-row-color all-packages-table all-packages-table-tab1">
+<div class="col-first odd-row-color all-packages-table all-packages-table-tab1"><a href="io/github/eutro/wasm2j/core/passes/form/package-summary.html">io.github.eutro.wasm2j.core.passes.form</a></div>
+<div class="col-last odd-row-color all-packages-table all-packages-table-tab1">
 <div class="block">Passes that change some assumptions about the IR.</div>
 </div>
-<div class="col-first odd-row-color all-packages-table all-packages-table-tab1"><a href="io/github/eutro/wasm2j/core/passes/meta/package-summary.html">io.github.eutro.wasm2j.core.passes.meta</a></div>
-<div class="col-last odd-row-color all-packages-table all-packages-table-tab1">
+<div class="col-first even-row-color all-packages-table all-packages-table-tab1"><a href="io/github/eutro/wasm2j/core/passes/meta/package-summary.html">io.github.eutro.wasm2j.core.passes.meta</a></div>
+<div class="col-last even-row-color all-packages-table all-packages-table-tab1">
 <div class="block">Metadata passes that compute information about, or validate, the IR,
  but don't otherwise modify it.</div>
 </div>
-<div class="col-first even-row-color all-packages-table all-packages-table-tab1"><a href="io/github/eutro/wasm2j/core/passes/misc/package-summary.html">io.github.eutro.wasm2j.core.passes.misc</a></div>
-<div class="col-last even-row-color all-packages-table all-packages-table-tab1">
+<div class="col-first odd-row-color all-packages-table all-packages-table-tab1"><a href="io/github/eutro/wasm2j/core/passes/misc/package-summary.html">io.github.eutro.wasm2j.core.passes.misc</a></div>
+<div class="col-last odd-row-color all-packages-table all-packages-table-tab1">
 <div class="block">Miscellaneous passes that create new passes from others.</div>
 </div>
-<div class="col-first odd-row-color all-packages-table all-packages-table-tab1"><a href="io/github/eutro/wasm2j/core/passes/opts/package-summary.html">io.github.eutro.wasm2j.core.passes.opts</a></div>
-<div class="col-last odd-row-color all-packages-table all-packages-table-tab1">
+<div class="col-first even-row-color all-packages-table all-packages-table-tab1"><a href="io/github/eutro/wasm2j/core/passes/opts/package-summary.html">io.github.eutro.wasm2j.core.passes.opts</a></div>
+<div class="col-last even-row-color all-packages-table all-packages-table-tab1">
 <div class="block"><a href="io/github/eutro/wasm2j/core/passes/IRPass.html" title="interface in io.github.eutro.wasm2j.core.passes"><code>IR passes</code></a> that perform optimisations.</div>
 </div>
-<div class="col-first even-row-color all-packages-table all-packages-table-tab1"><a href="io/github/eutro/wasm2j/core/ssa/package-summary.html">io.github.eutro.wasm2j.core.ssa</a></div>
-<div class="col-last even-row-color all-packages-table all-packages-table-tab1">
+<div class="col-first odd-row-color all-packages-table all-packages-table-tab1"><a href="io/github/eutro/wasm2j/core/ssa/package-summary.html">io.github.eutro.wasm2j.core.ssa</a></div>
+<div class="col-last odd-row-color all-packages-table all-packages-table-tab1">
 <div class="block">This package defines the intermediate representation (IR) used by Wasm2j
  to represent both WebAssembly and Java code.</div>
 </div>
-<div class="col-first odd-row-color all-packages-table all-packages-table-tab1"><a href="io/github/eutro/wasm2j/core/ssa/display/package-summary.html">io.github.eutro.wasm2j.core.ssa.display</a></div>
-<div class="col-last odd-row-color all-packages-table all-packages-table-tab1">
+<div class="col-first even-row-color all-packages-table all-packages-table-tab1"><a href="io/github/eutro/wasm2j/core/ssa/display/package-summary.html">io.github.eutro.wasm2j.core.ssa.display</a></div>
+<div class="col-last even-row-color all-packages-table all-packages-table-tab1">
 <div class="block">Utilities for displaying the IR for debugging.</div>
 </div>
-<div class="col-first even-row-color all-packages-table all-packages-table-tab1"><a href="io/github/eutro/wasm2j/core/util/package-summary.html">io.github.eutro.wasm2j.core.util</a></div>
-<div class="col-last even-row-color all-packages-table all-packages-table-tab1">
+<div class="col-first odd-row-color all-packages-table all-packages-table-tab1"><a href="io/github/eutro/wasm2j/core/util/package-summary.html">io.github.eutro.wasm2j.core.util</a></div>
+<div class="col-last odd-row-color all-packages-table all-packages-table-tab1">
 <div class="block">Miscellaneous core utilities.</div>
 </div>
-<div class="col-first odd-row-color all-packages-table all-packages-table-tab1"><a href="io/github/eutro/wasm2j/embed/package-summary.html">io.github.eutro.wasm2j.embed</a></div>
-<div class="col-last odd-row-color all-packages-table all-packages-table-tab1">
+<div class="col-first even-row-color all-packages-table all-packages-table-tab3"><a href="io/github/eutro/wasm2j/embed/package-summary.html">io.github.eutro.wasm2j.embed</a></div>
+<div class="col-last even-row-color all-packages-table all-packages-table-tab3">
 <div class="block">An implementation of the
  <a href="https://webassembly.github.io/spec/core/appendix/embedding.html">WebAssembly embedding</a>.</div>
 </div>
-<div class="col-first even-row-color all-packages-table all-packages-table-tab1"><a href="io/github/eutro/wasm2j/embed/internal/package-summary.html">io.github.eutro.wasm2j.embed.internal</a></div>
-<div class="col-last even-row-color all-packages-table all-packages-table-tab1">
+<div class="col-first odd-row-color all-packages-table all-packages-table-tab3"><a href="io/github/eutro/wasm2j/embed/internal/package-summary.html">io.github.eutro.wasm2j.embed.internal</a></div>
+<div class="col-last odd-row-color all-packages-table all-packages-table-tab3">
 <div class="block"><a href="io/github/eutro/wasm2j/embed/package-summary.html"><code>io.github.eutro.wasm2j.embed</code></a> internals.</div>
+</div>
 </div>
 </div>
 </div>

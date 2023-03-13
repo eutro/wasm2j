@@ -84,7 +84,7 @@ project(":wasm2j-core") {
     }
 }
 
-val javadocModules = listOf(":wasm2j-core", ":wasm2j-embed")
+val javadocModules = listOf(":wasm2j-core", ":wasm2j-embed", "wasm2j-api")
 
 tasks.javadoc {
     setDestinationDir(file("docs"))
@@ -98,6 +98,9 @@ tasks.javadoc {
             "https://asm.ow2.io/javadoc/",
             "https://eutro.github.io/jwasm",
         )
+        group("Core", "io.github.eutro.wasm2j.core*")
+        group("API", "io.github.eutro.wasm2j.api*")
+        group("Embedding", "io.github.eutro.wasm2j.embed*")
     }
 }
 
