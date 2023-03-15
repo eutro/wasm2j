@@ -23,13 +23,16 @@ val jwasmVer = properties["jwasm_version"]
 allprojects {
     repositories {
         mavenCentral()
+        maven {
+            url = uri("https://maven.eutro.dev/releases")
+        }
         mavenLocal()
     }
 
     dependencies {
-        implementation("org.jetbrains:annotations:23.0.0")
+        implementation("org.jetbrains:annotations:23.1.0")
 
-        testImplementation("org.junit.jupiter:junit-jupiter-api:5.9.0")
+        testImplementation("org.junit.jupiter:junit-jupiter-api:5.9.2")
         testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine")
 
         testImplementation("io.github.eutro.jwasm:jwasm-sexp:$jwasmVer")
@@ -117,6 +120,17 @@ allprojects {
     }
 
     publishing {
+        repositories {
+            maven {
+                name = "eutroDev"
+                val repo = if (properties["ver_phase"] == "SNAPSHOT") "snapshots" else "release"
+                url = uri("https://maven.eutro.dev/${repo}")
+                credentials(PasswordCredentials::class)
+                authentication {
+                    create<BasicAuthentication>("basic")
+                }
+            }
+        }
         publications {
             register<MavenPublication>("maven") {
                 from(components.named("java").get())

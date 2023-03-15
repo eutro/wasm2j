@@ -162,21 +162,6 @@ public class ExecutingWastVisitor extends WastVisitor {
         };
     }
 
-    @Override
-    public @Nullable WastVisitor visitMetaScript(@Nullable String name) {
-        throw new UnsupportedOperationException("visitMetaScript");
-    }
-
-    @Override
-    public void visitMetaInput(@Nullable String name, String string) {
-        throw new UnsupportedOperationException("visitMetaInput");
-    }
-
-    @Override
-    public void visitMetaOutput(@Nullable String name, String string) {
-        throw new UnsupportedOperationException("visitMetaOutput");
-    }
-
     int arc = 0;
 
     @Override

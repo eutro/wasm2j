@@ -27,6 +27,7 @@ import org.objectweb.asm.ClassWriter;
 import org.objectweb.asm.MethodTooLargeException;
 import org.objectweb.asm.tree.ClassNode;
 
+import java.lang.reflect.Method;
 import java.util.stream.Stream;
 
 public class SpecTest {
@@ -115,7 +116,7 @@ public class SpecTest {
                                 );
                             }
                         }.defineTheClass();
-                        System.out.println(theClass);
+                        Method[] ignored = theClass.getMethods(); // verify
                     } catch (UnsupportedOperationException ignored) {
                         // TODO support all the operations
                     } catch (MethodTooLargeException ignored) {

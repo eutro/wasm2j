@@ -1,7 +1,5 @@
 package io.github.eutro.wasm2j;
 
-import io.github.eutro.jwasm.ByteInputStream;
-import io.github.eutro.jwasm.test.ModuleTestBase;
 import io.github.eutro.wasm2j.api.ModuleCompilation;
 import io.github.eutro.wasm2j.api.WasmCompiler;
 import io.github.eutro.wasm2j.api.bits.InterfaceBasedLinker;
@@ -15,7 +13,6 @@ import org.objectweb.asm.util.CheckClassAdapter;
 
 import java.io.File;
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.UncheckedIOException;
 import java.nio.file.Files;
 
@@ -57,13 +54,6 @@ public class InterfaceLinkingTest {
                 "(start $main))");
         ibl.register("main_itf", comp.node);
         comp.setName(PACKAGE + "Main").run();
-
-        try (InputStream is = ModuleTestBase.openResource(ModuleTestBase.AOC_SOLNS)) {
-            comp = cc.submitBinary(new ByteInputStream.InputStreamByteInputStream(is));
-            comp.setName(PACKAGE + "Aoc");
-            ibl.register("aoc_itf", comp.node);
-            comp.run();
-        }
 
         ibl.finish();
     }
