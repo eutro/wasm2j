@@ -1,5 +1,7 @@
 # Wasm2j
 
+[![build](https://github.com/eutro/wasm2j/actions/workflows/build.yaml/badge.svg)](https://github.com/eutro/jwasm/actions/workflows/build.yaml)
+
 A WebAssembly to Java bytecode compiler.
 
 JavaDocs can be found [here](https://eutro.github.io/wasm2j/index.html).
