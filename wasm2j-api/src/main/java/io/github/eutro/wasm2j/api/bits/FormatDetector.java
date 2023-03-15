@@ -146,7 +146,9 @@ public class FormatDetector {
                 CharsetDecoder dec = StandardCharsets.UTF_8.newDecoder();
                 int toScan = Math.min(128, buf.capacity());
                 CharBuffer cbuf = CharBuffer.allocate(toScan);
-                CoderResult res = dec.decode(buf.slice().limit(toScan), cbuf, false);
+                ByteBuffer sliced = buf.slice();
+                sliced.limit(toScan);
+                CoderResult res = dec.decode(sliced, cbuf, false);
                 if (!res.isError()) {
                     return TEXT;
                 }
