@@ -87,7 +87,18 @@ project(":wasm2j-core") {
     }
 }
 
-val javadocModules = listOf(":wasm2j-core", ":wasm2j-embed", "wasm2j-api")
+project(":wasm2j-wasi") {
+    dependencies {
+        implementation("org.ow2.asm:asm:9.4")
+        implementation("org.ow2.asm:asm-tree:9.4")
+        testImplementation("org.ow2.asm:asm-util:9.4")
+
+        implementation("io.github.eutro.jwasm:jwasm-tree:$jwasmVer")
+        implementation(project(":wasm2j-api"))
+    }
+}
+
+val javadocModules = listOf(":wasm2j-core", ":wasm2j-embed", ":wasm2j-api", ":wasm2j-wasi")
 
 tasks.javadoc {
     setDestinationDir(file("docs"))

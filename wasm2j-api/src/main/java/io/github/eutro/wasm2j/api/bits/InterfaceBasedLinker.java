@@ -402,8 +402,6 @@ public class InterfaceBasedLinker<T extends EventSupplier<? super RunModuleCompi
             if (interfacedModule.implementation != null) {
                 ClassNode input = interfacedModule.implementation.getInput();
                 input.interfaces.add(interfaceCode.name);
-                dispatch(EmitClassEvent.class, new EmitClassEvent(input));
-                interfacedModule.implementation.isDelivered = true;
             }
         }
         for (GeneratedCode code : generatedCode.values()) {

@@ -1,5 +1,7 @@
 package io.github.eutro.wasm2j.core.ssa;
 
+import org.jetbrains.annotations.NotNull;
+
 import java.util.*;
 
 abstract class TrackedList<E> extends AbstractList<E> implements RandomAccess /* probably */ {
@@ -7,20 +9,6 @@ abstract class TrackedList<E> extends AbstractList<E> implements RandomAccess /*
 
     public TrackedList(List<E> viewed) {
         this.viewed = viewed;
-    }
-
-    public void setViewed(List<E> viewed) {
-        if (this.viewed != null) {
-            for (E e : this.viewed) {
-                onRemoved(e);
-            }
-        }
-        this.viewed = viewed;
-        if (this.viewed != null) {
-            for (E e : this.viewed) {
-                onAdded(e);
-            }
-        }
     }
 
     protected abstract void onAdded(E elt);
@@ -160,5 +148,15 @@ abstract class TrackedList<E> extends AbstractList<E> implements RandomAccess /*
                 onAdded(e);
             }
         };
+    }
+
+    @Override
+    public Object @NotNull [] toArray() {
+        return viewed.toArray();
+    }
+
+    @Override
+    public <T> T @NotNull [] toArray(T @NotNull [] a) {
+        return viewed.toArray(a);
     }
 }
